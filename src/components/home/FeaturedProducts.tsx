@@ -1,8 +1,9 @@
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
 import ProductGrid from '@/components/store/ProductGrid'
 import type { Product } from '@/types'
 
-// Geçici placeholder ürünler (Trendyol sync sonra gerçek verilerle değişecek)
+// Supabase'de ürün yokken gösterilecek placeholder'lar
 const placeholderProducts: Product[] = Array.from({ length: 4 }, (_, i) => ({
   id: `placeholder-${i + 1}`,
   slug: `urun-${i + 1}`,
@@ -30,7 +31,24 @@ const placeholderProducts: Product[] = Array.from({ length: 4 }, (_, i) => ({
   last_synced_at: '',
 }))
 
-export default function FeaturedProducts() {
+export default async function FeaturedProducts() {
+  let products: Product[] = placeholderProducts
+
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('products_display')
+      .select('*')
+      .eq('is_featured', true)
+      .limit(4)
+
+    if (data && data.length > 0) {
+      products = data
+    }
+  } catch {
+    // Supabase bağlantısı yoksa placeholder göster
+  }
+
   return (
     <section className="max-w-7xl mx-auto px-4 lg:px-8 py-20">
       <div className="flex items-end justify-between mb-12">
@@ -44,7 +62,7 @@ export default function FeaturedProducts() {
           Tümünü Gör →
         </Link>
       </div>
-      <ProductGrid products={placeholderProducts} columns={4} />
+      <ProductGrid products={products} columns={4} />
       <div className="mt-8 text-center sm:hidden">
         <Link
           href="/urunler"
