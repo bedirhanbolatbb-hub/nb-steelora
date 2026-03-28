@@ -107,7 +107,30 @@ export default function Footer() {
 
       {/* Alt Şerit */}
       <div className="border-t border-champagne-mid/10">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 flex flex-col items-center gap-4">
+          <div className="flex items-center justify-center gap-4 flex-wrap mb-4">
+            <img
+              src="https://www.iyzico.com/assets/images/iyzico_ile_ode.png"
+              alt="iyzico ile öde"
+              className="h-6 object-contain opacity-70 hover:opacity-100 transition-opacity"
+            />
+            <img
+              src="https://www.iyzico.com/assets/images/3d_secure.png"
+              alt="3D Secure"
+              className="h-6 object-contain opacity-70 hover:opacity-100 transition-opacity"
+            />
+            <img
+              src="https://www.iyzico.com/assets/images/visa_verified.png"
+              alt="Verified by Visa"
+              className="h-6 object-contain opacity-70 hover:opacity-100 transition-opacity"
+            />
+            <img
+              src="https://www.iyzico.com/assets/images/mastercard_secure.png"
+              alt="Mastercard SecureCode"
+              className="h-6 object-contain opacity-70 hover:opacity-100 transition-opacity"
+            />
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
           <p className="text-[10px] font-body text-champagne-mid/50 tracking-wider">
             © 2026 NB Steelora®. Tüm hakları saklıdır.
           </p>
@@ -121,6 +144,7 @@ export default function Footer() {
             <a href="#" className="text-champagne-mid/50 hover:text-gold transition-colors" aria-label="X">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M4 20l6.768 -6.768m2.46 -2.46L20 4"/></svg>
             </a>
+          </div>
           </div>
         </div>
       </div>

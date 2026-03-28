@@ -188,6 +188,41 @@ export default function OdemePage() {
             <span>•</span>
             <span>iyzico Güvencesi</span>
           </div>
+
+          {/* iyzico Güven Rozetleri */}
+          <div className="mt-6 pt-6 border-t border-champagne-mid">
+            <p className="text-[10px] text-text-muted text-center mb-4 uppercase tracking-[0.2em] font-body">
+              Güvenli Ödeme
+            </p>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <img
+                src="https://www.iyzico.com/assets/images/iyzico_ile_ode.png"
+                alt="iyzico ile öde"
+                className="h-8 object-contain"
+              />
+              <img
+                src="https://www.iyzico.com/assets/images/3d_secure.png"
+                alt="3D Secure"
+                className="h-8 object-contain"
+              />
+              <img
+                src="https://www.iyzico.com/assets/images/visa_verified.png"
+                alt="Verified by Visa"
+                className="h-8 object-contain"
+              />
+              <img
+                src="https://www.iyzico.com/assets/images/mastercard_secure.png"
+                alt="Mastercard SecureCode"
+                className="h-8 object-contain"
+              />
+              <div className="flex items-center gap-1 text-[11px] text-text-muted">
+                <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+                <span>256-bit SSL</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Sipariş özeti — sağ 1/3 */}
