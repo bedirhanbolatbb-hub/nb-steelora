@@ -9,11 +9,12 @@ const categories = [
 ]
 
 const helpLinks = [
-  { href: '/kargo', label: 'Kargo Bilgileri' },
-  { href: '/iade', label: 'İade & Değişim' },
-  { href: '/sss', label: 'Sıkça Sorulan Sorular' },
+  { href: '/kargo-ve-iade', label: 'Kargo ve İade' },
+  { href: '/hakkimizda', label: 'Hakkımızda' },
+  { href: '/iletisim', label: 'İletişim' },
   { href: '/kvkk', label: 'KVKK Aydınlatma' },
-  { href: '/gizlilik', label: 'Gizlilik Politikası' },
+  { href: '/gizlilik-politikasi', label: 'Gizlilik Politikası' },
+  { href: '/mesafeli-satis-sozlesmesi', label: 'Mesafeli Satış Sözleşmesi' },
 ]
 
 export default function Footer() {
@@ -82,9 +83,12 @@ export default function Footer() {
               İletişim
             </h4>
             <ul className="space-y-3 text-[12px] font-body text-champagne-mid/70">
-              <li>info@nbsteelora.com</li>
-              <li>+90 (555) 000 00 00</li>
-              <li>İstanbul, Türkiye</li>
+              <li>
+                <a href="mailto:info@nbsteelora.com" className="hover:text-gold transition-colors">
+                  info@nbsteelora.com
+                </a>
+              </li>
+              <li>Mezitli / Mersin / Türkiye</li>
             </ul>
           </div>
         </div>
