@@ -6,8 +6,28 @@ export const metadata: Metadata = {
     default: 'NB Steelora | Fine Jewellery',
     template: '%s | NB Steelora',
   },
-  description: 'Premium Türk takı markası. Kolye, küpe, yüzük, bileklik ve setlerde zarafeti keşfedin.',
-  keywords: ['takı', 'kolye', 'küpe', 'yüzük', 'bileklik', 'altın kaplama', 'premium takı', 'NB Steelora'],
+  description: 'Premium takı markası. Orijinal sertifikalı ürünler, güvenli ödeme ve hızlı kargo ile Türkiye\'nin dört bir yanına teslimat.',
+  keywords: ['takı', 'kolye', 'küpe', 'yüzük', 'bileklik', 'premium takı', 'NB Steelora'],
+  authors: [{ name: 'NB Steelora' }],
+  creator: 'NB Steelora',
+  metadataBase: new URL('https://www.nbsteelora.com'),
+  openGraph: {
+    type: 'website',
+    locale: 'tr_TR',
+    url: 'https://www.nbsteelora.com',
+    siteName: 'NB Steelora',
+    title: 'NB Steelora | Fine Jewellery',
+    description: 'Premium takı markası. Orijinal sertifikalı ürünler.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'NB Steelora | Fine Jewellery',
+    description: 'Premium takı markası. Orijinal sertifikalı ürünler.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function RootLayout({
