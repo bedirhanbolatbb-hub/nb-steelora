@@ -9,7 +9,7 @@ export default function MesafeliSatisSozlesmesiPage() {
       <p>
         <strong>SATICI:</strong><br />
         Ad Soyad: Nalan Bolat<br />
-        Adres: Akdeniz Mahallesi 39823 Sokak Men Tower 1 No:3 Kapı No:11, 33200 Mezitli / Mersin / Türkiye<br />
+        Adres: Mezitli / Mersin / Türkiye<br />
         Vergi Dairesi: İstiklal Vergi Dairesi<br />
         E-posta: info@nbsteelora.com<br />
         Web: https://www.nbsteelora.com

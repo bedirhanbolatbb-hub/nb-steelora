@@ -13,7 +13,7 @@ export default function KvkkPage() {
       <h2>1. Veri Sorumlusu</h2>
       <p>
         <strong>Nalan Bolat</strong><br />
-        Akdeniz Mahallesi 39823 Sokak Men Tower 1 No:3 Kapı No:11, 33200 Mezitli / Mersin / Türkiye<br />
+        Mezitli / Mersin / Türkiye<br />
         E-posta: info@nbsteelora.com
       </p>
 
