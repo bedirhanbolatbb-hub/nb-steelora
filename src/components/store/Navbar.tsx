@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { Search, Heart, User, ShoppingBag, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useCart } from '@/hooks/useCart'
+import CartDrawer from './CartDrawer'
 
 const navLinks = [
   { href: '/urunler?kategori=kolye', label: 'Kolye' },
@@ -16,6 +18,8 @@ const navLinks = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [cartOpen, setCartOpen] = useState(false)
+  const totalItems = useCart((s) => s.totalItems())
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -83,11 +87,17 @@ export default function Navbar() {
             <button className="hidden sm:block text-text-secondary hover:text-gold transition-colors" aria-label="Hesap">
               <User size={18} />
             </button>
-            <button className="relative text-text-secondary hover:text-gold transition-colors" aria-label="Sepet">
+            <button
+              className="relative text-text-secondary hover:text-gold transition-colors"
+              aria-label="Sepet"
+              onClick={() => setCartOpen(true)}
+            >
               <ShoppingBag size={18} />
-              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gold text-white text-[8px] rounded-full flex items-center justify-center font-body">
-                0
-              </span>
+              {totalItems > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gold text-white text-[8px] rounded-full flex items-center justify-center font-body">
+                  {totalItems}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -121,6 +131,7 @@ export default function Navbar() {
           </div>
         </div>
       )}
+      <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
     </header>
   )
 }
