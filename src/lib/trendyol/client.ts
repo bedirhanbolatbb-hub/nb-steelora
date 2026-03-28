@@ -1,4 +1,5 @@
-const BASE_URL = 'https://api.trendyol.com/sapigw'
+const PRODUCT_BASE = 'https://apigw.trendyol.com/integration/product'
+const INVENTORY_BASE = 'https://apigw.trendyol.com/integration/inventory'
 
 function getHeaders() {
   const credentials = Buffer.from(
@@ -13,11 +14,14 @@ function getHeaders() {
   }
 }
 
-export async function fetchTrendyolProducts(page = 0, size = 50) {
-  const supplierId = process.env.TRENDYOL_SUPPLIER_ID
-  const url = `${BASE_URL}/suppliers/${supplierId}/products?page=${page}&size=${size}&approved=true`
+export async function fetchTrendyolProducts(page = 0, size = 100) {
+  const sellerId = process.env.TRENDYOL_SUPPLIER_ID
+  const url = `${PRODUCT_BASE}/sellers/${sellerId}/products?page=${page}&size=${size}`
 
-  const res = await fetch(url, { headers: getHeaders() })
+  const res = await fetch(url, {
+    headers: getHeaders(),
+    signal: AbortSignal.timeout(15_000),
+  })
   if (!res.ok) throw new Error(`Trendyol API error: ${res.status}`)
   return res.json()
 }
@@ -25,7 +29,7 @@ export async function fetchTrendyolProducts(page = 0, size = 50) {
 export async function fetchAllTrendyolProducts() {
   const allProducts: any[] = []
   let page = 0
-  const size = 50
+  const size = 100
 
   while (true) {
     const data = await fetchTrendyolProducts(page, size)
@@ -40,8 +44,8 @@ export async function fetchAllTrendyolProducts() {
 }
 
 export async function updateTrendyolStock(barcode: string, quantity: number) {
-  const supplierId = process.env.TRENDYOL_SUPPLIER_ID
-  const url = `${BASE_URL}/suppliers/${supplierId}/products/price-and-inventory`
+  const sellerId = process.env.TRENDYOL_SUPPLIER_ID
+  const url = `${INVENTORY_BASE}/sellers/${sellerId}/products/price-and-inventory`
 
   const body = {
     items: [{ barcode, quantity }],
@@ -51,6 +55,7 @@ export async function updateTrendyolStock(barcode: string, quantity: number) {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(10_000),
   })
 
   if (!res.ok) {
