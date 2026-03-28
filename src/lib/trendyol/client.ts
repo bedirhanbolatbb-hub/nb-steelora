@@ -10,7 +10,7 @@ function getHeaders() {
     'Authorization': `Basic ${credentials}`,
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'User-Agent': `${process.env.TRENDYOL_SUPPLIER_ID} - SelfIntegration`,
+    'User-Agent': 'KarPanel - nbsteelora@gmail.com',
   }
 }
 
