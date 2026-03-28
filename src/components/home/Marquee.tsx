@@ -1,7 +1,7 @@
 export default function Marquee() {
   const items = [
     'Ücretsiz Kargo',
-    'Orijinal Sertifikalı',
+    'Premium Çelik Takılar',
     'Güvenli Ödeme',
     'Kolay İade',
     'Özel Hediye Paketi',

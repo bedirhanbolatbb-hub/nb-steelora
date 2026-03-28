@@ -37,7 +37,7 @@ export default function Navbar() {
       {/* Duyuru Şeridi */}
       <div className="bg-dark text-center py-2 px-4">
         <p className="text-gold text-[10px] tracking-[0.2em] uppercase font-body">
-          Tüm siparişlerde ücretsiz kargo • Orijinal sertifikalı ürünler
+          Tüm siparişlerde ücretsiz kargo • Premium Çelik Takılar
         </p>
       </div>
 

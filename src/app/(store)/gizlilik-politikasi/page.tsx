@@ -64,7 +64,7 @@ export default function GizlilikPolitikasiPage() {
       </p>
 
       <p>
-        <em>Son güncelleme: Mart 2025</em>
+        <em>Son güncelleme: Mart 2026</em>
       </p>
     </LegalPageLayout>
   )

@@ -6,7 +6,7 @@ export default function Hero() {
       {/* Sol: İçerik */}
       <div className="bg-dark-mid flex flex-col justify-center px-8 lg:px-16 py-16 lg:py-0 order-2 lg:order-1">
         <span className="text-gold text-[10px] uppercase tracking-[0.25em] font-body mb-6">
-          Yeni Koleksiyon — 2025
+          Yeni Koleksiyon — 2026
         </span>
         <h1 className="font-heading text-[40px] sm:text-[48px] lg:text-[56px] font-light text-champagne leading-[1.1]">
           Her anın

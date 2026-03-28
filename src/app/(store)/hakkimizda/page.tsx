@@ -9,13 +9,13 @@ export default function HakkimizdaPage() {
       <div className="w-16 h-px bg-gold mb-10" />
 
       <p className="font-heading text-[22px] text-text-primary italic leading-relaxed mb-10">
-        &ldquo;Her parça bir hikaye anlatır. NB Steelora, bu hikayeleri zarafetle hayata
+        &ldquo;Her parça bir hikaye anlatır. NB Steelora®, bu hikayeleri zarafetle hayata
         geçirir.&rdquo;
       </p>
 
       <div className="space-y-6 text-[13px] font-body text-text-secondary leading-relaxed">
         <p>
-          NB Steelora, Mersin&apos;den tüm Türkiye&apos;ye ulaşan bir premium takı markasıdır.
+          NB Steelora®, Mersin&apos;den tüm Türkiye&apos;ye ulaşan tescilli bir premium çelik takı markasıdır.
           Modern kadının günlük zarafetini yansıtan, şık ve zamansız parçalar tasarlıyoruz.
           Her bir ürünümüz, kalite ve estetiğin bir arada sunulduğu özenli bir sürecin ürünüdür.
         </p>
@@ -30,7 +30,7 @@ export default function HakkimizdaPage() {
         </p>
 
         <h2 className="font-heading text-[24px] font-light text-text-primary mt-10 mb-4">
-          Neden NB Steelora?
+          Neden NB Steelora®?
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
           <div className="bg-champagne-dark/30 p-6">
