@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import ProductImageGallery from '@/components/store/ProductImageGallery'
 import AddToCartButton from '@/components/store/AddToCartButton'
+import RelatedProducts from '@/components/store/RelatedProducts'
 
 export default async function UrunDetayPage({
   params,
@@ -95,6 +96,12 @@ export default async function UrunDetayPage({
           </div>
         </div>
       </div>
+
+      {/* İlgili Ürünler */}
+      <RelatedProducts
+        productId={product.id}
+        category={product.trendyol_category || ''}
+      />
     </div>
   )
 }
