@@ -10,7 +10,7 @@ export default function Icon() {
         style={{
           width: 32,
           height: 32,
-          background: '#2d1a1f',
+          background: '#2A1E1E',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -19,7 +19,7 @@ export default function Icon() {
       >
         <div
           style={{
-            color: '#c4768a',
+            color: '#C89080',
             fontSize: 14,
             fontWeight: 700,
             letterSpacing: -1,

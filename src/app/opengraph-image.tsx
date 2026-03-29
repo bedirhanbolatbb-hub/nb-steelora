@@ -10,7 +10,7 @@ export default function OGImage() {
         style={{
           width: 1200,
           height: 630,
-          background: '#2d1a1f',
+          background: '#2A1E1E',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -20,7 +20,7 @@ export default function OGImage() {
       >
         <div
           style={{
-            color: '#c4768a',
+            color: '#C89080',
             fontSize: 72,
             fontWeight: 300,
             letterSpacing: 24,
@@ -31,7 +31,7 @@ export default function OGImage() {
         </div>
         <div
           style={{
-            color: '#e0b8c4',
+            color: '#F0E0D8',
             fontSize: 24,
             letterSpacing: 12,
             fontFamily: 'serif',
@@ -43,13 +43,13 @@ export default function OGImage() {
           style={{
             width: 80,
             height: 1,
-            background: '#c4768a',
+            background: '#C89080',
             marginTop: 8,
           }}
         />
         <div
           style={{
-            color: '#a07080',
+            color: '#B09080',
             fontSize: 18,
             letterSpacing: 6,
             marginTop: 8,
