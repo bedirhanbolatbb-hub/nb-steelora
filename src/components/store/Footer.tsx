@@ -1,11 +1,11 @@
 import Link from 'next/link'
 
 const categories = [
-  { href: '/urunler?kategori=kolye', label: 'Kolye' },
-  { href: '/urunler?kategori=kupe', label: 'Küpe' },
-  { href: '/urunler?kategori=yuzuk', label: 'Yüzük' },
-  { href: '/urunler?kategori=bileklik', label: 'Bileklik' },
-  { href: '/urunler?kategori=setler', label: 'Setler' },
+  { href: '/kategori/kolye', label: 'Kolye' },
+  { href: '/kategori/kupe', label: 'Küpe' },
+  { href: '/kategori/yuzuk', label: 'Yüzük' },
+  { href: '/kategori/bileklik', label: 'Bileklik' },
+  { href: '/kategori/setler', label: 'Setler' },
 ]
 
 const helpLinks = [

@@ -18,7 +18,7 @@ export default function CategoryGrid() {
         {categories.map((cat) => (
           <Link
             key={cat.slug}
-            href={`/urunler?kategori=${cat.slug}`}
+            href={`/kategori/${cat.slug}`}
             className="group"
           >
             <div className="aspect-square bg-champagne-dark relative overflow-hidden transition-transform duration-500 group-hover:-translate-y-2">
