@@ -186,6 +186,27 @@ export default function OdemePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
         {/* Form — sol 2/3 */}
         <div className="lg:col-span-2">
+          {/* Üyelik uyarısı — sadece giriş yapılmamış kullanıcılara */}
+          {!userId && (
+            <div className="bg-champagne border border-gold/40 border-l-4 border-l-gold p-4 mb-6 rounded-sm">
+              <p className="text-[14px] font-body font-medium text-text-primary mb-1">
+                Üye olarak sipariş verin, daha fazlasını kazanın
+              </p>
+              <p className="text-[13px] font-body text-text-secondary mb-3">
+                Kargo takibi, sipariş geçmişi ve özel kampanyalar için üye olun.
+              </p>
+              <div className="flex items-center gap-3 text-[13px] font-body">
+                <a href="/giris" className="text-gold hover:text-gold-light underline transition-colors">
+                  Giriş yap
+                </a>
+                <a href="/kayit" className="text-gold hover:text-gold-light underline transition-colors">
+                  Üye ol
+                </a>
+                <span className="text-text-muted">veya misafir olarak devam edin ↓</span>
+              </div>
+            </div>
+          )}
+
           <h2 className="text-[11px] uppercase tracking-[0.2em] font-body text-gold mb-6">
             Teslimat Bilgileri
           </h2>

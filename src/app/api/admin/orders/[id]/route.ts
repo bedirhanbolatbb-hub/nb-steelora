@@ -28,15 +28,68 @@ export async function PATCH(
     return NextResponse.json({ success: true })
   }
 
-  // Default: update order status
-  const { error } = await supabase
+  // Update order status + optional tracking number
+  const updateData: any = {
+    status: body.status,
+    updated_at: new Date().toISOString(),
+  }
+  if (body.tracking_number) {
+    updateData.tracking_number = body.tracking_number
+  }
+
+  const { data: order, error } = await supabase
     .from('orders')
-    .update({
-      status: body.status,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq('id', id)
+    .select('order_number, guest_email')
+    .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Send shipping notification email
+  if (body.status === 'shipped' && body.tracking_number && order?.guest_email) {
+    try {
+      const { Resend } = await import('resend')
+      const resend = new Resend(process.env.RESEND_API_KEY)
+
+      await resend.emails.send({
+        from: 'NB Steelora <onboarding@resend.dev>',
+        to: order.guest_email,
+        subject: `Siparişiniz Kargoya Verildi — ${order.order_number}`,
+        html: `<!DOCTYPE html>
+<html>
+<body style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #2A1E1E;">
+  <div style="text-align: center; padding: 30px 0; border-bottom: 1px solid #E8D8D0;">
+    <h1 style="letter-spacing: 0.3em; font-size: 20px; font-weight: 400; margin: 0;">NB STEELORA</h1>
+    <p style="font-size: 11px; color: #C89080; letter-spacing: 0.2em; margin: 5px 0 0;">FINE JEWELLERY</p>
+  </div>
+  <div style="padding: 40px 0;">
+    <h2 style="font-size: 24px; font-weight: 300; margin-bottom: 8px;">Siparişiniz Yolda! 🚚</h2>
+    <p style="color: #7A5048; margin-bottom: 30px;">Siparişiniz kargoya verildi. Aşağıdaki takip numarasını kullanarak kargonuzu takip edebilirsiniz.</p>
+    <div style="background: #FFF8F6; border: 1px solid #E8D8D0; padding: 20px; margin-bottom: 20px;">
+      <p style="margin: 0 0 8px; font-size: 12px; color: #C89080; letter-spacing: 0.1em; text-transform: uppercase;">Sipariş Numarası</p>
+      <p style="margin: 0; font-size: 16px; font-weight: 600;">${order.order_number}</p>
+    </div>
+    <div style="background: #2A1E1E; padding: 20px; margin-bottom: 30px; text-align: center;">
+      <p style="margin: 0 0 8px; font-size: 12px; color: #C89080; letter-spacing: 0.1em; text-transform: uppercase;">Kargo Takip Numarası</p>
+      <p style="margin: 0; font-size: 24px; font-weight: 600; color: #FFF8F6; letter-spacing: 0.1em;">${body.tracking_number}</p>
+    </div>
+    <p style="color: #7A5048; font-size: 14px; line-height: 1.8;">
+      Kargo firmasının web sitesine giderek takip numaranızı girin.<br>
+      Sorularınız için <a href="mailto:info@nbsteelora.com" style="color: #C89080;">info@nbsteelora.com</a> adresine yazabilirsiniz.
+    </p>
+  </div>
+  <div style="text-align: center; padding: 30px 0; border-top: 1px solid #E8D8D0; color: #A88070; font-size: 12px;">
+    <p style="margin: 0 0 8px;"><a href="https://wa.me/905536552020" style="color: #C89080;">WhatsApp ile yazın</a></p>
+    <p style="margin: 8px 0 0; font-size: 11px;">© 2026 NB Steelora®</p>
+  </div>
+</body>
+</html>`,
+      })
+    } catch (emailError) {
+      console.error('Shipping notification email error:', emailError)
+    }
+  }
+
   return NextResponse.json({ success: true })
 }

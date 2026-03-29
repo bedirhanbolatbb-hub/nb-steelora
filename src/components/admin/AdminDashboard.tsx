@@ -43,6 +43,8 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs }
   const [syncResult, setSyncResult] = useState<any>(null)
   const [showCampaignForm, setShowCampaignForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any>(null)
+  const [shippingOrderId, setShippingOrderId] = useState<string | null>(null)
+  const [trackingNumber, setTrackingNumber] = useState('')
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -52,14 +54,16 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs }
   }
 
   // ─── Orders ───
-  const updateOrderStatus = async (orderId: string, status: string) => {
+  const updateOrderStatus = async (orderId: string, status: string, tracking?: string) => {
+    const body: any = { status }
+    if (tracking) body.tracking_number = tracking
     await fetch(`/api/admin/orders/${orderId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(body),
     })
     setLocalOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status } : o))
+      prev.map((o) => (o.id === orderId ? { ...o, status, tracking_number: tracking || o.tracking_number } : o))
     )
   }
 
@@ -249,7 +253,14 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs }
                         <td className="px-4 py-3 text-center">
                           <select
                             value={order.status}
-                            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                            onChange={(e) => {
+                              if (e.target.value === 'shipped') {
+                                setShippingOrderId(order.id)
+                                setTrackingNumber(order.tracking_number || '')
+                              } else {
+                                updateOrderStatus(order.id, e.target.value)
+                              }
+                            }}
                             className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none"
                           >
                             <option value="pending">Bekliyor</option>
@@ -258,6 +269,27 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs }
                             <option value="delivered">Teslim Edildi</option>
                             <option value="cancelled">İptal</option>
                           </select>
+                          {shippingOrderId === order.id && (
+                            <div className="mt-2 flex gap-1">
+                              <input
+                                type="text"
+                                placeholder="Takip No"
+                                value={trackingNumber}
+                                onChange={(e) => setTrackingNumber(e.target.value)}
+                                className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none w-28"
+                              />
+                              <button
+                                onClick={() => {
+                                  updateOrderStatus(order.id, 'shipped', trackingNumber)
+                                  setShippingOrderId(null)
+                                  setTrackingNumber('')
+                                }}
+                                className="text-[10px] bg-gold text-white px-2 py-1 rounded hover:bg-gold-light transition-colors"
+                              >
+                                Gönder
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
