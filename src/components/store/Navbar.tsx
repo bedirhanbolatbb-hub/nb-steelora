@@ -18,9 +18,10 @@ const navLinks = [
 interface NavbarProps {
   bannerText?: string | null
   bannerColor?: string | null
+  isLoggedIn?: boolean
 }
 
-export default function Navbar({ bannerText, bannerColor }: NavbarProps) {
+export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
@@ -89,9 +90,9 @@ export default function Navbar({ bannerText, bannerColor }: NavbarProps) {
             <button className="hidden sm:block text-text-secondary hover:text-gold transition-colors" aria-label="Favoriler">
               <Heart size={18} />
             </button>
-            <button className="hidden sm:block text-text-secondary hover:text-gold transition-colors" aria-label="Hesap">
+            <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="hidden sm:block text-text-secondary hover:text-gold transition-colors" aria-label="Hesap">
               <User size={18} />
-            </button>
+            </Link>
             <button
               className="relative text-text-secondary hover:text-gold transition-colors"
               aria-label="Sepet"
@@ -129,9 +130,9 @@ export default function Navbar({ bannerText, bannerColor }: NavbarProps) {
               <button className="text-text-secondary hover:text-gold transition-colors" aria-label="Favoriler">
                 <Heart size={18} />
               </button>
-              <button className="text-text-secondary hover:text-gold transition-colors" aria-label="Hesap">
+              <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="text-text-secondary hover:text-gold transition-colors" aria-label="Hesap" onClick={() => setMobileOpen(false)}>
                 <User size={18} />
-              </button>
+              </Link>
             </div>
           </div>
         </div>

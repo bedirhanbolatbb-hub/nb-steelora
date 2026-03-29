@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { items, buyer, shippingAddress } = body
+    const { items, buyer, shippingAddress, userId } = body
 
     const orderNumber = `NBS-${Date.now()}`
     const conversationId = generateConversationId()
@@ -75,6 +75,7 @@ export async function POST(request: Request) {
     const supabase = await createClient()
     await supabase.from('orders').insert({
       order_number: orderNumber,
+      user_id: userId || null,
       guest_email: buyer.email,
       items,
       subtotal,

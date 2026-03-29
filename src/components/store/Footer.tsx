@@ -17,7 +17,15 @@ const helpLinks = [
   { href: '/mesafeli-satis-sozlesmesi', label: 'Mesafeli Satış Sözleşmesi' },
 ]
 
-export default function Footer() {
+const accountLinks = {
+  loggedIn: [{ href: '/hesabim', label: 'Hesabım' }],
+  loggedOut: [
+    { href: '/giris', label: 'Giriş Yap' },
+    { href: '/kayit', label: 'Üye Ol' },
+  ],
+}
+
+export default function Footer({ isLoggedIn }: { isLoggedIn?: boolean }) {
   return (
     <footer className="bg-dark-mid text-champagne-mid">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
@@ -65,6 +73,16 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               {helpLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-[12px] font-body text-champagne-mid/70 hover:text-gold transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+              {(isLoggedIn ? accountLinks.loggedIn : accountLinks.loggedOut).map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

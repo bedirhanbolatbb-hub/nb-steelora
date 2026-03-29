@@ -9,33 +9,44 @@ export default async function StoreLayout({
 }) {
   let bannerText: string | null = null
   let bannerColor: string | null = null
+  let isLoggedIn = false
 
   try {
     const supabase = await createClient()
     const now = new Date().toISOString()
-    const { data } = await supabase
-      .from('campaigns')
-      .select('banner_text, banner_color')
-      .eq('type', 'banner')
-      .eq('is_active', true)
-      .lte('starts_at', now)
-      .or(`ends_at.is.null,ends_at.gte.${now}`)
-      .limit(1)
-      .single()
 
-    if (data) {
-      bannerText = data.banner_text
-      bannerColor = data.banner_color
+    const [bannerResult, userResult] = await Promise.all([
+      supabase
+        .from('campaigns')
+        .select('banner_text, banner_color')
+        .eq('type', 'banner')
+        .eq('is_active', true)
+        .lte('starts_at', now)
+        .or(`ends_at.is.null,ends_at.gte.${now}`)
+        .limit(1)
+        .single(),
+      supabase.auth.getUser(),
+    ])
+
+    if (bannerResult.data) {
+      bannerText = bannerResult.data.banner_text
+      bannerColor = bannerResult.data.banner_color
     }
+
+    isLoggedIn = !!userResult.data?.user
   } catch {
-    // No active banner campaign
+    // Defaults apply
   }
 
   return (
     <>
-      <Navbar bannerText={bannerText} bannerColor={bannerColor} />
+      <Navbar
+        bannerText={bannerText}
+        bannerColor={bannerColor}
+        isLoggedIn={isLoggedIn}
+      />
       <main className="flex-1">{children}</main>
-      <Footer />
+      <Footer isLoggedIn={isLoggedIn} />
     </>
   )
 }

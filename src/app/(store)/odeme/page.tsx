@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useCart } from '@/hooks/useCart'
+import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import Input from '@/components/ui/Input'
@@ -10,6 +11,37 @@ import Input from '@/components/ui/Input'
 export default function OdemePage() {
   const { items, totalPrice, clearCart } = useCart()
   const router = useRouter()
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUserId(data.user.id)
+        // Auto-fill email from auth
+        setForm((prev) => ({
+          ...prev,
+          email: prev.email || data.user!.email || '',
+        }))
+        // Try to load profile for name/phone
+        supabase
+          .from('user_profiles')
+          .select('full_name, phone')
+          .eq('id', data.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            if (profile) {
+              setForm((prev) => ({
+                ...prev,
+                firstName: prev.firstName || profile.full_name?.split(' ')[0] || '',
+                lastName: prev.lastName || profile.full_name?.split(' ').slice(1).join(' ') || '',
+                phone: prev.phone || profile.phone || '',
+              }))
+            }
+          })
+      }
+    })
+  }, [])
   const [loading, setLoading] = useState(false)
   const [iframeHtml, setIframeHtml] = useState<string | null>(null)
   const [discountCode, setDiscountCode] = useState('')
@@ -96,6 +128,7 @@ export default function OdemePage() {
             address: form.address,
             zipCode: form.zipCode,
           },
+          userId,
         }),
       })
 
