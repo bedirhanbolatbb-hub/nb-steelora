@@ -5,7 +5,9 @@ import { useState, useEffect } from 'react'
 import { Search, Heart, User, ShoppingBag, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
+import { useWishlist } from '@/hooks/useWishlist'
 import CartDrawer from './CartDrawer'
+import SearchModal from './SearchModal'
 
 const navLinks = [
   { href: '/urunler?kategori=kolye', label: 'Kolye' },
@@ -25,7 +27,9 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const totalItems = useCart((s) => s.totalItems())
+  const wishlistCount = useWishlist((s) => s.items.length)
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -84,12 +88,17 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
 
           {/* Sağ: İkonlar */}
           <div className="flex items-center gap-4">
-            <button className="hidden sm:block text-text-secondary hover:text-gold transition-colors" aria-label="Ara">
+            <button className="hidden sm:block text-text-secondary hover:text-gold transition-colors" aria-label="Ara" onClick={() => setSearchOpen(true)}>
               <Search size={18} />
             </button>
-            <button className="hidden sm:block text-text-secondary hover:text-gold transition-colors" aria-label="Favoriler">
+            <Link href="/favorilerim" className="hidden sm:block relative text-text-secondary hover:text-gold transition-colors" aria-label="Favoriler">
               <Heart size={18} />
-            </button>
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gold text-white text-[8px] rounded-full flex items-center justify-center font-body">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
             <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="hidden sm:block text-text-secondary hover:text-gold transition-colors" aria-label="Hesap">
               <User size={18} />
             </Link>
@@ -124,12 +133,12 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
               </Link>
             ))}
             <div className="flex items-center gap-4 pt-3 border-t border-champagne-mid">
-              <button className="text-text-secondary hover:text-gold transition-colors" aria-label="Ara">
+              <button className="text-text-secondary hover:text-gold transition-colors" aria-label="Ara" onClick={() => { setSearchOpen(true); setMobileOpen(false) }}>
                 <Search size={18} />
               </button>
-              <button className="text-text-secondary hover:text-gold transition-colors" aria-label="Favoriler">
+              <Link href="/favorilerim" className="text-text-secondary hover:text-gold transition-colors" aria-label="Favoriler" onClick={() => setMobileOpen(false)}>
                 <Heart size={18} />
-              </button>
+              </Link>
               <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="text-text-secondary hover:text-gold transition-colors" aria-label="Hesap" onClick={() => setMobileOpen(false)}>
                 <User size={18} />
               </Link>
@@ -138,6 +147,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
         </div>
       )}
       <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
+      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   )
 }

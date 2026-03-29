@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
+import { useWishlist } from '@/hooks/useWishlist'
+import ProductGrid from '@/components/store/ProductGrid'
 import Input from '@/components/ui/Input'
 
 interface HesabimClientProps {
@@ -40,8 +42,19 @@ export default function HesabimClient({
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [favProducts, setFavProducts] = useState<any[]>([])
+  const wishlistItems = useWishlist((s) => s.items)
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    if (wishlistItems.length === 0) { setFavProducts([]); return }
+    supabase
+      .from('products_display')
+      .select('*')
+      .in('id', wishlistItems)
+      .then(({ data }) => setFavProducts(data || []))
+  }, [wishlistItems])
 
   const saveProfile = async () => {
     setSaving(true)
@@ -70,7 +83,7 @@ export default function HesabimClient({
 
       {/* Tabs */}
       <div className="flex gap-8 border-b border-champagne-mid mb-8">
-        {(['profil', 'siparisler'] as const).map((t) => (
+        {(['profil', 'siparisler', 'favoriler'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -80,7 +93,7 @@ export default function HesabimClient({
                 : 'text-text-muted hover:text-text-primary'
             }`}
           >
-            {t === 'profil' ? 'Profilim' : 'Siparişlerim'}
+            {t === 'profil' ? 'Profilim' : t === 'siparisler' ? 'Siparişlerim' : 'Favorilerim'}
           </button>
         ))}
       </div>
@@ -185,6 +198,19 @@ export default function HesabimClient({
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Favoriler */}
+      {tab === 'favoriler' && (
+        <div>
+          {wishlistItems.length === 0 ? (
+            <p className="text-text-muted font-body text-[13px]">
+              Henüz favoriye eklediğiniz ürün yok.
+            </p>
+          ) : (
+            <ProductGrid products={favProducts} />
           )}
         </div>
       )}

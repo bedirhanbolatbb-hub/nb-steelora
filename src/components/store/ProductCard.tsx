@@ -2,10 +2,9 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Heart } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { formatPrice } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
+import WishlistButton from './WishlistButton'
 import type { Product } from '@/types'
 
 interface ProductCardProps {
@@ -36,16 +35,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
         )}
 
         {/* Wishlist */}
-        <button
-          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white"
-          onClick={(e) => {
-            e.preventDefault()
-            // TODO: Wishlist fonksiyonu
-          }}
-          aria-label="Favorilere ekle"
-        >
-          <Heart size={14} className="text-text-secondary" />
-        </button>
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <div className="bg-white/80 rounded-full hover:bg-white transition-colors">
+            <WishlistButton productId={product.id} />
+          </div>
+        </div>
 
         {/* Gold border on hover */}
         <div className="absolute inset-0 border border-transparent group-hover:border-gold/30 transition-colors duration-300 pointer-events-none" />
