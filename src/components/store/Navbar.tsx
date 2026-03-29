@@ -15,7 +15,12 @@ const navLinks = [
   { href: '/urunler?kategori=setler', label: 'Setler' },
 ]
 
-export default function Navbar() {
+interface NavbarProps {
+  bannerText?: string | null
+  bannerColor?: string | null
+}
+
+export default function Navbar({ bannerText, bannerColor }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
@@ -35,9 +40,9 @@ export default function Navbar() {
       )}
     >
       {/* Duyuru Şeridi */}
-      <div className="bg-dark text-center py-2 px-4">
+      <div className="text-center py-2 px-4" style={{ backgroundColor: bannerColor || '#2A1E1E' }}>
         <p className="text-gold text-[10px] tracking-[0.2em] uppercase font-body">
-          Tüm siparişlerde ücretsiz kargo • Premium Çelik Takılar
+          {bannerText || 'Tüm siparişlerde ücretsiz kargo • Premium Çelik Takılar'}
         </p>
       </div>
 

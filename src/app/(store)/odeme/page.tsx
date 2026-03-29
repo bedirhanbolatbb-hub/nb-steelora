@@ -12,6 +12,10 @@ export default function OdemePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [iframeHtml, setIframeHtml] = useState<string | null>(null)
+  const [discountCode, setDiscountCode] = useState('')
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; amount: number; description: string } | null>(null)
+  const [discountError, setDiscountError] = useState('')
+  const [discountLoading, setDiscountLoading] = useState(false)
 
   const [form, setForm] = useState({
     firstName: '',
@@ -25,8 +29,33 @@ export default function OdemePage() {
   })
 
   const subtotal = totalPrice()
+  const discountAmount = appliedDiscount?.amount || 0
   const shipping = subtotal >= 500 ? 0 : 49.9
-  const total = subtotal + shipping
+  const total = subtotal - discountAmount + shipping
+
+  const applyDiscount = async () => {
+    if (!discountCode.trim()) return
+    setDiscountLoading(true)
+    setDiscountError('')
+    try {
+      const res = await fetch('/api/discount/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: discountCode, cartTotal: subtotal }),
+      })
+      const data = await res.json()
+      if (data.discount) {
+        setAppliedDiscount(data.discount)
+        setDiscountError('')
+      } else {
+        setDiscountError(data.error || 'Geçersiz kod')
+        setAppliedDiscount(null)
+      }
+    } catch {
+      setDiscountError('Bir hata oluştu')
+    }
+    setDiscountLoading(false)
+  }
 
   const updateField = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -173,10 +202,50 @@ export default function OdemePage() {
             />
           </div>
 
+          {/* İndirim Kodu */}
+          <div className="mt-6 pt-6 border-t border-champagne-mid">
+            <p className="text-[11px] uppercase tracking-[0.2em] font-body text-text-muted mb-3">
+              İndirim Kodu
+            </p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Kodu girin"
+                value={discountCode}
+                onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                className="flex-1"
+                disabled={!!appliedDiscount}
+              />
+              {appliedDiscount ? (
+                <button
+                  onClick={() => { setAppliedDiscount(null); setDiscountCode('') }}
+                  className="px-4 py-2 border border-red-300 text-red-500 text-[11px] uppercase tracking-wider hover:bg-red-50 transition-colors"
+                >
+                  Kaldır
+                </button>
+              ) : (
+                <button
+                  onClick={applyDiscount}
+                  disabled={discountLoading || !discountCode.trim()}
+                  className="px-4 py-2 border border-gold text-gold text-[11px] uppercase tracking-wider hover:bg-gold hover:text-white transition-colors disabled:opacity-50"
+                >
+                  {discountLoading ? '...' : 'Uygula'}
+                </button>
+              )}
+            </div>
+            {discountError && (
+              <p className="text-[11px] text-red-500 font-body mt-2">{discountError}</p>
+            )}
+            {appliedDiscount && (
+              <p className="text-[11px] text-green-700 font-body mt-2">
+                ✓ {appliedDiscount.description} — {formatPrice(appliedDiscount.amount)} indirim
+              </p>
+            )}
+          </div>
+
           <button
             onClick={handlePayment}
             disabled={loading || !isFormValid}
-            className="mt-8 w-full py-4 bg-gold text-white font-body text-[12px] tracking-[0.15em] uppercase hover:bg-gold-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-6 w-full py-4 bg-gold text-white font-body text-[12px] tracking-[0.15em] uppercase hover:bg-gold-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'İşleniyor...' : `${formatPrice(total)} Öde`}
           </button>
@@ -252,6 +321,12 @@ export default function OdemePage() {
               <span>Ara Toplam</span>
               <span>{formatPrice(subtotal)}</span>
             </div>
+            {appliedDiscount && (
+              <div className="flex justify-between text-[12px] font-body text-green-700">
+                <span>İndirim ({appliedDiscount.code})</span>
+                <span>-{formatPrice(appliedDiscount.amount)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-[12px] font-body text-text-secondary">
               <span>Kargo</span>
               <span>
