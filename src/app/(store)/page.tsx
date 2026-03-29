@@ -30,27 +30,35 @@ export default async function HomePage() {
   return (
     <>
       <Hero />
-      <Marquee />
-      <CategoryGrid />
 
       {activeCampaign && (
-        <div className="bg-dark text-champagne text-center py-4 px-8">
-          <p className="font-heading text-[20px] font-light">
+        <div
+          className="border-y border-gold/20 py-5 px-8 text-center"
+          style={{ background: 'linear-gradient(135deg, #2A1E1E 0%, #4A2828 50%, #2A1E1E 100%)' }}
+        >
+          <p className="font-heading text-[24px] text-white font-light mb-1">
             {activeCampaign.type === 'discount_code' &&
-              `🎁 ${activeCampaign.name} — Kod: ${activeCampaign.code}`}
+              `🎁 ${activeCampaign.name}`}
             {activeCampaign.type === 'cart_discount' &&
               `✨ ${activeCampaign.name}`}
             {activeCampaign.type === 'free_shipping' &&
               `🚚 ${activeCampaign.name}`}
           </p>
+          {activeCampaign.type === 'discount_code' && activeCampaign.code && (
+            <p className="text-[11px] tracking-[0.2em] uppercase font-body" style={{ color: '#C89080' }}>
+              Kod: {activeCampaign.code} — Sepete ekle, indirimi uygula
+            </p>
+          )}
           {activeCampaign.ends_at && (
-            <p className="text-[11px] text-text-muted font-body mt-1">
+            <p className="text-[10px] text-white/40 font-body mt-1.5">
               {new Date(activeCampaign.ends_at).toLocaleDateString('tr-TR')} tarihine kadar geçerli
             </p>
           )}
         </div>
       )}
 
+      <Marquee />
+      <CategoryGrid />
       <FeaturedProducts />
       <BrandBanner />
       <Newsletter />
