@@ -9,11 +9,13 @@ export default async function AdminPage() {
     { data: products },
     { data: campaigns },
     { data: syncLogs },
+    { data: reviews },
   ] = await Promise.all([
     supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(50),
     supabase.from('products_display').select('*').order('created_at', { ascending: false }),
     supabase.from('campaigns').select('*').order('created_at', { ascending: false }),
     supabase.from('sync_log').select('*').order('synced_at', { ascending: false }).limit(5),
+    supabase.from('reviews').select('*').order('created_at', { ascending: false }).limit(50),
   ])
 
   return (
@@ -22,6 +24,7 @@ export default async function AdminPage() {
       products={products || []}
       campaigns={campaigns || []}
       syncLogs={syncLogs || []}
+      reviews={reviews || []}
     />
   )
 }

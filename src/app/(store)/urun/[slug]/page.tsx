@@ -4,6 +4,7 @@ import { formatPrice } from '@/lib/utils'
 import ProductImageGallery from '@/components/store/ProductImageGallery'
 import AddToCartButton from '@/components/store/AddToCartButton'
 import RelatedProducts from '@/components/store/RelatedProducts'
+import ReviewList from '@/components/store/ReviewList'
 
 export default async function UrunDetayPage({
   params,
@@ -96,6 +97,9 @@ export default async function UrunDetayPage({
           </div>
         </div>
       </div>
+
+      {/* Yorumlar */}
+      <ReviewList productId={product.id} />
 
       {/* İlgili Ürünler */}
       <RelatedProducts
