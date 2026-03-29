@@ -4,7 +4,9 @@ import { completeThreeDS } from '@/lib/iyzico/client'
 import { createClient } from '@/lib/supabase/server'
 import { decreaseStock } from '@/lib/trendyol/stockUpdate'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 export async function POST(request: Request) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -52,7 +54,7 @@ export async function POST(request: Request) {
     // Sipariş onay e-postası gönder
     if (order?.guest_email) {
       try {
-        await resend.emails.send({
+        await getResend().emails.send({
           from: 'NB Steelora <onboarding@resend.dev>',
           to: order.guest_email,
           subject: `Siparişiniz Alındı — ${order.order_number}`,
