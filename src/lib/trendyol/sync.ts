@@ -33,6 +33,13 @@ export async function syncTrendyolProducts() {
   let errorMessage: string | null = null
 
   try {
+    // Tüm ürünleri pasife çek — Trendyol'dan gelmeyen ürünler pasif kalacak
+    console.log('Sync başlıyor: tüm ürünler pasife çekiliyor...')
+    await supabase
+      .from('products')
+      .update({ is_active: false })
+      .neq('id', '00000000-0000-0000-0000-000000000000') // tüm satırları etkile
+
     let page = 0
     const size = 50
 
@@ -71,6 +78,7 @@ export async function syncTrendyolProducts() {
                 trendyol_images: images,
                 trendyol_category: product.categoryName,
                 trendyol_barcode: barcode,
+                is_active: true,
                 updated_at: new Date().toISOString(),
                 last_synced_at: new Date().toISOString(),
               })
@@ -109,6 +117,8 @@ export async function syncTrendyolProducts() {
     errorMessage = error.message
     console.error('Sync error:', error)
   }
+
+  console.log(`Sync tamamlandı: ${productsAdded} eklendi, ${productsUpdated} güncellendi, ${Date.now() - startTime}ms`)
 
   const supabaseLog = getServiceClient()
   await supabaseLog.from('sync_log').insert({

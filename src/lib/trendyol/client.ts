@@ -14,9 +14,9 @@ function getHeaders() {
   }
 }
 
-export async function fetchTrendyolProducts(page = 0, size = 100) {
+export async function fetchTrendyolProducts(page = 0, size = 50) {
   const sellerId = process.env.TRENDYOL_SUPPLIER_ID
-  const url = `${PRODUCT_BASE}/sellers/${sellerId}/products?page=${page}&size=${size}`
+  const url = `${PRODUCT_BASE}/sellers/${sellerId}/products?approved=true&onSale=true&page=${page}&size=${size}`
 
   const res = await fetch(url, {
     headers: getHeaders(),
