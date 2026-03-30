@@ -1,53 +1,26 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import ProductGrid from '@/components/store/ProductGrid'
-import type { Product } from '@/types'
-
-// Supabase'de ürün yokken gösterilecek placeholder'lar
-const placeholderProducts: Product[] = Array.from({ length: 4 }, (_, i) => ({
-  id: `placeholder-${i + 1}`,
-  slug: `urun-${i + 1}`,
-  trendyol_id: `T${i + 1}`,
-  trendyol_title: ['Altın Kaplama Zincir Kolye', 'Minimal Halka Küpe', 'İnce Taşlı Yüzük', 'Çoklu Zincir Bileklik'][i],
-  trendyol_description: '',
-  trendyol_price: [349, 199, 279, 249][i],
-  trendyol_stock: 10,
-  trendyol_images: [],
-  trendyol_category: ['Kolye', 'Küpe', 'Yüzük', 'Bileklik'][i],
-  trendyol_barcode: '',
-  override_title: null,
-  override_description: null,
-  override_price: null,
-  override_images: null,
-  display_title: ['Altın Kaplama Zincir Kolye', 'Minimal Halka Küpe', 'İnce Taşlı Yüzük', 'Çoklu Zincir Bileklik'][i],
-  display_price: [349, 199, 279, 249][i],
-  display_images: [],
-  collection_id: null,
-  is_active: true,
-  is_featured: true,
-  badge: [null, 'new', 'bestseller', null][i] as Product['badge'],
-  created_at: '',
-  updated_at: '',
-  last_synced_at: '',
-}))
 
 export default async function FeaturedProducts() {
-  let products: Product[] = placeholderProducts
+  let products: any[] = []
 
   try {
     const supabase = await createClient()
     const { data } = await supabase
       .from('products_display')
       .select('*')
-      .eq('is_featured', true)
+      .order('created_at', { ascending: false })
       .limit(4)
 
     if (data && data.length > 0) {
       products = data
     }
   } catch {
-    // Supabase bağlantısı yoksa placeholder göster
+    // Supabase bağlantısı yoksa boş göster
   }
+
+  if (products.length === 0) return null
 
   return (
     <section className="max-w-7xl mx-auto px-4 lg:px-8 py-20">
