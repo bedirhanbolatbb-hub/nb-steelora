@@ -1,4 +1,4 @@
-import { fetchAllTrendyolProducts } from './client'
+import { fetchTrendyolProducts } from './client'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 function getServiceClient() {
@@ -33,28 +33,54 @@ export async function syncTrendyolProducts() {
   let errorMessage: string | null = null
 
   try {
-    const trendyolProducts = await fetchAllTrendyolProducts()
+    let page = 0
+    const size = 50
 
-    for (const product of trendyolProducts) {
-      const variants = product.variants?.length ? product.variants : [product]
+    while (true) {
+      const data = await fetchTrendyolProducts(page, size)
+      const products = data.content || []
 
-      for (const variant of variants) {
-        const barcode = variant.barcode || product.barcode
-        const stock = variant.quantity ?? product.quantity ?? 0
-        const price = variant.salePrice ?? product.salePrice ?? 0
-        const images = (product.images || []).map((img: any) => img.url || img)
-        const trendyolId = String(product.id)
+      if (products.length === 0) break
 
-        const { data: existing } = await supabase
-          .from('products')
-          .select('id')
-          .eq('trendyol_id', trendyolId)
-          .single()
+      for (const product of products) {
+        const variants = product.variants?.length ? product.variants : [product]
 
-        if (existing) {
-          await supabase
+        for (const variant of variants) {
+          const barcode = variant.barcode || product.barcode
+          const stock = variant.quantity ?? product.quantity ?? 0
+          const price = variant.salePrice ?? product.salePrice ?? 0
+          const images = (product.images || []).map((img: any) => img.url || img)
+          const trendyolId = String(product.id)
+
+          const { data: existing } = await supabase
             .from('products')
-            .update({
+            .select('id')
+            .eq('trendyol_id', trendyolId)
+            .single()
+
+          if (existing) {
+            await supabase
+              .from('products')
+              .update({
+                trendyol_title: product.title,
+                trendyol_description: product.description || '',
+                trendyol_price: price,
+                trendyol_stock: stock,
+                trendyol_images: images,
+                trendyol_category: product.categoryName,
+                trendyol_barcode: barcode,
+                updated_at: new Date().toISOString(),
+                last_synced_at: new Date().toISOString(),
+              })
+              .eq('trendyol_id', trendyolId)
+
+            productsUpdated++
+          } else {
+            const slug = generateSlug(product.title, barcode)
+
+            await supabase.from('products').insert({
+              trendyol_id: trendyolId,
+              slug,
               trendyol_title: product.title,
               trendyol_description: product.description || '',
               trendyol_price: price,
@@ -62,33 +88,18 @@ export async function syncTrendyolProducts() {
               trendyol_images: images,
               trendyol_category: product.categoryName,
               trendyol_barcode: barcode,
-              updated_at: new Date().toISOString(),
+              is_active: true,
+              is_featured: false,
               last_synced_at: new Date().toISOString(),
             })
-            .eq('trendyol_id', trendyolId)
 
-          productsUpdated++
-        } else {
-          const slug = generateSlug(product.title, barcode)
-
-          await supabase.from('products').insert({
-            trendyol_id: trendyolId,
-            slug,
-            trendyol_title: product.title,
-            trendyol_description: product.description || '',
-            trendyol_price: price,
-            trendyol_stock: stock,
-            trendyol_images: images,
-            trendyol_category: product.categoryName,
-            trendyol_barcode: barcode,
-            is_active: true,
-            is_featured: false,
-            last_synced_at: new Date().toISOString(),
-          })
-
-          productsAdded++
+            productsAdded++
+          }
         }
       }
+
+      if (products.length < size || page >= (data.totalPages - 1)) break
+      page++
     }
   } catch (error: any) {
     errorMessage = error.message
