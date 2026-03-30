@@ -1,6 +1,27 @@
 import Link from 'next/link'
+import Image from 'next/image'
+import { createClient } from '@/lib/supabase/server'
 
-export default function Hero() {
+export default async function Hero() {
+  let heroImages: string[] = []
+
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('products_display')
+      .select('display_images')
+      .order('created_at', { ascending: false })
+      .limit(3)
+
+    if (data) {
+      heroImages = data
+        .map((p) => p.display_images?.[0])
+        .filter(Boolean) as string[]
+    }
+  } catch {
+    // Placeholder kalır
+  }
+
   return (
     <section className="min-h-[580px] grid grid-cols-1 lg:grid-cols-2">
       {/* Sol: İçerik */}
@@ -30,25 +51,58 @@ export default function Hero() {
       {/* Sağ: Görsel Grid */}
       <div className="grid grid-rows-2 grid-cols-2 gap-1 order-1 lg:order-2 min-h-[400px] lg:min-h-0">
         <div className="col-span-2 bg-champagne-dark relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-            <span className="text-text-muted/40 text-[11px] font-body tracking-wider uppercase">
-              Koleksiyon Görseli
-            </span>
-          </div>
+          {heroImages[0] ? (
+            <Image
+              src={heroImages[0]}
+              alt="Koleksiyon"
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-b from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
+              <span className="text-text-muted/40 text-[11px] font-body tracking-wider uppercase">
+                Koleksiyon Görseli
+              </span>
+            </div>
+          )}
         </div>
         <div className="bg-champagne-dark relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-            <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">
-              Ürün 1
-            </span>
-          </div>
+          {heroImages[1] ? (
+            <Image
+              src={heroImages[1]}
+              alt="Ürün"
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 50vw, 25vw"
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
+              <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">
+                Ürün 1
+              </span>
+            </div>
+          )}
         </div>
         <div className="bg-champagne-dark relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-bl from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-            <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">
-              Ürün 2
-            </span>
-          </div>
+          {heroImages[2] ? (
+            <Image
+              src={heroImages[2]}
+              alt="Ürün"
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 50vw, 25vw"
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-bl from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
+              <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">
+                Ürün 2
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </section>
