@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
-import { syncTrendyolProducts } from '@/lib/trendyol/sync'
+import { syncTrendyolPage } from '@/lib/trendyol/sync'
 
 export const maxDuration = 60
 
 export async function POST(request: Request) {
-  // Admin cookie veya Bearer token ile auth
   const authHeader = request.headers.get('authorization')
   const cookieHeader = request.headers.get('cookie') || ''
   const adminToken = cookieHeader.match(/admin_token=([^;]+)/)?.[1]
@@ -19,7 +18,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await syncTrendyolProducts()
+    const body = await request.json().catch(() => ({}))
+    const page = body.page ?? 0
+    const result = await syncTrendyolPage(page, 50)
     return NextResponse.json(result)
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -29,11 +30,17 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
 
-  // Vercel cron tetiklemesi
+  // Vercel cron — sayfa 0'dan başlayıp tek seferde tamamla
   if (authHeader === `Bearer ${process.env.CRON_SECRET}`) {
     try {
-      const result = await syncTrendyolProducts()
-      return NextResponse.json(result)
+      let page = 0
+      let lastResult: any
+      while (true) {
+        lastResult = await syncTrendyolPage(page, 50)
+        if (lastResult.done) break
+        page++
+      }
+      return NextResponse.json(lastResult)
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }

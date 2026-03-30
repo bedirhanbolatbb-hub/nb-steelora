@@ -71,16 +71,36 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   }
 
   // ─── Sync ───
+  const [syncProgress, setSyncProgress] = useState('')
   const triggerSync = async () => {
     setSyncing(true)
     setSyncResult(null)
+    setSyncProgress('')
+    let page = 0
+    let totalAdded = 0
+    let totalUpdated = 0
     try {
-      const res = await fetch('/api/sync', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET}` },
-      })
-      const data = await res.json()
-      setSyncResult(data)
+      while (true) {
+        setSyncProgress(`Sayfa ${page + 1} yükleniyor...`)
+        const res = await fetch('/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page }),
+        })
+        const data = await res.json()
+        if (data.error) {
+          setSyncResult({ error: data.error })
+          break
+        }
+        totalAdded += data.added
+        totalUpdated += data.updated
+        setSyncProgress(`Sayfa ${data.page + 1}/${data.totalPages} tamamlandı (+${totalAdded} eklendi, ${totalUpdated} güncellendi)`)
+        if (data.done) {
+          setSyncResult({ success: true, productsAdded: totalAdded, productsUpdated: totalUpdated })
+          break
+        }
+        page++
+      }
     } catch {
       setSyncResult({ error: 'Bağlantı hatası' })
     }
@@ -569,10 +589,16 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
               {syncing ? 'Sync yapılıyor...' : 'Manuel Sync Başlat'}
             </button>
 
+            {syncing && syncProgress && (
+              <div className="p-4 mb-4 text-[12px] font-body bg-blue-50 text-blue-800">
+                ⏳ {syncProgress}
+              </div>
+            )}
+
             {syncResult && (
               <div className={`p-4 mb-6 text-[12px] font-body ${syncResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
                 {syncResult.success
-                  ? `✓ ${syncResult.productsAdded} ürün eklendi, ${syncResult.productsUpdated} ürün güncellendi (${syncResult.duration}ms)`
+                  ? `✓ ${syncResult.productsAdded} ürün eklendi, ${syncResult.productsUpdated} ürün güncellendi`
                   : `✗ Hata: ${syncResult.error}`}
               </div>
             )}
