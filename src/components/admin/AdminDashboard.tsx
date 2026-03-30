@@ -50,6 +50,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [productSearch, setProductSearch] = useState('')
   const [showAddProduct, setShowAddProduct] = useState(false)
+  const [showAllProducts, setShowAllProducts] = useState(false)
   // Homepage tab state
   const [featuredIds, setFeaturedIds] = useState<string[]>(initialFeaturedIds)
   const [featuredPicker, setFeaturedPicker] = useState<number | null>(null)
@@ -307,6 +308,8 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
               <h2 className="font-heading text-[24px] text-text-primary">
                 {selectedCategory ? (
                   <><button onClick={() => setSelectedCategory(null)} className="text-gold hover:text-gold-light mr-2">← </button>{selectedCategory}</>
+                ) : showAllProducts ? (
+                  <><button onClick={() => setShowAllProducts(false)} className="text-gold hover:text-gold-light mr-2">← </button>Tüm Ürünler</>
                 ) : 'Ürünler'}
               </h2>
               <div className="flex gap-2">
@@ -340,7 +343,14 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
             )}
 
             {/* Category cards (when no category selected) */}
-            {!selectedCategory && !productSearch && (
+            {!selectedCategory && !showAllProducts && !productSearch && (
+              <div className="mb-4">
+                <button onClick={() => setShowAllProducts(true)} className="w-full bg-white p-4 text-center border border-champagne-mid hover:border-gold transition-colors text-[13px] font-body text-gold font-medium">
+                  Tüm Ürünleri Göster ({localProducts.length})
+                </button>
+              </div>
+            )}
+            {!selectedCategory && !showAllProducts && !productSearch && (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
                 {categoryList.map(([cat, count]) => (
                   <button key={cat} onClick={() => setSelectedCategory(cat)} className="bg-white p-4 text-left hover:border-gold border border-champagne-mid transition-colors">
@@ -352,7 +362,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
             )}
 
             {/* Product table */}
-            {(selectedCategory || productSearch) && filteredProducts.length > 0 && (
+            {(selectedCategory || showAllProducts || productSearch) && filteredProducts.length > 0 && (
               <div className="bg-white overflow-x-auto">
                 <table className="w-full text-[12px] font-body">
                   <thead><tr className="border-b border-champagne-mid text-text-muted uppercase tracking-wider">
@@ -376,7 +386,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                 </table>
               </div>
             )}
-            {(selectedCategory || productSearch) && filteredProducts.length === 0 && <p className="text-text-muted font-body text-sm">Ürün bulunamadı.</p>}
+            {(selectedCategory || showAllProducts || productSearch) && filteredProducts.length === 0 && <p className="text-text-muted font-body text-sm">Ürün bulunamadı.</p>}
 
             {/* Edit Modal */}
             {editingProduct && (
