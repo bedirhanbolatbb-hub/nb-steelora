@@ -1,5 +1,12 @@
 import { fetchAllTrendyolProducts } from './client'
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+function getServiceClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 function generateSlug(title: string, barcode: string): string {
   const base = title
@@ -18,7 +25,7 @@ function generateSlug(title: string, barcode: string): string {
 }
 
 export async function syncTrendyolProducts() {
-  const supabase = await createClient()
+  const supabase = getServiceClient()
   const startTime = Date.now()
 
   let productsAdded = 0
@@ -88,7 +95,7 @@ export async function syncTrendyolProducts() {
     console.error('Sync error:', error)
   }
 
-  const supabaseLog = await createClient()
+  const supabaseLog = getServiceClient()
   await supabaseLog.from('sync_log').insert({
     products_updated: productsUpdated,
     products_added: productsAdded,
