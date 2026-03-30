@@ -43,6 +43,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   const [syncResult, setSyncResult] = useState<any>(null)
   const [syncProgress, setSyncProgress] = useState('')
   const [showCampaignForm, setShowCampaignForm] = useState(false)
+  const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null)
   const [editingProduct, setEditingProduct] = useState<any>(null)
   const [shippingOrderId, setShippingOrderId] = useState<string | null>(null)
   const [trackingNumber, setTrackingNumber] = useState('')
@@ -112,6 +113,17 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
     discount_value: '', min_cart_amount: '0', max_uses: '',
     banner_text: '', banner_color: '#2A1E1E', starts_at: '', ends_at: '',
   })
+  const emptyCampaignForm = { name: '', type: 'discount_code' as string, code: '', discount_type: 'percent', discount_value: '', min_cart_amount: '0', max_uses: '', banner_text: '', banner_color: '#2A1E1E', starts_at: '', ends_at: '' }
+  const startEditCampaign = (c: any) => {
+    setCampaignForm({
+      name: c.name || '', type: c.type || 'discount_code', code: c.code || '', discount_type: c.discount_type || 'percent',
+      discount_value: c.discount_value?.toString() || '', min_cart_amount: c.min_cart_amount?.toString() || '0', max_uses: c.max_uses?.toString() || '',
+      banner_text: c.banner_text || '', banner_color: c.banner_color || '#2A1E1E',
+      starts_at: c.starts_at ? new Date(c.starts_at).toISOString().slice(0, 16) : '', ends_at: c.ends_at ? new Date(c.ends_at).toISOString().slice(0, 16) : '',
+    })
+    setEditingCampaignId(c.id)
+    setShowCampaignForm(true)
+  }
   const saveCampaign = async () => {
     const body: any = { name: campaignForm.name, type: campaignForm.type, is_active: true, starts_at: campaignForm.starts_at || new Date().toISOString(), ends_at: campaignForm.ends_at || null }
     if (campaignForm.type === 'discount_code' || campaignForm.type === 'cart_discount') {
@@ -121,8 +133,17 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
     }
     if (campaignForm.type === 'free_shipping') body.min_cart_amount = Number(campaignForm.min_cart_amount)
     if (campaignForm.type === 'banner') { body.banner_text = campaignForm.banner_text; body.banner_color = campaignForm.banner_color }
-    const res = await fetch('/api/admin/campaigns', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    if (res.ok) { const { data } = await res.json(); if (data) setLocalCampaigns((prev) => [data, ...prev]); setShowCampaignForm(false); setCampaignForm({ name: '', type: 'discount_code', code: '', discount_type: 'percent', discount_value: '', min_cart_amount: '0', max_uses: '', banner_text: '', banner_color: '#2A1E1E', starts_at: '', ends_at: '' }) }
+
+    if (editingCampaignId) {
+      // Update existing
+      await fetch(`/api/admin/campaigns/${editingCampaignId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      setLocalCampaigns((prev) => prev.map((c) => c.id === editingCampaignId ? { ...c, ...body } : c))
+    } else {
+      // Create new
+      const res = await fetch('/api/admin/campaigns', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      if (res.ok) { const { data } = await res.json(); if (data) setLocalCampaigns((prev) => [data, ...prev]) }
+    }
+    setShowCampaignForm(false); setEditingCampaignId(null); setCampaignForm(emptyCampaignForm)
   }
   const toggleCampaign = async (id: string, isActive: boolean) => {
     await fetch(`/api/admin/campaigns/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: !isActive }) })
@@ -422,7 +443,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-heading text-[24px] text-text-primary">Kampanyalar</h2>
-              <button onClick={() => setShowCampaignForm(!showCampaignForm)} className="px-4 py-2 bg-gold text-white text-[11px] uppercase tracking-wider hover:bg-gold-light transition-colors">{showCampaignForm ? 'İptal' : '+ Yeni Kampanya'}</button>
+              <button onClick={() => { setShowCampaignForm(!showCampaignForm); if (showCampaignForm) { setEditingCampaignId(null); setCampaignForm(emptyCampaignForm) } }} className="px-4 py-2 bg-gold text-white text-[11px] uppercase tracking-wider hover:bg-gold-light transition-colors">{showCampaignForm ? 'İptal' : '+ Yeni Kampanya'}</button>
             </div>
             {showCampaignForm && (
               <div className="bg-white p-6 mb-6 space-y-4">
@@ -445,7 +466,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                   <div><label className="text-[10px] font-body text-text-muted uppercase tracking-wider">Başlangıç</label><input className={inputClass} type="datetime-local" value={campaignForm.starts_at} onChange={(e) => setCampaignForm({ ...campaignForm, starts_at: e.target.value })} /></div>
                   <div><label className="text-[10px] font-body text-text-muted uppercase tracking-wider">Bitiş</label><input className={inputClass} type="datetime-local" value={campaignForm.ends_at} onChange={(e) => setCampaignForm({ ...campaignForm, ends_at: e.target.value })} /></div>
                 </div>
-                <button onClick={saveCampaign} disabled={!campaignForm.name} className="w-full py-2.5 bg-gold text-white text-[11px] uppercase tracking-wider hover:bg-gold-light transition-colors disabled:opacity-50">Kampanya Oluştur</button>
+                <button onClick={saveCampaign} disabled={!campaignForm.name} className="w-full py-2.5 bg-gold text-white text-[11px] uppercase tracking-wider hover:bg-gold-light transition-colors disabled:opacity-50">{editingCampaignId ? 'Güncelle' : 'Kampanya Oluştur'}</button>
               </div>
             )}
             <div className="space-y-3">{localCampaigns.length === 0 ? <p className="text-text-muted font-body text-sm">Henüz kampanya yok.</p> : localCampaigns.map((c: any) => (
@@ -456,6 +477,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => toggleCampaign(c.id, c.is_active)} className={`text-[10px] px-2 py-1 rounded transition-colors ${c.is_active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{c.is_active ? 'Aktif' : 'Pasif'}</button>
+                  <button onClick={() => startEditCampaign(c)} className="text-[10px] text-gold hover:text-gold-light transition-colors px-2 py-1">Düzenle</button>
                   <button onClick={() => deleteCampaign(c.id)} className="text-[10px] text-red-400 hover:text-red-600 transition-colors px-2 py-1">Sil</button>
                 </div>
               </div>
