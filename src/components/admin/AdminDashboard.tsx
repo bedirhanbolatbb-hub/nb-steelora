@@ -82,7 +82,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   // ─── Sync ───
   const triggerSync = async () => {
     setSyncing(true); setSyncResult(null); setSyncProgress('')
-    let page = 0, totalAdded = 0, totalUpdated = 0
+    let page = 0, totalAdded = 0, totalUpdated = 0, totalElements = 0
     try {
       while (true) {
         setSyncProgress(`Sayfa ${page + 1} yükleniyor...`)
@@ -90,12 +90,20 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
         const data = await res.json()
         if (data.error) { setSyncResult({ error: data.error }); break }
         totalAdded += data.added; totalUpdated += data.updated
+        totalElements = data.totalElements || totalElements
         setSyncProgress(`Sayfa ${data.page + 1}/${data.totalPages} (+${totalAdded} eklendi, ${totalUpdated} güncellendi)`)
-        if (data.done) { setSyncResult({ success: true, productsAdded: totalAdded, productsUpdated: totalUpdated }); break }
+        if (data.done) {
+          const activeCount = totalAdded + totalUpdated
+          const passiveCount = Math.max(0, localProducts.length - activeCount)
+          setSyncResult({ success: true, productsAdded: totalAdded, productsUpdated: totalUpdated, activeCount, passiveCount, totalElements })
+          break
+        }
         page++
       }
     } catch { setSyncResult({ error: 'Bağlantı hatası' }) }
     setSyncing(false)
+    // Sayfayı yenile — ürün listesi ve sayıları güncellensin
+    router.refresh()
   }
 
   // ─── Campaigns ───
@@ -487,7 +495,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
             <h2 className="font-heading text-[24px] text-text-primary mb-6">Trendyol Sync</h2>
             <button onClick={triggerSync} disabled={syncing} className="px-6 py-3 bg-gold text-white text-[11px] uppercase tracking-wider hover:bg-gold-light transition-colors disabled:opacity-50 mb-6">{syncing ? 'Sync yapılıyor...' : 'Manuel Sync Başlat'}</button>
             {syncing && syncProgress && <div className="p-4 mb-4 text-[12px] font-body bg-blue-50 text-blue-800">⏳ {syncProgress}</div>}
-            {syncResult && <div className={`p-4 mb-6 text-[12px] font-body ${syncResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>{syncResult.success ? `✓ ${syncResult.productsAdded} ürün eklendi, ${syncResult.productsUpdated} ürün güncellendi` : `✗ Hata: ${syncResult.error}`}</div>}
+            {syncResult && <div className={`p-4 mb-6 text-[12px] font-body ${syncResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>{syncResult.success ? `✓ ${syncResult.productsAdded} ürün eklendi, ${syncResult.productsUpdated} güncellendi · ${syncResult.activeCount || 0} aktif, ${syncResult.passiveCount || 0} pasife çekildi` : `✗ Hata: ${syncResult.error}`}</div>}
             <h3 className="font-heading text-[18px] text-text-primary mb-4">Son Sync Logları</h3>
             {syncLogs.length === 0 ? <p className="text-text-muted font-body text-sm">Henüz sync yapılmamış.</p> : (
               <div className="bg-white">{syncLogs.map((log: any) => (
