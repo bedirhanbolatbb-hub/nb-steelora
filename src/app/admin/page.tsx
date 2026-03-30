@@ -15,15 +15,22 @@ export default async function AdminPage() {
     { data: campaigns },
     { data: syncLogs },
     { data: reviews },
-    { data: homepage },
+    { data: homepageRows },
   ] = await Promise.all([
     supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(50),
     serviceClient.from('products').select('*, display_title:trendyol_title, display_price:trendyol_price, display_images:trendyol_images').order('created_at', { ascending: false }),
     supabase.from('campaigns').select('*').order('created_at', { ascending: false }),
     supabase.from('sync_log').select('*').order('synced_at', { ascending: false }).limit(5),
     serviceClient.from('reviews').select('*').order('created_at', { ascending: false }).limit(50),
-    serviceClient.from('homepage_settings').select('product_ids').eq('section', 'featured').single(),
+    serviceClient.from('homepage_settings').select('section, product_ids'),
   ])
+
+  const homepageSettings: Record<string, string[]> = {}
+  if (homepageRows) {
+    for (const row of homepageRows) {
+      homepageSettings[row.section] = row.product_ids || []
+    }
+  }
 
   return (
     <AdminDashboard
@@ -32,7 +39,7 @@ export default async function AdminPage() {
       campaigns={campaigns || []}
       syncLogs={syncLogs || []}
       reviews={reviews || []}
-      featuredIds={homepage?.product_ids || []}
+      homepageSettings={homepageSettings}
     />
   )
 }

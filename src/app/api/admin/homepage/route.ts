@@ -10,20 +10,22 @@ function getServiceClient() {
 
 export async function GET() {
   const supabase = getServiceClient()
-  const { data } = await supabase
-    .from('homepage_settings')
-    .select('*')
-    .eq('section', 'featured')
-    .single()
+  const { data } = await supabase.from('homepage_settings').select('section, product_ids')
 
-  return NextResponse.json({ data })
+  const settings: Record<string, string[]> = {}
+  if (data) {
+    for (const row of data) {
+      settings[row.section] = row.product_ids || []
+    }
+  }
+
+  return NextResponse.json({ settings })
 }
 
 export async function POST(request: Request) {
   const body = await request.json()
   const supabase = getServiceClient()
 
-  // Upsert: varsa güncelle, yoksa ekle
   const { data: existing } = await supabase
     .from('homepage_settings')
     .select('id')
@@ -33,10 +35,7 @@ export async function POST(request: Request) {
   if (existing) {
     await supabase
       .from('homepage_settings')
-      .update({
-        product_ids: body.product_ids,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ product_ids: body.product_ids, updated_at: new Date().toISOString() })
       .eq('section', body.section)
   } else {
     await supabase.from('homepage_settings').insert({

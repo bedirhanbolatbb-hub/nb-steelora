@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
+import HomepageEditor from './HomepageEditor'
 
 interface AdminDashboardProps {
   orders: any[]
@@ -10,7 +11,7 @@ interface AdminDashboardProps {
   campaigns: any[]
   syncLogs: any[]
   reviews: any[]
-  featuredIds: string[]
+  homepageSettings: Record<string, string[]>
 }
 
 const tabs = [
@@ -33,7 +34,7 @@ const statusLabels: Record<string, string> = {
   pending: 'Bekliyor', paid: 'Hazırlanıyor', shipped: 'Kargoda', delivered: 'Teslim Edildi', cancelled: 'İptal',
 }
 
-export default function AdminDashboard({ orders, products, campaigns, syncLogs, reviews: initialReviews, featuredIds: initialFeaturedIds }: AdminDashboardProps) {
+export default function AdminDashboard({ orders, products, campaigns, syncLogs, reviews: initialReviews, homepageSettings }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState('homepage')
   const [localOrders, setLocalOrders] = useState(orders)
   const [localCampaigns, setLocalCampaigns] = useState(campaigns)
@@ -56,12 +57,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null)
   const [editingValue, setEditingValue] = useState('')
-  // Homepage tab state
-  const [featuredIds, setFeaturedIds] = useState<string[]>(initialFeaturedIds)
-  const [featuredPicker, setFeaturedPicker] = useState<number | null>(null)
-  const [homepageSaving, setHomepageSaving] = useState(false)
-  const [homepageSaved, setHomepageSaved] = useState(false)
-  const [pickerSearch, setPickerSearch] = useState('')
+  // (Homepage tab uses HomepageEditor component)
   // Add product form
   const [newProduct, setNewProduct] = useState({
     title: '', category: '', price: '', salePrice: '', stock: '0',
@@ -172,18 +168,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
     setEditingProduct(null)
   }
 
-  // ─── Homepage Featured ───
-  const saveFeatured = async () => {
-    setHomepageSaving(true)
-    await fetch('/api/admin/homepage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ section: 'featured', product_ids: featuredIds }) })
-    setHomepageSaving(false); setHomepageSaved(true)
-    setTimeout(() => setHomepageSaved(false), 2000)
-  }
-  const randomizeFeatured = () => {
-    const active = localProducts.filter((p: any) => p.is_active)
-    const shuffled = [...active].sort(() => Math.random() - 0.5).slice(0, 4)
-    setFeaturedIds(shuffled.map((p: any) => p.id))
-  }
+  // (Homepage functions moved to HomepageEditor)
 
   // ─── Add Product ───
   const saveNewProduct = async () => {
@@ -237,8 +222,6 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
     if (typeof av === 'string') return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
     return sortDir === 'asc' ? av - bv : bv - av
   })
-  const featuredProducts = featuredIds.map((id) => localProducts.find((p: any) => p.id === id)).filter(Boolean)
-
   return (
     <div className="min-h-screen bg-champagne flex">
       {/* Sidebar */}
@@ -267,76 +250,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
 
         {/* ═══ HOMEPAGE ═══ */}
         {activeTab === 'homepage' && (
-          <div>
-            <h2 className="font-heading text-[24px] text-text-primary mb-6">Ana Sayfa Kontrol</h2>
-            <div className="bg-white p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[14px] font-body font-medium text-text-primary">Öne Çıkan Ürünler (4 ürün)</h3>
-                <div className="flex gap-2">
-                  <button onClick={randomizeFeatured} className="text-[10px] text-text-muted hover:text-gold transition-colors px-3 py-1 border border-champagne-mid rounded">Rastgele</button>
-                  <button onClick={saveFeatured} disabled={homepageSaving} className="text-[10px] bg-gold text-white px-3 py-1 rounded hover:bg-gold-light transition-colors disabled:opacity-50">
-                    {homepageSaving ? 'Kaydediliyor...' : homepageSaved ? 'Kaydedildi ✓' : 'Kaydet'}
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 gap-3">
-                {[0, 1, 2, 3].map((slot) => {
-                  const product = featuredProducts[slot]
-                  return (
-                    <div key={slot} className="border border-champagne-mid p-3 text-center">
-                      <div className="aspect-square bg-champagne-dark mb-2 relative overflow-hidden">
-                        {product?.display_images?.[0] ? (
-                          <img src={product.display_images[0]} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-[10px] text-text-muted">Boş Slot</div>
-                        )}
-                      </div>
-                      <p className="text-[11px] font-body text-text-primary truncate mb-2">{product?.display_title || '—'}</p>
-                      <button onClick={() => { setFeaturedPicker(slot); setPickerSearch('') }} className="text-[10px] text-gold hover:text-gold-light transition-colors">Değiştir</button>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Product picker modal */}
-            {featuredPicker !== null && (
-              <div className="fixed inset-0 bg-dark/50 z-50 flex items-center justify-center p-4">
-                <div className="bg-white w-full max-w-lg max-h-[70vh] flex flex-col">
-                  <div className="flex items-center justify-between p-4 border-b border-champagne-mid">
-                    <h3 className="font-heading text-[18px]">Ürün Seç (Slot {featuredPicker + 1})</h3>
-                    <button onClick={() => setFeaturedPicker(null)} className="text-text-muted hover:text-text-primary">✕</button>
-                  </div>
-                  <div className="px-4 py-2 border-b border-champagne-mid">
-                    <input type="text" placeholder="Ürün adı veya barkod ile ara..." value={pickerSearch} onChange={(e) => setPickerSearch(e.target.value)} className={inputClass} />
-                  </div>
-                  <div className="overflow-y-auto flex-1">
-                    {localProducts.filter((p: any) => {
-                      if (!p.is_active) return false
-                      if (!pickerSearch) return true
-                      const q = pickerSearch.toLowerCase()
-                      return p.display_title?.toLowerCase().includes(q) || (p.trendyol_barcode || '').toLowerCase().includes(q)
-                    }).map((p: any) => (
-                      <button key={p.id} onClick={() => {
-                        const newIds = [...featuredIds]
-                        newIds[featuredPicker!] = p.id
-                        setFeaturedIds(newIds)
-                        setFeaturedPicker(null)
-                      }} className="w-full flex items-center gap-3 p-3 hover:bg-champagne transition-colors text-left border-b border-champagne-mid/30">
-                        <div className="w-12 h-12 bg-champagne-dark shrink-0 overflow-hidden">
-                          {p.display_images?.[0] && <img src={p.display_images[0]} alt="" className="w-full h-full object-cover" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-body truncate">{p.display_title}</p>
-                          <p className="text-[10px] text-text-muted">{p.trendyol_category} · {formatPrice(p.display_price)}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <HomepageEditor products={localProducts} settings={homepageSettings} />
         )}
 
         {/* ═══ ORDERS ═══ */}

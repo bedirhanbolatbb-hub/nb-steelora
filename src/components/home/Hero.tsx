@@ -7,16 +7,44 @@ export default async function Hero() {
 
   try {
     const supabase = await createClient()
-    const { data } = await supabase
-      .from('products_display')
-      .select('display_images')
-      .order('created_at', { ascending: false })
-      .limit(3)
 
-    if (data) {
-      heroImages = data
-        .map((p) => p.display_images?.[0])
-        .filter(Boolean) as string[]
+    // Try homepage_settings first
+    const sections = ['hero_top', 'hero_bottom_left', 'hero_bottom_right']
+    const { data: settings } = await supabase
+      .from('homepage_settings')
+      .select('section, product_ids')
+      .in('section', sections)
+
+    if (settings && settings.length > 0) {
+      const allIds = settings.flatMap((s) => s.product_ids || []).filter(Boolean)
+      if (allIds.length > 0) {
+        const { data: products } = await supabase
+          .from('products_display')
+          .select('id, display_images')
+          .in('id', allIds)
+
+        const productMap = new Map((products || []).map((p) => [p.id, p.display_images?.[0]]))
+        heroImages = sections.map((sec) => {
+          const row = settings.find((s) => s.section === sec)
+          const pid = row?.product_ids?.[0]
+          return pid ? productMap.get(pid) || null : null
+        }).filter(Boolean) as string[]
+      }
+    }
+
+    // Fallback: last 3 products
+    if (heroImages.length === 0) {
+      const { data } = await supabase
+        .from('products_display')
+        .select('display_images')
+        .order('created_at', { ascending: false })
+        .limit(3)
+
+      if (data) {
+        heroImages = data
+          .map((p) => p.display_images?.[0])
+          .filter(Boolean) as string[]
+      }
     }
   } catch {
     // Placeholder kalır
