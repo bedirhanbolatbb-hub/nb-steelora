@@ -48,6 +48,8 @@ export default function OdemePage() {
   const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; amount: number; description: string } | null>(null)
   const [discountError, setDiscountError] = useState('')
   const [discountLoading, setDiscountLoading] = useState(false)
+  const [autoDiscounts, setAutoDiscounts] = useState<{ id: string; name: string; type: string; amount: number }[]>([])
+  const [autoFreeShipping, setAutoFreeShipping] = useState(false)
 
   const [form, setForm] = useState({
     firstName: '',
@@ -61,9 +63,29 @@ export default function OdemePage() {
   })
 
   const subtotal = totalPrice()
-  const discountAmount = appliedDiscount?.amount || 0
-  const shipping = subtotal >= 500 ? 0 : 49.9
-  const total = subtotal - discountAmount + shipping
+
+  // Auto-apply campaigns
+  useEffect(() => {
+    if (items.length === 0) { setAutoDiscounts([]); setAutoFreeShipping(false); return }
+    const itemPrices = items.map((i) => i.product.display_price)
+    fetch('/api/discount/auto-apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cartTotal: subtotal, itemCount: items.length, itemPrices }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        setAutoDiscounts(data.discounts || [])
+        setAutoFreeShipping(data.freeShipping || false)
+      })
+      .catch(() => {})
+  }, [subtotal, items.length])
+
+  const autoDiscountTotal = autoDiscounts.reduce((sum, d) => sum + d.amount, 0)
+  const codeDiscountAmount = appliedDiscount?.amount || 0
+  const totalDiscount = autoDiscountTotal + codeDiscountAmount
+  const shipping = autoFreeShipping || subtotal >= 500 ? 0 : 49.9
+  const total = subtotal - totalDiscount + shipping
 
   const applyDiscount = async () => {
     if (!discountCode.trim()) return
@@ -375,6 +397,12 @@ export default function OdemePage() {
               <span>Ara Toplam</span>
               <span>{formatPrice(subtotal)}</span>
             </div>
+            {autoDiscounts.map((d) => (
+              <div key={d.id} className="flex justify-between text-[12px] font-body text-green-700">
+                <span>🎉 {d.name}</span>
+                <span>-{formatPrice(d.amount)}</span>
+              </div>
+            ))}
             {appliedDiscount && (
               <div className="flex justify-between text-[12px] font-body text-green-700">
                 <span>İndirim ({appliedDiscount.code})</span>

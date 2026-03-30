@@ -112,14 +112,17 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
     name: '', type: 'discount_code' as string, code: '', discount_type: 'percent',
     discount_value: '', min_cart_amount: '0', max_uses: '',
     banner_text: '', banner_color: '#2A1E1E', starts_at: '', ends_at: '',
+    buy_quantity: '4', pay_quantity: '3',
   })
-  const emptyCampaignForm = { name: '', type: 'discount_code' as string, code: '', discount_type: 'percent', discount_value: '', min_cart_amount: '0', max_uses: '', banner_text: '', banner_color: '#2A1E1E', starts_at: '', ends_at: '' }
+  const emptyCampaignForm = { name: '', type: 'discount_code' as string, code: '', discount_type: 'percent', discount_value: '', min_cart_amount: '0', max_uses: '', banner_text: '', banner_color: '#2A1E1E', starts_at: '', ends_at: '', buy_quantity: '4', pay_quantity: '3' }
   const startEditCampaign = (c: any) => {
+    const meta = c.metadata || {}
     setCampaignForm({
       name: c.name || '', type: c.type || 'discount_code', code: c.code || '', discount_type: c.discount_type || 'percent',
       discount_value: c.discount_value?.toString() || '', min_cart_amount: c.min_cart_amount?.toString() || '0', max_uses: c.max_uses?.toString() || '',
       banner_text: c.banner_text || '', banner_color: c.banner_color || '#2A1E1E',
       starts_at: c.starts_at ? new Date(c.starts_at).toISOString().slice(0, 16) : '', ends_at: c.ends_at ? new Date(c.ends_at).toISOString().slice(0, 16) : '',
+      buy_quantity: meta.buy_quantity?.toString() || '4', pay_quantity: meta.pay_quantity?.toString() || '3',
     })
     setEditingCampaignId(c.id)
     setShowCampaignForm(true)
@@ -132,6 +135,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
       body.min_cart_amount = Number(campaignForm.min_cart_amount); body.max_uses = campaignForm.max_uses ? Number(campaignForm.max_uses) : null
     }
     if (campaignForm.type === 'free_shipping') body.min_cart_amount = Number(campaignForm.min_cart_amount)
+    if (campaignForm.type === 'buy_x_get_y') { body.metadata = { buy_quantity: Number(campaignForm.buy_quantity), pay_quantity: Number(campaignForm.pay_quantity) }; body.min_cart_amount = 0 }
     if (campaignForm.type === 'banner') { body.banner_text = campaignForm.banner_text; body.banner_color = campaignForm.banner_color }
 
     if (editingCampaignId) {
@@ -449,7 +453,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
               <div className="bg-white p-6 mb-6 space-y-4">
                 <input className={inputClass} placeholder="Kampanya Adı *" value={campaignForm.name} onChange={(e) => setCampaignForm({ ...campaignForm, name: e.target.value })} />
                 <select className={inputClass} value={campaignForm.type} onChange={(e) => setCampaignForm({ ...campaignForm, type: e.target.value })}>
-                  <option value="discount_code">İndirim Kodu</option><option value="cart_discount">Sepet İndirimi</option><option value="free_shipping">Ücretsiz Kargo</option><option value="banner">Duyuru Banner</option>
+                  <option value="discount_code">İndirim Kodu</option><option value="cart_discount">Sepet İndirimi</option><option value="free_shipping">Ücretsiz Kargo</option><option value="buy_x_get_y">X Al Y Öde</option><option value="banner">Duyuru Banner</option>
                 </select>
                 {(campaignForm.type === 'discount_code' || campaignForm.type === 'cart_discount') && (<>
                   {campaignForm.type === 'discount_code' && <input className={inputClass} placeholder="Kod (ör: YAZ2026)" value={campaignForm.code} onChange={(e) => setCampaignForm({ ...campaignForm, code: e.target.value.toUpperCase() })} />}
@@ -461,6 +465,12 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                   {campaignForm.type === 'discount_code' && <input className={inputClass} placeholder="Max Kullanım (boş = sınırsız)" type="number" value={campaignForm.max_uses} onChange={(e) => setCampaignForm({ ...campaignForm, max_uses: e.target.value })} />}
                 </>)}
                 {campaignForm.type === 'free_shipping' && <input className={inputClass} placeholder="Min. Sepet Tutarı (0 = her zaman)" type="number" value={campaignForm.min_cart_amount} onChange={(e) => setCampaignForm({ ...campaignForm, min_cart_amount: e.target.value })} />}
+                {campaignForm.type === 'buy_x_get_y' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <input className={inputClass} placeholder="Kaç ürün alınsın? (ör: 4)" type="number" value={campaignForm.buy_quantity} onChange={(e) => setCampaignForm({ ...campaignForm, buy_quantity: e.target.value })} />
+                    <input className={inputClass} placeholder="Kaç ürün ödensin? (ör: 3)" type="number" value={campaignForm.pay_quantity} onChange={(e) => setCampaignForm({ ...campaignForm, pay_quantity: e.target.value })} />
+                  </div>
+                )}
                 {campaignForm.type === 'banner' && (<><input className={inputClass} placeholder="Banner Metni" value={campaignForm.banner_text} onChange={(e) => setCampaignForm({ ...campaignForm, banner_text: e.target.value })} /><div className="flex items-center gap-3"><label className="text-[12px] font-body text-text-muted">Renk:</label><input type="color" value={campaignForm.banner_color} onChange={(e) => setCampaignForm({ ...campaignForm, banner_color: e.target.value })} className="w-10 h-8 border-0 cursor-pointer" /></div></>)}
                 <div className="grid grid-cols-2 gap-3">
                   <div><label className="text-[10px] font-body text-text-muted uppercase tracking-wider">Başlangıç</label><input className={inputClass} type="datetime-local" value={campaignForm.starts_at} onChange={(e) => setCampaignForm({ ...campaignForm, starts_at: e.target.value })} /></div>
