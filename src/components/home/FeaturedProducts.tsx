@@ -7,17 +7,42 @@ export default async function FeaturedProducts() {
 
   try {
     const supabase = await createClient()
-    const { data } = await supabase
-      .from('products_display')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(4)
 
-    if (data && data.length > 0) {
-      products = data
+    // Önce homepage_settings'den seçili ürünleri dene
+    const { data: settings } = await supabase
+      .from('homepage_settings')
+      .select('product_ids')
+      .eq('section', 'featured')
+      .single()
+
+    const ids = settings?.product_ids as string[] | undefined
+    if (ids && ids.length > 0) {
+      const { data } = await supabase
+        .from('products_display')
+        .select('*')
+        .in('id', ids)
+
+      if (data && data.length > 0) {
+        products = ids
+          .map((id) => data.find((p: any) => p.id === id))
+          .filter(Boolean)
+      }
+    }
+
+    // Fallback: son 4 aktif ürün
+    if (products.length === 0) {
+      const { data } = await supabase
+        .from('products_display')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(4)
+
+      if (data && data.length > 0) {
+        products = data
+      }
     }
   } catch {
-    // Supabase bağlantısı yoksa boş göster
+    // Boş göster
   }
 
   if (products.length === 0) return null

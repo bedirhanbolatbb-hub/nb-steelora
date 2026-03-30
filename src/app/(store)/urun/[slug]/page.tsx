@@ -51,9 +51,9 @@ export default async function UrunDetayPage({
               ✓ Stokta var
             </p>
           ) : (
-            <p className="text-[12px] text-red-600 font-body mb-6">
-              Stok tükendi
-            </p>
+            <div className="bg-red-50 border border-red-200 text-red-700 text-[12px] font-body px-4 py-3 mb-6 text-center">
+              Stok Tükendi — Bu ürün şu anda mevcut değil
+            </div>
           )}
 
           {/* Sepete ekle */}
