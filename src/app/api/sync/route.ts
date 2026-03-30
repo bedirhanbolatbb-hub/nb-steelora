@@ -1,40 +1,42 @@
-import { NextResponse, after } from 'next/server'
+import { NextResponse } from 'next/server'
 import { syncTrendyolProducts } from '@/lib/trendyol/sync'
 
+export const maxDuration = 60
+
 export async function POST(request: Request) {
+  // Admin cookie veya Bearer token ile auth
   const authHeader = request.headers.get('authorization')
+  const cookieHeader = request.headers.get('cookie') || ''
+  const adminToken = cookieHeader.match(/admin_token=([^;]+)/)?.[1]
   const cronSecret = process.env.CRON_SECRET
 
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  const isAuthorized =
+    authHeader === `Bearer ${cronSecret}` ||
+    adminToken === process.env.ADMIN_SECRET_TOKEN
+
+  if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Sync'i arka planda başlat, hemen response dön
-  after(async () => {
-    try {
-      await syncTrendyolProducts()
-    } catch (error) {
-      console.error('Background sync error:', error)
-    }
-  })
-
-  return NextResponse.json({ message: 'Sync started in background' })
+  try {
+    const result = await syncTrendyolProducts()
+    return NextResponse.json(result)
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
 }
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
 
-  // Vercel cron veya manuel tetikleme
+  // Vercel cron tetiklemesi
   if (authHeader === `Bearer ${process.env.CRON_SECRET}`) {
-    after(async () => {
-      try {
-        await syncTrendyolProducts()
-      } catch (error) {
-        console.error('Background sync error:', error)
-      }
-    })
-
-    return NextResponse.json({ message: 'Sync started in background' })
+    try {
+      const result = await syncTrendyolProducts()
+      return NextResponse.json(result)
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
   }
 
   // Normal GET — son sync durumunu göster

@@ -42,6 +42,8 @@ export async function syncTrendyolProducts() {
 
       if (products.length === 0) break
 
+      console.log(`Sync sayfa ${page}: ${products.length} ürün çekiliyor (toplam: ${data.totalElements || '?'})`)
+
       for (const product of products) {
         const variants = product.variants?.length ? product.variants : [product]
 
@@ -97,6 +99,8 @@ export async function syncTrendyolProducts() {
           }
         }
       }
+
+      console.log(`Sayfa ${page} tamamlandı: +${productsAdded} eklendi, ${productsUpdated} güncellendi`)
 
       if (products.length < size || page >= (data.totalPages - 1)) break
       page++
