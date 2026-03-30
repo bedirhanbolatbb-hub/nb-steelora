@@ -50,7 +50,7 @@ export async function syncTrendyolPage(page: number, size = 50) {
     const variants = product.variants?.length ? product.variants : [product]
 
     for (const variant of variants) {
-      const barcode = variant.barcode || product.barcode
+      const barcode = variant.barcode || product.barcode || product.stockCode || ''
       const stock = variant.quantity ?? product.quantity ?? 0
       const price = variant.salePrice ?? product.salePrice ?? 0
       const images = (product.images || []).map((img: any) => img.url || img)

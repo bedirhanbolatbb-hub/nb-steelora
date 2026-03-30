@@ -74,11 +74,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
         )}
         <div className="flex items-center gap-2 mt-2">
           <span className="text-[14px] font-body text-gold font-medium">
-            {formatPrice(product.display_price)}
+            {formatPrice((product as any).custom_price ?? product.display_price)}
           </span>
-          {product.override_price && product.trendyol_price > product.override_price && (
+          {((product as any).custom_price && (product as any).custom_price < product.display_price) && (
             <span className="text-[12px] font-body text-text-muted line-through">
-              {formatPrice(product.trendyol_price)}
+              {formatPrice(product.display_price)}
             </span>
           )}
         </div>

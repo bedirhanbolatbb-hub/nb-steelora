@@ -52,11 +52,16 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   const [productSearch, setProductSearch] = useState('')
   const [showAddProduct, setShowAddProduct] = useState(false)
   const [showAllProducts, setShowAllProducts] = useState(false)
+  const [sortField, setSortField] = useState<string>('display_title')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null)
+  const [editingValue, setEditingValue] = useState('')
   // Homepage tab state
   const [featuredIds, setFeaturedIds] = useState<string[]>(initialFeaturedIds)
   const [featuredPicker, setFeaturedPicker] = useState<number | null>(null)
   const [homepageSaving, setHomepageSaving] = useState(false)
   const [homepageSaved, setHomepageSaved] = useState(false)
+  const [pickerSearch, setPickerSearch] = useState('')
   // Add product form
   const [newProduct, setNewProduct] = useState({
     title: '', category: '', price: '', salePrice: '', stock: '0',
@@ -192,6 +197,22 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   }
 
   // ─── Computed ───
+  // ─── Sorting & Inline Edit ───
+  const toggleSort = (field: string) => {
+    if (sortField === field) { setSortDir(sortDir === 'asc' ? 'desc' : 'asc') }
+    else { setSortField(field); setSortDir('asc') }
+  }
+  const sortIcon = (field: string) => sortField === field ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''
+
+  const saveInlineEdit = async (productId: string, field: string, value: string) => {
+    const update: any = {}
+    if (field === 'custom_price') update.custom_price = value ? Number(value) : null
+    else if (field === 'note') update.note = value || null
+    await fetch(`/api/admin/products/${productId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(update) })
+    setLocalProducts((prev: any[]) => prev.map((p: any) => p.id === productId ? { ...p, ...update } : p))
+    setEditingCell(null)
+  }
+
   const pendingCount = localOrders.filter((o) => o.status === 'pending').length
   const categories = localProducts.reduce((acc: Record<string, number>, p: any) => {
     const cat = p.trendyol_category || 'Kategorisiz'
@@ -201,8 +222,20 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   const categoryList = Object.entries(categories).sort((a, b) => b[1] - a[1])
   const filteredProducts = localProducts.filter((p: any) => {
     if (selectedCategory && (p.trendyol_category || 'Kategorisiz') !== selectedCategory) return false
-    if (productSearch && !p.display_title?.toLowerCase().includes(productSearch.toLowerCase())) return false
+    if (productSearch) {
+      const q = productSearch.toLowerCase()
+      if (!p.display_title?.toLowerCase().includes(q) && !(p.trendyol_barcode || '').toLowerCase().includes(q)) return false
+    }
     return true
+  }).sort((a: any, b: any) => {
+    let av: any, bv: any
+    if (sortField === 'price') { av = a.custom_price ?? a.display_price ?? 0; bv = b.custom_price ?? b.display_price ?? 0 }
+    else if (sortField === 'trendyol_stock') { av = a.trendyol_stock ?? 0; bv = b.trendyol_stock ?? 0 }
+    else if (sortField === 'sales_count') { av = a.sales_count ?? 0; bv = b.sales_count ?? 0 }
+    else if (sortField === 'trendyol_barcode') { av = a.trendyol_barcode || ''; bv = b.trendyol_barcode || '' }
+    else { av = a.display_title || ''; bv = b.display_title || '' }
+    if (typeof av === 'string') return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
+    return sortDir === 'asc' ? av - bv : bv - av
   })
   const featuredProducts = featuredIds.map((id) => localProducts.find((p: any) => p.id === id)).filter(Boolean)
 
@@ -259,7 +292,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                         )}
                       </div>
                       <p className="text-[11px] font-body text-text-primary truncate mb-2">{product?.display_title || '—'}</p>
-                      <button onClick={() => setFeaturedPicker(slot)} className="text-[10px] text-gold hover:text-gold-light transition-colors">Değiştir</button>
+                      <button onClick={() => { setFeaturedPicker(slot); setPickerSearch('') }} className="text-[10px] text-gold hover:text-gold-light transition-colors">Değiştir</button>
                     </div>
                   )
                 })}
@@ -274,8 +307,16 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                     <h3 className="font-heading text-[18px]">Ürün Seç (Slot {featuredPicker + 1})</h3>
                     <button onClick={() => setFeaturedPicker(null)} className="text-text-muted hover:text-text-primary">✕</button>
                   </div>
+                  <div className="px-4 py-2 border-b border-champagne-mid">
+                    <input type="text" placeholder="Ürün adı veya barkod ile ara..." value={pickerSearch} onChange={(e) => setPickerSearch(e.target.value)} className={inputClass} />
+                  </div>
                   <div className="overflow-y-auto flex-1">
-                    {localProducts.filter((p: any) => p.is_active).map((p: any) => (
+                    {localProducts.filter((p: any) => {
+                      if (!p.is_active) return false
+                      if (!pickerSearch) return true
+                      const q = pickerSearch.toLowerCase()
+                      return p.display_title?.toLowerCase().includes(q) || (p.trendyol_barcode || '').toLowerCase().includes(q)
+                    }).map((p: any) => (
                       <button key={p.id} onClick={() => {
                         const newIds = [...featuredIds]
                         newIds[featuredPicker!] = p.id
@@ -397,23 +438,56 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
             {/* Product table */}
             {(selectedCategory || showAllProducts || productSearch) && filteredProducts.length > 0 && (
               <div className="bg-white overflow-x-auto">
-                <table className="w-full text-[12px] font-body">
-                  <thead><tr className="border-b border-champagne-mid text-text-muted uppercase tracking-wider">
-                    <th className="text-left px-4 py-3">Ürün</th><th className="text-left px-4 py-3">Kategori</th><th className="text-right px-4 py-3">Fiyat</th><th className="text-center px-4 py-3">Stok</th><th className="text-center px-4 py-3">Durum</th><th className="text-center px-4 py-3">İşlem</th>
+                <table className="w-full text-[11px] font-body">
+                  <thead><tr className="border-b border-champagne-mid text-text-muted uppercase tracking-wider text-[9px]">
+                    <th className="text-left px-3 py-2 cursor-pointer hover:text-gold" onClick={() => toggleSort('display_title')}>Ürün{sortIcon('display_title')}</th>
+                    <th className="text-left px-3 py-2 cursor-pointer hover:text-gold" onClick={() => toggleSort('trendyol_barcode')}>Barkod{sortIcon('trendyol_barcode')}</th>
+                    <th className="text-right px-3 py-2 cursor-pointer hover:text-gold" onClick={() => toggleSort('price')}>Fiyat{sortIcon('price')}</th>
+                    <th className="text-left px-3 py-2">Not</th>
+                    <th className="text-center px-3 py-2 cursor-pointer hover:text-gold" onClick={() => toggleSort('trendyol_stock')}>Stok{sortIcon('trendyol_stock')}</th>
+                    <th className="text-center px-3 py-2 cursor-pointer hover:text-gold" onClick={() => toggleSort('sales_count')}>Satış{sortIcon('sales_count')}</th>
+                    <th className="text-center px-3 py-2">Durum</th>
+                    <th className="text-center px-3 py-2">İşlem</th>
                   </tr></thead>
                   <tbody>{filteredProducts.map((p: any) => (
                     <tr key={p.id} className="border-b border-champagne-mid/30 hover:bg-champagne/50">
-                      <td className="px-4 py-3"><div className="flex items-center gap-3">
-                        <div className="w-10 h-12 bg-champagne-dark shrink-0 overflow-hidden">{p.display_images?.[0] && <img src={p.display_images[0]} alt="" className="w-full h-full object-cover" />}</div>
-                        <span className="font-medium truncate max-w-[200px]">{p.display_title}</span>
+                      <td className="px-3 py-2"><div className="flex items-center gap-2">
+                        <div className="w-8 h-10 bg-champagne-dark shrink-0 overflow-hidden">{p.display_images?.[0] && <img src={p.display_images[0]} alt="" className="w-full h-full object-cover" />}</div>
+                        <span className="font-medium truncate max-w-[160px]">{p.display_title}</span>
                       </div></td>
-                      <td className="px-4 py-3 text-text-muted">{p.trendyol_category || '-'}</td>
-                      <td className="px-4 py-3 text-right text-gold">{formatPrice(p.display_price)}</td>
-                      <td className="px-4 py-3 text-center">{p.trendyol_stock}</td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-3 py-2 text-text-muted text-[10px]">{p.trendyol_barcode || '-'}</td>
+                      <td className="px-3 py-2 text-right">
+                        {editingCell?.id === p.id && editingCell?.field === 'custom_price' ? (
+                          <input type="number" autoFocus value={editingValue} onChange={(e) => setEditingValue(e.target.value)}
+                            onBlur={() => saveInlineEdit(p.id, 'custom_price', editingValue)}
+                            onKeyDown={(e) => e.key === 'Enter' && saveInlineEdit(p.id, 'custom_price', editingValue)}
+                            className="w-20 text-right border border-gold px-1 py-0.5 text-[11px] focus:outline-none" />
+                        ) : (
+                          <span className={`cursor-pointer hover:text-gold ${p.custom_price ? 'text-gold font-medium' : 'text-text-primary'}`}
+                            onClick={() => { setEditingCell({ id: p.id, field: 'custom_price' }); setEditingValue(p.custom_price?.toString() || p.display_price?.toString() || '') }}>
+                            {formatPrice(p.custom_price ?? p.display_price)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        {editingCell?.id === p.id && editingCell?.field === 'note' ? (
+                          <input type="text" autoFocus value={editingValue} onChange={(e) => setEditingValue(e.target.value)}
+                            onBlur={() => saveInlineEdit(p.id, 'note', editingValue)}
+                            onKeyDown={(e) => e.key === 'Enter' && saveInlineEdit(p.id, 'note', editingValue)}
+                            className="w-24 border border-gold px-1 py-0.5 text-[11px] focus:outline-none" />
+                        ) : (
+                          <span className="cursor-pointer text-text-muted hover:text-gold text-[10px] truncate block max-w-[100px]"
+                            onClick={() => { setEditingCell({ id: p.id, field: 'note' }); setEditingValue(p.note || '') }}>
+                            {p.note || '—'}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-center">{p.trendyol_stock}</td>
+                      <td className="px-3 py-2 text-center text-text-muted">{p.sales_count || 0}</td>
+                      <td className="px-3 py-2 text-center">
                         {p.is_active ? <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded">Aktif</span> : <span className="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded">Pasif</span>}
                       </td>
-                      <td className="px-4 py-3 text-center"><button onClick={() => setEditingProduct({ ...p })} className="text-[10px] text-gold hover:text-gold-light transition-colors uppercase tracking-wider">Düzenle</button></td>
+                      <td className="px-3 py-2 text-center"><button onClick={() => setEditingProduct({ ...p })} className="text-[10px] text-gold hover:text-gold-light transition-colors uppercase tracking-wider">Düzenle</button></td>
                     </tr>
                   ))}</tbody>
                 </table>

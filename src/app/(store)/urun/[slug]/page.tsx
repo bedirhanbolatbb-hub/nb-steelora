@@ -41,9 +41,16 @@ export default async function UrunDetayPage({
           <h1 className="font-heading text-[32px] lg:text-[40px] font-light text-text-primary mb-4">
             {product.display_title}
           </h1>
-          <p className="text-[24px] font-body text-gold font-medium mb-8">
-            {formatPrice(product.display_price)}
-          </p>
+          <div className="flex items-center gap-3 mb-8">
+            <p className="text-[24px] font-body text-gold font-medium">
+              {formatPrice(product.custom_price ?? product.display_price)}
+            </p>
+            {product.custom_price && product.custom_price < product.display_price && (
+              <p className="text-[16px] font-body text-text-muted line-through">
+                {formatPrice(product.display_price)}
+              </p>
+            )}
+          </div>
 
           {/* Stok durumu */}
           {product.trendyol_stock > 0 ? (
