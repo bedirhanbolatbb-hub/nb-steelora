@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import Hero from '@/components/home/Hero'
 import Marquee from '@/components/home/Marquee'
 import CategoryGrid from '@/components/home/CategoryGrid'
@@ -14,28 +15,51 @@ export default async function HomePage() {
 
   try {
     const supabase = await createClient()
+    const service = createServiceClient()
     const now = new Date().toISOString()
 
-    const [campaignResult, arrivalsResult] = await Promise.all([
-      supabase
-        .from('campaigns')
-        .select('*')
-        .eq('is_active', true)
-        .in('type', ['cart_discount', 'free_shipping', 'discount_code'])
-        .lte('starts_at', now)
-        .or(`ends_at.is.null,ends_at.gte.${now}`)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single(),
-      supabase
+    // Campaign
+    const { data: campaignData } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('is_active', true)
+      .in('type', ['cart_discount', 'free_shipping', 'discount_code'])
+      .lte('starts_at', now)
+      .or(`ends_at.is.null,ends_at.gte.${now}`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+    activeCampaign = campaignData
+
+    // New Arrivals — admin seçtiyse kalıcı, yoksa fallback
+    const { data: naSettings } = await service
+      .from('homepage_settings')
+      .select('product_ids')
+      .eq('section', 'new_arrivals')
+      .single()
+
+    const naIds = (naSettings?.product_ids as string[]) || []
+
+    if (naIds.length > 0) {
+      // Admin seçimi — is_active filtresi yok
+      const { data } = await service
+        .from('products')
+        .select('*, display_title:trendyol_title, display_price:trendyol_price, display_images:trendyol_images')
+        .in('id', naIds)
+      if (data && data.length > 0) {
+        newArrivals = naIds.map((id) => data.find((p: any) => p.id === id)).filter(Boolean)
+      }
+    }
+
+    // Fallback: son 4 aktif ürün
+    if (newArrivals.length === 0) {
+      const { data } = await supabase
         .from('products_display')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(4),
-    ])
-
-    activeCampaign = campaignResult.data
-    newArrivals = arrivalsResult.data || []
+        .limit(4)
+      newArrivals = data || []
+    }
   } catch {
     // Defaults apply
   }

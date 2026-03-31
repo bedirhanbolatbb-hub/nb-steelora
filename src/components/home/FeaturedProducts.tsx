@@ -1,25 +1,29 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import ProductGrid from '@/components/store/ProductGrid'
 
 export default async function FeaturedProducts() {
   let products: any[] = []
 
   try {
+    const service = createServiceClient()
     const supabase = await createClient()
 
-    // Önce homepage_settings'den seçili ürünleri dene
-    const { data: settings } = await supabase
+    // homepage_settings'ten seçili ürünleri oku
+    const { data: settings } = await service
       .from('homepage_settings')
       .select('product_ids')
       .eq('section', 'featured')
       .single()
 
-    const ids = settings?.product_ids as string[] | undefined
-    if (ids && ids.length > 0) {
-      const { data } = await supabase
-        .from('products_display')
-        .select('*')
+    const ids = (settings?.product_ids as string[]) || []
+
+    if (ids.length > 0) {
+      // Admin seçtiyse — is_active filtresi YOK, kalıcı
+      const { data } = await service
+        .from('products')
+        .select('*, display_title:trendyol_title, display_price:trendyol_price, display_images:trendyol_images')
         .in('id', ids)
 
       if (data && data.length > 0) {
@@ -29,7 +33,7 @@ export default async function FeaturedProducts() {
       }
     }
 
-    // Fallback: son 4 aktif ürün
+    // Fallback: admin hiç seçmediyse son 4 aktif ürün
     if (products.length === 0) {
       const { data } = await supabase
         .from('products_display')
