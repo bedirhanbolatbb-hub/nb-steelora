@@ -41,6 +41,13 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           </div>
         </div>
 
+        {/* Stock badge */}
+        {product.trendyol_stock === 0 && (
+          <span className="absolute bottom-2 left-2 bg-red-600 text-white text-[9px] px-2 py-0.5 font-body">
+            Stok Tükendi
+          </span>
+        )}
+
         {/* Gold border on hover */}
         <div className="absolute inset-0 border border-transparent group-hover:border-gold/30 transition-colors duration-300 pointer-events-none" />
       </div>

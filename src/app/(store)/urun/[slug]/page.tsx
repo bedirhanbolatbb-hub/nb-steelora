@@ -5,6 +5,8 @@ import ProductImageGallery from '@/components/store/ProductImageGallery'
 import AddToCartButton from '@/components/store/AddToCartButton'
 import RelatedProducts from '@/components/store/RelatedProducts'
 import ReviewList from '@/components/store/ReviewList'
+import RecentlyViewedTracker from '@/components/store/RecentlyViewedTracker'
+import RecentlyViewed from '@/components/store/RecentlyViewed'
 
 export default async function UrunDetayPage({
   params,
@@ -113,6 +115,10 @@ export default async function UrunDetayPage({
         productId={product.id}
         category={product.trendyol_category || ''}
       />
+
+      {/* Son Görüntülenenler */}
+      <RecentlyViewedTracker slug={slug} />
+      <RecentlyViewed currentSlug={slug} />
     </div>
   )
 }

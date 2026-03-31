@@ -61,6 +61,7 @@ export default function OdemePage() {
     address: '',
     zipCode: '',
   })
+  const [giftNote, setGiftNote] = useState('')
 
   const subtotal = totalPrice()
 
@@ -151,6 +152,7 @@ export default function OdemePage() {
             zipCode: form.zipCode,
           },
           userId,
+          giftNote: giftNote || null,
         }),
       })
 
@@ -276,6 +278,22 @@ export default function OdemePage() {
               value={form.zipCode}
               onChange={(e) => updateField('zipCode', e.target.value)}
             />
+          </div>
+
+          {/* Hediye Notu */}
+          <div className="mt-4">
+            <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body block mb-2">
+              Hediye Notu (isteğe bağlı)
+            </label>
+            <textarea
+              placeholder="Sevdiklerinize özel bir not bırakın..."
+              value={giftNote}
+              onChange={(e) => setGiftNote(e.target.value)}
+              rows={3}
+              maxLength={300}
+              className="w-full border border-champagne-mid bg-white px-4 py-3 text-sm font-body text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none transition-colors resize-none"
+            />
+            <p className="text-[10px] font-body text-text-muted mt-1 text-right">{giftNote.length}/300</p>
           </div>
 
           {/* İndirim Kodu */}
