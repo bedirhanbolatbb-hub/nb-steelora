@@ -1,3 +1,6 @@
+'use client'
+
+import { useRef, useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -6,7 +9,29 @@ export interface HeroItem {
   slug: string | null
 }
 
+interface Dims { W: number; H: number; topH: number }
+
 export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; singleMode: boolean }) {
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const topRef = useRef<HTMLDivElement>(null)
+  const [dims, setDims] = useState<Dims | null>(null)
+
+  useEffect(() => {
+    if (!singleMode) return
+    function measure() {
+      const wrapper = wrapperRef.current
+      const top = topRef.current
+      if (!wrapper || !top) return
+      const W = wrapper.offsetWidth
+      const H = wrapper.offsetHeight
+      const topH = top.offsetHeight
+      if (W > 0 && H > 0 && topH > 0) setDims({ W, H, topH })
+    }
+    measure()
+    const obs = new ResizeObserver(measure)
+    if (wrapperRef.current) obs.observe(wrapperRef.current)
+    return () => obs.disconnect()
+  }, [singleMode])
 
   // ── Normal mode ───────────────────────────────────────────────────────────
   if (!singleMode) {
@@ -61,27 +86,52 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
     )
   }
 
-  // ── Single mode — 2:3 vertical image, overlay link regions ─────────────
+  // ── Single mode — same grid layout, background-image puzzle ──────────────
   const image = items[0].image
   const slug = items[0].slug
-  const href = slug ? `/urunler/${slug}` : null
+
+  const bgSize = dims ? `${dims.W}px ${dims.H}px` : undefined
+
+  const slotStyle = (posX: number, posY: number): React.CSSProperties =>
+    image && bgSize
+      ? {
+          backgroundImage: `url(${JSON.stringify(image)})`,
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: bgSize,
+          backgroundPosition: `${posX}px ${posY}px`,
+        }
+      : {}
+
+  const topY = 0
+  const botY = dims ? -dims.topH : 0
+  const halfW = dims ? -(dims.W / 2) : 0
 
   return (
-    <div className="relative w-full order-1 lg:order-2 bg-champagne-dark" style={{ aspectRatio: '2/3' }}>
-      {image ? (
-        <Image src={image} alt="Koleksiyon" fill className="object-contain object-center" sizes="(max-width: 1024px) 100vw, 50vw" priority />
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-b from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-          <span className="text-text-muted/40 text-[11px] font-body tracking-wider uppercase">Koleksiyon Görseli</span>
-        </div>
-      )}
-      {href && (
-        <>
-          <Link href={href} className="absolute top-0 left-0 w-full h-2/3" aria-label="Ürüne git" />
-          <Link href={href} className="absolute bottom-0 left-0 w-1/2 h-1/3" aria-label="Ürüne git" />
-          <Link href={href} className="absolute bottom-0 right-0 w-1/2 h-1/3" aria-label="Ürüne git" />
-        </>
-      )}
+    <div ref={wrapperRef} className="grid grid-rows-2 grid-cols-2 gap-1 order-1 lg:order-2 min-h-[400px] lg:min-h-0">
+      <div ref={topRef} className="col-span-2 bg-champagne-dark relative overflow-hidden" style={slotStyle(0, topY)}>
+        {!image && (
+          <div className="absolute inset-0 bg-gradient-to-b from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
+            <span className="text-text-muted/40 text-[11px] font-body tracking-wider uppercase">Koleksiyon Görseli</span>
+          </div>
+        )}
+        {image && slug && <Link href={`/urunler/${slug}`} className="absolute inset-0" aria-label="Ürüne git" />}
+      </div>
+      <div className="bg-champagne-dark relative overflow-hidden" style={slotStyle(0, botY)}>
+        {!image && (
+          <div className="absolute inset-0 bg-gradient-to-br from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
+            <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 1</span>
+          </div>
+        )}
+        {image && slug && <Link href={`/urunler/${slug}`} className="absolute inset-0" aria-label="Ürüne git" />}
+      </div>
+      <div className="bg-champagne-dark relative overflow-hidden" style={slotStyle(halfW, botY)}>
+        {!image && (
+          <div className="absolute inset-0 bg-gradient-to-bl from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
+            <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 2</span>
+          </div>
+        )}
+        {image && slug && <Link href={`/urunler/${slug}`} className="absolute inset-0" aria-label="Ürüne git" />}
+      </div>
     </div>
   )
 }
