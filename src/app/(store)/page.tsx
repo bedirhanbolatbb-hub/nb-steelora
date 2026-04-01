@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { getSiteContent } from '@/lib/supabase/content'
 import Hero from '@/components/home/Hero'
 import Marquee from '@/components/home/Marquee'
 import CategoryGrid from '@/components/home/CategoryGrid'
@@ -12,6 +13,7 @@ import ProductCard from '@/components/store/ProductCard'
 export default async function HomePage() {
   let activeCampaign: any = null
   let newArrivals: any[] = []
+  const c = await getSiteContent()
 
   try {
     const supabase = await createClient()
@@ -68,6 +70,15 @@ export default async function HomePage() {
     <>
       <Hero />
 
+      {c.promo_bar_text && (
+        <div className="bg-dark border-b border-gold/20 py-2.5 px-8 text-center">
+          <p className="text-[11px] font-body text-gold uppercase tracking-[0.15em]">
+            {c.promo_bar_emoji && <span className="mr-2">{c.promo_bar_emoji}</span>}
+            {c.promo_bar_text}
+          </p>
+        </div>
+      )}
+
       {activeCampaign && (
         <div
           className="border-y border-gold/20 py-5 px-8 text-center"
@@ -96,14 +107,19 @@ export default async function HomePage() {
 
       <Marquee />
       <CategoryGrid />
-      <FeaturedProducts />
+      <FeaturedProducts title={c.featured_title} subtitle={c.featured_subtitle} />
 
       {newArrivals.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
           <div className="flex items-end justify-between mb-8">
-            <h2 className="font-heading text-[32px] text-text-primary">
-              Yeni <span className="italic text-gold">Gelenler</span>
-            </h2>
+            <div>
+              <h2 className="font-heading text-[32px] text-text-primary">
+                {c.new_arrivals_title || (<>Yeni <span className="italic text-gold">Gelenler</span></>)}
+              </h2>
+              {c.new_arrivals_subtitle && (
+                <p className="text-[12px] font-body text-text-muted mt-1">{c.new_arrivals_subtitle}</p>
+              )}
+            </div>
             <Link
               href="/urunler?siralama=yeni"
               className="text-[11px] uppercase tracking-[0.15em] font-body text-text-muted hover:text-gold transition-colors hidden sm:block"

@@ -3,7 +3,12 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import ProductGrid from '@/components/store/ProductGrid'
 
-export default async function FeaturedProducts() {
+interface Props {
+  title?: string
+  subtitle?: string
+}
+
+export default async function FeaturedProducts({ title, subtitle }: Props = {}) {
   let products: any[] = []
 
   try {
@@ -55,8 +60,9 @@ export default async function FeaturedProducts() {
     <section className="max-w-7xl mx-auto px-4 lg:px-8 py-20">
       <div className="flex items-end justify-between mb-12">
         <h2 className="font-heading text-[32px] text-text-primary">
-          Öne Çıkan <span className="italic text-gold">Parçalar</span>
+          {title || (<>Öne Çıkan <span className="italic text-gold">Parçalar</span></>)}
         </h2>
+        {subtitle && <p className="text-[12px] font-body text-text-muted mt-1">{subtitle}</p>}
         <Link
           href="/urunler"
           className="text-[11px] uppercase tracking-[0.15em] font-body text-gold hover:text-gold-light transition-colors hidden sm:block"

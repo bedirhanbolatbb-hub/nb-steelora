@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import HomepageEditor from './HomepageEditor'
+import ContentEditor from './ContentEditor'
 
 interface AdminDashboardProps {
   orders: any[]
@@ -16,6 +17,7 @@ interface AdminDashboardProps {
 
 const tabs = [
   { id: 'homepage', label: '🏠 Ana Sayfa' },
+  { id: 'content', label: '✏️ İçerik' },
   { id: 'orders', label: '📦 Siparişler' },
   { id: 'products', label: '🛍️ Ürünler' },
   { id: 'campaigns', label: '🎯 Kampanyalar' },
@@ -252,6 +254,9 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
         {activeTab === 'homepage' && (
           <HomepageEditor products={localProducts} settings={homepageSettings} />
         )}
+
+        {/* ═══ CONTENT ═══ */}
+        {activeTab === 'content' && <ContentEditor />}
 
         {/* ═══ ORDERS ═══ */}
         {activeTab === 'orders' && (
