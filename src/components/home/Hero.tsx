@@ -1,11 +1,12 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getSiteContent } from '@/lib/supabase/content'
+import HeroGrid from './HeroGrid'
 
 export default async function Hero() {
   const c = await getSiteContent()
-  // null = placeholder göster
+  const singleMode = c.hero_single_mode === 'true'
+
   let heroItems: { image: string | null; slug: string | null }[] = [
     { image: null, slug: null },
     { image: null, slug: null },
@@ -22,12 +23,9 @@ export default async function Hero() {
       .in('section', sections)
 
     if (settings && settings.length > 0) {
-      const allIds = settings
-        .flatMap((s) => s.product_ids || [])
-        .filter(Boolean)
+      const allIds = settings.flatMap((s) => s.product_ids || []).filter(Boolean)
 
       if (allIds.length > 0) {
-        // products tablosundan çek — is_active filtresi YOK
         const { data: products } = await supabase
           .from('products')
           .select('id, slug, trendyol_images')
@@ -50,11 +48,6 @@ export default async function Hero() {
   } catch {
     // Placeholder kalır
   }
-
-  const singleMode = c.hero_single_mode === 'true'
-  const positions = singleMode
-    ? ['center top', 'left bottom', 'right bottom']
-    : ['center center', 'center center', 'center center']
 
   return (
     <section className="min-h-[580px] grid grid-cols-1 lg:grid-cols-2">
@@ -82,53 +75,7 @@ export default async function Hero() {
       </div>
 
       {/* Sağ: Görsel Grid */}
-      <div className="grid grid-rows-2 grid-cols-2 gap-1 order-1 lg:order-2 min-h-[400px] lg:min-h-0">
-        <div className="col-span-2 bg-champagne-dark relative overflow-hidden">
-          {heroItems[0].image ? (
-            heroItems[0].slug ? (
-              <Link href={`/urunler/${heroItems[0].slug}`} className="block absolute inset-0">
-                <Image src={heroItems[0].image} alt="Koleksiyon" fill className="object-cover" style={{ objectPosition: positions[0] }} sizes="(max-width: 1024px) 100vw, 50vw" priority />
-              </Link>
-            ) : (
-              <Image src={heroItems[0].image} alt="Koleksiyon" fill className="object-cover" style={{ objectPosition: positions[0] }} sizes="(max-width: 1024px) 100vw, 50vw" priority />
-            )
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-b from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-              <span className="text-text-muted/40 text-[11px] font-body tracking-wider uppercase">Koleksiyon Görseli</span>
-            </div>
-          )}
-        </div>
-        <div className="bg-champagne-dark relative overflow-hidden">
-          {heroItems[1].image ? (
-            heroItems[1].slug ? (
-              <Link href={`/urunler/${heroItems[1].slug}`} className="block absolute inset-0">
-                <Image src={heroItems[1].image} alt="Ürün" fill className="object-cover" style={{ objectPosition: positions[1] }} sizes="(max-width: 1024px) 50vw, 25vw" priority />
-              </Link>
-            ) : (
-              <Image src={heroItems[1].image} alt="Ürün" fill className="object-cover" style={{ objectPosition: positions[1] }} sizes="(max-width: 1024px) 50vw, 25vw" priority />
-            )
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-              <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 1</span>
-            </div>
-          )}
-        </div>
-        <div className="bg-champagne-dark relative overflow-hidden">
-          {heroItems[2].image ? (
-            heroItems[2].slug ? (
-              <Link href={`/urunler/${heroItems[2].slug}`} className="block absolute inset-0">
-                <Image src={heroItems[2].image} alt="Ürün" fill className="object-cover" style={{ objectPosition: positions[2] }} sizes="(max-width: 1024px) 50vw, 25vw" priority />
-              </Link>
-            ) : (
-              <Image src={heroItems[2].image} alt="Ürün" fill className="object-cover" style={{ objectPosition: positions[2] }} sizes="(max-width: 1024px) 50vw, 25vw" priority />
-            )
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-bl from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-              <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 2</span>
-            </div>
-          )}
-        </div>
-      </div>
+      <HeroGrid items={heroItems} singleMode={singleMode} />
     </section>
   )
 }
