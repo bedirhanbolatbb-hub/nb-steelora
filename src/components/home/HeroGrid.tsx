@@ -9,23 +9,32 @@ export interface HeroItem {
   slug: string | null
 }
 
+// gap-1 = 4px (between rows and between bottom columns)
+const GAP = 4
+
+interface Dims { W: number; topH: number; botH: number }
+
 export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; singleMode: boolean }) {
   const topRef = useRef<HTMLDivElement>(null)
-  const [dims, setDims] = useState<{ W: number; H: number } | null>(null)
+  const botRef = useRef<HTMLDivElement>(null)
+  const [dims, setDims] = useState<Dims | null>(null)
 
   useEffect(() => {
-    const el = topRef.current
-    if (!el) return
-    // Initial synchronous read — covers first paint after hydration
-    const W = el.offsetWidth
-    const H = el.offsetHeight
-    if (W > 0 && H > 0) setDims({ W, H })
+    function measure() {
+      const top = topRef.current
+      const bot = botRef.current
+      if (!top || !bot) return
+      const W = top.offsetWidth
+      const topH = top.offsetHeight
+      const botH = bot.offsetHeight
+      if (W > 0 && topH > 0 && botH > 0) setDims({ W, topH, botH })
+    }
 
-    const obs = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect
-      if (width > 0 && height > 0) setDims({ W: width, H: height })
-    })
-    obs.observe(el)
+    measure()
+
+    const obs = new ResizeObserver(measure)
+    if (topRef.current) obs.observe(topRef.current)
+    if (botRef.current) obs.observe(botRef.current)
     return () => obs.disconnect()
   }, [])
 
@@ -83,34 +92,41 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
   }
 
   // ── Single mode — puzzle background-image split ───────────────────────────
-  // Layout:
-  //   top    → width=W, height=H       (aspect-[2/1])
-  //   bot-L  → width=W/2, height=H/2  (aspect-[2/1] at half width)
-  //   bot-R  → width=W/2, height=H/2
   //
-  // One image stretched to W×1.5H covers all three slots:
-  //   top    → bgPos 0      0
-  //   bot-L  → bgPos 0     -H
-  //   bot-R  → bgPos -(W/2) -H
+  // Composite canvas: W × (topH + GAP + botH)
+  //
+  //  ┌──────────────────────────┐  ← y=0
+  //  │        top slot          │  height = topH
+  //  ├────────────┬─────────────┤  ← y = topH + GAP
+  //  │  bot-left  │  bot-right  │  height = botH
+  //  └────────────┴─────────────┘
+  //  x=0         x = botSlotW + GAP
+  //
+  // Each slot shows its window into the composite via background-position.
+  // bot-right's left edge in the composite = botSlotW + GAP = (W - GAP)/2 + GAP = W/2 + GAP/2
 
   const image = items[0].image
   const slug = items[0].slug
 
-  const bgSize = dims ? `${Math.round(dims.W)}px ${Math.round(dims.H * 1.5)}px` : undefined
+  const bgStyle = (posX: number, posY: number): React.CSSProperties => {
+    if (!image || !dims) return {}
+    const { W, topH, botH } = dims
+    const totalH = topH + GAP + botH
+    return {
+      backgroundImage: `url(${JSON.stringify(image)})`,
+      backgroundRepeat: 'no-repeat',
+      backgroundSize: `${Math.round(W)}px ${Math.round(totalH)}px`,
+      backgroundPosition: `${Math.round(posX)}px ${Math.round(posY)}px`,
+    }
+  }
 
-  const bgStyle = (posX: number, posY: number): React.CSSProperties =>
-    image && dims
-      ? {
-          backgroundImage: `url(${JSON.stringify(image)})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: bgSize,
-          backgroundPosition: `${posX}px ${posY}px`,
-        }
-      : {}
+  const botY = dims ? -(dims.topH + GAP) : 0
+  // Right slot's left edge within composite: (W - GAP)/2 + GAP = W/2 + GAP/2
+  const botRightX = dims ? -(Math.round((dims.W - GAP) / 2) + GAP) : 0
 
   return (
     <div className="flex flex-col gap-1 order-1 lg:order-2">
-      {/* Top slot: full width, sets H via aspect-[2/1] */}
+      {/* Top slot */}
       <div
         ref={topRef}
         className="aspect-[2/1] relative overflow-hidden bg-champagne-dark"
@@ -126,11 +142,11 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
         )}
       </div>
 
-      {/* Bottom row: each child is flex-1 aspect-[2/1] → width=W/2, height=W/4=H/2 */}
-      <div className="flex gap-1">
+      {/* Bottom row */}
+      <div ref={botRef} className="flex gap-1">
         <div
           className="flex-1 aspect-[2/1] relative overflow-hidden bg-champagne-dark"
-          style={bgStyle(0, dims ? -Math.round(dims.H) : 0)}
+          style={bgStyle(0, botY)}
         >
           {!image && (
             <div className="absolute inset-0 bg-gradient-to-br from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
@@ -144,7 +160,7 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
 
         <div
           className="flex-1 aspect-[2/1] relative overflow-hidden bg-champagne-dark"
-          style={bgStyle(dims ? -Math.round(dims.W / 2) : 0, dims ? -Math.round(dims.H) : 0)}
+          style={bgStyle(botRightX, botY)}
         >
           {!image && (
             <div className="absolute inset-0 bg-gradient-to-bl from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
