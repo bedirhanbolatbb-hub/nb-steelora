@@ -1,5 +1,3 @@
-'use client'
-
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -63,51 +61,27 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
     )
   }
 
-  // ── Single mode — cover with positional crop ──────────────────────────────
+  // ── Single mode — one image, overlay link regions ────────────────────────
   const image = items[0].image
   const slug = items[0].slug
-
-  const bgBase: React.CSSProperties = image
-    ? { backgroundImage: `url(${JSON.stringify(image)})`, backgroundSize: 'cover', backgroundRepeat: 'no-repeat' }
-    : {}
-
-  const Placeholder = ({ gradient }: { gradient: string }) => (
-    <div className={`absolute inset-0 ${gradient} flex items-center justify-center`}>
-      <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Görsel</span>
-    </div>
-  )
-
-  const SlotLink = () =>
-    image && slug ? <Link href={`/urunler/${slug}`} className="absolute inset-0" aria-label="Ürüne git" /> : null
+  const href = slug ? `/urunler/${slug}` : null
 
   return (
-    <div className="flex flex-col gap-1 order-1 lg:order-2">
-      {/* Top: W × H */}
-      <div
-        className="aspect-[2/1] relative overflow-hidden bg-champagne-dark w-full"
-        style={{ ...bgBase, backgroundPosition: 'center 25%' }}
-      >
-        {!image && <Placeholder gradient="bg-gradient-to-b from-champagne-mid/20 to-champagne-dark" />}
-        <SlotLink />
-      </div>
-
-      {/* Bottom row: each W/2 × H/2 */}
-      <div className="flex gap-1">
-        <div
-          className="flex-1 aspect-[2/1] relative overflow-hidden bg-champagne-dark"
-          style={{ ...bgBase, backgroundPosition: 'left 75%' }}
-        >
-          {!image && <Placeholder gradient="bg-gradient-to-br from-champagne-mid/20 to-champagne-dark" />}
-          <SlotLink />
+    <div className="relative w-full aspect-[4/3] order-1 lg:order-2 overflow-hidden bg-champagne-dark">
+      {image ? (
+        <Image src={image} alt="Koleksiyon" fill className="object-cover object-center" sizes="(max-width: 1024px) 100vw, 50vw" priority />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-b from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
+          <span className="text-text-muted/40 text-[11px] font-body tracking-wider uppercase">Koleksiyon Görseli</span>
         </div>
-        <div
-          className="flex-1 aspect-[2/1] relative overflow-hidden bg-champagne-dark"
-          style={{ ...bgBase, backgroundPosition: 'right 75%' }}
-        >
-          {!image && <Placeholder gradient="bg-gradient-to-bl from-champagne-mid/20 to-champagne-dark" />}
-          <SlotLink />
-        </div>
-      </div>
+      )}
+      {href && (
+        <>
+          <Link href={href} className="absolute top-0 left-0 w-full h-[66.67%]" aria-label="Ürüne git" />
+          <Link href={href} className="absolute bottom-0 left-0 w-1/2 h-[33.33%]" aria-label="Ürüne git" />
+          <Link href={href} className="absolute bottom-0 right-0 w-1/2 h-[33.33%]" aria-label="Ürüne git" />
+        </>
+      )}
     </div>
   )
 }
