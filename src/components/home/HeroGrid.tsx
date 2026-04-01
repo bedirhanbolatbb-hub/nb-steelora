@@ -61,15 +61,15 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
     )
   }
 
-  // ── Single mode — one image, overlay link regions ────────────────────────
+  // ── Single mode — 2:3 vertical image, overlay link regions ─────────────
   const image = items[0].image
   const slug = items[0].slug
   const href = slug ? `/urunler/${slug}` : null
 
   return (
-    <div className="relative w-full aspect-[4/3] order-1 lg:order-2 overflow-hidden bg-champagne-dark">
+    <div className="relative w-full order-1 lg:order-2 bg-champagne-dark" style={{ aspectRatio: '2/3' }}>
       {image ? (
-        <Image src={image} alt="Koleksiyon" fill className="object-cover object-center" sizes="(max-width: 1024px) 100vw, 50vw" priority />
+        <Image src={image} alt="Koleksiyon" fill className="object-contain object-center" sizes="(max-width: 1024px) 100vw, 50vw" priority />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-b from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
           <span className="text-text-muted/40 text-[11px] font-body tracking-wider uppercase">Koleksiyon Görseli</span>
@@ -77,9 +77,9 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
       )}
       {href && (
         <>
-          <Link href={href} className="absolute top-0 left-0 w-full h-[66.67%]" aria-label="Ürüne git" />
-          <Link href={href} className="absolute bottom-0 left-0 w-1/2 h-[33.33%]" aria-label="Ürüne git" />
-          <Link href={href} className="absolute bottom-0 right-0 w-1/2 h-[33.33%]" aria-label="Ürüne git" />
+          <Link href={href} className="absolute top-0 left-0 w-full h-2/3" aria-label="Ürüne git" />
+          <Link href={href} className="absolute bottom-0 left-0 w-1/2 h-1/3" aria-label="Ürüne git" />
+          <Link href={href} className="absolute bottom-0 right-0 w-1/2 h-1/3" aria-label="Ürüne git" />
         </>
       )}
     </div>
