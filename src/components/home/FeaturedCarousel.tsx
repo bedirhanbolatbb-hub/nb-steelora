@@ -8,6 +8,9 @@ const CARD_GAP = 24
 const AUTOPLAY_MS = 3000
 
 export default function FeaturedCarousel({ products }: { products: Product[] }) {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[FeaturedCarousel] product count:', products.length, products.map((p) => p.id))
+  }
   const trackRef = useRef<HTMLDivElement>(null)
   const [cardW, setCardW] = useState(0)
   const [offset, setOffset] = useState(0)

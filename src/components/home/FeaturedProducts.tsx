@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { createServiceClient } from '@/lib/supabase/service'
 import { getSiteContent } from '@/lib/supabase/content'
 import FeaturedCarousel from './FeaturedCarousel'
 
@@ -13,50 +12,39 @@ export default async function FeaturedProducts({ title, subtitle }: Props = {}) 
   let products: any[] = []
 
   try {
-    const service = createServiceClient()
     const supabase = await createClient()
 
-    const { data: settings } = await service
-      .from('homepage_settings')
-      .select('product_ids')
-      .eq('section', 'featured')
-      .single()
+    // Tüm aktif ürünleri çek — carousel için limit yok
+    const { data } = await supabase
+      .from('products_display')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-    const ids = (settings?.product_ids as string[]) || []
+    products = data || []
 
-    if (ids.length > 0) {
-      const { data } = await service
-        .from('products')
-        .select('*, display_title:trendyol_title, display_price:trendyol_price, display_images:trendyol_images')
-        .in('id', ids)
-
-      if (data && data.length > 0) {
-        products = ids.map((id) => data.find((p: any) => p.id === id)).filter(Boolean)
-      }
-    }
-
-    if (products.length === 0) {
-      const { data } = await supabase
-        .from('products_display')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(8)
-
-      if (data && data.length > 0) products = data
-    }
-
-    // Apply saved display order
+    // Apply priority order: featured_order ids first, then homepage featured ids, then rest
     const c = await getSiteContent()
+    let priorityIds: string[] = []
+
     if (c.featured_order) {
-      try {
-        const order: string[] = JSON.parse(c.featured_order)
-        if (order.length > 0) {
-          const map = new Map(products.map((p: any) => [p.id, p]))
-          const ordered = order.map((id) => map.get(id)).filter(Boolean)
-          const rest = products.filter((p: any) => !order.includes(p.id))
-          products = [...ordered, ...rest]
-        }
-      } catch { /* ignore malformed JSON */ }
+      try { priorityIds = JSON.parse(c.featured_order) } catch { /* ignore */ }
+    }
+
+    if (priorityIds.length === 0) {
+      // Fallback priority: whatever admin pinned in homepage_settings
+      const { data: settings } = await supabase
+        .from('homepage_settings')
+        .select('product_ids')
+        .eq('section', 'featured')
+        .single()
+      priorityIds = (settings?.product_ids as string[]) || []
+    }
+
+    if (priorityIds.length > 0) {
+      const map = new Map(products.map((p: any) => [p.id, p]))
+      const prioritized = priorityIds.map((id) => map.get(id)).filter(Boolean)
+      const rest = products.filter((p: any) => !priorityIds.includes(p.id))
+      products = [...prioritized, ...rest]
     }
   } catch {
     // Boş göster
