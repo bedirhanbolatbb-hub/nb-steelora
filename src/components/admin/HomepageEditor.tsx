@@ -32,14 +32,23 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
   const [heroSingleMode, setHeroSingleMode] = useState(false)
   const [singlePicker, setSinglePicker] = useState(false)
   const [singleSearch, setSingleSearch] = useState('')
+  // Featured order state
+  const [featuredOrder, setFeaturedOrder] = useState<string[]>([])
+  const [orderSearch, setOrderSearch] = useState('')
+  const [orderSaving, setOrderSaving] = useState(false)
+  const [orderSaved, setOrderSaved] = useState(false)
 
-  // Load hero_single_mode from site_content on mount
+  // Load hero_single_mode and featured_order from site_content on mount
   useEffect(() => {
     fetch('/api/admin/content')
       .then((r) => r.json())
       .then(({ data }) => {
-        const row = data?.find((r: any) => r.key === 'hero_single_mode')
-        if (row?.value === 'true') setHeroSingleMode(true)
+        const singleRow = data?.find((r: any) => r.key === 'hero_single_mode')
+        if (singleRow?.value === 'true') setHeroSingleMode(true)
+        const orderRow = data?.find((r: any) => r.key === 'featured_order')
+        if (orderRow?.value) {
+          try { setFeaturedOrder(JSON.parse(orderRow.value)) } catch { /* ignore */ }
+        }
       })
   }, [])
 
@@ -113,6 +122,52 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
+
+  // ── Featured order helpers ────────────────────────────────────────────────
+  const featuredIds = settings.featured || []
+
+  // Effective display order: featuredOrder ids first (if they're in featuredIds), then the rest
+  const orderedFeaturedIds = [
+    ...featuredOrder.filter((id) => featuredIds.includes(id)),
+    ...featuredIds.filter((id) => !featuredOrder.includes(id)),
+  ]
+
+  const moveOrder = (index: number, dir: -1 | 1) => {
+    const next = [...orderedFeaturedIds]
+    const swap = index + dir
+    if (swap < 0 || swap >= next.length) return
+    ;[next[index], next[swap]] = [next[swap], next[index]]
+    setFeaturedOrder(next)
+  }
+
+  const shuffleOrder = () => {
+    const shuffled = [...orderedFeaturedIds]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    setFeaturedOrder(shuffled)
+  }
+
+  const saveOrder = async () => {
+    setOrderSaving(true)
+    await fetch('/api/admin/content', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'featured_order', value: JSON.stringify(orderedFeaturedIds) }),
+    })
+    setFeaturedOrder(orderedFeaturedIds)
+    setOrderSaving(false)
+    setOrderSaved(true)
+    setTimeout(() => setOrderSaved(false), 2000)
+  }
+
+  const filteredOrderProducts = products.filter((p: any) => {
+    if (!p.is_active) return false
+    if (!orderSearch) return true
+    const q = orderSearch.toLowerCase()
+    return p.display_title?.toLowerCase().includes(q) || (p.trendyol_barcode || '').toLowerCase().includes(q)
+  })
 
   const filteredPicker = products.filter((p: any) => {
     if (!p.is_active) return false
@@ -280,6 +335,93 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
           ))}
         </div>
       </div>
+
+      {/* ── Featured Order Editor ── */}
+      {orderedFeaturedIds.length > 0 && (
+        <div className="mt-6 border border-champagne-mid bg-white p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-heading text-[16px] text-text-primary">Öne Çıkan — Carousel Sırası</h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={shuffleOrder}
+                className="px-3 py-1.5 border border-champagne-mid text-[11px] font-body text-text-muted hover:border-gold hover:text-gold transition-colors"
+              >
+                ⇌ Rastgele Sırala
+              </button>
+              <button
+                onClick={saveOrder}
+                disabled={orderSaving}
+                className="px-4 py-1.5 bg-gold text-white text-[11px] font-body uppercase tracking-wider hover:bg-gold-light transition-colors disabled:opacity-50"
+              >
+                {orderSaving ? 'Kaydediliyor...' : orderSaved ? 'Kaydedildi ✓' : 'Sırayı Kaydet'}
+              </button>
+            </div>
+          </div>
+
+          {/* Ordered list */}
+          <div className="divide-y divide-champagne-mid/30 mb-4">
+            {orderedFeaturedIds.map((id, i) => {
+              const p = getProduct(id)
+              if (!p) return null
+              const img = p.display_images?.[0] || p.trendyol_images?.[0]
+              return (
+                <div key={id} className="flex items-center gap-3 py-2">
+                  <span className="w-5 text-[10px] font-body text-text-muted text-right shrink-0">{i + 1}</span>
+                  <div className="w-8 h-8 bg-champagne-dark shrink-0 overflow-hidden">
+                    {img && <img src={img} alt="" className="w-full h-full object-cover" />}
+                  </div>
+                  <p className="flex-1 text-[12px] font-body truncate">{p.display_title}</p>
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      onClick={() => moveOrder(i, -1)}
+                      disabled={i === 0}
+                      className="w-6 h-6 flex items-center justify-center border border-champagne-mid text-[10px] hover:border-gold hover:text-gold disabled:opacity-30 transition-colors"
+                    >↑</button>
+                    <button
+                      onClick={() => moveOrder(i, 1)}
+                      disabled={i === orderedFeaturedIds.length - 1}
+                      className="w-6 h-6 flex items-center justify-center border border-champagne-mid text-[10px] hover:border-gold hover:text-gold disabled:opacity-30 transition-colors"
+                    >↓</button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Search to add unlisted products */}
+          <div>
+            <input
+              type="text"
+              placeholder="Listeye ürün ekle — adı veya barkod ile ara..."
+              value={orderSearch}
+              onChange={(e) => setOrderSearch(e.target.value)}
+              className="w-full px-3 py-2 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none"
+            />
+            {orderSearch && (
+              <div className="border border-t-0 border-champagne-mid max-h-48 overflow-y-auto">
+                {filteredOrderProducts
+                  .filter((p: any) => !orderedFeaturedIds.includes(p.id))
+                  .slice(0, 10)
+                  .map((p: any) => (
+                    <button
+                      key={p.id}
+                      onClick={() => { setFeaturedOrder([...orderedFeaturedIds, p.id]); setOrderSearch('') }}
+                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-champagne transition-colors text-left border-b border-champagne-mid/30"
+                    >
+                      <div className="w-8 h-8 bg-champagne-dark shrink-0 overflow-hidden">
+                        {(p.display_images?.[0] || p.trendyol_images?.[0]) && (
+                          <img src={p.display_images?.[0] || p.trendyol_images?.[0]} alt="" className="w-full h-full object-cover" />
+                        )}
+                      </div>
+                      <p className="text-[12px] font-body truncate">{p.display_title}</p>
+                      <span className="ml-auto text-[10px] font-body text-gold shrink-0">+ Ekle</span>
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Normal slot picker modal ── */}
       {picker && (

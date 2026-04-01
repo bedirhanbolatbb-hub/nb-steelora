@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { getSiteContent } from '@/lib/supabase/content'
 import FeaturedCarousel from './FeaturedCarousel'
 
 interface Props {
@@ -42,6 +43,20 @@ export default async function FeaturedProducts({ title, subtitle }: Props = {}) 
         .limit(8)
 
       if (data && data.length > 0) products = data
+    }
+
+    // Apply saved display order
+    const c = await getSiteContent()
+    if (c.featured_order) {
+      try {
+        const order: string[] = JSON.parse(c.featured_order)
+        if (order.length > 0) {
+          const map = new Map(products.map((p: any) => [p.id, p]))
+          const ordered = order.map((id) => map.get(id)).filter(Boolean)
+          const rest = products.filter((p: any) => !order.includes(p.id))
+          products = [...ordered, ...rest]
+        }
+      } catch { /* ignore malformed JSON */ }
     }
   } catch {
     // Boş göster
