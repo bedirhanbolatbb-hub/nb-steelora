@@ -51,6 +51,11 @@ export default async function Hero() {
     // Placeholder kalır
   }
 
+  const singleMode = c.hero_single_mode === 'true'
+  const positions = singleMode
+    ? ['center top', 'left bottom', 'right bottom']
+    : ['center center', 'center center', 'center center']
+
   return (
     <section className="min-h-[580px] grid grid-cols-1 lg:grid-cols-2">
       {/* Sol: İçerik */}
@@ -82,10 +87,10 @@ export default async function Hero() {
           {heroItems[0].image ? (
             heroItems[0].slug ? (
               <Link href={`/urunler/${heroItems[0].slug}`} className="block absolute inset-0">
-                <Image src={heroItems[0].image} alt="Koleksiyon" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" priority />
+                <Image src={heroItems[0].image} alt="Koleksiyon" fill className="object-cover" style={{ objectPosition: positions[0] }} sizes="(max-width: 1024px) 100vw, 50vw" priority />
               </Link>
             ) : (
-              <Image src={heroItems[0].image} alt="Koleksiyon" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" priority />
+              <Image src={heroItems[0].image} alt="Koleksiyon" fill className="object-cover" style={{ objectPosition: positions[0] }} sizes="(max-width: 1024px) 100vw, 50vw" priority />
             )
           ) : (
             <div className="absolute inset-0 bg-gradient-to-b from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
@@ -97,10 +102,10 @@ export default async function Hero() {
           {heroItems[1].image ? (
             heroItems[1].slug ? (
               <Link href={`/urunler/${heroItems[1].slug}`} className="block absolute inset-0">
-                <Image src={heroItems[1].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
+                <Image src={heroItems[1].image} alt="Ürün" fill className="object-cover" style={{ objectPosition: positions[1] }} sizes="(max-width: 1024px) 50vw, 25vw" priority />
               </Link>
             ) : (
-              <Image src={heroItems[1].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
+              <Image src={heroItems[1].image} alt="Ürün" fill className="object-cover" style={{ objectPosition: positions[1] }} sizes="(max-width: 1024px) 50vw, 25vw" priority />
             )
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
@@ -112,10 +117,10 @@ export default async function Hero() {
           {heroItems[2].image ? (
             heroItems[2].slug ? (
               <Link href={`/urunler/${heroItems[2].slug}`} className="block absolute inset-0">
-                <Image src={heroItems[2].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
+                <Image src={heroItems[2].image} alt="Ürün" fill className="object-cover" style={{ objectPosition: positions[2] }} sizes="(max-width: 1024px) 50vw, 25vw" priority />
               </Link>
             ) : (
-              <Image src={heroItems[2].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
+              <Image src={heroItems[2].image} alt="Ürün" fill className="object-cover" style={{ objectPosition: positions[2] }} sizes="(max-width: 1024px) 50vw, 25vw" priority />
             )
           ) : (
             <div className="absolute inset-0 bg-gradient-to-bl from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
