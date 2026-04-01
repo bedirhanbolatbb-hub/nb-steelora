@@ -14,7 +14,6 @@ export default async function FeaturedProducts({ title, subtitle }: Props = {}) 
   try {
     const supabase = await createClient()
 
-    // Tüm aktif ürünleri çek — carousel için limit yok
     const { data } = await supabase
       .from('products_display')
       .select('*')
@@ -22,29 +21,18 @@ export default async function FeaturedProducts({ title, subtitle }: Props = {}) 
 
     products = data || []
 
-    // Apply priority order: featured_order ids first, then homepage featured ids, then rest
+    // Apply featured_order from site_content if present
     const c = await getSiteContent()
-    let priorityIds: string[] = []
-
     if (c.featured_order) {
-      try { priorityIds = JSON.parse(c.featured_order) } catch { /* ignore */ }
-    }
-
-    if (priorityIds.length === 0) {
-      // Fallback priority: whatever admin pinned in homepage_settings
-      const { data: settings } = await supabase
-        .from('homepage_settings')
-        .select('product_ids')
-        .eq('section', 'featured')
-        .single()
-      priorityIds = (settings?.product_ids as string[]) || []
-    }
-
-    if (priorityIds.length > 0) {
-      const map = new Map(products.map((p: any) => [p.id, p]))
-      const prioritized = priorityIds.map((id) => map.get(id)).filter(Boolean)
-      const rest = products.filter((p: any) => !priorityIds.includes(p.id))
-      products = [...prioritized, ...rest]
+      try {
+        const order: string[] = JSON.parse(c.featured_order)
+        if (order.length > 0) {
+          const map = new Map(products.map((p: any) => [p.id, p]))
+          const prioritized = order.map((id) => map.get(id)).filter(Boolean)
+          const rest = products.filter((p: any) => !order.includes(p.id))
+          products = [...prioritized, ...rest]
+        }
+      } catch { /* ignore malformed JSON */ }
     }
   } catch {
     // Boş göster
