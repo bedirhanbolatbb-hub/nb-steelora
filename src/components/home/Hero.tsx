@@ -3,8 +3,12 @@ import Image from 'next/image'
 import { createServiceClient } from '@/lib/supabase/service'
 
 export default async function Hero() {
-  // null = placeholder göster, string = görsel URL
-  let heroImages: (string | null)[] = [null, null, null]
+  // null = placeholder göster
+  let heroItems: { image: string | null; slug: string | null }[] = [
+    { image: null, slug: null },
+    { image: null, slug: null },
+    { image: null, slug: null },
+  ]
 
   try {
     const supabase = createServiceClient()
@@ -24,17 +28,20 @@ export default async function Hero() {
         // products tablosundan çek — is_active filtresi YOK
         const { data: products } = await supabase
           .from('products')
-          .select('id, trendyol_images')
+          .select('id, slug, trendyol_images')
           .in('id', allIds)
 
         const productMap = new Map(
-          (products || []).map((p) => [p.id, (p.trendyol_images as string[])?.[0]])
+          (products || []).map((p) => [
+            p.id,
+            { image: (p.trendyol_images as string[])?.[0] ?? null, slug: (p.slug as string) ?? null },
+          ])
         )
 
-        heroImages = sections.map((sec) => {
+        heroItems = sections.map((sec) => {
           const row = settings.find((s) => s.section === sec)
           const pid = row?.product_ids?.[0]
-          return pid ? productMap.get(pid) || null : null
+          return pid ? (productMap.get(pid) ?? { image: null, slug: null }) : { image: null, slug: null }
         })
       }
     }
@@ -71,8 +78,14 @@ export default async function Hero() {
       {/* Sağ: Görsel Grid */}
       <div className="grid grid-rows-2 grid-cols-2 gap-1 order-1 lg:order-2 min-h-[400px] lg:min-h-0">
         <div className="col-span-2 bg-champagne-dark relative overflow-hidden">
-          {heroImages[0] ? (
-            <Image src={heroImages[0]} alt="Koleksiyon" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" priority />
+          {heroItems[0].image ? (
+            heroItems[0].slug ? (
+              <Link href={`/urunler/${heroItems[0].slug}`} className="block absolute inset-0">
+                <Image src={heroItems[0].image} alt="Koleksiyon" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" priority />
+              </Link>
+            ) : (
+              <Image src={heroItems[0].image} alt="Koleksiyon" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" priority />
+            )
           ) : (
             <div className="absolute inset-0 bg-gradient-to-b from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
               <span className="text-text-muted/40 text-[11px] font-body tracking-wider uppercase">Koleksiyon Görseli</span>
@@ -80,8 +93,14 @@ export default async function Hero() {
           )}
         </div>
         <div className="bg-champagne-dark relative overflow-hidden">
-          {heroImages[1] ? (
-            <Image src={heroImages[1]} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
+          {heroItems[1].image ? (
+            heroItems[1].slug ? (
+              <Link href={`/urunler/${heroItems[1].slug}`} className="block absolute inset-0">
+                <Image src={heroItems[1].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
+              </Link>
+            ) : (
+              <Image src={heroItems[1].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
+            )
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
               <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 1</span>
@@ -89,8 +108,14 @@ export default async function Hero() {
           )}
         </div>
         <div className="bg-champagne-dark relative overflow-hidden">
-          {heroImages[2] ? (
-            <Image src={heroImages[2]} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
+          {heroItems[2].image ? (
+            heroItems[2].slug ? (
+              <Link href={`/urunler/${heroItems[2].slug}`} className="block absolute inset-0">
+                <Image src={heroItems[2].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
+              </Link>
+            ) : (
+              <Image src={heroItems[2].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
+            )
           ) : (
             <div className="absolute inset-0 bg-gradient-to-bl from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
               <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 2</span>
