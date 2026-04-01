@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { formatPrice } from '@/lib/utils'
 
 interface HomepageEditorProps {
@@ -29,6 +29,19 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
   const [pickerSearch, setPickerSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [heroSingleMode, setHeroSingleMode] = useState(false)
+  const [singlePicker, setSinglePicker] = useState(false)
+  const [singleSearch, setSingleSearch] = useState('')
+
+  // Load hero_single_mode from site_content on mount
+  useEffect(() => {
+    fetch('/api/admin/content')
+      .then((r) => r.json())
+      .then(({ data }) => {
+        const row = data?.find((r: any) => r.key === 'hero_single_mode')
+        if (row?.value === 'true') setHeroSingleMode(true)
+      })
+  }, [])
 
   const getProduct = (id: string) => products.find((p) => p.id === id)
   const getImage = (section: string, slot = 0) => {
@@ -36,6 +49,13 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
     const p = getProduct(ids[slot])
     return p?.display_images?.[0] || p?.trendyol_images?.[0] || null
   }
+
+  // The product currently assigned to all 3 hero slots (single mode)
+  const heroSingleProductId = settings['hero_top']?.[0] || null
+  const heroSingleProduct = heroSingleProductId ? getProduct(heroSingleProductId) : null
+  const heroSingleImage = heroSingleProduct
+    ? heroSingleProduct.display_images?.[0] || heroSingleProduct.trendyol_images?.[0] || null
+    : null
 
   const selectProduct = (productId: string) => {
     if (!picker) return
@@ -47,8 +67,35 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
     setPickerSearch('')
   }
 
+  const selectSingleProduct = (productId: string) => {
+    setSettings({
+      ...settings,
+      hero_top: [productId],
+      hero_bottom_left: [productId],
+      hero_bottom_right: [productId],
+    })
+    setSinglePicker(false)
+    setSingleSearch('')
+  }
+
+  const toggleSingleMode = (enabled: boolean) => {
+    setHeroSingleMode(enabled)
+    // When turning on: if there's already a selection in hero_top, propagate to others
+    if (enabled) {
+      const existingId = settings['hero_top']?.[0]
+      if (existingId) {
+        setSettings({
+          ...settings,
+          hero_bottom_left: [existingId],
+          hero_bottom_right: [existingId],
+        })
+      }
+    }
+  }
+
   const saveAll = async () => {
     setSaving(true)
+    // Save homepage section settings
     for (const [section, ids] of Object.entries(settings)) {
       await fetch('/api/admin/homepage', {
         method: 'POST',
@@ -56,6 +103,12 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
         body: JSON.stringify({ section, product_ids: ids }),
       })
     }
+    // Save hero_single_mode to site_content
+    await fetch('/api/admin/content', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'hero_single_mode', value: heroSingleMode ? 'true' : 'false' }),
+    })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -65,6 +118,16 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
     if (!p.is_active) return false
     if (!pickerSearch) return true
     const q = pickerSearch.toLowerCase()
+    return (
+      p.display_title?.toLowerCase().includes(q) ||
+      (p.trendyol_barcode || '').toLowerCase().includes(q)
+    )
+  })
+
+  const filteredSinglePicker = products.filter((p: any) => {
+    if (!p.is_active) return false
+    if (!singleSearch) return true
+    const q = singleSearch.toLowerCase()
     return (
       p.display_title?.toLowerCase().includes(q) ||
       (p.trendyol_barcode || '').toLowerCase().includes(q)
@@ -117,7 +180,23 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
       <div className="bg-white border border-champagne-mid p-4 origin-top-left" style={{ transform: 'scale(0.85)', transformOrigin: 'top left', width: '117.6%' }}>
 
         {/* ── Hero ── */}
-        <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-2">Hero Bölümü</p>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[9px] font-body text-gold uppercase tracking-widest">Hero Bölümü</p>
+          {/* Single mode toggle */}
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <span className="text-[9px] font-body text-text-muted uppercase tracking-wider">Tek Ürün Modu</span>
+            <button
+              type="button"
+              onClick={() => toggleSingleMode(!heroSingleMode)}
+              className={`relative w-9 h-5 rounded-full transition-colors ${heroSingleMode ? 'bg-gold' : 'bg-champagne-mid'}`}
+            >
+              <span
+                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${heroSingleMode ? 'translate-x-4' : 'translate-x-0.5'}`}
+              />
+            </button>
+          </label>
+        </div>
+
         <div className="grid grid-cols-2 gap-1 mb-6">
           <div className="bg-dark-mid p-6 flex flex-col justify-center">
             <span className="text-[8px] text-gold uppercase tracking-widest font-body">Yeni Koleksiyon — 2026</span>
@@ -125,13 +204,41 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
               Her anın <span className="italic text-gold">zarif</span> tanığı
             </p>
           </div>
-          <div className="grid grid-rows-2 grid-cols-2 gap-1">
-            <div className="col-span-2">
-              <Slot section="hero_top" aspectClass="aspect-[2/1]" />
+
+          {heroSingleMode ? (
+            /* Single product mode: one click area fills all 3 slots */
+            <div
+              className="relative group cursor-pointer overflow-hidden bg-champagne-dark"
+              onClick={() => { setSinglePicker(true); setSingleSearch('') }}
+            >
+              {heroSingleImage ? (
+                <img src={heroSingleImage} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full gap-2 text-text-muted">
+                  <span className="text-[20px]">+</span>
+                  <span className="text-[9px] font-body uppercase tracking-wider">Ürün Seç</span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-dark/0 group-hover:bg-dark/60 transition-colors flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 gap-1">
+                <span className="text-white text-[11px] font-body">✎ Değiştir</span>
+                <span className="text-white/60 text-[9px] font-body">3 slota uygulanır</span>
+              </div>
+              {heroSingleProduct && (
+                <div className="absolute bottom-0 left-0 right-0 bg-dark/70 px-2 py-1">
+                  <p className="text-[8px] text-champagne truncate">{heroSingleProduct.display_title}</p>
+                </div>
+              )}
             </div>
-            <Slot section="hero_bottom_left" />
-            <Slot section="hero_bottom_right" />
-          </div>
+          ) : (
+            /* Normal mode: 3 separate slots */
+            <div className="grid grid-rows-2 grid-cols-2 gap-1">
+              <div className="col-span-2">
+                <Slot section="hero_top" aspectClass="aspect-[2/1]" />
+              </div>
+              <Slot section="hero_bottom_left" />
+              <Slot section="hero_bottom_right" />
+            </div>
+          )}
         </div>
 
         {/* ── Öne Çıkan ── */}
@@ -174,7 +281,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
         </div>
       </div>
 
-      {/* ── Picker Modal ── */}
+      {/* ── Normal slot picker modal ── */}
       {picker && (
         <div className="fixed inset-0 bg-dark/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-lg max-h-[70vh] flex flex-col">
@@ -216,6 +323,58 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
                 </button>
               ))}
               {filteredPicker.length === 0 && (
+                <p className="p-4 text-center text-text-muted text-[12px] font-body">Ürün bulunamadı</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Single mode picker modal ── */}
+      {singlePicker && (
+        <div className="fixed inset-0 bg-dark/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg max-h-[70vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-champagne-mid">
+              <div>
+                <h3 className="font-heading text-[18px]">Tek Ürün — Hero</h3>
+                <p className="text-[10px] font-body text-text-muted mt-0.5">Seçilen ürün 3 slota da uygulanır</p>
+              </div>
+              <button onClick={() => setSinglePicker(false)} className="text-text-muted hover:text-text-primary">✕</button>
+            </div>
+            <div className="px-4 py-2 border-b border-champagne-mid">
+              <input
+                type="text"
+                placeholder="Ürün adı veya barkod ile ara..."
+                value={singleSearch}
+                onChange={(e) => setSingleSearch(e.target.value)}
+                className="w-full px-3 py-2 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none"
+                autoFocus
+              />
+            </div>
+            <div className="overflow-y-auto flex-1">
+              {filteredSinglePicker.map((p: any) => (
+                <button
+                  key={p.id}
+                  onClick={() => selectSingleProduct(p.id)}
+                  className={`w-full flex items-center gap-3 p-3 hover:bg-champagne transition-colors text-left border-b border-champagne-mid/30 ${heroSingleProductId === p.id ? 'bg-gold/10' : ''}`}
+                >
+                  <div className="w-12 h-12 bg-champagne-dark shrink-0 overflow-hidden">
+                    {(p.display_images?.[0] || p.trendyol_images?.[0]) && (
+                      <img src={p.display_images?.[0] || p.trendyol_images?.[0]} alt="" className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-body truncate">{p.display_title}</p>
+                    <p className="text-[10px] text-text-muted font-body">
+                      {p.trendyol_barcode || ''} · {p.trendyol_category} · {formatPrice(p.custom_price ?? p.display_price)}
+                    </p>
+                  </div>
+                  {heroSingleProductId === p.id && (
+                    <span className="text-gold text-[10px] font-body shrink-0">✓ Seçili</span>
+                  )}
+                </button>
+              ))}
+              {filteredSinglePicker.length === 0 && (
                 <p className="p-4 text-center text-text-muted text-[12px] font-body">Ürün bulunamadı</p>
               )}
             </div>
