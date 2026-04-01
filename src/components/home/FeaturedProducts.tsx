@@ -20,6 +20,7 @@ export default async function FeaturedProducts({ title, subtitle }: Props = {}) 
       .order('created_at', { ascending: false })
 
     products = data || []
+    console.log('[FeaturedProducts] products_display row count:', products.length)
 
     // Apply featured_order from site_content if present
     const c = await getSiteContent()
