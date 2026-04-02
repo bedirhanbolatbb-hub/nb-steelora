@@ -220,7 +220,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
           </div>
         )}
         <div className="absolute inset-0 bg-dark/0 group-hover:bg-dark/60 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-          <span className="text-white text-[11px] font-body">✎ Değiştir</span>
+          <span className="text-white text-[9px] font-body">✎ Değiştir</span>
         </div>
         {p && (
           <div className="absolute bottom-0 left-0 right-0 bg-dark/70 px-2 py-1">
@@ -235,9 +235,9 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
     <button
       type="button"
       onClick={() => toggleSection(sectionKey)}
-      className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-champagne/50 transition-colors"
+      className="w-full flex items-center justify-between px-3 py-2 bg-white hover:bg-champagne/50 transition-colors"
     >
-      <span className="text-base font-semibold font-body text-text-primary">{label}</span>
+      <span className="text-sm font-semibold font-body text-text-primary">{label}</span>
       <span className="text-text-muted text-xs">{openSections[sectionKey] ? '▲' : '▼'}</span>
     </button>
   )
@@ -257,13 +257,13 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
       </div>
 
       {/* ── Görsel Editör accordion ── */}
-      <div className="border border-champagne-mid mb-3">
+      <div className="border border-champagne-mid mb-2">
         <AccordionHeader sectionKey="editor" label="Görsel Editör" />
         {openSections['editor'] && (
-          <div className="bg-white border-t border-champagne-mid p-4 origin-top-left" style={{ transform: 'scale(0.85)', transformOrigin: 'top left', width: '117.6%' }}>
+          <div className="bg-white border-t border-champagne-mid p-3">
 
             {/* ── Hero ── */}
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-1">
               <p className="text-[9px] font-body text-gold uppercase tracking-widest">Hero Bölümü</p>
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <span className="text-[9px] font-body text-text-muted uppercase tracking-wider">Tek Ürün Modu</span>
@@ -279,7 +279,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-1 mb-6">
+            <div className="grid grid-cols-2 gap-1 mb-3">
               <div className="bg-dark-mid p-6 flex flex-col justify-center">
                 <span className="text-[8px] text-gold uppercase tracking-widest font-body">Yeni Koleksiyon — 2026</span>
                 <p className="font-heading text-[24px] text-champagne font-light leading-tight mt-2">
@@ -322,8 +322,8 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
             </div>
 
             {/* ── Öne Çıkan ── */}
-            <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-2">Öne Çıkan Parçalar</p>
-            <div className="grid grid-cols-4 gap-2 mb-6">
+            <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-1">Öne Çıkan Parçalar</p>
+            <div className="grid grid-cols-4 gap-1 mb-3">
               {[0, 1, 2, 3].map((slot) => (
                 <div key={slot}>
                   <Slot section="featured" slot={slot} aspectClass="aspect-[3/4]" />
@@ -335,8 +335,8 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
             </div>
 
             {/* ── Kategoriler ── */}
-            <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-2">Kategoriler</p>
-            <div className="grid grid-cols-5 gap-2 mb-6">
+            <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-1">Kategoriler</p>
+            <div className="grid grid-cols-5 gap-1 mb-3">
               {(['category_kolye', 'category_kupe', 'category_yuzuk', 'category_bileklik', 'category_setler'] as const).map((key) => (
                 <div key={key}>
                   <Slot section={key} />
@@ -348,8 +348,8 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
             </div>
 
             {/* ── Yeni Gelenler ── */}
-            <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-2">Yeni Gelenler</p>
-            <div className="grid grid-cols-4 gap-2">
+            <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-1">Yeni Gelenler</p>
+            <div className="grid grid-cols-4 gap-1">
               {[0, 1, 2, 3].map((slot) => (
                 <div key={slot}>
                   <Slot section="new_arrivals" slot={slot} aspectClass="aspect-[3/4]" />
@@ -365,12 +365,12 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
 
       {/* ── Carousel Sırası accordion ── */}
       {orderedFeaturedIds.length > 0 && (
-        <div className="border border-champagne-mid mb-3">
+        <div className="border border-champagne-mid mb-2">
           <AccordionHeader sectionKey="carousel" label="Carousel Sırası" />
           {openSections['carousel'] && (
-            <div className="bg-white border-t border-champagne-mid p-4">
+            <div className="bg-white border-t border-champagne-mid p-3">
               {/* Action buttons */}
-              <div className="flex items-center justify-end gap-2 mb-4">
+              <div className="flex items-center justify-end gap-2 mb-3">
                 <button
                   onClick={shuffleOrder}
                   className="px-3 py-1.5 border border-champagne-mid text-[11px] font-body text-text-muted hover:border-gold hover:text-gold transition-colors"
@@ -387,7 +387,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
               </div>
 
               {/* Search to add unlisted products */}
-              <div className="relative mb-4" onMouseDown={(e) => e.stopPropagation()}>
+              <div className="relative mb-3" onMouseDown={(e) => e.stopPropagation()}>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -431,7 +431,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
                   if (!p) return null
                   const img = p.display_images?.[0] || p.trendyol_images?.[0]
                   return (
-                    <div key={id} className="flex items-center gap-3 py-2">
+                    <div key={id} className="flex items-center gap-3 py-1.5">
                       <span className="w-5 text-[10px] font-body text-text-muted text-right shrink-0">{i + 1}</span>
                       <div className="w-8 h-8 bg-champagne-dark shrink-0 overflow-hidden">
                         {img && <img src={img} alt="" className="w-full h-full object-cover" />}
