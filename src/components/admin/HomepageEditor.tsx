@@ -389,14 +389,19 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
           </div>
 
           {/* Search to add unlisted products */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Listeye ürün ekle — adı veya barkod ile ara..."
-              value={orderSearch}
-              onChange={(e) => setOrderSearch(e.target.value)}
-              className="w-full px-3 py-2 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none"
-            />
+          <div className="relative" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Listeye ürün ekle — adı veya barkod ile ara..."
+                value={orderSearch}
+                onChange={(e) => setOrderSearch(e.target.value)}
+                className="flex-1 px-3 py-2 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none"
+              />
+              {orderSearch && (
+                <button onClick={() => setOrderSearch('')} className="px-3 py-2 border border-champagne-mid text-[11px] font-body text-text-muted hover:border-gold hover:text-gold transition-colors">✕</button>
+              )}
+            </div>
             {orderSearch && (
               <div className="absolute bottom-full left-0 right-0 mb-1 border border-champagne-mid bg-white max-h-64 overflow-y-auto z-10 shadow-md">
                 {filteredOrderProducts
@@ -405,7 +410,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
                   .map((p: any) => (
                     <button
                       key={p.id}
-                      onClick={() => { setFeaturedOrder([...orderedFeaturedIds, p.id]); setOrderSearch('') }}
+                      onClick={() => setFeaturedOrder([...orderedFeaturedIds, p.id])}
                       className="w-full flex items-center gap-3 px-3 py-2 hover:bg-champagne transition-colors text-left border-b border-champagne-mid/30"
                     >
                       <div className="w-8 h-8 bg-champagne-dark shrink-0 overflow-hidden">

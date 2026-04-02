@@ -15,7 +15,7 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
         <div className="col-span-2 bg-champagne-dark relative overflow-hidden">
           {items[0].image ? (
             items[0].slug ? (
-              <Link href={`/urunler/${items[0].slug}`} className="block absolute inset-0">
+              <Link href={`/urun/${items[0].slug}`} className="block absolute inset-0">
                 <Image src={items[0].image} alt="Koleksiyon" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" priority />
               </Link>
             ) : (
@@ -30,7 +30,7 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
         <div className="bg-champagne-dark relative overflow-hidden">
           {items[1].image ? (
             items[1].slug ? (
-              <Link href={`/urunler/${items[1].slug}`} className="block absolute inset-0">
+              <Link href={`/urun/${items[1].slug}`} className="block absolute inset-0">
                 <Image src={items[1].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
               </Link>
             ) : (
@@ -45,7 +45,7 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
         <div className="bg-champagne-dark relative overflow-hidden">
           {items[2].image ? (
             items[2].slug ? (
-              <Link href={`/urunler/${items[2].slug}`} className="block absolute inset-0">
+              <Link href={`/urun/${items[2].slug}`} className="block absolute inset-0">
                 <Image src={items[2].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
               </Link>
             ) : (
@@ -70,7 +70,7 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
     : {}
 
   const SlotLink = () =>
-    image && slug ? <Link href={`/urunler/${slug}`} className="absolute inset-0" aria-label="Ürüne git" /> : null
+    image && slug ? <Link href={`/urun/${slug}`} className="absolute inset-0" aria-label="Ürüne git" /> : null
 
   return (
     <div className="flex flex-col gap-1 order-1 lg:order-2">
