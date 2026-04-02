@@ -23,6 +23,8 @@ const SECTIONS = {
 
 type SectionKey = keyof typeof SECTIONS
 
+const LS_KEY = 'admin_sections'
+
 export default function HomepageEditor({ products, settings: initialSettings }: HomepageEditorProps) {
   const [settings, setSettings] = useState<Record<string, string[]>>(initialSettings)
   const [picker, setPicker] = useState<{ section: SectionKey; slot: number } | null>(null)
@@ -37,6 +39,16 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
   const [orderSearch, setOrderSearch] = useState('')
   const [orderSaving, setOrderSaving] = useState(false)
   const [orderSaved, setOrderSaved] = useState(false)
+  // Accordion state
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({})
+
+  // Load accordion state from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(LS_KEY)
+      if (stored) setOpenSections(JSON.parse(stored))
+    } catch {}
+  }, [])
 
   // Load hero_single_mode and featured_order from site_content on mount
   useEffect(() => {
@@ -52,6 +64,14 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
       })
   }, [])
 
+  const toggleSection = (key: string) => {
+    setOpenSections((prev) => {
+      const next = { ...prev, [key]: !prev[key] }
+      try { localStorage.setItem(LS_KEY, JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
   const getProduct = (id: string) => products.find((p) => p.id === id)
   const getImage = (section: string, slot = 0) => {
     const ids = settings[section] || []
@@ -59,7 +79,6 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
     return p?.display_images?.[0] || p?.trendyol_images?.[0] || null
   }
 
-  // The product currently assigned to all 3 hero slots (single mode)
   const heroSingleProductId = settings['hero_top']?.[0] || null
   const heroSingleProduct = heroSingleProductId ? getProduct(heroSingleProductId) : null
   const heroSingleImage = heroSingleProduct
@@ -89,7 +108,6 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
 
   const toggleSingleMode = (enabled: boolean) => {
     setHeroSingleMode(enabled)
-    // When turning on: if there's already a selection in hero_top, propagate to others
     if (enabled) {
       const existingId = settings['hero_top']?.[0]
       if (existingId) {
@@ -104,7 +122,6 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
 
   const saveAll = async () => {
     setSaving(true)
-    // Save homepage section settings
     for (const [section, ids] of Object.entries(settings)) {
       await fetch('/api/admin/homepage', {
         method: 'POST',
@@ -112,7 +129,6 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
         body: JSON.stringify({ section, product_ids: ids }),
       })
     }
-    // Save hero_single_mode to site_content
     await fetch('/api/admin/content', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -125,8 +141,6 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
 
   // ── Featured order helpers ────────────────────────────────────────────────
   const featuredIds = settings.featured || []
-
-  // All IDs in display order: featuredOrder first, then any pinned IDs not yet listed
   const orderedFeaturedIds = [
     ...featuredOrder,
     ...featuredIds.filter((id) => !featuredOrder.includes(id)),
@@ -217,214 +231,230 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
     )
   }
 
+  const AccordionHeader = ({ sectionKey, label }: { sectionKey: string; label: string }) => (
+    <button
+      type="button"
+      onClick={() => toggleSection(sectionKey)}
+      className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-champagne/50 transition-colors"
+    >
+      <span className="text-base font-semibold font-body text-text-primary">{label}</span>
+      <span className="text-text-muted text-xs">{openSections[sectionKey] ? '▲' : '▼'}</span>
+    </button>
+  )
+
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-heading text-[24px] text-text-primary">Ana Sayfa Düzenleyici</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-heading text-[18px] text-text-primary">Ana Sayfa Düzenleyici</h2>
         <button
           onClick={saveAll}
           disabled={saving}
-          className="px-6 py-2 bg-gold text-white text-[11px] uppercase tracking-wider hover:bg-gold-light transition-colors disabled:opacity-50"
+          className="px-4 py-2 bg-gold text-white text-[11px] uppercase tracking-wider hover:bg-gold-light transition-colors disabled:opacity-50"
         >
           {saving ? 'Kaydediliyor...' : saved ? 'Kaydedildi ✓' : 'Tüm Değişiklikleri Kaydet'}
         </button>
       </div>
 
-      {/* Preview at 70% scale */}
-      <div className="bg-white border border-champagne-mid p-4 origin-top-left" style={{ transform: 'scale(0.85)', transformOrigin: 'top left', width: '117.6%' }}>
+      {/* ── Görsel Editör accordion ── */}
+      <div className="border border-champagne-mid mb-3">
+        <AccordionHeader sectionKey="editor" label="Görsel Editör" />
+        {openSections['editor'] && (
+          <div className="bg-white border-t border-champagne-mid p-4 origin-top-left" style={{ transform: 'scale(0.85)', transformOrigin: 'top left', width: '117.6%' }}>
 
-        {/* ── Hero ── */}
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[9px] font-body text-gold uppercase tracking-widest">Hero Bölümü</p>
-          {/* Single mode toggle */}
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <span className="text-[9px] font-body text-text-muted uppercase tracking-wider">Tek Ürün Modu</span>
-            <button
-              type="button"
-              onClick={() => toggleSingleMode(!heroSingleMode)}
-              className={`relative w-9 h-5 rounded-full transition-colors ${heroSingleMode ? 'bg-gold' : 'bg-champagne-mid'}`}
-            >
-              <span
-                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${heroSingleMode ? 'translate-x-4' : 'translate-x-0.5'}`}
-              />
-            </button>
-          </label>
-        </div>
+            {/* ── Hero ── */}
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[9px] font-body text-gold uppercase tracking-widest">Hero Bölümü</p>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <span className="text-[9px] font-body text-text-muted uppercase tracking-wider">Tek Ürün Modu</span>
+                <button
+                  type="button"
+                  onClick={() => toggleSingleMode(!heroSingleMode)}
+                  className={`relative w-9 h-5 rounded-full transition-colors ${heroSingleMode ? 'bg-gold' : 'bg-champagne-mid'}`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${heroSingleMode ? 'translate-x-4' : 'translate-x-0.5'}`}
+                  />
+                </button>
+              </label>
+            </div>
 
-        <div className="grid grid-cols-2 gap-1 mb-6">
-          <div className="bg-dark-mid p-6 flex flex-col justify-center">
-            <span className="text-[8px] text-gold uppercase tracking-widest font-body">Yeni Koleksiyon — 2026</span>
-            <p className="font-heading text-[24px] text-champagne font-light leading-tight mt-2">
-              Her anın <span className="italic text-gold">zarif</span> tanığı
-            </p>
-          </div>
+            <div className="grid grid-cols-2 gap-1 mb-6">
+              <div className="bg-dark-mid p-6 flex flex-col justify-center">
+                <span className="text-[8px] text-gold uppercase tracking-widest font-body">Yeni Koleksiyon — 2026</span>
+                <p className="font-heading text-[24px] text-champagne font-light leading-tight mt-2">
+                  Her anın <span className="italic text-gold">zarif</span> tanığı
+                </p>
+              </div>
 
-          {heroSingleMode ? (
-            /* Single product mode: one click area fills all 3 slots */
-            <div
-              className="relative group cursor-pointer overflow-hidden bg-champagne-dark"
-              onClick={() => { setSinglePicker(true); setSingleSearch('') }}
-            >
-              {heroSingleImage ? (
-                <img src={heroSingleImage} alt="" className="w-full h-full object-cover" />
+              {heroSingleMode ? (
+                <div
+                  className="relative group cursor-pointer overflow-hidden bg-champagne-dark"
+                  onClick={() => { setSinglePicker(true); setSingleSearch('') }}
+                >
+                  {heroSingleImage ? (
+                    <img src={heroSingleImage} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full gap-2 text-text-muted">
+                      <span className="text-[20px]">+</span>
+                      <span className="text-[9px] font-body uppercase tracking-wider">Ürün Seç</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-dark/0 group-hover:bg-dark/60 transition-colors flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 gap-1">
+                    <span className="text-white text-[11px] font-body">✎ Değiştir</span>
+                    <span className="text-white/60 text-[9px] font-body">3 slota uygulanır</span>
+                  </div>
+                  {heroSingleProduct && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-dark/70 px-2 py-1">
+                      <p className="text-[8px] text-champagne truncate">{heroSingleProduct.display_title}</p>
+                    </div>
+                  )}
+                </div>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-2 text-text-muted">
-                  <span className="text-[20px]">+</span>
-                  <span className="text-[9px] font-body uppercase tracking-wider">Ürün Seç</span>
-                </div>
-              )}
-              <div className="absolute inset-0 bg-dark/0 group-hover:bg-dark/60 transition-colors flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 gap-1">
-                <span className="text-white text-[11px] font-body">✎ Değiştir</span>
-                <span className="text-white/60 text-[9px] font-body">3 slota uygulanır</span>
-              </div>
-              {heroSingleProduct && (
-                <div className="absolute bottom-0 left-0 right-0 bg-dark/70 px-2 py-1">
-                  <p className="text-[8px] text-champagne truncate">{heroSingleProduct.display_title}</p>
+                <div className="grid grid-rows-2 grid-cols-2 gap-1">
+                  <div className="col-span-2">
+                    <Slot section="hero_top" aspectClass="aspect-[2/1]" />
+                  </div>
+                  <Slot section="hero_bottom_left" />
+                  <Slot section="hero_bottom_right" />
                 </div>
               )}
             </div>
-          ) : (
-            /* Normal mode: 3 separate slots */
-            <div className="grid grid-rows-2 grid-cols-2 gap-1">
-              <div className="col-span-2">
-                <Slot section="hero_top" aspectClass="aspect-[2/1]" />
-              </div>
-              <Slot section="hero_bottom_left" />
-              <Slot section="hero_bottom_right" />
-            </div>
-          )}
-        </div>
 
-        {/* ── Öne Çıkan ── */}
-        <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-2">Öne Çıkan Parçalar</p>
-        <div className="grid grid-cols-4 gap-2 mb-6">
-          {[0, 1, 2, 3].map((slot) => (
-            <div key={slot}>
-              <Slot section="featured" slot={slot} aspectClass="aspect-[3/4]" />
-              <p className="text-[9px] font-body text-text-primary mt-1 truncate">
-                {getProduct((settings.featured || [])[slot])?.display_title || '—'}
-              </p>
+            {/* ── Öne Çıkan ── */}
+            <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-2">Öne Çıkan Parçalar</p>
+            <div className="grid grid-cols-4 gap-2 mb-6">
+              {[0, 1, 2, 3].map((slot) => (
+                <div key={slot}>
+                  <Slot section="featured" slot={slot} aspectClass="aspect-[3/4]" />
+                  <p className="text-[9px] font-body text-text-primary mt-1 truncate">
+                    {getProduct((settings.featured || [])[slot])?.display_title || '—'}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {/* ── Kategoriler ── */}
-        <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-2">Kategoriler</p>
-        <div className="grid grid-cols-5 gap-2 mb-6">
-          {(['category_kolye', 'category_kupe', 'category_yuzuk', 'category_bileklik', 'category_setler'] as const).map((key) => (
-            <div key={key}>
-              <Slot section={key} />
-              <p className="text-[9px] font-body text-text-primary mt-1 text-center">
-                {SECTIONS[key].label.replace('Kategori — ', '')}
-              </p>
+            {/* ── Kategoriler ── */}
+            <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-2">Kategoriler</p>
+            <div className="grid grid-cols-5 gap-2 mb-6">
+              {(['category_kolye', 'category_kupe', 'category_yuzuk', 'category_bileklik', 'category_setler'] as const).map((key) => (
+                <div key={key}>
+                  <Slot section={key} />
+                  <p className="text-[9px] font-body text-text-primary mt-1 text-center">
+                    {SECTIONS[key].label.replace('Kategori — ', '')}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {/* ── Yeni Gelenler ── */}
-        <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-2">Yeni Gelenler</p>
-        <div className="grid grid-cols-4 gap-2">
-          {[0, 1, 2, 3].map((slot) => (
-            <div key={slot}>
-              <Slot section="new_arrivals" slot={slot} aspectClass="aspect-[3/4]" />
-              <p className="text-[9px] font-body text-text-primary mt-1 truncate">
-                {getProduct((settings.new_arrivals || [])[slot])?.display_title || '—'}
-              </p>
+            {/* ── Yeni Gelenler ── */}
+            <p className="text-[9px] font-body text-gold uppercase tracking-widest mb-2">Yeni Gelenler</p>
+            <div className="grid grid-cols-4 gap-2">
+              {[0, 1, 2, 3].map((slot) => (
+                <div key={slot}>
+                  <Slot section="new_arrivals" slot={slot} aspectClass="aspect-[3/4]" />
+                  <p className="text-[9px] font-body text-text-primary mt-1 truncate">
+                    {getProduct((settings.new_arrivals || [])[slot])?.display_title || '—'}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* ── Featured Order Editor ── */}
+      {/* ── Carousel Sırası accordion ── */}
       {orderedFeaturedIds.length > 0 && (
-        <div className="mt-6 border border-champagne-mid bg-white p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-heading text-[16px] text-text-primary">Öne Çıkan — Carousel Sırası</h3>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={shuffleOrder}
-                className="px-3 py-1.5 border border-champagne-mid text-[11px] font-body text-text-muted hover:border-gold hover:text-gold transition-colors"
-              >
-                ⇌ Rastgele Sırala
-              </button>
-              <button
-                onClick={saveOrder}
-                disabled={orderSaving}
-                className="px-4 py-1.5 bg-gold text-white text-[11px] font-body uppercase tracking-wider hover:bg-gold-light transition-colors disabled:opacity-50"
-              >
-                {orderSaving ? 'Kaydediliyor...' : orderSaved ? 'Kaydedildi ✓' : 'Sırayı Kaydet'}
-              </button>
-            </div>
-          </div>
-
-          {/* Search to add unlisted products */}
-          <div className="relative mb-4" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Listeye ürün ekle — adı veya barkod ile ara..."
-                value={orderSearch}
-                onChange={(e) => setOrderSearch(e.target.value)}
-                className="flex-1 px-3 py-2 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none"
-              />
-              {orderSearch && (
-                <button onClick={() => setOrderSearch('')} className="px-3 py-2 border border-champagne-mid text-[11px] font-body text-text-muted hover:border-gold hover:text-gold transition-colors">✕</button>
-              )}
-            </div>
-            {orderSearch && (
-              <div className="absolute top-full left-0 right-0 mt-1 border border-champagne-mid bg-white max-h-64 overflow-y-auto z-10 shadow-md">
-                {filteredOrderProducts
-                  .filter((p: any) => !orderedFeaturedIds.includes(p.id))
-                  .slice(0, 20)
-                  .map((p: any) => (
-                    <button
-                      key={p.id}
-                      onClick={() => setFeaturedOrder([...orderedFeaturedIds, p.id])}
-                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-champagne transition-colors text-left border-b border-champagne-mid/30"
-                    >
-                      <div className="w-8 h-8 bg-champagne-dark shrink-0 overflow-hidden">
-                        {(p.display_images?.[0] || p.trendyol_images?.[0]) && (
-                          <img src={p.display_images?.[0] || p.trendyol_images?.[0]} alt="" className="w-full h-full object-cover" />
-                        )}
-                      </div>
-                      <p className="text-[12px] font-body truncate">{p.display_title}</p>
-                      <span className="ml-auto text-[10px] font-body text-gold shrink-0">+ Ekle</span>
-                    </button>
-                  ))}
+        <div className="border border-champagne-mid mb-3">
+          <AccordionHeader sectionKey="carousel" label="Carousel Sırası" />
+          {openSections['carousel'] && (
+            <div className="bg-white border-t border-champagne-mid p-4">
+              {/* Action buttons */}
+              <div className="flex items-center justify-end gap-2 mb-4">
+                <button
+                  onClick={shuffleOrder}
+                  className="px-3 py-1.5 border border-champagne-mid text-[11px] font-body text-text-muted hover:border-gold hover:text-gold transition-colors"
+                >
+                  ⇌ Rastgele Sırala
+                </button>
+                <button
+                  onClick={saveOrder}
+                  disabled={orderSaving}
+                  className="px-4 py-1.5 bg-gold text-white text-[11px] font-body uppercase tracking-wider hover:bg-gold-light transition-colors disabled:opacity-50"
+                >
+                  {orderSaving ? 'Kaydediliyor...' : orderSaved ? 'Kaydedildi ✓' : 'Sırayı Kaydet'}
+                </button>
               </div>
-            )}
-          </div>
 
-          {/* Ordered list */}
-          <div className="divide-y divide-champagne-mid/30">
-            {orderedFeaturedIds.map((id, i) => {
-              const p = getProduct(id)
-              if (!p) return null
-              const img = p.display_images?.[0] || p.trendyol_images?.[0]
-              return (
-                <div key={id} className="flex items-center gap-3 py-2">
-                  <span className="w-5 text-[10px] font-body text-text-muted text-right shrink-0">{i + 1}</span>
-                  <div className="w-8 h-8 bg-champagne-dark shrink-0 overflow-hidden">
-                    {img && <img src={img} alt="" className="w-full h-full object-cover" />}
-                  </div>
-                  <p className="flex-1 text-[12px] font-body truncate">{p.display_title}</p>
-                  <div className="flex gap-1 shrink-0">
-                    <button
-                      onClick={() => moveOrder(i, -1)}
-                      disabled={i === 0}
-                      className="w-6 h-6 flex items-center justify-center border border-champagne-mid text-[10px] hover:border-gold hover:text-gold disabled:opacity-30 transition-colors"
-                    >↑</button>
-                    <button
-                      onClick={() => moveOrder(i, 1)}
-                      disabled={i === orderedFeaturedIds.length - 1}
-                      className="w-6 h-6 flex items-center justify-center border border-champagne-mid text-[10px] hover:border-gold hover:text-gold disabled:opacity-30 transition-colors"
-                    >↓</button>
-                  </div>
+              {/* Search to add unlisted products */}
+              <div className="relative mb-4" onMouseDown={(e) => e.stopPropagation()}>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Listeye ürün ekle — adı veya barkod ile ara..."
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none"
+                  />
+                  {orderSearch && (
+                    <button onClick={() => setOrderSearch('')} className="px-3 py-2 border border-champagne-mid text-[11px] font-body text-text-muted hover:border-gold hover:text-gold transition-colors">✕</button>
+                  )}
                 </div>
-              )
-            })}
-          </div>
+                {orderSearch && (
+                  <div className="absolute top-full left-0 right-0 mt-1 border border-champagne-mid bg-white max-h-64 overflow-y-auto z-10 shadow-md">
+                    {filteredOrderProducts
+                      .filter((p: any) => !orderedFeaturedIds.includes(p.id))
+                      .slice(0, 20)
+                      .map((p: any) => (
+                        <button
+                          key={p.id}
+                          onClick={() => setFeaturedOrder([...orderedFeaturedIds, p.id])}
+                          className="w-full flex items-center gap-3 px-3 py-2 hover:bg-champagne transition-colors text-left border-b border-champagne-mid/30"
+                        >
+                          <div className="w-8 h-8 bg-champagne-dark shrink-0 overflow-hidden">
+                            {(p.display_images?.[0] || p.trendyol_images?.[0]) && (
+                              <img src={p.display_images?.[0] || p.trendyol_images?.[0]} alt="" className="w-full h-full object-cover" />
+                            )}
+                          </div>
+                          <p className="text-[12px] font-body truncate">{p.display_title}</p>
+                          <span className="ml-auto text-[10px] font-body text-gold shrink-0">+ Ekle</span>
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Ordered list */}
+              <div className="divide-y divide-champagne-mid/30">
+                {orderedFeaturedIds.map((id, i) => {
+                  const p = getProduct(id)
+                  if (!p) return null
+                  const img = p.display_images?.[0] || p.trendyol_images?.[0]
+                  return (
+                    <div key={id} className="flex items-center gap-3 py-2">
+                      <span className="w-5 text-[10px] font-body text-text-muted text-right shrink-0">{i + 1}</span>
+                      <div className="w-8 h-8 bg-champagne-dark shrink-0 overflow-hidden">
+                        {img && <img src={img} alt="" className="w-full h-full object-cover" />}
+                      </div>
+                      <p className="flex-1 text-[12px] font-body truncate">{p.display_title}</p>
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          onClick={() => moveOrder(i, -1)}
+                          disabled={i === 0}
+                          className="w-6 h-6 flex items-center justify-center border border-champagne-mid text-[10px] hover:border-gold hover:text-gold disabled:opacity-30 transition-colors"
+                        >↑</button>
+                        <button
+                          onClick={() => moveOrder(i, 1)}
+                          disabled={i === orderedFeaturedIds.length - 1}
+                          className="w-6 h-6 flex items-center justify-center border border-champagne-mid text-[10px] hover:border-gold hover:text-gold disabled:opacity-30 transition-colors"
+                        >↓</button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
