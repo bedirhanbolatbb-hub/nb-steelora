@@ -4,36 +4,26 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import ProductCard from '@/components/store/ProductCard'
 import type { Product } from '@/types'
 
-const CARD_GAP = 24
+const CARD_W = 192
+const CARD_GAP = 16
 const AUTOPLAY_MS = 3000
 
 export default function FeaturedCarousel({ products }: { products: Product[] }) {
   const trackRef = useRef<HTMLDivElement>(null)
-  const [cardW, setCardW] = useState(0)
   const [offset, setOffset] = useState(0)
   const [paused, setPaused] = useState(false)
-  const [resetKey, setResetKey] = useState(0)   // bump to restart autoplay timer
+  const [resetKey, setResetKey] = useState(0)
   const offsetRef = useRef(0)
   const pausedRef = useRef(false)
   const touchStartX = useRef<number | null>(null)
-
-  useEffect(() => {
-    const measure = () => {
-      const first = trackRef.current?.children[0] as HTMLElement | undefined
-      if (first) setCardW(first.offsetWidth)
-    }
-    measure()
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [products.length])
 
   useEffect(() => { offsetRef.current = offset }, [offset])
   useEffect(() => { pausedRef.current = paused }, [paused])
 
   // Autoplay — restarts whenever resetKey changes
   useEffect(() => {
-    if (!cardW || products.length < 2) return
-    const step = cardW + CARD_GAP
+    if (products.length < 2) return
+    const step = CARD_W + CARD_GAP
     const total = step * products.length
 
     const id = setInterval(() => {
@@ -44,21 +34,20 @@ export default function FeaturedCarousel({ products }: { products: Product[] }) 
     }, AUTOPLAY_MS)
 
     return () => clearInterval(id)
-  }, [cardW, products.length, resetKey])
+  }, [products.length, resetKey])
 
-  const step = cardW + CARD_GAP
+  const step = CARD_W + CARD_GAP
   const total = step * products.length
 
   const navigate = useCallback((dir: 1 | -1) => {
-    if (!cardW) return
     setOffset((prev) => {
       let next = prev + dir * step
       if (next < 0) next = total - step
       if (next >= total) next = 0
       return next
     })
-    setResetKey((k) => k + 1)   // restart autoplay countdown
-  }, [cardW, step, total])
+    setResetKey((k) => k + 1)
+  }, [step, total])
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX
@@ -83,7 +72,7 @@ export default function FeaturedCarousel({ products }: { products: Product[] }) 
       <div className="overflow-hidden">
         <div
           ref={trackRef}
-          className="flex gap-6"
+          className="flex gap-4"
           style={{
             transform: `translateX(-${offset}px)`,
             transition: `transform ${AUTOPLAY_MS * 0.3}ms ease-in-out`,
@@ -91,7 +80,7 @@ export default function FeaturedCarousel({ products }: { products: Product[] }) 
           }}
         >
           {looped.map((product, i) => (
-            <div key={`${product.id}-${i}`} className="w-[calc(25%-18px)] shrink-0">
+            <div key={`${product.id}-${i}`} style={{ width: CARD_W, flexShrink: 0 }}>
               <ProductCard product={product} />
             </div>
           ))}
