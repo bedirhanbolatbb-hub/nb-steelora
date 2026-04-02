@@ -70,8 +70,8 @@ export default async function HomePage() {
       <Hero />
 
       {c.promo_bar_text && (
-        <div className="bg-dark border-b border-gold/20 py-2.5 px-8 text-center">
-          <p className="text-[11px] font-body text-gold uppercase tracking-[0.15em]">
+        <div className="bg-champagne-mid border-b border-champagne-dark py-2.5 px-8 text-center">
+          <p className="text-[11px] font-body text-text-primary uppercase tracking-[0.15em]">
             {c.promo_bar_emoji && <span className="mr-2">{c.promo_bar_emoji}</span>}
             {c.promo_bar_text}
           </p>

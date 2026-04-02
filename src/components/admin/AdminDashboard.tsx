@@ -227,7 +227,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   return (
     <div className="min-h-screen bg-champagne flex">
       {/* Sidebar */}
-      <aside className="w-56 bg-dark text-champagne shrink-0 flex flex-col">
+      <aside className="w-56 bg-dark-mid text-champagne shrink-0 flex flex-col">
         <div className="p-5 border-b border-champagne-mid/10">
           <h1 className="font-heading text-[18px] font-light tracking-wider">NB Steelora</h1>
           <p className="text-[9px] text-text-muted uppercase tracking-widest mt-0.5">Admin Panel</p>

@@ -5,7 +5,7 @@ export default function BrandBanner() {
     <section className="bg-dark-mid">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-20 flex flex-col lg:flex-row items-center gap-10 lg:gap-20">
         {/* Sol: Görsel Placeholder */}
-        <div className="w-full lg:w-1/2 aspect-[4/3] bg-dark relative overflow-hidden flex items-center justify-center">
+        <div className="w-full lg:w-1/2 aspect-[4/3] bg-champagne-dark relative overflow-hidden flex items-center justify-center">
           <span className="text-champagne-mid/20 text-[11px] font-body tracking-wider uppercase">
             Hediye Paketi Görseli
           </span>
