@@ -126,9 +126,9 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
   // ── Featured order helpers ────────────────────────────────────────────────
   const featuredIds = settings.featured || []
 
-  // Effective display order: featuredOrder ids first (if they're in featuredIds), then the rest
+  // All IDs in display order: featuredOrder first, then any pinned IDs not yet listed
   const orderedFeaturedIds = [
-    ...featuredOrder.filter((id) => featuredIds.includes(id)),
+    ...featuredOrder,
     ...featuredIds.filter((id) => !featuredOrder.includes(id)),
   ]
 
