@@ -263,9 +263,9 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
             </div>
 
             <div className="grid grid-cols-2 gap-1 mb-2" style={{ transform: 'scale(0.75)', transformOrigin: 'top left', width: '133%' }}>
-              <div className="bg-dark-mid p-2 flex flex-col justify-center">
+              <div className="bg-champagne-dark p-2 flex flex-col justify-center">
                 <span className="text-[7px] text-gold uppercase tracking-widest font-body">Yeni Koleksiyon — 2026</span>
-                <p className="font-body text-xs text-champagne font-light leading-tight mt-1">
+                <p className="font-body text-xs text-text-primary font-light leading-tight mt-1">
                   Her anın <span className="italic text-gold">zarif</span> tanığı
                 </p>
               </div>
@@ -399,34 +399,34 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
                 )}
               </div>
 
-              {/* Ordered list */}
-              <div className="divide-y divide-champagne-mid/30">
+              {/* Ordered grid */}
+              <div className="grid grid-cols-6 xl:grid-cols-8 gap-2">
                 {orderedFeaturedIds.map((id, i) => {
                   const p = getProduct(id)
                   if (!p) return null
                   const img = p.display_images?.[0] || p.trendyol_images?.[0]
                   return (
-                    <div key={id} className="flex items-center gap-2 py-1">
-                      <span className="w-4 text-[9px] font-body text-text-muted text-right shrink-0">{i + 1}</span>
-                      <div className="w-6 h-6 bg-champagne-dark shrink-0 overflow-hidden">
+                    <div key={id} className="flex flex-col items-center gap-1">
+                      <div className="w-24 h-24 flex-shrink-0 overflow-hidden rounded relative bg-champagne-dark">
                         {img && <img src={img} alt="" className="w-full h-full object-cover" />}
+                        <span className="absolute top-0.5 left-0.5 text-[8px] font-body text-white bg-dark-mid/60 px-0.5 rounded">{i + 1}</span>
+                        <button
+                          onClick={() => setFeaturedOrder((prev) => prev.filter((fid) => fid !== id))}
+                          className="absolute top-0.5 right-0.5 w-4 h-4 flex items-center justify-center text-[9px] text-white bg-red-500/70 hover:bg-red-600 rounded transition-colors"
+                        >✕</button>
                       </div>
-                      <p className="flex-1 text-sm font-body truncate">{p.display_title}</p>
-                      <div className="flex gap-0.5 shrink-0">
+                      <p className="text-[10px] font-body text-text-primary truncate max-w-[96px] text-center">{p.display_title}</p>
+                      <div className="flex gap-0.5">
                         <button
                           onClick={() => moveOrder(i, -1)}
                           disabled={i === 0}
                           className="w-5 h-5 flex items-center justify-center border border-champagne-mid text-[9px] hover:border-gold hover:text-gold disabled:opacity-30 transition-colors"
-                        >↑</button>
+                        >←</button>
                         <button
                           onClick={() => moveOrder(i, 1)}
                           disabled={i === orderedFeaturedIds.length - 1}
                           className="w-5 h-5 flex items-center justify-center border border-champagne-mid text-[9px] hover:border-gold hover:text-gold disabled:opacity-30 transition-colors"
-                        >↓</button>
-                        <button
-                          onClick={() => setFeaturedOrder((prev) => prev.filter((fid) => fid !== id))}
-                          className="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-600 transition-colors"
-                        >✕</button>
+                        >→</button>
                       </div>
                     </div>
                   )
