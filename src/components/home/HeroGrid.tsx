@@ -6,52 +6,66 @@ export interface HeroItem {
   slug: string | null
 }
 
+/** Returns a valid slug string, or null if the value is missing/garbage. */
+function validSlug(slug: string | null): string | null {
+  if (!slug || slug === 'null' || slug === 'undefined') return null
+  return slug
+}
+
+/** Renders the image wrapped in a Link when slug is valid, otherwise just the image. */
+function SlotImage({
+  image,
+  slug,
+  sizes,
+  alt,
+}: {
+  image: string
+  slug: string | null
+  sizes: string
+  alt: string
+}) {
+  const href = validSlug(slug)
+  if (href) {
+    return (
+      <Link href={`/urun/${href}`} className="block absolute inset-0">
+        <Image src={image} alt={alt} fill className="object-cover" sizes={sizes} priority />
+      </Link>
+    )
+  }
+  return <Image src={image} alt={alt} fill className="object-cover" sizes={sizes} priority />
+}
+
 export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; singleMode: boolean }) {
 
   // ── Normal mode ───────────────────────────────────────────────────────────
   if (!singleMode) {
-    console.log('[HeroGrid] top slot slug:', items[0]?.slug, '| image:', items[0]?.image)
+    console.log('[HeroGrid] top slug:', items[0]?.slug, '| validSlug:', validSlug(items[0]?.slug ?? null))
     return (
       <div className="grid grid-rows-2 grid-cols-2 gap-1 order-1 lg:order-2 min-h-[400px] lg:min-h-0">
+        {/* Top — hero_top */}
         <div className="col-span-2 bg-champagne-dark relative overflow-hidden">
           {items[0].image ? (
-            items[0].slug ? (
-              <Link href={`/urun/${items[0].slug}`} className="block absolute inset-0">
-                <Image src={items[0].image} alt="Koleksiyon" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" priority />
-              </Link>
-            ) : (
-              <Image src={items[0].image} alt="Koleksiyon" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" priority />
-            )
+            <SlotImage image={items[0].image} slug={items[0].slug} sizes="(max-width: 1024px) 100vw, 50vw" alt="Koleksiyon" />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-b from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
               <span className="text-text-muted/40 text-[11px] font-body tracking-wider uppercase">Koleksiyon Görseli</span>
             </div>
           )}
         </div>
+        {/* Bottom-left — hero_bottom_left */}
         <div className="bg-champagne-dark relative overflow-hidden">
           {items[1].image ? (
-            items[1].slug ? (
-              <Link href={`/urun/${items[1].slug}`} className="block absolute inset-0">
-                <Image src={items[1].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
-              </Link>
-            ) : (
-              <Image src={items[1].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
-            )
+            <SlotImage image={items[1].image} slug={items[1].slug} sizes="(max-width: 1024px) 50vw, 25vw" alt="Ürün" />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
               <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 1</span>
             </div>
           )}
         </div>
+        {/* Bottom-right — hero_bottom_right */}
         <div className="bg-champagne-dark relative overflow-hidden">
           {items[2].image ? (
-            items[2].slug ? (
-              <Link href={`/urun/${items[2].slug}`} className="block absolute inset-0">
-                <Image src={items[2].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
-              </Link>
-            ) : (
-              <Image src={items[2].image} alt="Ürün" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" priority />
-            )
+            <SlotImage image={items[2].image} slug={items[2].slug} sizes="(max-width: 1024px) 50vw, 25vw" alt="Ürün" />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-bl from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
               <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 2</span>
@@ -64,7 +78,7 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
 
   // ── Single mode — cover crop, positional focus per slot ─────────────────
   const image = items[0].image
-  const slug = items[0].slug
+  const slug = validSlug(items[0].slug)
 
   const base: React.CSSProperties = image
     ? { backgroundImage: `url(${JSON.stringify(image)})`, backgroundSize: 'cover', backgroundRepeat: 'no-repeat' }
