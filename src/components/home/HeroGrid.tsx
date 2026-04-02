@@ -10,6 +10,7 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
 
   // ── Normal mode ───────────────────────────────────────────────────────────
   if (!singleMode) {
+    console.log('[HeroGrid] top slot slug:', items[0]?.slug, '| image:', items[0]?.image)
     return (
       <div className="grid grid-rows-2 grid-cols-2 gap-1 order-1 lg:order-2 min-h-[400px] lg:min-h-0">
         <div className="col-span-2 bg-champagne-dark relative overflow-hidden">
