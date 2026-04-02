@@ -18,6 +18,7 @@ export default async function FeaturedProducts({ title, subtitle }: Props = {}) 
       .from('products_display')
       .select('*')
       .order('created_at', { ascending: false })
+      .limit(1000)
 
     products = data || []
 
