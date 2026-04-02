@@ -245,7 +245,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
       <div className="border border-champagne-mid mb-2">
         <AccordionHeader sectionKey="editor" label="Görsel Editör" />
         {openSections['editor'] && (
-          <div className="bg-white border-t border-champagne-mid p-2" style={{ transform: 'scale(0.7)', transformOrigin: 'top left', width: '142.8%' }}>
+          <div className="bg-white border-t border-champagne-mid p-2">
 
             {/* Hero */}
             <div className="flex items-center justify-between mb-1">
@@ -262,7 +262,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-1 mb-2">
+            <div className="grid grid-cols-2 gap-1 mb-2" style={{ transform: 'scale(0.75)', transformOrigin: 'top left', width: '133%' }}>
               <div className="bg-dark-mid p-2 flex flex-col justify-center">
                 <span className="text-[7px] text-gold uppercase tracking-widest font-body">Yeni Koleksiyon — 2026</span>
                 <p className="font-body text-xs text-champagne font-light leading-tight mt-1">
@@ -305,7 +305,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
 
             {/* Öne Çıkan */}
             <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">Öne Çıkan</p>
-            <div className="grid grid-cols-4 gap-1 mb-2">
+            <div className="grid grid-cols-4 gap-1 mb-2" style={{ transform: 'scale(0.75)', transformOrigin: 'top left', width: '133%' }}>
               {[0, 1, 2, 3].map((slot) => (
                 <div key={slot}>
                   <Slot section="featured" slot={slot} aspectClass="aspect-[3/4]" />
@@ -318,7 +318,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
 
             {/* Kategoriler */}
             <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">Kategoriler</p>
-            <div className="grid grid-cols-5 gap-1 mb-2">
+            <div className="grid grid-cols-5 gap-1 mb-2" style={{ transform: 'scale(0.75)', transformOrigin: 'top left', width: '133%' }}>
               {(['category_kolye', 'category_kupe', 'category_yuzuk', 'category_bileklik', 'category_setler'] as const).map((key) => (
                 <div key={key}>
                   <Slot section={key} />
@@ -331,7 +331,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
 
             {/* Yeni Gelenler */}
             <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">Yeni Gelenler</p>
-            <div className="grid grid-cols-4 gap-1">
+            <div className="grid grid-cols-4 gap-1" style={{ transform: 'scale(0.75)', transformOrigin: 'top left', width: '133%' }}>
               {[0, 1, 2, 3].map((slot) => (
                 <div key={slot}>
                   <Slot section="new_arrivals" slot={slot} aspectClass="aspect-[3/4]" />
@@ -411,7 +411,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
                       <div className="w-6 h-6 bg-champagne-dark shrink-0 overflow-hidden">
                         {img && <img src={img} alt="" className="w-full h-full object-cover" />}
                       </div>
-                      <p className="flex-1 text-xs font-body truncate">{p.display_title}</p>
+                      <p className="flex-1 text-sm font-body truncate">{p.display_title}</p>
                       <div className="flex gap-0.5 shrink-0">
                         <button
                           onClick={() => moveOrder(i, -1)}
@@ -423,6 +423,10 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
                           disabled={i === orderedFeaturedIds.length - 1}
                           className="w-5 h-5 flex items-center justify-center border border-champagne-mid text-[9px] hover:border-gold hover:text-gold disabled:opacity-30 transition-colors"
                         >↓</button>
+                        <button
+                          onClick={() => setFeaturedOrder((prev) => prev.filter((fid) => fid !== id))}
+                          className="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-600 transition-colors"
+                        >✕</button>
                       </div>
                     </div>
                   )
