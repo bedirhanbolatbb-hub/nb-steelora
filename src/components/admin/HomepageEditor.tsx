@@ -389,7 +389,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
           </div>
 
           {/* Search to add unlisted products */}
-          <div>
+          <div className="relative">
             <input
               type="text"
               placeholder="Listeye ürün ekle — adı veya barkod ile ara..."
@@ -398,10 +398,10 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
               className="w-full px-3 py-2 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none"
             />
             {orderSearch && (
-              <div className="border border-t-0 border-champagne-mid max-h-48 overflow-y-auto">
+              <div className="absolute bottom-full left-0 right-0 mb-1 border border-champagne-mid bg-white max-h-64 overflow-y-auto z-10 shadow-md">
                 {filteredOrderProducts
                   .filter((p: any) => !orderedFeaturedIds.includes(p.id))
-                  .slice(0, 10)
+                  .slice(0, 20)
                   .map((p: any) => (
                     <button
                       key={p.id}
