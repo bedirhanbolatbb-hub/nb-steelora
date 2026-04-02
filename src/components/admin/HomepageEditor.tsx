@@ -262,7 +262,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-1 mb-2 max-h-48 overflow-hidden">
+            <div className="grid grid-cols-2 gap-1 mb-2 max-h-64 overflow-hidden">
               <div className="bg-dark-mid p-2 h-full flex flex-col justify-center">
                 <span className="text-[7px] text-gold uppercase tracking-widest font-body">Yeni Koleksiyon — 2026</span>
                 <p className="font-body text-xs text-champagne font-light leading-tight mt-1">
@@ -271,7 +271,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
               </div>
               {heroSingleMode ? (
                 <div
-                  className="relative group cursor-pointer overflow-hidden bg-champagne-dark h-48"
+                  className="relative group cursor-pointer overflow-hidden bg-champagne-dark h-64"
                   onClick={() => { setSinglePicker(true); setSingleSearch('') }}
                 >
                   {heroSingleImage ? (
@@ -295,10 +295,10 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
               ) : (
                 <div className="grid grid-rows-2 grid-cols-2 gap-1">
                   <div className="col-span-2">
-                    <Slot section="hero_top" aspectClass="h-24 w-full" />
+                    <Slot section="hero_top" aspectClass="h-36 w-full" />
                   </div>
-                  <Slot section="hero_bottom_left" aspectClass="h-12 w-full" />
-                  <Slot section="hero_bottom_right" aspectClass="h-12 w-full" />
+                  <Slot section="hero_bottom_left" aspectClass="h-16 w-full" />
+                  <Slot section="hero_bottom_right" aspectClass="h-16 w-full" />
                 </div>
               )}
             </div>
@@ -308,7 +308,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
             <div className="grid grid-cols-4 gap-1 mb-2">
               {[0, 1, 2, 3].map((slot) => (
                 <div key={slot}>
-                  <Slot section="featured" slot={slot} aspectClass="aspect-[3/4]" />
+                  <Slot section="featured" slot={slot} aspectClass="h-24 w-full" />
                   <p className="text-[7px] font-body text-text-primary mt-0.5 truncate">
                     {getProduct((settings.featured || [])[slot])?.display_title || '—'}
                   </p>
@@ -321,7 +321,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
             <div className="grid grid-cols-5 gap-1 mb-2">
               {(['category_kolye', 'category_kupe', 'category_yuzuk', 'category_bileklik', 'category_setler'] as const).map((key) => (
                 <div key={key}>
-                  <Slot section={key} />
+                  <Slot section={key} aspectClass="h-16 w-full" />
                   <p className="text-[7px] font-body text-text-primary mt-0.5 text-center">
                     {SECTIONS[key].label.replace('Kategori — ', '')}
                   </p>
@@ -334,7 +334,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
             <div className="grid grid-cols-4 gap-1">
               {[0, 1, 2, 3].map((slot) => (
                 <div key={slot}>
-                  <Slot section="new_arrivals" slot={slot} aspectClass="aspect-[3/4]" />
+                  <Slot section="new_arrivals" slot={slot} aspectClass="h-24 w-full" />
                   <p className="text-[7px] font-body text-text-primary mt-0.5 truncate">
                     {getProduct((settings.new_arrivals || [])[slot])?.display_title || '—'}
                   </p>
