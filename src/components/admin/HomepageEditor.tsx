@@ -194,7 +194,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
     const p = getProduct(ids[slot])
     return (
       <div
-        className={`relative group cursor-pointer overflow-hidden bg-champagne-dark ${aspectClass} ${className || ''}`}
+        className={`relative group cursor-pointer overflow-hidden bg-champagne-dark hover:ring-2 hover:ring-gold ring-inset ${aspectClass} ${className || ''}`}
         onClick={() => { setPicker({ section, slot }); setPickerSearch('') }}
       >
         {img ? (
@@ -261,11 +261,7 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
               </label>
             </div>
 
-            {/* Scaled preview container */}
-            <div className="overflow-hidden" style={{ height: '280px' }}>
-              <div style={{ transform: 'scale(0.4)', transformOrigin: 'top left', width: '250%', pointerEvents: 'none' }}>
-
-                {/* Hero */}
+            {/* Hero */}
                 <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">Hero</p>
                 <div className="grid grid-cols-2 gap-1 mb-3">
                   <div className="bg-champagne-dark p-4 flex flex-col justify-center min-h-[160px]">
@@ -347,8 +343,6 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
                   ))}
                 </div>
 
-              </div>
-            </div>
           </div>
         )}
       </div>
