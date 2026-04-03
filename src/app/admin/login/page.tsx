@@ -32,7 +32,7 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen bg-champagne flex items-center justify-center">
       <div className="bg-white p-8 w-full max-w-sm shadow-sm">
-        <h1 className="font-heading text-[24px] font-light text-dark text-center mb-8">
+        <h1 className="font-heading text-[24px] font-light text-text-primary text-center mb-8">
           NB Steelora Admin
         </h1>
         <form onSubmit={handleLogin} className="space-y-4">
@@ -48,7 +48,7 @@ export default function AdminLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-dark text-champagne text-[11px] tracking-[0.15em] uppercase font-body hover:bg-gold transition-colors disabled:opacity-50"
+            className="w-full py-3 bg-text-primary text-white text-[11px] tracking-[0.15em] uppercase font-body hover:bg-gold hover:text-white transition-colors disabled:opacity-50"
           >
             {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
           </button>
