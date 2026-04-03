@@ -78,7 +78,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
 
           {/* Orta: Logo */}
           <Link href="/" className="flex flex-col items-center">
-            <span className="font-heading text-[22px] font-light tracking-[0.15em] text-dark">
+            <span className="font-heading text-[22px] font-light tracking-[0.15em] text-text-primary">
               NB STEELORA
             </span>
             <span className="text-[8px] uppercase tracking-[0.25em] text-gold font-body">
