@@ -13,21 +13,19 @@ export default function FeaturedCarousel({ products }: { products: Product[] }) 
   const step = CARD_W + CARD_GAP
   const total = step * products.length
 
-  // offset: the settled position after each snap
   const [offset, setOffset] = useState(0)
-  // liveTranslate: what the track currently shows (includes finger-drag delta)
   const [liveTranslate, setLiveTranslate] = useState(0)
   const [transition, setTransition] = useState(`transform 300ms ${EASING}`)
 
   const offsetRef = useRef(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
   const touchStartTime = useRef<number | null>(null)
   const isDragging = useRef(false)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
-  // keep offsetRef in sync
   useEffect(() => { offsetRef.current = offset }, [offset])
-  // keep liveTranslate in sync with offset when not dragging
   useEffect(() => { if (!isDragging.current) setLiveTranslate(offset) }, [offset])
 
   const snapTo = useCallback((next: number, durationMs = 300) => {
@@ -54,57 +52,72 @@ export default function FeaturedCarousel({ products }: { products: Product[] }) 
   // ── Arrow navigation ──────────────────────────────────────────────────────
   const navigate = useCallback((dir: 1 | -1) => {
     snapTo(offsetRef.current + dir * step)
-    startAutoplay() // reset autoplay timer on interaction
+    startAutoplay()
   }, [step, snapTo, startAutoplay])
 
-  // ── Touch / swipe ─────────────────────────────────────────────────────────
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
-    touchStartTime.current = Date.now()
-    isDragging.current = true
-    // disable transition so track follows finger instantly
-    setTransition('none')
-  }
+  // ── Non-passive touch listeners (allows preventDefault) ───────────────────
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return
-    const delta = e.touches[0].clientX - touchStartX.current
-    setLiveTranslate(offsetRef.current - delta) // note: we subtract because translateX is negative
-  }
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null || touchStartTime.current === null) return
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current
-    const elapsed = Date.now() - touchStartTime.current
-    touchStartX.current = null
-    touchStartTime.current = null
-    isDragging.current = false
-
-    const velocity = Math.abs(deltaX) / elapsed // px/ms
-    const shouldAdvance = velocity > 0.3 || Math.abs(deltaX) > 50
-
-    if (shouldAdvance) {
-      const dir = deltaX < 0 ? 1 : -1
-      const durationMs = velocity > 0.5 ? 150 : 300
-      snapTo(offsetRef.current + dir * step, durationMs)
-    } else {
-      // snap back to current offset
-      snapTo(offsetRef.current, 200)
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX
+      touchStartY.current = e.touches[0].clientY
+      touchStartTime.current = Date.now()
+      isDragging.current = true
+      setTransition('none')
     }
 
-    startAutoplay()
-  }
+    const onTouchMove = (e: TouchEvent) => {
+      if (touchStartX.current === null || touchStartY.current === null) return
+      const dx = Math.abs(e.touches[0].clientX - touchStartX.current)
+      const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
+      if (dx > dy) {
+        e.preventDefault() // block vertical scroll only when swiping horizontally
+      }
+      const delta = e.touches[0].clientX - touchStartX.current
+      setLiveTranslate(offsetRef.current - delta)
+    }
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (touchStartX.current === null || touchStartTime.current === null) return
+      const deltaX = e.changedTouches[0].clientX - touchStartX.current
+      const elapsed = Date.now() - touchStartTime.current
+      touchStartX.current = null
+      touchStartY.current = null
+      touchStartTime.current = null
+      isDragging.current = false
+
+      const velocity = Math.abs(deltaX) / elapsed
+      const shouldAdvance = velocity > 0.3 || Math.abs(deltaX) > 50
+
+      if (shouldAdvance) {
+        const dir = deltaX < 0 ? 1 : -1
+        const durationMs = velocity > 0.5 ? 150 : 300
+        snapTo(offsetRef.current + dir * step, durationMs)
+      } else {
+        snapTo(offsetRef.current, 200)
+      }
+
+      startAutoplay()
+    }
+
+    el.addEventListener('touchstart', onTouchStart, { passive: false })
+    el.addEventListener('touchmove', onTouchMove, { passive: false })
+    el.addEventListener('touchend', onTouchEnd)
+
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove', onTouchMove)
+      el.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [step, snapTo, startAutoplay])
 
   const looped = [...products, ...products]
 
   return (
-    <div
-      className="relative group"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      <div className="overflow-hidden">
+    <div ref={wrapperRef} className="relative group">
+      <div className="overflow-hidden touch-pan-x">
         <div
           className="flex gap-4"
           style={{
