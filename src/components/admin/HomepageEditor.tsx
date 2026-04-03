@@ -262,12 +262,12 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
             </div>
 
             {/* Scaled preview container */}
-            <div className="overflow-hidden" style={{ height: '420px' }}>
-              <div style={{ transform: 'scale(0.45)', transformOrigin: 'top left', width: '222%' }}>
+            <div className="overflow-hidden" style={{ height: '280px' }}>
+              <div style={{ transform: 'scale(0.4)', transformOrigin: 'top left', width: '250%', pointerEvents: 'none' }}>
 
                 {/* Hero */}
                 <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">Hero</p>
-                <div className="grid grid-cols-2 gap-1 mb-3 max-h-[260px] overflow-hidden">
+                <div className="grid grid-cols-2 gap-1 mb-3">
                   <div className="bg-champagne-dark p-4 flex flex-col justify-center min-h-[160px]">
                     <span className="text-[10px] text-gold uppercase tracking-widest font-body">Yeni Koleksiyon — 2026</span>
                     <p className="font-body text-xl text-text-primary font-light leading-tight mt-2">
