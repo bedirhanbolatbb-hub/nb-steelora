@@ -64,14 +64,22 @@ export default async function Hero() {
           {c.hero_title_line3 || 'tanığı'}
         </h1>
         <p className="text-[12px] font-body text-text-secondary max-w-sm mt-6 leading-relaxed">
-          {c.hero_description || 'Özenle tasarlanmış her bir parça, stilinize zarafet ve anlam katar. Kendinizi özel hissetmeniz için tasarlandı.'}
+          {c.hero_description || '316L medikal çelik. Kararmaz, paslanmaz, solmaz.\nHer gün tak, her gün şık görün.'}
         </p>
-        <Link
-          href="/urunler"
-          className="inline-flex items-center mt-8 border border-text-primary/40 text-text-primary text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3.5 hover:bg-gold hover:text-white hover:border-gold transition-all duration-300 self-start"
-        >
-          {c.hero_cta || 'Koleksiyonu Keşfet'}
-        </Link>
+        <div className="flex items-center gap-6 mt-8">
+          <Link
+            href="/urunler"
+            className="inline-flex items-center border border-text-primary/40 text-text-primary text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3.5 hover:bg-gold hover:text-white hover:border-gold transition-all duration-300"
+          >
+            {c.hero_cta || 'Koleksiyonu Keşfet'}
+          </Link>
+          <Link
+            href="/kategori/kolye"
+            className="text-gold text-[11px] uppercase tracking-widest font-body underline underline-offset-4 hover:text-gold/70 transition-colors"
+          >
+            Çok Satanlar →
+          </Link>
+        </div>
       </div>
 
       {/* Sağ: Görsel Grid */}

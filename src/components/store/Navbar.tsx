@@ -81,7 +81,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
             <span className="font-heading text-[22px] font-light tracking-[0.15em] text-text-primary">
               NB STEELORA
             </span>
-            <span className="text-[8px] uppercase tracking-[0.25em] text-gold font-body">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-gold font-body">
               Fine Jewellery
             </span>
           </Link>
@@ -94,7 +94,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
             <Link href="/favorilerim" className="hidden sm:block relative text-text-secondary hover:text-gold transition-colors" aria-label="Favoriler">
               <Heart size={18} />
               {wishlistCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gold text-white text-[8px] rounded-full flex items-center justify-center font-body">
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gold text-white text-[10px] rounded-full flex items-center justify-center font-body">
                   {wishlistCount}
                 </span>
               )}
@@ -109,7 +109,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
             >
               <ShoppingBag size={18} />
               {totalItems > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gold text-white text-[8px] rounded-full flex items-center justify-center font-body">
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gold text-white text-[10px] rounded-full flex items-center justify-center font-body">
                   {totalItems}
                 </span>
               )}
