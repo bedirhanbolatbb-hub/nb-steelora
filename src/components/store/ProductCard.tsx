@@ -62,35 +62,15 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           </span>
         )}
 
-        {/* Quick-add — desktop hover */}
+        {/* Quick-add — hover on desktop, always visible on mobile */}
         <button
           onClick={handleQuickAdd}
           disabled={outOfStock}
-          className="absolute bottom-0 left-0 right-0 py-3 bg-text-primary/90 text-white text-[10px] tracking-[0.15em] uppercase font-body
-            opacity-0 group-hover:opacity-100 transition-opacity duration-200
-            disabled:bg-champagne-mid disabled:text-text-muted disabled:cursor-not-allowed
-            hidden sm:block"
+          className="absolute bottom-0 left-0 right-0 py-3 bg-text-primary/90 text-white text-[10px] tracking-[0.15em] uppercase font-body text-center
+            opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200
+            disabled:bg-champagne-mid disabled:text-text-muted disabled:cursor-not-allowed"
         >
           {outOfStock ? 'Tükendi' : added ? '✓ Eklendi' : 'Sepete Ekle'}
-        </button>
-
-        {/* Quick-add — mobile: persistent cart icon */}
-        <button
-          onClick={handleQuickAdd}
-          disabled={outOfStock}
-          aria-label="Sepete Ekle"
-          className="absolute bottom-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center
-            opacity-90 hover:bg-white transition-colors
-            disabled:opacity-40 disabled:cursor-not-allowed
-            sm:hidden"
-        >
-          {added ? (
-            <span className="text-[11px] text-gold">✓</span>
-          ) : (
-            <svg className="w-4 h-4 text-text-primary" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-            </svg>
-          )}
         </button>
 
         {/* Gold border on hover */}
