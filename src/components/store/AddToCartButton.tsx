@@ -24,7 +24,7 @@ export default function AddToCartButton({ product, disabled }: AddToCartButtonPr
     <button
       onClick={handleClick}
       disabled={disabled || added}
-      className="w-full py-4 bg-dark text-champagne font-body text-[12px] tracking-[0.15em] uppercase hover:bg-gold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      className="w-full py-4 bg-text-primary text-white font-body text-[12px] tracking-[0.15em] uppercase hover:bg-gold hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
     >
       {disabled ? (
         'Stok Tükendi'
