@@ -246,10 +246,9 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
         <AccordionHeader sectionKey="editor" label="Görsel Editör" />
         {openSections['editor'] && (
           <div className="bg-white border-t border-champagne-mid p-2">
-
-            {/* Hero */}
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-widest">Hero</p>
+            {/* Tek Ürün toggle — outside the scaled area so it stays clickable at real size */}
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-widest">Görsel Önizleme</p>
               <label className="flex items-center gap-1 cursor-pointer select-none">
                 <span className="text-[10px] font-body text-text-muted">Tek Ürün</span>
                 <button
@@ -262,84 +261,93 @@ export default function HomepageEditor({ products, settings: initialSettings }: 
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-1 mb-2" style={{ transform: 'scale(0.75)', transformOrigin: 'top left', width: '133%' }}>
-              <div className="bg-champagne-dark p-2 flex flex-col justify-center">
-                <span className="text-[7px] text-gold uppercase tracking-widest font-body">Yeni Koleksiyon — 2026</span>
-                <p className="font-body text-xs text-text-primary font-light leading-tight mt-1">
-                  Her anın <span className="italic text-gold">zarif</span> tanığı
-                </p>
-              </div>
-              {heroSingleMode ? (
-                <div
-                  className="relative group cursor-pointer overflow-hidden bg-champagne-dark min-h-[60px]"
-                  onClick={() => { setSinglePicker(true); setSingleSearch('') }}
-                >
-                  {heroSingleImage ? (
-                    <img src={heroSingleImage} alt="" className="w-full h-full object-cover" />
+            {/* Scaled preview container */}
+            <div className="overflow-hidden" style={{ height: '420px' }}>
+              <div style={{ transform: 'scale(0.45)', transformOrigin: 'top left', width: '222%' }}>
+
+                {/* Hero */}
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">Hero</p>
+                <div className="grid grid-cols-2 gap-1 mb-3">
+                  <div className="bg-champagne-dark p-4 flex flex-col justify-center min-h-[160px]">
+                    <span className="text-[10px] text-gold uppercase tracking-widest font-body">Yeni Koleksiyon — 2026</span>
+                    <p className="font-body text-xl text-text-primary font-light leading-tight mt-2">
+                      Her anın <span className="italic text-gold">zarif</span> tanığı
+                    </p>
+                  </div>
+                  {heroSingleMode ? (
+                    <div
+                      className="relative group cursor-pointer overflow-hidden bg-champagne-dark min-h-[160px]"
+                      onClick={() => { setSinglePicker(true); setSingleSearch('') }}
+                    >
+                      {heroSingleImage ? (
+                        <img src={heroSingleImage} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full gap-2 text-text-muted">
+                          <span className="text-2xl">+</span>
+                          <span className="text-xs font-body uppercase">Ürün Seç</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-dark/0 group-hover:bg-dark/60 transition-colors flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 gap-1">
+                        <span className="text-white text-xs font-body">✎ Değiştir</span>
+                        <span className="text-white/60 text-[10px] font-body">3 slota uygulanır</span>
+                      </div>
+                      {heroSingleProduct && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-dark/70 px-2 py-1">
+                          <p className="text-[10px] text-champagne truncate">{heroSingleProduct.display_title}</p>
+                        </div>
+                      )}
+                    </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-full gap-1 text-text-muted">
-                      <span className="text-xs">+</span>
-                      <span className="text-[8px] font-body uppercase">Ürün Seç</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-dark/0 group-hover:bg-dark/60 transition-colors flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 gap-0.5">
-                    <span className="text-white text-[8px] font-body">✎ Değiştir</span>
-                    <span className="text-white/60 text-[7px] font-body">3 slota uygulanır</span>
-                  </div>
-                  {heroSingleProduct && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-dark/70 px-1 py-0.5">
-                      <p className="text-[7px] text-champagne truncate">{heroSingleProduct.display_title}</p>
+                    <div className="grid grid-rows-2 grid-cols-2 gap-1">
+                      <div className="col-span-2">
+                        <Slot section="hero_top" aspectClass="aspect-[2/1]" />
+                      </div>
+                      <Slot section="hero_bottom_left" />
+                      <Slot section="hero_bottom_right" />
                     </div>
                   )}
                 </div>
-              ) : (
-                <div className="grid grid-rows-2 grid-cols-2 gap-1">
-                  <div className="col-span-2">
-                    <Slot section="hero_top" aspectClass="aspect-[2/1]" />
-                  </div>
-                  <Slot section="hero_bottom_left" />
-                  <Slot section="hero_bottom_right" />
-                </div>
-              )}
-            </div>
 
-            {/* Öne Çıkan */}
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">Öne Çıkan</p>
-            <div className="grid grid-cols-4 gap-1 mb-2" style={{ transform: 'scale(0.75)', transformOrigin: 'top left', width: '133%' }}>
-              {[0, 1, 2, 3].map((slot) => (
-                <div key={slot}>
-                  <Slot section="featured" slot={slot} aspectClass="aspect-[3/4]" />
-                  <p className="text-[7px] font-body text-text-primary mt-0.5 truncate">
-                    {getProduct((settings.featured || [])[slot])?.display_title || '—'}
-                  </p>
+                {/* Öne Çıkan */}
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">Öne Çıkan</p>
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {[0, 1, 2, 3].map((slot) => (
+                    <div key={slot}>
+                      <Slot section="featured" slot={slot} aspectClass="aspect-[3/4]" />
+                      <p className="text-[10px] font-body text-text-primary mt-1 truncate">
+                        {getProduct((settings.featured || [])[slot])?.display_title || '—'}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            {/* Kategoriler */}
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">Kategoriler</p>
-            <div className="grid grid-cols-5 gap-1 mb-2" style={{ transform: 'scale(0.75)', transformOrigin: 'top left', width: '133%' }}>
-              {(['category_kolye', 'category_kupe', 'category_yuzuk', 'category_bileklik', 'category_setler'] as const).map((key) => (
-                <div key={key}>
-                  <Slot section={key} />
-                  <p className="text-[7px] font-body text-text-primary mt-0.5 text-center">
-                    {SECTIONS[key].label.replace('Kategori — ', '')}
-                  </p>
+                {/* Kategoriler */}
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">Kategoriler</p>
+                <div className="grid grid-cols-5 gap-2 mb-3">
+                  {(['category_kolye', 'category_kupe', 'category_yuzuk', 'category_bileklik', 'category_setler'] as const).map((key) => (
+                    <div key={key}>
+                      <Slot section={key} />
+                      <p className="text-[10px] font-body text-text-primary mt-1 text-center">
+                        {SECTIONS[key].label.replace('Kategori — ', '')}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            {/* Yeni Gelenler */}
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">Yeni Gelenler</p>
-            <div className="grid grid-cols-4 gap-1" style={{ transform: 'scale(0.75)', transformOrigin: 'top left', width: '133%' }}>
-              {[0, 1, 2, 3].map((slot) => (
-                <div key={slot}>
-                  <Slot section="new_arrivals" slot={slot} aspectClass="aspect-[3/4]" />
-                  <p className="text-[7px] font-body text-text-primary mt-0.5 truncate">
-                    {getProduct((settings.new_arrivals || [])[slot])?.display_title || '—'}
-                  </p>
+                {/* Yeni Gelenler */}
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">Yeni Gelenler</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {[0, 1, 2, 3].map((slot) => (
+                    <div key={slot}>
+                      <Slot section="new_arrivals" slot={slot} aspectClass="aspect-[3/4]" />
+                      <p className="text-[10px] font-body text-text-primary mt-1 truncate">
+                        {getProduct((settings.new_arrivals || [])[slot])?.display_title || '—'}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+
+              </div>
             </div>
           </div>
         )}
