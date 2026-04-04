@@ -25,10 +25,23 @@ export async function POST(request: Request) {
     const shippingCost = subtotal >= 500 ? 0 : 49.9
     const total = subtotal + shippingCost
 
+    const productItems = items.map((item: any) => ({
+      id: item.productId,
+      name: (item.name ?? 'Ürün')?.substring(0, 60),
+      category1: item.category || 'Takı',
+      itemType: 'PHYSICAL',
+      price: (item.price * item.quantity).toFixed(2),
+    }))
+
+    // Kargo'yu basketItems'a ekle — price = basketItems toplamı = paidPrice
+    const basketItems = shippingCost > 0
+      ? [...productItems, { id: 'KARGO', name: 'Kargo Ücreti', category1: 'Kargo', itemType: 'PHYSICAL', price: shippingCost.toFixed(2) }]
+      : productItems
+
     const result = await initializeThreeDS({
       locale: 'tr',
       conversationId,
-      price: subtotal.toFixed(2),
+      price: total.toFixed(2),
       paidPrice: total.toFixed(2),
       currency: 'TRY',
       installment: '1',
@@ -66,13 +79,7 @@ export async function POST(request: Request) {
         zipCode: safeZip,
       },
 
-      basketItems: items.map((item: any) => ({
-        id: item.productId,
-        name: (item.name ?? 'Ürün')?.substring(0, 60),
-        category1: item.category || 'Takı',
-        itemType: 'PHYSICAL',
-        price: (item.price * item.quantity).toFixed(2),
-      })),
+      basketItems,
     })
 
     if (result.status !== 'success') {
