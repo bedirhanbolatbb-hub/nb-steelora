@@ -4,24 +4,24 @@ const API_KEY = () => process.env.IYZICO_API_KEY!
 const SECRET_KEY = () => process.env.IYZICO_SECRET_KEY!
 const BASE_URL = () => process.env.IYZICO_BASE_URL || 'https://api.iyzipay.com'
 
-function generateAuthorizationHeader(uri: string, body: string): string {
+function generateAuthorizationHeader(body: string): { authorization: string; randomString: string } {
   const randomString = Math.random().toString(36).substring(2, 14)
   const hashStr = API_KEY() + randomString + SECRET_KEY() + body
-  const hash = crypto.createHash('sha1').update(hashStr).digest('base64')
-  const authorizationParams = `apiKey:${API_KEY()}&randomKey:${randomString}&signature:${hash}`
-  return `IYZWS ${Buffer.from(authorizationParams).toString('base64')}`
+  const signature = crypto.createHmac('sha256', SECRET_KEY()).update(hashStr).digest('base64')
+  const authorization = `IYZWSv2 apiKey:${API_KEY()}, randomKey:${randomString}, signature:${signature}`
+  return { authorization, randomString }
 }
 
 async function iyzicoRequest(path: string, body: Record<string, any>) {
   const bodyStr = JSON.stringify(body)
-  const authorization = generateAuthorizationHeader(path, bodyStr)
+  const { authorization, randomString } = generateAuthorizationHeader(bodyStr)
 
   const res = await fetch(`${BASE_URL()}${path}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': authorization,
-      'x-iyzi-rnd': Math.random().toString(36).substring(2, 14),
+      'x-iyzi-rnd': randomString,
     },
     body: bodyStr,
   })
