@@ -23,19 +23,23 @@ function generateAuthContent(randomString: string, body: string): string {
 }
 
 export async function iyzicoRequest(path: string, body: object): Promise<any> {
-  const randomString = Math.random().toString(36).substring(2, 12)
+  const randomString = Math.random().toString(36).substring(2, 12) +
+                       Math.random().toString(36).substring(2, 12)
   const bodyStr = JSON.stringify(body)
   const authContent = generateAuthContent(randomString, bodyStr)
 
   console.log('[iyzico] request path:', path)
   console.log('[iyzico] request body:', bodyStr)
+  console.log('[iyzico] sending body length:', bodyStr.length)
+  console.log('[iyzico] content-type: application/json; charset=UTF-8')
 
   const response = await fetch(`${IYZICO_BASE_URL}${path}`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json; charset=UTF-8',
       'Accept': 'application/json',
       'Authorization': authContent,
+      'x-iyzi-rnd': randomString,
       'x-iyzi-client-version': 'iyzipay-node-2.0.67',
     },
     body: bodyStr,
