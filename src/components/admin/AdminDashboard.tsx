@@ -22,6 +22,7 @@ const tabs = [
   { id: 'products', label: '🛍️ Ürünler' },
   { id: 'campaigns', label: '🎯 Kampanyalar' },
   { id: 'reviews', label: '⭐ Yorumlar' },
+  { id: 'blog', label: '📝 Blog' },
   { id: 'sync', label: '🔄 Sync' },
 ]
 
@@ -65,6 +66,53 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
     title: '', category: '', price: '', salePrice: '', stock: '0',
     description: '', longDescription: '', images: '', isActive: true,
   })
+
+  // Blog state
+  const [blogPosts, setBlogPosts] = useState<any[]>([])
+  const [blogLoaded, setBlogLoaded] = useState(false)
+  const [blogForm, setBlogForm] = useState<any>(null)
+  const [blogSaving, setBlogSaving] = useState(false)
+  const emptyBlogForm = { id: null, title: '', slug: '', excerpt: '', content: '', cover_image: '', meta_title: '', meta_description: '', read_time: 5, published: false }
+
+  const loadBlogPosts = async () => {
+    const res = await fetch('/api/admin/blog')
+    if (res.ok) { const data = await res.json(); setBlogPosts(data); setBlogLoaded(true) }
+  }
+
+  const handleBlogTabClick = () => {
+    setActiveTab('blog')
+    if (!blogLoaded) loadBlogPosts()
+  }
+
+  const saveBlogPost = async () => {
+    if (!blogForm) return
+    setBlogSaving(true)
+    const res = await fetch('/api/admin/blog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(blogForm),
+    })
+    if (res.ok) {
+      const saved = await res.json()
+      setBlogPosts((prev) => {
+        const idx = prev.findIndex((p) => p.id === saved.id)
+        if (idx >= 0) { const next = [...prev]; next[idx] = saved; return next }
+        return [saved, ...prev]
+      })
+      setBlogForm(null)
+    }
+    setBlogSaving(false)
+  }
+
+  const deleteBlogPost = async (id: string) => {
+    if (!confirm('Bu yazıyı silmek istediğinize emin misiniz?')) return
+    await fetch(`/api/admin/blog?id=${id}`, { method: 'DELETE' })
+    setBlogPosts((prev) => prev.filter((p) => p.id !== id))
+  }
+
+  const slugify = (text: string) =>
+    text.toLowerCase().replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
   const router = useRouter()
   const inputClass = 'w-full px-3 py-2 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none transition-colors'
@@ -234,7 +282,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
         </div>
         <nav className="flex-1 py-4">
           {tabs.map((tab) => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            <button key={tab.id} onClick={() => tab.id === 'blog' ? handleBlogTabClick() : setActiveTab(tab.id)}
               className={`w-full text-left px-5 py-3 text-[12px] font-body transition-colors flex items-center gap-2 ${activeTab === tab.id ? 'bg-gold/20 text-gold' : 'text-champagne-mid/70 hover:text-champagne hover:bg-champagne-mid/5'}`}>
               {tab.label}
               {tab.id === 'orders' && pendingCount > 0 && <span className="ml-auto bg-gold text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center">{pendingCount}</span>}
@@ -510,6 +558,161 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                   </div>
                 </div>
               ))}</div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ BLOG ═══ */}
+        {activeTab === 'blog' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-heading text-[24px] text-text-primary">Blog Yazıları</h2>
+              <button
+                onClick={() => setBlogForm({ ...emptyBlogForm })}
+                className="px-4 py-2 bg-gold text-white text-[11px] uppercase tracking-wider hover:bg-gold-light transition-colors"
+              >
+                + Yeni Yazı
+              </button>
+            </div>
+
+            {/* Post list */}
+            {!blogLoaded ? (
+              <p className="text-text-muted font-body text-sm">Yükleniyor...</p>
+            ) : blogPosts.length === 0 ? (
+              <p className="text-text-muted font-body text-sm">Henüz yazı yok.</p>
+            ) : (
+              <div className="bg-white overflow-x-auto">
+                <table className="w-full text-[12px] font-body">
+                  <thead>
+                    <tr className="border-b border-champagne-mid bg-champagne text-text-muted uppercase tracking-wider text-[10px]">
+                      <th className="px-4 py-3 text-left">Başlık</th>
+                      <th className="px-4 py-3 text-left">Slug</th>
+                      <th className="px-4 py-3 text-center">Durum</th>
+                      <th className="px-4 py-3 text-left">Tarih</th>
+                      <th className="px-4 py-3 text-center">İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {blogPosts.map((post: any) => (
+                      <tr key={post.id} className="border-b border-champagne-mid/30 hover:bg-champagne/50">
+                        <td className="px-4 py-3 text-text-primary max-w-[240px] truncate">{post.title}</td>
+                        <td className="px-4 py-3 text-text-muted max-w-[160px] truncate">{post.slug}</td>
+                        <td className="px-4 py-3 text-center">
+                          {post.published
+                            ? <span className="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded">Yayında</span>
+                            : <span className="text-[9px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">Taslak</span>}
+                        </td>
+                        <td className="px-4 py-3 text-text-muted">
+                          {post.published_at ? new Date(post.published_at).toLocaleDateString('tr-TR') : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-center flex items-center justify-center gap-3">
+                          <button
+                            onClick={() => setBlogForm({ ...post })}
+                            className="text-[10px] text-gold hover:text-gold-light transition-colors uppercase tracking-wider"
+                          >
+                            Düzenle
+                          </button>
+                          <button
+                            onClick={() => deleteBlogPost(post.id)}
+                            className="text-[10px] text-red-400 hover:text-red-600 transition-colors"
+                          >
+                            Sil
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Blog form modal */}
+            {blogForm && (
+              <div className="fixed inset-0 bg-black/40 z-50 flex items-start justify-center p-4 overflow-y-auto">
+                <div className="bg-white w-full max-w-2xl p-6 space-y-4 my-8">
+                  <h3 className="font-heading text-[20px]">{blogForm.id ? 'Yazıyı Düzenle' : 'Yeni Yazı'}</h3>
+                  <input
+                    className={inputClass}
+                    placeholder="Başlık"
+                    value={blogForm.title}
+                    onChange={(e) => {
+                      const title = e.target.value
+                      setBlogForm((f: any) => ({ ...f, title, slug: f.id ? f.slug : slugify(title) }))
+                    }}
+                  />
+                  <div className="flex gap-2">
+                    <input
+                      className={inputClass}
+                      placeholder="slug (otomatik)"
+                      value={blogForm.slug}
+                      onChange={(e) => setBlogForm((f: any) => ({ ...f, slug: e.target.value }))}
+                    />
+                    <input
+                      className={`${inputClass} w-28 shrink-0`}
+                      type="number"
+                      placeholder="Okuma dk"
+                      value={blogForm.read_time}
+                      onChange={(e) => setBlogForm((f: any) => ({ ...f, read_time: parseInt(e.target.value) || 5 }))}
+                    />
+                  </div>
+                  <textarea
+                    className={`${inputClass} resize-none`}
+                    rows={2}
+                    placeholder="Kısa açıklama (excerpt)"
+                    value={blogForm.excerpt}
+                    onChange={(e) => setBlogForm((f: any) => ({ ...f, excerpt: e.target.value }))}
+                  />
+                  <textarea
+                    className={`${inputClass} resize-y`}
+                    rows={12}
+                    placeholder="İçerik (HTML)"
+                    value={blogForm.content}
+                    onChange={(e) => setBlogForm((f: any) => ({ ...f, content: e.target.value }))}
+                  />
+                  <input
+                    className={inputClass}
+                    placeholder="Kapak görseli URL"
+                    value={blogForm.cover_image || ''}
+                    onChange={(e) => setBlogForm((f: any) => ({ ...f, cover_image: e.target.value }))}
+                  />
+                  <input
+                    className={inputClass}
+                    placeholder="Meta başlık (SEO)"
+                    value={blogForm.meta_title || ''}
+                    onChange={(e) => setBlogForm((f: any) => ({ ...f, meta_title: e.target.value }))}
+                  />
+                  <textarea
+                    className={`${inputClass} resize-none`}
+                    rows={2}
+                    placeholder="Meta açıklama (SEO)"
+                    value={blogForm.meta_description || ''}
+                    onChange={(e) => setBlogForm((f: any) => ({ ...f, meta_description: e.target.value }))}
+                  />
+                  <label className="flex items-center gap-2 text-[12px] font-body">
+                    <input
+                      type="checkbox"
+                      checked={blogForm.published}
+                      onChange={(e) => setBlogForm((f: any) => ({ ...f, published: e.target.checked }))}
+                    />
+                    Yayınla
+                  </label>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={saveBlogPost}
+                      disabled={blogSaving}
+                      className="flex-1 py-2 bg-gold text-white text-[11px] uppercase tracking-wider hover:bg-gold-light transition-colors disabled:opacity-50"
+                    >
+                      {blogSaving ? 'Kaydediliyor...' : 'Kaydet'}
+                    </button>
+                    <button
+                      onClick={() => setBlogForm(null)}
+                      className="flex-1 py-2 border border-champagne-mid text-text-muted text-[11px] uppercase tracking-wider hover:border-gold transition-colors"
+                    >
+                      İptal
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}

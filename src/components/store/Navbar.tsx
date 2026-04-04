@@ -15,6 +15,7 @@ const navLinks = [
   { href: '/kategori/yuzuk', label: 'Yüzük' },
   { href: '/kategori/bileklik', label: 'Bileklik' },
   { href: '/kategori/setler', label: 'Setler' },
+  { href: '/blog', label: 'Blog' },
 ]
 
 interface NavbarProps {
