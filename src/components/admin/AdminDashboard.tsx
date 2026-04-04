@@ -213,7 +213,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   // ─── Product Override ───
   const saveProductOverride = async () => {
     if (!editingProduct) return
-    await fetch(`/api/admin/orders/${editingProduct.id}?type=product`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ override_title: editingProduct.override_title || null, override_price: editingProduct.override_price ? Number(editingProduct.override_price) : null, override_description: editingProduct.override_description || null, is_featured: editingProduct.is_featured, is_active: editingProduct.is_active }) })
+    await fetch(`/api/admin/orders/${editingProduct.id}?type=product`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ override_title: editingProduct.override_title || null, custom_price: editingProduct.custom_price ? Number(editingProduct.custom_price) : null, override_description: editingProduct.override_description || null, is_featured: editingProduct.is_featured, is_active: editingProduct.is_active }) })
     setLocalProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...editingProduct } : p)))
     setEditingProduct(null)
   }
@@ -469,7 +469,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                   <h3 className="font-heading text-[20px]">Ürün Düzenle</h3>
                   <p className="text-[11px] text-text-muted font-body">Trendyol: {editingProduct.trendyol_title}</p>
                   <input className={inputClass} placeholder="Override Başlık" value={editingProduct.override_title || ''} onChange={(e) => setEditingProduct({ ...editingProduct, override_title: e.target.value })} />
-                  <input className={inputClass} placeholder="Override Fiyat" type="number" value={editingProduct.override_price || ''} onChange={(e) => setEditingProduct({ ...editingProduct, override_price: e.target.value })} />
+                  <input className={inputClass} placeholder="Fiyat (boş = Trendyol fiyatı)" type="number" value={editingProduct.custom_price || ''} onChange={(e) => setEditingProduct({ ...editingProduct, custom_price: e.target.value })} />
                   <textarea className={`${inputClass} resize-none`} rows={3} placeholder="Override Açıklama" value={editingProduct.override_description || ''} onChange={(e) => setEditingProduct({ ...editingProduct, override_description: e.target.value })} />
                   <label className="flex items-center gap-2 text-[12px] font-body"><input type="checkbox" checked={editingProduct.is_featured} onChange={(e) => setEditingProduct({ ...editingProduct, is_featured: e.target.checked })} /> Öne Çıkar</label>
                   <label className="flex items-center gap-2 text-[12px] font-body"><input type="checkbox" checked={editingProduct.is_active} onChange={(e) => setEditingProduct({ ...editingProduct, is_active: e.target.checked })} /> Aktif</label>

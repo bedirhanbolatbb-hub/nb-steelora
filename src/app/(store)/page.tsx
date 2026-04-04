@@ -42,10 +42,10 @@ export default async function HomePage() {
     const naIds = (naSettings?.product_ids as string[]) || []
 
     if (naIds.length > 0) {
-      // Admin seçimi — is_active filtresi yok
+      // Admin seçimi — is_active filtresi yok, products_display view'u kullan (custom_price dahil)
       const { data } = await service
-        .from('products')
-        .select('*, display_title:trendyol_title, display_price:trendyol_price, display_images:trendyol_images')
+        .from('products_display')
+        .select('*')
         .in('id', naIds)
       if (data && data.length > 0) {
         newArrivals = naIds.map((id) => data.find((p: any) => p.id === id)).filter(Boolean)

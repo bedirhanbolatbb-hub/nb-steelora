@@ -16,7 +16,7 @@ export async function PATCH(
       .from('products')
       .update({
         override_title: body.override_title,
-        override_price: body.override_price,
+        custom_price: body.custom_price ?? null,
         override_description: body.override_description,
         is_featured: body.is_featured,
         is_active: body.is_active,
