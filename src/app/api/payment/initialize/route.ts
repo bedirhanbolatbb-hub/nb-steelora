@@ -7,6 +7,14 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { items, buyer, shippingAddress, userId } = body
 
+    const safeName = (buyer?.firstName || buyer?.full_name || '').trim().split(/\s+/)
+    const firstName = buyer?.firstName || safeName[0] || 'Müşteri'
+    const lastName = buyer?.lastName || safeName.slice(1).join(' ') || 'Kullanıcı'
+    const phone = (buyer?.phone || '05000000000').replace(/\s/g, '')
+    const safeAddress = shippingAddress?.address || 'Belirtilmedi'
+    const safeCity = shippingAddress?.city || 'İstanbul'
+    const safeZip = shippingAddress?.zipCode || '34000'
+
     const orderNumber = `NBS-${Date.now()}`
     const conversationId = generateConversationId()
 
@@ -30,37 +38,37 @@ export async function POST(request: Request) {
       callbackUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/callback`,
 
       buyer: {
-        id: buyer.email.replace('@', '_'),
-        name: buyer.firstName,
-        surname: buyer.lastName,
-        gsmNumber: buyer.phone,
-        email: buyer.email,
+        id: (buyer?.email || 'guest').replace('@', '_'),
+        name: firstName,
+        surname: lastName,
+        gsmNumber: phone,
+        email: buyer?.email || 'musteri@nbsteelora.com',
         identityNumber: '74300864791',
-        registrationAddress: shippingAddress.address,
+        registrationAddress: safeAddress,
         ip: request.headers.get('x-forwarded-for') || '85.34.78.112',
-        city: shippingAddress.city,
+        city: safeCity,
         country: 'Turkey',
       },
 
       shippingAddress: {
-        contactName: `${buyer.firstName} ${buyer.lastName}`,
-        city: shippingAddress.city,
+        contactName: `${firstName} ${lastName}`,
+        city: safeCity,
         country: 'Turkey',
-        address: shippingAddress.address,
-        zipCode: shippingAddress.zipCode || '34000',
+        address: safeAddress,
+        zipCode: safeZip,
       },
 
       billingAddress: {
-        contactName: `${buyer.firstName} ${buyer.lastName}`,
-        city: shippingAddress.city,
+        contactName: `${firstName} ${lastName}`,
+        city: safeCity,
         country: 'Turkey',
-        address: shippingAddress.address,
-        zipCode: shippingAddress.zipCode || '34000',
+        address: safeAddress,
+        zipCode: safeZip,
       },
 
       basketItems: items.map((item: any) => ({
         id: item.productId,
-        name: item.name.substring(0, 60),
+        name: (item.name ?? 'Ürün')?.substring(0, 60),
         category1: item.category || 'Takı',
         itemType: 'PHYSICAL',
         price: (item.price * item.quantity).toFixed(2),
@@ -83,12 +91,12 @@ export async function POST(request: Request) {
       total,
       status: 'pending',
       shipping_address: {
-        full_name: `${buyer.firstName} ${buyer.lastName}`,
-        phone: buyer.phone,
-        city: shippingAddress.city,
-        district: shippingAddress.district,
-        address: shippingAddress.address,
-        zip_code: shippingAddress.zipCode,
+        full_name: `${firstName} ${lastName}`,
+        phone,
+        city: safeCity,
+        district: shippingAddress?.district || '',
+        address: safeAddress,
+        zip_code: safeZip,
       },
     })
 

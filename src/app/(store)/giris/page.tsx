@@ -71,7 +71,7 @@ export default function GirisPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-dark text-champagne font-body text-[12px] tracking-[0.15em] uppercase hover:bg-gold transition-colors disabled:opacity-50"
+            className="w-full py-4 bg-text-primary text-white font-body text-[12px] tracking-[0.15em] uppercase hover:bg-gold transition-colors disabled:opacity-50"
           >
             {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
           </button>

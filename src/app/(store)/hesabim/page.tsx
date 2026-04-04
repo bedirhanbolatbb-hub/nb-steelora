@@ -21,7 +21,7 @@ export default async function HesabimPage() {
 
   return (
     <HesabimClient
-      user={{ id: user.id, email: user.email }}
+      user={{ id: user.id, email: user.email, user_metadata: user.user_metadata }}
       profile={profile}
       orders={orders || []}
     />
