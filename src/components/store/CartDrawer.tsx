@@ -148,7 +148,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               </Link>
               <button
                 onClick={onClose}
-                className="block w-full mt-2 py-2 text-[11px] uppercase tracking-[0.15em] font-body text-text-muted hover:text-gold transition-colors text-center"
+                className="w-full mt-2 py-2 border border-text-primary/30 text-text-primary text-[11px] uppercase tracking-[0.15em] font-body hover:border-text-primary transition-colors text-center"
               >
                 Alışverişe Devam Et
               </button>
