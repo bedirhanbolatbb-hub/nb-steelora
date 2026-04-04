@@ -1,38 +1,51 @@
-// iyzipay SDK — signature otomatik hesaplanır
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const Iyzipay = require('iyzipay')
+import crypto from 'crypto'
 
-function getIyzipay() {
-  return new Iyzipay({
-    apiKey: process.env.IYZICO_API_KEY,
-    secretKey: process.env.IYZICO_SECRET_KEY,
-    uri: process.env.IYZICO_BASE_URL || 'https://api.iyzipay.com',
+const IYZICO_BASE_URL = process.env.IYZICO_BASE_URL || 'https://api.iyzipay.com'
+const API_KEY = process.env.IYZICO_API_KEY || ''
+const SECRET_KEY = process.env.IYZICO_SECRET_KEY || ''
+
+function generateAuthContent(randomString: string, body: string): string {
+  const signature = crypto
+    .createHmac('sha256', SECRET_KEY)
+    .update(API_KEY + randomString + SECRET_KEY + body)
+    .digest('base64')
+  const hashStr = `apiKey:${API_KEY}&randomKey:${randomString}&signature:${signature}`
+  return `IYZWSv2 ${Buffer.from(hashStr).toString('base64')}`
+}
+
+export async function iyzicoRequest(path: string, body: object): Promise<any> {
+  const randomString = Math.random().toString(36).substring(2, 12)
+  const bodyStr = JSON.stringify(body)
+  const authContent = generateAuthContent(randomString, bodyStr)
+
+  console.log('[iyzico] request path:', path)
+  console.log('[iyzico] request body:', bodyStr)
+
+  const response = await fetch(`${IYZICO_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': authContent,
+      'x-iyzi-rnd': randomString,
+      'x-iyzi-client-version': 'iyzipay-node-2.0.67',
+    },
+    body: bodyStr,
   })
+
+  const result = await response.json()
+  console.log('[iyzico] response:', JSON.stringify(result))
+  return result
 }
 
 export function generateConversationId(): string {
   return `nbs-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 }
 
-export function initializeThreeDS(request: Record<string, any>): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const iyzipay = getIyzipay()
-    console.log('[iyzico] threedsInitialize.create payload:', JSON.stringify(request, null, 2))
-    iyzipay.threedsInitialize.create(request, (err: any, result: any) => {
-      console.log('[iyzico] threedsInitialize error:', err)
-      console.log('[iyzico] threedsInitialize result:', JSON.stringify(result, null, 2))
-      if (err) return reject(err)
-      resolve(result)
-    })
-  })
+export function initializeThreeDS(payload: object): Promise<any> {
+  return iyzicoRequest('/payment/3dsecure/initialize', payload)
 }
 
-export function completeThreeDS(request: Record<string, any>): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const iyzipay = getIyzipay()
-    iyzipay.threedsPayment.create(request, (err: any, result: any) => {
-      if (err) return reject(err)
-      resolve(result)
-    })
-  })
+export function completeThreeDS(payload: object): Promise<any> {
+  return iyzicoRequest('/payment/3dsecure/auth', payload)
 }
