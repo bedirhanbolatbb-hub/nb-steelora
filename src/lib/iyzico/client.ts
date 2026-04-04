@@ -10,25 +10,14 @@ function generateAuthContent(randomString: string, body: string): string {
     .createHmac('sha256', SECRET_KEY)
     .update(hashInput)
     .digest('base64')
-  const authStr = `apiKey:${API_KEY}&randomKey:${randomString}&signature:${signature}`
+
+  // iyzipay kaynak formatı: base64(apiKey + ":" + randomString + ":" + hmacBase64)
+  const token = API_KEY + ':' + randomString + ':' + signature
+  const authHeader = 'IYZWSv2 ' + Buffer.from(token).toString('base64')
 
   console.log('[iyzico] API_KEY prefix:', API_KEY.substring(0, 8))
-  console.log('[iyzico] SECRET_KEY set:', SECRET_KEY.length > 0)
-  console.log('[iyzico] randomString:', randomString)
-  console.log('[iyzico] hashInput length:', hashInput.length, '| body length:', body.length)
-  console.log('[iyzico] hashInput prefix (apiKey+rnd+secret):', hashInput.substring(0, API_KEY.length + randomString.length + SECRET_KEY.length))
-  console.log('[iyzico] body appended (first 80):', body.substring(0, 80))
-  const authHeader = `IYZWSv2 ${Buffer.from(authStr).toString('base64')}`
-  const decoded = Buffer.from(authHeader.replace('IYZWSv2 ', ''), 'base64').toString('utf8')
-
-  console.log('[iyzico] signature:', signature)
-  console.log('[iyzico] authStr (pre-b64):', authStr)
-  console.log('[iyzico] authStr decoded:', decoded)
-  console.log('[iyzico] headers sent:', JSON.stringify({
-    'Authorization': authHeader.substring(0, 80),
-    'x-iyzi-rnd': randomString,
-    'x-iyzi-client-version': 'iyzipay-node-2.0.67',
-  }))
+  console.log('[iyzico] token (pre-b64):', token.substring(0, 60))
+  console.log('[iyzico] decoded check:', Buffer.from(authHeader.replace('IYZWSv2 ', ''), 'base64').toString('utf8').substring(0, 60))
 
   return authHeader
 }
@@ -47,7 +36,6 @@ export async function iyzicoRequest(path: string, body: object): Promise<any> {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Authorization': authContent,
-      'x-iyzi-rnd': randomString,
       'x-iyzi-client-version': 'iyzipay-node-2.0.67',
     },
     body: bodyStr,
