@@ -15,7 +15,9 @@ function generateAuthContent(randomString: string, body: string): string {
   console.log('[iyzico] API_KEY prefix:', API_KEY.substring(0, 8))
   console.log('[iyzico] SECRET_KEY set:', SECRET_KEY.length > 0)
   console.log('[iyzico] randomString:', randomString)
-  console.log('[iyzico] hashInput prefix:', hashInput.substring(0, 60))
+  console.log('[iyzico] hashInput length:', hashInput.length, '| body length:', body.length)
+  console.log('[iyzico] hashInput prefix (apiKey+rnd+secret):', hashInput.substring(0, API_KEY.length + randomString.length + SECRET_KEY.length))
+  console.log('[iyzico] body appended (first 80):', body.substring(0, 80))
   console.log('[iyzico] signature:', signature)
   console.log('[iyzico] authStr (pre-b64):', authStr)
 
