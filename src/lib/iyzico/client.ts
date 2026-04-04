@@ -18,10 +18,19 @@ function generateAuthContent(randomString: string, body: string): string {
   console.log('[iyzico] hashInput length:', hashInput.length, '| body length:', body.length)
   console.log('[iyzico] hashInput prefix (apiKey+rnd+secret):', hashInput.substring(0, API_KEY.length + randomString.length + SECRET_KEY.length))
   console.log('[iyzico] body appended (first 80):', body.substring(0, 80))
+  const authHeader = `IYZWSv2 ${Buffer.from(authStr).toString('base64')}`
+  const decoded = Buffer.from(authHeader.replace('IYZWSv2 ', ''), 'base64').toString('utf8')
+
   console.log('[iyzico] signature:', signature)
   console.log('[iyzico] authStr (pre-b64):', authStr)
+  console.log('[iyzico] authStr decoded:', decoded)
+  console.log('[iyzico] headers sent:', JSON.stringify({
+    'Authorization': authHeader.substring(0, 80),
+    'x-iyzi-rnd': randomString,
+    'x-iyzi-client-version': 'iyzipay-node-2.0.67',
+  }))
 
-  return `IYZWSv2 ${Buffer.from(authStr).toString('base64')}`
+  return authHeader
 }
 
 export async function iyzicoRequest(path: string, body: object): Promise<any> {
