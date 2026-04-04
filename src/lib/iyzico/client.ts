@@ -16,6 +16,12 @@ async function iyzicoRequest(path: string, body: Record<string, any>) {
   const bodyStr = JSON.stringify(body)
   const { authorization, randomString } = generateAuthorizationHeader(bodyStr)
 
+  console.log('[iyzico] API_KEY prefix:', API_KEY()?.substring(0, 8))
+  console.log('[iyzico] SECRET_KEY set:', !!SECRET_KEY())
+  console.log('[iyzico] BASE_URL:', BASE_URL())
+  console.log('[iyzico] path:', path)
+  console.log('[iyzico] payload:', bodyStr)
+
   const res = await fetch(`${BASE_URL()}${path}`, {
     method: 'POST',
     headers: {
@@ -26,7 +32,10 @@ async function iyzicoRequest(path: string, body: Record<string, any>) {
     body: bodyStr,
   })
 
-  return res.json()
+  const result = await res.json()
+  console.log('[iyzico] response status:', res.status)
+  console.log('[iyzico] response body:', JSON.stringify(result, null, 2))
+  return result
 }
 
 export function generateConversationId(): string {
