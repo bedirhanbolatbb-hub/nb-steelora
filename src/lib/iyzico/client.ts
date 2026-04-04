@@ -5,12 +5,21 @@ const API_KEY = process.env.IYZICO_API_KEY || ''
 const SECRET_KEY = process.env.IYZICO_SECRET_KEY || ''
 
 function generateAuthContent(randomString: string, body: string): string {
+  const hashInput = API_KEY + randomString + SECRET_KEY + body
   const signature = crypto
     .createHmac('sha256', SECRET_KEY)
-    .update(API_KEY + randomString + SECRET_KEY + body)
+    .update(hashInput)
     .digest('base64')
-  const hashStr = `apiKey:${API_KEY}&randomKey:${randomString}&signature:${signature}`
-  return `IYZWSv2 ${Buffer.from(hashStr).toString('base64')}`
+  const authStr = `apiKey:${API_KEY}&randomKey:${randomString}&signature:${signature}`
+
+  console.log('[iyzico] API_KEY prefix:', API_KEY.substring(0, 8))
+  console.log('[iyzico] SECRET_KEY set:', SECRET_KEY.length > 0)
+  console.log('[iyzico] randomString:', randomString)
+  console.log('[iyzico] hashInput prefix:', hashInput.substring(0, 60))
+  console.log('[iyzico] signature:', signature)
+  console.log('[iyzico] authStr (pre-b64):', authStr)
+
+  return `IYZWSv2 ${Buffer.from(authStr).toString('base64')}`
 }
 
 export async function iyzicoRequest(path: string, body: object): Promise<any> {
