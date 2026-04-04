@@ -15,7 +15,7 @@ function toAscii(str: string): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { items, buyer, shippingAddress, userId } = body
+    const { items, buyer, shippingAddress, paymentCard, userId } = body
 
     const safeName = (buyer?.firstName || buyer?.full_name || '').trim().split(/\s+/)
     const firstName = toAscii(String(buyer?.firstName || safeName[0] || 'Musteri')).substring(0, 30)
@@ -57,6 +57,14 @@ export async function POST(request: Request) {
       : productItems
 
     const result = await initializeThreeDS({
+      paymentCard: {
+        cardHolderName: String(paymentCard?.cardHolderName || '').substring(0, 60),
+        cardNumber: String(paymentCard?.cardNumber || '').replace(/\s/g, ''),
+        expireMonth: String(paymentCard?.expireMonth || '').padStart(2, '0'),
+        expireYear: String(paymentCard?.expireYear || ''),
+        cvc: String(paymentCard?.cvc || ''),
+        registerCard: '0',
+      },
       locale: 'tr',
       conversationId,
       price: total.toFixed(2),

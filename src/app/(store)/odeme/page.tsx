@@ -60,6 +60,11 @@ export default function OdemePage() {
     district: '',
     address: '',
     zipCode: '',
+    cardHolderName: '',
+    cardNumber: '',
+    expireMonth: '',
+    expireYear: '',
+    cvc: '',
   })
   const [giftNote, setGiftNote] = useState('')
 
@@ -115,6 +120,34 @@ export default function OdemePage() {
   const updateField = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }))
 
+  // Format card number display: 4-digit groups
+  const formatCardDisplay = (value: string) => {
+    const digits = value.replace(/\D/g, '').substring(0, 16)
+    return digits.replace(/(.{4})/g, '$1 ').trim()
+  }
+
+  const handleCardNumberChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').substring(0, 16)
+    updateField('cardNumber', formatCardDisplay(digits))
+  }
+
+  const handleExpireMonthChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').substring(0, 2)
+    updateField('expireMonth', digits)
+  }
+
+  const handleExpireYearChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').substring(0, 4)
+    updateField('expireYear', digits)
+  }
+
+  const handleCvcChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').substring(0, 4)
+    updateField('cvc', digits)
+  }
+
+  const rawCardNumber = form.cardNumber.replace(/\s/g, '')
+
   const isFormValid =
     form.firstName &&
     form.lastName &&
@@ -122,7 +155,12 @@ export default function OdemePage() {
     form.phone &&
     form.city &&
     form.district &&
-    form.address
+    form.address &&
+    form.cardHolderName &&
+    rawCardNumber.length === 16 &&
+    form.expireMonth.length >= 1 &&
+    form.expireYear.length === 4 &&
+    form.cvc.length >= 3
 
   const handlePayment = async () => {
     if (!isFormValid) return
@@ -150,6 +188,14 @@ export default function OdemePage() {
             district: form.district,
             address: form.address,
             zipCode: form.zipCode,
+          },
+          paymentCard: {
+            cardHolderName: form.cardHolderName,
+            cardNumber: rawCardNumber,
+            expireMonth: form.expireMonth.padStart(2, '0'),
+            expireYear: form.expireYear,
+            cvc: form.cvc,
+            registerCard: '0',
           },
           userId,
           giftNote: giftNote || null,
@@ -278,6 +324,60 @@ export default function OdemePage() {
               value={form.zipCode}
               onChange={(e) => updateField('zipCode', e.target.value)}
             />
+          </div>
+
+          {/* Kart Bilgileri */}
+          <div className="mt-8">
+            <h2 className="text-[11px] uppercase tracking-[0.2em] font-body text-gold mb-6">
+              Kart Bilgileri
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <Input
+                  placeholder="Kart Üzerindeki İsim *"
+                  value={form.cardHolderName}
+                  onChange={(e) => updateField('cardHolderName', e.target.value.toUpperCase())}
+                  autoComplete="cc-name"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Input
+                  placeholder="Kart Numarası *"
+                  value={form.cardNumber}
+                  onChange={(e) => handleCardNumberChange(e.target.value)}
+                  autoComplete="cc-number"
+                  inputMode="numeric"
+                  maxLength={19}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:col-span-1">
+                <Input
+                  placeholder="Ay (MM) *"
+                  value={form.expireMonth}
+                  onChange={(e) => handleExpireMonthChange(e.target.value)}
+                  autoComplete="cc-exp-month"
+                  inputMode="numeric"
+                  maxLength={2}
+                />
+                <Input
+                  placeholder="Yıl (YYYY) *"
+                  value={form.expireYear}
+                  onChange={(e) => handleExpireYearChange(e.target.value)}
+                  autoComplete="cc-exp-year"
+                  inputMode="numeric"
+                  maxLength={4}
+                />
+              </div>
+              <Input
+                placeholder="CVV *"
+                value={form.cvc}
+                onChange={(e) => handleCvcChange(e.target.value)}
+                autoComplete="cc-csc"
+                inputMode="numeric"
+                maxLength={4}
+                type="password"
+              />
+            </div>
           </div>
 
           {/* Hediye Notu */}
