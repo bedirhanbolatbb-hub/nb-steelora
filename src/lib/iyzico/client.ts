@@ -1,45 +1,39 @@
 import crypto from 'crypto'
 
-const IYZICO_BASE_URL = process.env.IYZICO_BASE_URL || 'https://api.iyzipay.com'
+const BASE_URL = process.env.IYZICO_BASE_URL || 'https://api.iyzipay.com'
 const API_KEY = process.env.IYZICO_API_KEY || ''
 const SECRET_KEY = process.env.IYZICO_SECRET_KEY || ''
 
-function generateAuthContent(randomString: string, body: string): string {
-  const hashInput = API_KEY + randomString + SECRET_KEY + body
+export async function iyzicoRequest(path: string, body: object): Promise<any> {
+  const randomKey = Math.random().toString(36).substring(2, 12)
+  const bodyStr = JSON.stringify(body)
+
+  // payload = randomKey + uri_path + requestBody
+  const payload = randomKey + path + bodyStr
+
+  // signature = HMAC-SHA256(payload, secretKey) → HEX
   const signature = crypto
     .createHmac('sha256', SECRET_KEY)
-    .update(hashInput)
-    .digest('base64')
+    .update(payload)
+    .digest('hex')
 
-  // iyzipay kaynak formatı: base64(apiKey + ":" + randomString + ":" + hmacBase64)
-  const token = API_KEY + ':' + randomString + ':' + signature
-  const authHeader = 'IYZWSv2 ' + Buffer.from(token).toString('base64')
+  // authorizationString
+  const authStr = `apiKey:${API_KEY}&randomKey:${randomKey}&signature:${signature}`
 
-  console.log('[iyzico] API_KEY prefix:', API_KEY.substring(0, 8))
-  console.log('[iyzico] token (pre-b64):', token.substring(0, 60))
-  console.log('[iyzico] decoded check:', Buffer.from(authHeader.replace('IYZWSv2 ', ''), 'base64').toString('utf8').substring(0, 60))
+  // base64 encode
+  const authorization = 'IYZWSv2 ' + Buffer.from(authStr).toString('base64')
 
-  return authHeader
-}
+  console.log('[iyzico] path:', path)
+  console.log('[iyzico] payload prefix:', payload.substring(0, 80))
+  console.log('[iyzico] signature (hex):', signature.substring(0, 20))
+  console.log('[iyzico] authorization prefix:', authorization.substring(0, 40))
 
-export async function iyzicoRequest(path: string, body: object): Promise<any> {
-  const randomString = Math.random().toString(36).substring(2, 12) +
-                       Math.random().toString(36).substring(2, 12)
-  const bodyStr = JSON.stringify(body)
-  const authContent = generateAuthContent(randomString, bodyStr)
-
-  console.log('[iyzico] request path:', path)
-  console.log('[iyzico] request body:', bodyStr)
-  console.log('[iyzico] sending body length:', bodyStr.length)
-  console.log('[iyzico] content-type: application/json; charset=UTF-8')
-
-  const response = await fetch(`${IYZICO_BASE_URL}${path}`, {
+  const response = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json; charset=UTF-8',
-      'Accept': 'application/json',
-      'Authorization': authContent,
-      'x-iyzi-rnd': randomString,
+      'Content-Type': 'application/json',
+      'Authorization': authorization,
+      'x-iyzi-rnd': randomKey,
       'x-iyzi-client-version': 'iyzipay-node-2.0.67',
     },
     body: bodyStr,
