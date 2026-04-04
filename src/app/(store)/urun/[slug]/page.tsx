@@ -73,9 +73,10 @@ export default async function UrunDetayPage({
 
           {/* Açıklama */}
           {(product.override_description || product.trendyol_description) && (
-            <div className="mt-8 text-[13px] font-body text-text-secondary leading-relaxed">
-              <p>{product.override_description || product.trendyol_description}</p>
-            </div>
+            <div
+              className="mt-8 text-[13px] font-body text-text-secondary leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: product.override_description || product.trendyol_description }}
+            />
           )}
 
           {/* Güven rozetleri */}

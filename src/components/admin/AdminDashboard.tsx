@@ -213,7 +213,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   // ─── Product Override ───
   const saveProductOverride = async () => {
     if (!editingProduct) return
-    await fetch(`/api/admin/orders/${editingProduct.id}?type=product`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ override_title: editingProduct.override_title || null, custom_price: editingProduct.custom_price ? Number(editingProduct.custom_price) : null, override_description: editingProduct.override_description || null, is_featured: editingProduct.is_featured, is_active: editingProduct.is_active }) })
+    await fetch(`/api/admin/products/${editingProduct.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ override_title: editingProduct.override_title || null, custom_price: editingProduct.custom_price ? Number(editingProduct.custom_price) : null, override_description: editingProduct.override_description || null, is_featured: editingProduct.is_featured, is_active: editingProduct.is_active }) })
     setLocalProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...editingProduct } : p)))
     setEditingProduct(null)
   }
