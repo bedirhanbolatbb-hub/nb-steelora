@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { notFound } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import ProductImageGallery from '@/components/store/ProductImageGallery'
@@ -15,14 +16,17 @@ export default async function UrunDetayPage({
 }) {
   const { slug } = await params
   const supabase = await createClient()
+  const service = createServiceClient()
 
-  const { data: product } = await supabase
-    .from('products_display')
-    .select('*')
-    .eq('slug', slug)
-    .single()
+  const [{ data: product }, { data: priceRow }] = await Promise.all([
+    supabase.from('products_display').select('*').eq('slug', slug).single(),
+    service.from('products').select('custom_price').eq('slug', slug).single(),
+  ])
 
   if (!product) notFound()
+
+  // products_display view'u custom_price içermeyebilir — direkt products tablosundan al
+  const mergedProduct = { ...product, custom_price: priceRow?.custom_price ?? product.custom_price ?? null }
 
   return (
     <div className="max-w-6xl mx-auto px-4 lg:px-8 py-12">
@@ -45,9 +49,9 @@ export default async function UrunDetayPage({
           </h1>
           <div className="flex items-center gap-3 mb-8">
             <p className="text-[24px] font-body text-gold font-medium">
-              {formatPrice(product.custom_price ?? product.display_price)}
+              {formatPrice(mergedProduct.custom_price ?? product.display_price)}
             </p>
-            {product.custom_price && product.custom_price < product.display_price && (
+            {mergedProduct.custom_price && mergedProduct.custom_price < product.display_price && (
               <p className="text-[16px] font-body text-text-muted line-through">
                 {formatPrice(product.display_price)}
               </p>
@@ -67,7 +71,7 @@ export default async function UrunDetayPage({
 
           {/* Sepete ekle */}
           <AddToCartButton
-            product={product}
+            product={mergedProduct}
             disabled={product.trendyol_stock === 0}
           />
 
