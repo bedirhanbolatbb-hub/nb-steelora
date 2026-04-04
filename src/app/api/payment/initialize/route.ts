@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const phone = (buyer?.phone || '05000000000').replace(/\s/g, '')
     const safeAddress = String(shippingAddress?.address || '-').substring(0, 60)
     const safeCity = String(shippingAddress?.city || 'Istanbul').substring(0, 30)
-    const safeZip = shippingAddress?.zipCode || '34000'
+    const safeZip = shippingAddress?.zipCode || '00000'
     const safeContactName = `${firstName} ${lastName}`.substring(0, 60)
 
     const orderNumber = `NBS-${Date.now()}`
@@ -27,8 +27,11 @@ export async function POST(request: Request) {
     const total = subtotal + shippingCost
 
     const productItems = items.map((item: any) => {
-      const rawName = item.name || item.title || 'Urun'
-      const name = String(rawName).substring(0, 60).padEnd(3, ' ').trim() || 'Urun'
+      const rawName = item.trendyol_title || item.name || item.title || 'Celik Taki'
+      const name = String(rawName)
+        .replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ\s]/g, '')
+        .substring(0, 60)
+        .padEnd(3, ' ')
       return {
         id: String(item.productId || 'ITEM').substring(0, 40),
         name,
@@ -56,7 +59,7 @@ export async function POST(request: Request) {
       callbackUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.nbsteelora.com').replace('://nbsteelora.com', '://www.nbsteelora.com')}/api/payment/callback`,
 
       buyer: {
-        id: (buyer?.email || 'guest').replace('@', '_'),
+        id: (userId || buyer?.email || 'user_001').replace(/[@.]/g, '_'),
         name: firstName,
         surname: lastName,
         gsmNumber: phone,
@@ -88,7 +91,8 @@ export async function POST(request: Request) {
     })
 
     if (result.status !== 'success') {
-      return NextResponse.json({ error: result.errorMessage }, { status: 400 })
+      console.error('[iyzico] full error:', JSON.stringify(result))
+      return NextResponse.json({ error: result.errorMessage, errorCode: result.errorCode, errorGroup: result.errorGroup }, { status: 400 })
     }
 
     // Siparişi pending olarak kaydet
