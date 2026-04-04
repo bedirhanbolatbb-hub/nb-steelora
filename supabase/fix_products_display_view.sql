@@ -1,20 +1,40 @@
--- Run this in Supabase SQL Editor to fix products_display view
--- This adds custom_price to the view and makes display_price respect it
---
--- First check the current view definition:
--- SELECT pg_get_viewdef('products_display', true);
---
--- Then recreate with custom_price:
+-- Run this in Supabase SQL Editor
+-- Replaces products_display view with explicit column list
+-- Adds custom_price support and fixes display_images mapping
 
-CREATE OR REPLACE VIEW products_display AS
+DROP VIEW IF EXISTS products_display;
+
+CREATE VIEW products_display AS
 SELECT
-  p.*,
-  COALESCE(p.override_title, p.trendyol_title)   AS display_title,
-  COALESCE(p.custom_price, p.override_price, p.trendyol_price) AS display_price,
-  COALESCE(p.override_images, p.trendyol_images)  AS display_images
+  p.id,
+  p.slug,
+  p.trendyol_id,
+  p.trendyol_title,
+  p.trendyol_description,
+  p.trendyol_price,
+  p.trendyol_stock,
+  p.trendyol_images,
+  p.trendyol_category,
+  p.trendyol_barcode,
+  p.override_title,
+  p.override_description,
+  p.override_price,
+  p.override_images,
+  p.custom_price,
+  p.collection_id,
+  p.is_active,
+  p.is_featured,
+  p.badge,
+  p.note,
+  p.sales_count,
+  p.created_at,
+  p.updated_at,
+  p.last_synced_at,
+
+  -- Computed display fields
+  COALESCE(p.override_title, p.trendyol_title)                       AS display_title,
+  COALESCE(p.custom_price, p.override_price, p.trendyol_price)       AS display_price,
+  COALESCE(p.override_images, p.trendyol_images)                     AS display_images
+
 FROM products p
 WHERE p.is_active = true;
-
--- If the above fails (columns don't match exactly), run this first to see current definition:
--- SELECT pg_get_viewdef('products_display', true);
--- Then adjust accordingly.

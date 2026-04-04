@@ -15,7 +15,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, priority = false }: ProductCardProps) {
-  const imageUrl = product.display_images?.[0] || '/placeholder-product.jpg'
+  const imageUrl = product.display_images?.[0] ?? (product as any).trendyol_images?.[0] ?? '/placeholder-product.jpg'
   const addItem = useCart((s) => s.addItem)
   const [added, setAdded] = useState(false)
   const outOfStock = product.trendyol_stock === 0
