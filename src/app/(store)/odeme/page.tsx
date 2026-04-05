@@ -43,7 +43,6 @@ export default function OdemePage() {
     })
   }, [])
   const [loading, setLoading] = useState(false)
-  const [iframeHtml, setIframeHtml] = useState<string | null>(null)
   const [discountCode, setDiscountCode] = useState('')
   const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; amount: number; description: string } | null>(null)
   const [discountError, setDiscountError] = useState('')
@@ -203,8 +202,17 @@ export default function OdemePage() {
       })
 
       const data = await res.json()
-      if (data.success) {
-        setIframeHtml(data.htmlContent)
+      if (data.success && data.htmlContent) {
+        const form = document.createElement('form')
+        form.method = 'POST'
+        form.action = '/api/3ds-redirect'
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = 'htmlContent'
+        input.value = data.htmlContent
+        form.appendChild(input)
+        document.body.appendChild(form)
+        form.submit()
       } else {
         alert('Ödeme başlatılamadı: ' + data.error)
       }
@@ -215,18 +223,6 @@ export default function OdemePage() {
     }
   }
 
-  // 3DS iframe
-  if (iframeHtml) {
-    return (
-      <div className="fixed inset-0 z-50 bg-white flex items-center justify-center">
-        <iframe
-          srcDoc={iframeHtml}
-          className="w-full max-w-lg h-[600px] border-0"
-          title="3D Secure Ödeme"
-        />
-      </div>
-    )
-  }
 
   // Boş sepet
   if (items.length === 0) {

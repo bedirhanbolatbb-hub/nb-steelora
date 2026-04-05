@@ -1,11 +1,33 @@
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { completeThreeDS } from '@/lib/iyzico/client'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { decreaseStock } from '@/lib/trendyol/stockUpdate'
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY)
+}
+
+function itemsFromIyzicoTransactions(transactions: unknown) {
+  if (!Array.isArray(transactions)) return []
+  return transactions
+    .filter((t: any) => t?.itemId && String(t.itemId) !== 'KARGO')
+    .map((t: any) => ({
+      productId: String(t.itemId),
+      name: String(t.itemName ?? 'Ürün'),
+      quantity: 1,
+      price: parseFloat(String(t.price ?? 0)) || 0,
+    }))
+}
+
+const emptyShippingAddress = {
+  full_name: '',
+  phone: '',
+  city: '',
+  district: '',
+  neighborhood: '',
+  address: '',
+  zip_code: '',
 }
 
 export async function POST(request: Request) {
@@ -16,8 +38,12 @@ export async function POST(request: Request) {
     const paymentId = formData.get('paymentId') as string
     const conversationId = formData.get('conversationData') as string
     const status = formData.get('status') as string
+    const mdStatus = formData.get('mdStatus') as string
 
-    if (status !== 'success') {
+    console.log('[callback] paymentId:', paymentId, 'status:', status, 'mdStatus:', mdStatus)
+
+    if (status !== 'success' && mdStatus !== '1') {
+      console.error('[callback] 3DS failed. status:', status, 'mdStatus:', mdStatus)
       return NextResponse.redirect(`${siteUrl}/odeme/basarisiz`, { status: 302 })
     }
 
@@ -27,27 +53,94 @@ export async function POST(request: Request) {
       paymentId,
     })
 
+    console.log('[callback] completeThreeDS full result:', JSON.stringify(result))
+
     if (result.status !== 'success') {
+      console.error('[callback] completeThreeDS failed:', result.errorMessage)
       return NextResponse.redirect(`${siteUrl}/odeme/basarisiz`, { status: 302 })
     }
 
-    // Siparişi güncelle
-    const supabase = await createClient()
-    const { data: order } = await supabase
+
+    const serviceClient = createServiceClient()
+    const paidTotal = parseFloat(String(result.paidPrice ?? '0')) || 0
+    const subtotalFromIyzico = parseFloat(String(result.price ?? '0')) || 0
+
+    const { data: updatedRows, error: updateError } = await serviceClient
       .from('orders')
       .update({
         status: 'paid',
         iyzico_payment_id: result.paymentId,
+        total: paidTotal,
+        subtotal: subtotalFromIyzico,
         updated_at: new Date().toISOString(),
       })
       .eq('order_number', result.basketId)
       .select()
-      .single()
+
+    let order = updatedRows?.[0] ?? null
+
+    if (updateError) {
+      console.error('[callback] order update error:', updateError)
+    }
+
+    if (!order) {
+      const fallbackItems = itemsFromIyzicoTransactions(result.itemTransactions)
+      const { data: inserted, error: insertError } = await serviceClient
+        .from('orders')
+        .insert({
+          order_number: result.basketId,
+          iyzico_payment_id: result.paymentId,
+          status: 'paid',
+          total: paidTotal,
+          subtotal: subtotalFromIyzico,
+          shipping: 0,
+          items: fallbackItems.length ? fallbackItems : result.itemTransactions ?? [],
+          guest_email: null,
+          user_id: null,
+          shipping_address: emptyShippingAddress,
+        })
+        .select()
+        .single()
+
+      console.log('[callback] fallback INSERT result:', inserted)
+      console.log('[callback] fallback INSERT error:', insertError)
+
+      if (insertError) {
+        console.error('[callback] Supabase insert error:', insertError)
+        // Pending row may already exist (e.g. race); retry paid update instead of failing open
+        if (insertError.code === '23505') {
+          const { data: retryRows, error: retryErr } = await serviceClient
+            .from('orders')
+            .update({
+              status: 'paid',
+              iyzico_payment_id: result.paymentId,
+              total: paidTotal,
+              subtotal: subtotalFromIyzico,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('order_number', result.basketId)
+            .select()
+          if (retryErr) console.error('[callback] retry update after duplicate:', retryErr)
+          order = retryRows?.[0] ?? null
+        }
+        if (!order) {
+          return NextResponse.redirect(`${siteUrl}/odeme/basarisiz`, { status: 302 })
+        }
+      } else {
+        order = inserted
+      }
+    }
+
+    if (!order) {
+      console.error('[callback] order row missing after persist')
+      return NextResponse.redirect(`${siteUrl}/odeme/basarisiz`, { status: 302 })
+    }
 
     // Stok düş
-    if (order?.items) {
+    if (order.items) {
       for (const item of order.items as any[]) {
-        await decreaseStock(item.productId, item.quantity)
+        if (!item?.productId || item.productId === 'KARGO') continue
+        await decreaseStock(item.productId, Number(item.quantity) || 1)
       }
     }
 
@@ -73,35 +166,31 @@ export async function POST(request: Request) {
       <p style="margin: 0; font-size: 18px; font-weight: 600;">${order.order_number}</p>
     </div>
     <h3 style="font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A5048; margin-bottom: 16px;">Sipariş Detayları</h3>
-    ${(order.items as any[]).map((item: any) => `
-      <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #F0E8E0;">
-        <div>
-          <p style="margin: 0; font-size: 14px;">${item.name}</p>
-          <p style="margin: 4px 0 0; font-size: 12px; color: #7A5048;">Adet: ${item.quantity}</p>
-        </div>
-        <p style="margin: 0; font-size: 14px;">₺${(item.price * item.quantity).toFixed(2)}</p>
+    ${(order.items as any[]).map((item: any) => {
+      const line = (Number(item.price) || 0) * (Number(item.quantity) || 1)
+      return `
+      <div style="padding: 12px 0; border-bottom: 1px solid #F0E8E0;">
+        <p style="margin: 0; font-size: 14px;">${item.name}</p>
+        <p style="margin: 4px 0 0; font-size: 12px; color: #7A5048;">₺${line.toFixed(2)}</p>
       </div>
-    `).join('')}
+    `
+    }).join('')}
     <div style="padding: 16px 0; border-top: 2px solid #E8D8D0; margin-top: 8px;">
       <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <span style="color: #7A5048;">Ara Toplam</span>
-        <span>₺${order.subtotal.toFixed(2)}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
         <span style="color: #7A5048;">Kargo</span>
-        <span>${order.shipping_cost === 0 ? 'Ücretsiz' : '₺' + order.shipping_cost.toFixed(2)}</span>
+        <span>${(order.shipping ?? order.shipping_cost) === 0 ? 'Ücretsiz' : '₺' + Number(order.shipping ?? order.shipping_cost ?? 0).toFixed(2)}</span>
       </div>
       <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 600; margin-top: 12px;">
         <span>Toplam</span>
-        <span>₺${order.total.toFixed(2)}</span>
+        <span>₺${order.total?.toFixed(2)}</span>
       </div>
     </div>
     <div style="margin-top: 30px; padding: 20px; background: #FFF8F6; border: 1px solid #E8D8D0;">
       <h3 style="font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A5048; margin: 0 0 12px;">Teslimat Adresi</h3>
       <p style="margin: 0; font-size: 14px; line-height: 1.8;">
-        ${order.shipping_address.full_name}<br>
-        ${order.shipping_address.address}<br>
-        ${order.shipping_address.district} / ${order.shipping_address.city}
+        ${order.shipping_address?.full_name}<br>
+        ${order.shipping_address?.address}<br>
+        ${order.shipping_address?.city}
       </p>
     </div>
   </div>
@@ -119,7 +208,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.redirect(
-      `${siteUrl}/odeme/basarili?order=${result.basketId}`,
+      `${siteUrl}/siparis-tamamlandi?siparis=${encodeURIComponent(result.basketId || '')}`,
       { status: 302 }
     )
   } catch (error: any) {

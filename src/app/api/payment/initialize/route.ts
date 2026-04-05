@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { initializeThreeDS, generateConversationId } from '@/lib/iyzico/client'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 
 function toAscii(str: string): string {
   return str
@@ -56,6 +56,43 @@ export async function POST(request: Request) {
       ? [...productItems, { id: 'KARGO', name: 'Kargo Ucreti', category1: 'Kargo', itemType: 'PHYSICAL', price: shippingCost.toFixed(2) }]
       : productItems
 
+    const fullName = [buyer?.firstName, buyer?.lastName].filter(Boolean).join(' ').trim() || safeContactName
+    const shipping_address = {
+      full_name: fullName,
+      phone,
+      city: String(shippingAddress?.city ?? ''),
+      district: String(shippingAddress?.district ?? ''),
+      neighborhood: String(shippingAddress?.neighborhood ?? ''),
+      address: String(shippingAddress?.address ?? ''),
+      zip_code: String(shippingAddress?.zipCode ?? safeZip),
+    }
+    const orderItems = items.map((item: any) => ({
+      productId: String(item.productId ?? ''),
+      name: String(item.name ?? item.title ?? item.trendyol_title ?? 'Ürün'),
+      quantity: Number(item.quantity) || 0,
+      price: Number(item.price) || 0,
+    }))
+
+    const serviceClient = createServiceClient()
+    const { error: pendingOrderError } = await serviceClient.from('orders').insert({
+      order_number: orderNumber,
+      status: 'pending',
+      user_id: userId || null,
+      guest_email: buyer?.email || null,
+      shipping_address,
+      items: orderItems,
+      subtotal,
+      shipping: shippingCost,
+      total,
+      iyzico_payment_id: null,
+    })
+
+    if (pendingOrderError) {
+      console.error('PENDING ORDER FAILED', pendingOrderError)
+      throw new Error(`PENDING ORDER FAILED: ${pendingOrderError.message}`)
+    }
+    console.log('PENDING ORDER CREATED')
+
     const result = await initializeThreeDS({
       paymentCard: {
         cardHolderName: String(paymentCard?.cardHolderName || '').substring(0, 60),
@@ -110,36 +147,42 @@ export async function POST(request: Request) {
 
     if (result.status !== 'success') {
       console.error('[iyzico] full error:', JSON.stringify(result))
-      return NextResponse.json({ error: result.errorMessage, errorCode: result.errorCode, errorGroup: result.errorGroup }, { status: 400 })
+      return NextResponse.json(
+        { error: result.errorMessage, errorCode: result.errorCode, errorGroup: result.errorGroup },
+        { status: 400 }
+      )
     }
-
-    // Siparişi pending olarak kaydet
-    const supabase = await createClient()
-    await supabase.from('orders').insert({
-      order_number: orderNumber,
-      user_id: userId || null,
-      guest_email: buyer.email,
-      items,
-      subtotal,
-      shipping_cost: shippingCost,
-      total,
-      status: 'pending',
-      shipping_address: {
-        full_name: `${firstName} ${lastName}`,
-        phone,
-        city: safeCity,
-        district: shippingAddress?.district || '',
-        address: safeAddress,
-        zip_code: safeZip,
-      },
-    })
-
+    
+    // 🔥 PENDING ORDER INSERT
+    const { error: pendingError } = await serviceClient
+      .from('orders')
+      .insert({
+        order_number: orderNumber,
+        status: 'pending',
+        user_id: userId || null,
+        guest_email: buyer?.email || null,
+        shipping_address,
+        items: orderItems,
+        subtotal,
+        shipping: shippingCost,
+        total,
+        iyzico_payment_id: null,
+      })
+    
+    if (pendingError) {
+      console.error('PENDING ORDER FAILED:', pendingError)
+      return NextResponse.json({ error: 'Order create failed' }, { status: 500 })
+    }
+    
+    console.log('PENDING ORDER CREATED:', orderNumber)
+    
     return NextResponse.json({
       success: true,
       htmlContent: result.threeDSHtmlContent,
       orderNumber,
       conversationId,
     })
+        
   } catch (error: any) {
     console.error('Payment init error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
