@@ -136,11 +136,28 @@ export async function POST(request: Request) {
       return NextResponse.redirect(`${siteUrl}/odeme/basarisiz`, { status: 302 })
     }
 
-    // Stok düş
-    if (order.items) {
+    // Stok düş (yalnızca bir kez — stock_deducted_at ile idempotent)
+    const { data: stockGate } = await serviceClient
+      .from('orders')
+      .select('stock_deducted_at')
+      .eq('id', order.id)
+      .single()
+
+    if (!stockGate?.stock_deducted_at && order.items) {
+      let stockDecreaseOk = true
       for (const item of order.items as any[]) {
         if (!item?.productId || item.productId === 'KARGO') continue
-        await decreaseStock(item.productId, Number(item.quantity) || 1)
+        const dec = await decreaseStock(item.productId, Number(item.quantity) || 1)
+        if (!dec.success) {
+          stockDecreaseOk = false
+          console.error('[callback] decreaseStock failed:', item.productId, dec.error)
+        }
+      }
+      if (stockDecreaseOk) {
+        await serviceClient
+          .from('orders')
+          .update({ stock_deducted_at: new Date().toISOString() })
+          .eq('id', order.id)
       }
     }
 

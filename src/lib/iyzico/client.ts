@@ -55,3 +55,54 @@ export function initializeThreeDS(payload: object): Promise<any> {
 export function completeThreeDS(payload: object): Promise<any> {
   return iyzicoRequest('/payment/3dsecure/auth', payload)
 }
+
+export function retrievePaymentDetail(paymentId: string): Promise<any> {
+  return iyzicoRequest('/payment/detail', {
+    locale: 'tr',
+    conversationId: generateConversationId(),
+    paymentId,
+  })
+}
+
+export function refundPaymentLine(payload: {
+  paymentTransactionId: string
+  price: string
+  currency: string
+}): Promise<any> {
+  return iyzicoRequest('/payment/refund', {
+    locale: 'tr',
+    conversationId: generateConversationId(),
+    paymentTransactionId: payload.paymentTransactionId,
+    price: payload.price,
+    currency: payload.currency,
+    ip: '85.34.78.112',
+  })
+}
+
+/** Refund every basket line returned by payment/detail (full line amounts). */
+export async function refundFullPayment(paymentId: string): Promise<{ success: boolean; error?: string }> {
+  const detail = await retrievePaymentDetail(paymentId)
+  if (detail.status !== 'success') {
+    return { success: false, error: detail.errorMessage || 'Ödeme sorgulanamadı' }
+  }
+  const txs = detail.itemTransactions
+  if (!Array.isArray(txs) || txs.length === 0) {
+    return { success: false, error: 'Ödeme kalemi bulunamadı' }
+  }
+  const currency = detail.currency || 'TRY'
+  for (const tx of txs) {
+    const paymentTransactionId = tx.paymentTransactionId
+    const paidPrice = tx.paidPrice != null ? String(tx.paidPrice) : ''
+    const priceNum = parseFloat(paidPrice)
+    if (!paymentTransactionId || !paidPrice || Number.isNaN(priceNum) || priceNum <= 0) continue
+    const ref = await refundPaymentLine({
+      paymentTransactionId,
+      price: paidPrice,
+      currency,
+    })
+    if (ref.status !== 'success') {
+      return { success: false, error: ref.errorMessage || 'İade başarısız' }
+    }
+  }
+  return { success: true }
+}

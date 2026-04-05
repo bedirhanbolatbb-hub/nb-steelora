@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
+import { refundFullPayment } from '@/lib/iyzico/client'
+import { increaseStock } from '@/lib/trendyol/stockUpdate'
 
 export async function PATCH(
   request: Request,
@@ -28,7 +31,19 @@ export async function PATCH(
     return NextResponse.json({ success: true })
   }
 
-  // Update order status + optional tracking number
+  // Update order status + optional tracking number (service role — reliable without Supabase session)
+  const serviceClient = createServiceClient()
+
+  const { data: existing, error: fetchErr } = await serviceClient
+    .from('orders')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (fetchErr || !existing) {
+    return NextResponse.json({ error: fetchErr?.message || 'Sipariş bulunamadı' }, { status: 404 })
+  }
+
   const updateData: any = {
     status: body.status,
     updated_at: new Date().toISOString(),
@@ -37,7 +52,37 @@ export async function PATCH(
     updateData.tracking_number = body.tracking_number
   }
 
-  const { data: order, error } = await supabase
+  if (body.status === 'cancelled') {
+    if (existing.status === 'cancelled') {
+      return NextResponse.json({ success: true })
+    }
+
+    if (existing.status === 'paid' && existing.iyzico_payment_id) {
+      const refund = await refundFullPayment(String(existing.iyzico_payment_id))
+      if (!refund.success) {
+        return NextResponse.json(
+          { error: refund.error || 'iyzico iade başarısız' },
+          { status: 502 }
+        )
+      }
+    }
+
+    if (existing.stock_deducted_at && !existing.stock_restored_at && existing.items) {
+      for (const item of existing.items as any[]) {
+        if (!item?.productId || item.productId === 'KARGO') continue
+        const inc = await increaseStock(item.productId, Number(item.quantity) || 1)
+        if (!inc.success) {
+          return NextResponse.json(
+            { error: inc.error || 'Stok iadesi başarısız' },
+            { status: 500 }
+          )
+        }
+      }
+      updateData.stock_restored_at = new Date().toISOString()
+    }
+  }
+
+  const { data: order, error } = await serviceClient
     .from('orders')
     .update(updateData)
     .eq('id', id)
