@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       shipping_address,
       items: orderItems,
       subtotal,
-      shipping: shippingCost,
+      shipping_cost: shippingCost,
       total,
       iyzico_payment_id: null,
     })
