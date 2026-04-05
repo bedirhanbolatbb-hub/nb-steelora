@@ -8,6 +8,23 @@ const ALLOWED: Record<string, Set<string>> = {
   cancelled: new Set(['cancelled']),
 }
 
+const ADMIN_STATUS_OPTION_ORDER = [
+  'pending',
+  'paid',
+  'preparing',
+  'shipped',
+  'delivered',
+  'cancelled',
+] as const
+
+/** Values allowed in the admin status dropdown for the current row (includes current status). */
+export function getAdminSelectableOrderStatuses(current: string | null | undefined): string[] {
+  const c = current || 'pending'
+  const set = ALLOWED[c]
+  if (!set) return [c]
+  return ADMIN_STATUS_OPTION_ORDER.filter((s) => set.has(s))
+}
+
 export function validateOrderStatusTransition(from: string | null | undefined, to: string): string | null {
   const f = from || 'pending'
   if (f === to) return null

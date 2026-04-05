@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
+import { getAdminSelectableOrderStatuses } from '@/lib/orders/statusTransitions'
 import HomepageEditor from './HomepageEditor'
 import ContentEditor from './ContentEditor'
 
@@ -50,6 +51,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   useEffect(() => {
     setLocalOrders(orders)
   }, [orders])
+
   const [localCampaigns, setLocalCampaigns] = useState(campaigns)
   const [localProducts, setLocalProducts] = useState(products)
   const [localReviews, setLocalReviews] = useState(initialReviews)
@@ -59,8 +61,19 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   const [showCampaignForm, setShowCampaignForm] = useState(false)
   const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null)
   const [editingProduct, setEditingProduct] = useState<any>(null)
-  const [shippingOrderId, setShippingOrderId] = useState<string | null>(null)
-  const [trackingNumber, setTrackingNumber] = useState('')
+  /** Single row: preparing → shipped flow (tracking draft). */
+  const [shippingDraftOrderId, setShippingDraftOrderId] = useState<string | null>(null)
+  const [shippingDraftTracking, setShippingDraftTracking] = useState('')
+
+  useEffect(() => {
+    if (!shippingDraftOrderId) return
+    const row = localOrders.find((o) => o.id === shippingDraftOrderId)
+    if (!row || row.status !== 'preparing') {
+      setShippingDraftOrderId(null)
+      setShippingDraftTracking('')
+    }
+  }, [localOrders, shippingDraftOrderId])
+
   // Products tab state
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [productSearch, setProductSearch] = useState('')
@@ -153,6 +166,8 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
       router.refresh()
       return false
     }
+    setShippingDraftOrderId(null)
+    setShippingDraftTracking('')
     router.refresh()
     return true
   }
@@ -350,44 +365,57 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                       <td className="px-4 py-3 text-right text-gold font-medium">{formatPrice(order.total)}</td>
                       <td className="px-4 py-3 text-center"><span className={`inline-block px-2 py-0.5 rounded text-[10px] ${statusColors[order.status] || 'bg-gray-100'}`}>{statusLabels[order.status] || order.status}</span></td>
                       <td className="px-4 py-3 text-center">
-                        <select
-                          value={order.status}
-                          onChange={async (e) => {
-                            const v = e.target.value
-                            if (v === 'shipped') {
-                              setShippingOrderId(order.id)
-                              setTrackingNumber(order.tracking_number || '')
-                              return
-                            }
-                            await updateOrderStatus(order.id, v)
-                          }}
-                          className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none"
-                        >
-                          <option value="pending">Bekliyor</option>
-                          <option value="paid">Ödendi</option>
-                          <option value="preparing">Hazırlanıyor</option>
-                          <option value="shipped">Kargoda</option>
-                          <option value="delivered">Teslim Edildi</option>
-                          <option value="cancelled">İptal</option>
-                        </select>
-                        {shippingOrderId === order.id && (
-                          <div className="mt-2 flex gap-1">
-                            <input type="text" placeholder="Takip No" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none w-28" />
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                const ok = await updateOrderStatus(order.id, 'shipped', trackingNumber)
-                                if (ok) {
-                                  setShippingOrderId(null)
-                                  setTrackingNumber('')
-                                }
-                              }}
-                              className="text-[10px] bg-gold text-white px-2 py-1 rounded hover:bg-gold-light transition-colors"
-                            >
-                              Gönder
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-[9px] text-text-muted leading-tight max-w-[140px]">
+                            {shippingDraftOrderId === order.id
+                              ? 'Kargoda — takip no girin'
+                              : (statusLabels[order.status] ?? order.status)}
+                          </span>
+                          <select
+                            value={order.status}
+                            onChange={async (e) => {
+                              const v = e.target.value
+                              if (shippingDraftOrderId === order.id && v !== 'shipped') {
+                                setShippingDraftOrderId(null)
+                                setShippingDraftTracking('')
+                              }
+                              if (v === 'shipped') {
+                                if (order.status !== 'preparing') return
+                                setShippingDraftOrderId(order.id)
+                                setShippingDraftTracking(order.tracking_number || '')
+                                return
+                              }
+                              await updateOrderStatus(order.id, v)
+                            }}
+                            className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none"
+                          >
+                            {getAdminSelectableOrderStatuses(order.status).map((s) => (
+                              <option key={s} value={s}>
+                                {statusLabels[s] ?? s}
+                              </option>
+                            ))}
+                          </select>
+                          {shippingDraftOrderId === order.id && order.status === 'preparing' && (
+                            <div className="mt-1 flex flex-wrap justify-center gap-1">
+                              <input
+                                type="text"
+                                placeholder="Takip No"
+                                value={shippingDraftTracking}
+                                onChange={(e) => setShippingDraftTracking(e.target.value)}
+                                className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none w-28"
+                              />
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  await updateOrderStatus(order.id, 'shipped', shippingDraftTracking)
+                                }}
+                                className="text-[10px] bg-gold text-white px-2 py-1 rounded hover:bg-gold-light transition-colors"
+                              >
+                                Gönder
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}</tbody>
