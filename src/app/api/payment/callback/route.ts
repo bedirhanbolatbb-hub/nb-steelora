@@ -93,7 +93,7 @@ export async function POST(request: Request) {
           status: 'paid',
           total: paidTotal,
           subtotal: subtotalFromIyzico,
-          shipping: 0,
+          shipping_cost: 0,
           items: fallbackItems.length ? fallbackItems : result.itemTransactions ?? [],
           guest_email: null,
           user_id: null,
