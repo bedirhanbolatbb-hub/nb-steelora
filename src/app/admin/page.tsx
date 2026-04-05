@@ -16,6 +16,7 @@ export default async function AdminPage() {
     { data: syncLogs },
     { data: reviews },
     { data: homepageRows },
+    { count: orderRequestsPendingCount },
   ] = await Promise.all([
     supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(50),
     serviceClient.from('products').select('*, display_title:trendyol_title, display_price:trendyol_price, display_images:trendyol_images').order('created_at', { ascending: false }),
@@ -23,6 +24,10 @@ export default async function AdminPage() {
     supabase.from('sync_log').select('*').order('synced_at', { ascending: false }).limit(5),
     serviceClient.from('reviews').select('*').order('created_at', { ascending: false }).limit(50),
     serviceClient.from('homepage_settings').select('section, product_ids'),
+    serviceClient
+      .from('order_requests')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending'),
   ])
 
   const homepageSettings: Record<string, string[]> = {}
@@ -40,6 +45,7 @@ export default async function AdminPage() {
       syncLogs={syncLogs || []}
       reviews={reviews || []}
       homepageSettings={homepageSettings}
+      orderRequestsPendingCount={orderRequestsPendingCount ?? 0}
     />
   )
 }

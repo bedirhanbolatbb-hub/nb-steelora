@@ -1,24 +1,25 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { refundFullPayment } from '@/lib/iyzico/client'
-import { increaseStock } from '@/lib/trendyol/stockUpdate'
 import { validateOrderStatusTransition } from '@/lib/orders/statusTransitions'
-
-function lineProductId(item: any): string | null {
-  const id = item?.productId ?? item?.product_id
-  if (id == null || id === '') return null
-  const s = String(id).trim()
-  if (!s || s === 'KARGO') return null
-  return s
-}
+import { executeAdminOrderCancellation } from '@/lib/admin/executeOrderCancellation'
+import { isAdminRequest } from '@/lib/admin/requireAdmin'
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAdminRequest())) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { id } = await params
-  const body = await request.json()
+  let body: any
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ success: false, error: 'Geçersiz gövde.' }, { status: 400 })
+  }
   const url = new URL(request.url)
   const type = url.searchParams.get('type')
   const supabase = await createClient()
@@ -36,7 +37,8 @@ export async function PATCH(
       })
       .eq('id', id)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error)
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     return NextResponse.json({ success: true })
   }
 
@@ -49,7 +51,10 @@ export async function PATCH(
     .single()
 
   if (fetchErr || !existing) {
-    return NextResponse.json({ error: fetchErr?.message || 'Sipariş bulunamadı' }, { status: 404 })
+    return NextResponse.json(
+      { success: false, error: fetchErr?.message || 'Sipariş bulunamadı' },
+      { status: 404 }
+    )
   }
 
   console.log('[admin-order] PATCH start', {
@@ -68,101 +73,18 @@ export async function PATCH(
   }
 
   if (body.status === 'cancelled') {
-    if (existing.status === 'cancelled') {
-      console.log('[admin-order] cancel idempotent — already cancelled', { orderId: id })
-      return NextResponse.json({ success: true })
+    const cancelResult = await executeAdminOrderCancellation(serviceClient, id)
+    if (!cancelResult.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: cancelResult.error,
+          ...(cancelResult.code ? { code: cancelResult.code } : {}),
+        },
+        { status: cancelResult.status }
+      )
     }
-
-    const cancelErr = validateOrderStatusTransition(existing.status, 'cancelled')
-    if (cancelErr) {
-      console.warn('[admin-order] cancel rejected', { orderId: id, reason: cancelErr })
-      return NextResponse.json({ error: cancelErr }, { status: 400 })
-    }
-
-    const needsRefund =
-      (existing.status === 'paid' || existing.status === 'preparing') &&
-      Boolean(existing.iyzico_payment_id)
-
-    if (needsRefund && !existing.payment_refunded_at) {
-      console.log('[admin-order] refund start', {
-        orderId: id,
-        paymentId: existing.iyzico_payment_id,
-      })
-      const refund = await refundFullPayment(String(existing.iyzico_payment_id))
-      console.log('[admin-order] refund result', {
-        orderId: id,
-        success: refund.success,
-        error: refund.error,
-      })
-      if (!refund.success) {
-        return NextResponse.json(
-          { error: refund.error || 'iyzico iade başarısız' },
-          { status: 502 }
-        )
-      }
-
-      const { error: refundStampErr } = await serviceClient
-        .from('orders')
-        .update({ payment_refunded_at: new Date().toISOString() })
-        .eq('id', id)
-
-      if (refundStampErr) {
-        console.error(
-          '[admin-order] CRITICAL: refund API succeeded but payment_refunded_at DB update failed — risk of duplicate refund on retry',
-          { orderId: id, refundStampErr }
-        )
-        return NextResponse.json(
-          { error: 'İade kaydı veritabanına yazılamadı' },
-          { status: 500 }
-        )
-      }
-    }
-
-    if (existing.stock_deducted_at && !existing.stock_restored_at) {
-      console.log('[admin-order] stock restore start', { orderId: id })
-      const items = Array.isArray(existing.items) ? (existing.items as any[]) : []
-      let restoredLines = 0
-      for (const item of items) {
-        const pid = lineProductId(item)
-        if (!pid) continue
-        const qty = Math.max(1, Number(item.quantity) || 1)
-        const inc = await increaseStock(pid, qty)
-        console.log('[admin-order] stock restore line', {
-          orderId: id,
-          productId: pid,
-          quantity: qty,
-          success: inc.success,
-          error: inc.error,
-        })
-        if (!inc.success) {
-          console.error(
-            '[admin-order] CRITICAL: iyzico refund may have completed but stock restore failed — reconcile inventory manually',
-            { orderId: id, productId: pid, error: inc.error }
-          )
-          return NextResponse.json(
-            {
-              error: inc.error || 'Stok iadesi başarısız',
-              code: 'STOCK_RESTORE_FAILED',
-            },
-            { status: 500 }
-          )
-        }
-        restoredLines += 1
-      }
-      if (restoredLines === 0 && items.length > 0) {
-        console.warn('[admin-order] stock restore: no product lines to restore', { orderId: id })
-      }
-      updateData.stock_restored_at = new Date().toISOString()
-      console.log('[admin-order] stock restore complete', { orderId: id, restoredLines })
-    } else {
-      console.log('[admin-order] stock restore skip', {
-        orderId: id,
-        stock_deducted_at: existing.stock_deducted_at,
-        stock_restored_at: existing.stock_restored_at,
-      })
-    }
-
-    updateData.status = 'cancelled'
+    return NextResponse.json({ success: true })
   } else {
     const transitionErr = validateOrderStatusTransition(existing.status, body.status)
     if (transitionErr) {
@@ -170,7 +92,7 @@ export async function PATCH(
         orderId: id,
         reason: transitionErr,
       })
-      return NextResponse.json({ error: transitionErr }, { status: 400 })
+      return NextResponse.json({ success: false, error: transitionErr }, { status: 400 })
     }
     updateData.status = body.status
   }
@@ -187,7 +109,7 @@ export async function PATCH(
       '[admin-order] CRITICAL: final order update failed after side-effects (check refund/stock state)',
       { orderId: id, error }
     )
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 
   console.log('[admin-order] final status update success', {

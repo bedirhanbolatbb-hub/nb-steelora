@@ -32,7 +32,40 @@ const statusLabels: Record<string, string> = {
   cancelled: 'İptal',
 }
 
+const requestTypeLabels: Record<string, string> = {
+  cancel: 'İptal talebi',
+  return: 'İade talebi',
+}
+
+const requestStatusLabels: Record<string, string> = {
+  pending: 'İncelemede',
+  approved: 'Onaylandı',
+  rejected: 'Reddedildi',
+}
+
+function formatShippingSummary(addr: unknown): string | null {
+  if (!addr || typeof addr !== 'object') return null
+  const a = addr as Record<string, string | undefined>
+  const line1 = [a.full_name, a.phone].filter(Boolean).join(' · ')
+  const cityLine = [a.district, a.city].filter(Boolean).join(', ')
+  const parts = [line1, cityLine, a.address].filter((p) => p && String(p).trim())
+  return parts.length ? parts.join(' — ') : null
+}
+
+function orderLineItems(items: any[] | undefined) {
+  if (!Array.isArray(items)) return []
+  return items.filter((item) => {
+    const id = item?.productId ?? item?.product_id
+    return id !== 'KARGO'
+  })
+}
+
+function hasPendingCustomerRequest(requests: any[] | undefined) {
+  return Array.isArray(requests) && requests.some((r) => r.status === 'pending')
+}
+
 const btnPrimary = 'py-3 px-8 bg-text-primary text-white text-[11px] tracking-[0.15em] uppercase font-body hover:bg-gold transition-colors disabled:opacity-50'
+const btnOutline = 'py-2 px-4 border border-champagne-mid text-text-secondary text-[10px] tracking-[0.12em] uppercase font-body hover:border-gold hover:text-gold transition-colors disabled:opacity-50 disabled:pointer-events-none'
 const inputClass = 'w-full px-3 py-2 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none transition-colors'
 
 export default function HesabimClient({ user, profile, orders }: HesabimClientProps) {
@@ -66,11 +99,108 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
   const [billingSaving, setBillingSaving] = useState(false)
   const [billingSaved, setBillingSaved] = useState(false)
 
+  const [orderRequestsByOrderId, setOrderRequestsByOrderId] = useState<Record<string, any[]>>({})
+  const [orderRequestsLoading, setOrderRequestsLoading] = useState(false)
+  const [orderRequestOpenForm, setOrderRequestOpenForm] = useState<{
+    orderId: string
+    kind: 'cancel' | 'return'
+  } | null>(null)
+  const [orderRequestFormReason, setOrderRequestFormReason] = useState('')
+  const [orderRequestSubmittingId, setOrderRequestSubmittingId] = useState<string | null>(null)
+  const [orderRequestFlash, setOrderRequestFlash] = useState<
+    Record<string, { type: 'success' | 'error'; msg: string }>
+  >({})
+
   useEffect(() => {
     if (wishlistItems.length === 0) { setFavProducts([]); return }
     supabase.from('products_display').select('*').in('id', wishlistItems)
       .then(({ data }) => setFavProducts(data || []))
   }, [wishlistItems])
+
+  useEffect(() => {
+    if (tab !== 'siparisler' || orders.length === 0) {
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      setOrderRequestsLoading(true)
+      const entries = await Promise.all(
+        orders.map(async (o: any) => {
+          const res = await fetch(`/api/account/orders/${o.id}/requests`)
+          const json = await res.json().catch(() => ({}))
+          const list = res.ok && Array.isArray(json.requests) ? json.requests : []
+          return [o.id, list] as const
+        })
+      )
+      if (cancelled) return
+      const next: Record<string, any[]> = {}
+      for (const [id, list] of entries) next[id] = list
+      setOrderRequestsByOrderId(next)
+      setOrderRequestsLoading(false)
+    })()
+    return () => {
+      cancelled = true
+      setOrderRequestsLoading(false)
+    }
+  }, [tab, orders])
+
+  const refreshOrderRequests = async (orderId: string) => {
+    const res = await fetch(`/api/account/orders/${orderId}/requests`)
+    const json = await res.json().catch(() => ({}))
+    if (res.ok && Array.isArray(json.requests)) {
+      setOrderRequestsByOrderId((prev) => ({ ...prev, [orderId]: json.requests }))
+    }
+  }
+
+  const submitOrderRequest = async (orderId: string, kind: 'cancel' | 'return') => {
+    setOrderRequestSubmittingId(orderId)
+    setOrderRequestFlash((prev) => {
+      const n = { ...prev }
+      delete n[orderId]
+      return n
+    })
+    try {
+      const path =
+        kind === 'cancel' ? 'cancel-request' : 'return-request'
+      const res = await fetch(`/api/account/orders/${orderId}/${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: orderRequestFormReason.trim() || undefined,
+        }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setOrderRequestFlash((prev) => ({
+          ...prev,
+          [orderId]: {
+            type: 'error',
+            msg:
+              typeof json.error === 'string'
+                ? json.error
+                : 'İşlem tamamlanamadı. Lütfen tekrar deneyin.',
+          },
+        }))
+        return
+      }
+      setOrderRequestOpenForm(null)
+      setOrderRequestFormReason('')
+      setOrderRequestFlash((prev) => ({
+        ...prev,
+        [orderId]: {
+          type: 'success',
+          msg:
+            kind === 'cancel'
+              ? 'İptal talebiniz alındı. En kısa sürede değerlendirilecektir.'
+              : 'İade talebiniz alındı. En kısa sürede değerlendirilecektir.',
+        },
+      }))
+      await refreshOrderRequests(orderId)
+      router.refresh()
+    } finally {
+      setOrderRequestSubmittingId(null)
+    }
+  }
 
   const loadAddresses = async () => {
     const { data } = await supabase.from('user_addresses').select('*').eq('user_id', user.id).order('created_at')
@@ -205,26 +335,239 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
           {orders.length === 0 ? (
             <p className="text-text-muted font-body text-[13px]">Henüz siparişiniz bulunmuyor.</p>
           ) : (
-            <div className="space-y-4">
-              {orders.map((order: any) => (
-                <div key={order.id} className="border border-champagne-mid p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <p className="font-body text-[14px] font-medium text-text-primary">{order.order_number}</p>
-                      <p className="text-[12px] font-body text-text-muted">{new Date(order.created_at).toLocaleDateString('tr-TR')}</p>
+            <div className="space-y-6">
+              {orders.map((order: any) => {
+                const requests = orderRequestsByOrderId[order.id] ?? []
+                const latestRequest = requests[0]
+                const shippingLine = formatShippingSummary(order.shipping_address)
+                const lines = orderLineItems(order.items)
+                const pendingReq = hasPendingCustomerRequest(requests)
+                const busy = orderRequestSubmittingId === order.id
+                const showCancelBtn =
+                  (order.status === 'paid' || order.status === 'preparing') && !pendingReq
+                const showReturnBtn = order.status === 'delivered' && !pendingReq
+                const flash = orderRequestFlash[order.id]
+                const formOpen =
+                  orderRequestOpenForm && orderRequestOpenForm.orderId === order.id
+                    ? orderRequestOpenForm.kind
+                    : null
+
+                return (
+                  <div key={order.id} className="border border-champagne-mid p-6 bg-white/40">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
+                      <div>
+                        <p className="font-body text-[11px] uppercase tracking-[0.15em] text-text-muted mb-1">
+                          Sipariş numarası
+                        </p>
+                        <p className="font-body text-[15px] font-medium text-text-primary">
+                          {order.order_number}
+                        </p>
+                        <p className="text-[12px] font-body text-text-muted mt-1">
+                          {new Date(order.created_at).toLocaleString('tr-TR', {
+                            dateStyle: 'long',
+                            timeStyle: 'short',
+                          })}
+                        </p>
+                      </div>
+                      <div className="text-left sm:text-right shrink-0">
+                        <span
+                          className={`inline-block text-[10px] font-body px-2 py-1 rounded ${
+                            statusColors[order.status] || 'bg-gray-100'
+                          }`}
+                        >
+                          {statusLabels[order.status] || order.status}
+                        </span>
+                        <p className="font-body text-[16px] font-medium text-gold mt-2">
+                          {formatPrice(order.total)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className={`text-[10px] font-body px-2 py-1 rounded ${statusColors[order.status] || 'bg-gray-100'}`}>
-                        {statusLabels[order.status] || order.status}
-                      </span>
-                      <p className="font-body text-[14px] font-medium text-gold mt-2">{formatPrice(order.total)}</p>
+
+                    {shippingLine ? (
+                      <div className="mb-4 pb-4 border-b border-champagne-mid/40">
+                        <p className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-1">
+                          Teslimat adresi
+                        </p>
+                        <p className="text-[12px] font-body text-text-secondary leading-relaxed">
+                          {shippingLine}
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {order.status === 'shipped' && order.tracking_number ? (
+                      <div className="mb-4 p-3 bg-champagne/80 border border-champagne-mid/50">
+                        <p className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-1">
+                          Kargo takip
+                        </p>
+                        <p className="text-[13px] font-body text-text-primary font-medium tracking-wide">
+                          {String(order.tracking_number)}
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {order.status === 'cancelled' ? (
+                      <div className="mb-4 p-3 bg-red-50/90 border border-red-100">
+                        <p className="text-[12px] font-body text-text-secondary leading-relaxed">
+                          Bu sipariş iptal edilmiştir. Ödeme iadesi süreçleri tamamlandıysa kartınıza
+                          yansıması bankanıza bağlıdır.
+                        </p>
+                      </div>
+                    ) : null}
+
+                    <div className="mb-4">
+                      <p className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-2">
+                        Ürünler
+                      </p>
+                      <ul className="space-y-1">
+                        {lines.length === 0 ? (
+                          <li className="text-[12px] font-body text-text-muted">Ürün satırı yok.</li>
+                        ) : (
+                          lines.map((item: any, i: number) => (
+                            <li
+                              key={i}
+                              className="text-[12px] font-body text-text-secondary flex justify-between gap-4"
+                            >
+                              <span>{item.name}</span>
+                              <span className="shrink-0 text-text-muted">× {item.quantity}</span>
+                            </li>
+                          ))
+                        )}
+                      </ul>
                     </div>
+
+                    <div className="mb-4 p-3 border border-champagne-mid/60 bg-champagne/30">
+                      <p className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-2">
+                        Talep durumu
+                      </p>
+                      {orderRequestsLoading && requests.length === 0 ? (
+                        <p className="text-[12px] font-body text-text-muted">Yükleniyor...</p>
+                      ) : latestRequest ? (
+                        <div className="space-y-1">
+                          <p className="text-[12px] font-body text-text-primary">
+                            <span className="text-text-muted">Son talep:</span>{' '}
+                            {requestTypeLabels[latestRequest.request_type] ||
+                              latestRequest.request_type}
+                            {' · '}
+                            <span className="font-medium">
+                              {requestStatusLabels[latestRequest.status] || latestRequest.status}
+                            </span>
+                          </p>
+                          <p className="text-[11px] font-body text-text-muted">
+                            {new Date(latestRequest.created_at).toLocaleString('tr-TR', {
+                              dateStyle: 'medium',
+                              timeStyle: 'short',
+                            })}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-[12px] font-body text-text-muted">
+                          Henüz bir iptal veya iade talebiniz yok.
+                        </p>
+                      )}
+                    </div>
+
+                    {flash ? (
+                      <div
+                        className={`mb-4 text-[12px] font-body px-3 py-2 border ${
+                          flash.type === 'success'
+                            ? 'bg-green-50 border-green-200 text-green-900'
+                            : 'bg-red-50 border-red-200 text-red-900'
+                        }`}
+                      >
+                        {flash.msg}
+                      </div>
+                    ) : null}
+
+                    {pendingReq ? (
+                      <p className="text-[11px] font-body text-text-muted mb-2">
+                        Bekleyen bir talebiniz var; yeni talep oluşturmadan önce sonuçlanmasını
+                        bekleyin.
+                      </p>
+                    ) : null}
+
+                    <div className="flex flex-col gap-3">
+                      {showCancelBtn ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => {
+                            setOrderRequestOpenForm({ orderId: order.id, kind: 'cancel' })
+                            setOrderRequestFormReason('')
+                            setOrderRequestFlash((p) => {
+                              const n = { ...p }
+                              delete n[order.id]
+                              return n
+                            })
+                          }}
+                          className={btnOutline}
+                        >
+                          Sipariş İptal Talebi Oluştur
+                        </button>
+                      ) : null}
+                      {showReturnBtn ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => {
+                            setOrderRequestOpenForm({ orderId: order.id, kind: 'return' })
+                            setOrderRequestFormReason('')
+                            setOrderRequestFlash((p) => {
+                              const n = { ...p }
+                              delete n[order.id]
+                              return n
+                            })
+                          }}
+                          className={btnOutline}
+                        >
+                          İade Talebi Oluştur
+                        </button>
+                      ) : null}
+                    </div>
+
+                    {formOpen ? (
+                      <div className="mt-4 pt-4 border-t border-champagne-mid/40 space-y-3">
+                        <label className="block">
+                          <span className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body block mb-1">
+                            Açıklama{' '}
+                            <span className="normal-case tracking-normal text-text-muted">
+                              (isteğe bağlı)
+                            </span>
+                          </span>
+                          <textarea
+                            className={`${inputClass} resize-none min-h-[88px]`}
+                            value={orderRequestFormReason}
+                            onChange={(e) => setOrderRequestFormReason(e.target.value)}
+                            disabled={busy}
+                            placeholder="Talebinizle ilgili kısa bir not ekleyebilirsiniz."
+                            maxLength={4000}
+                          />
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => submitOrderRequest(order.id, formOpen)}
+                            className="py-2 px-5 bg-gold text-white text-[10px] tracking-[0.12em] uppercase font-body hover:bg-gold-light transition-colors disabled:opacity-50"
+                          >
+                            {busy ? 'Gönderiliyor...' : 'Talebi Gönder'}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => {
+                              setOrderRequestOpenForm(null)
+                              setOrderRequestFormReason('')
+                            }}
+                            className={btnOutline}
+                          >
+                            Vazgeç
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                  {order.items?.map((item: any, i: number) => (
-                    <p key={i} className="text-[12px] font-body text-text-secondary">{item.name} × {item.quantity}</p>
-                  ))}
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { getAdminSelectableOrderStatuses } from '@/lib/orders/statusTransitions'
@@ -14,12 +14,14 @@ interface AdminDashboardProps {
   syncLogs: any[]
   reviews: any[]
   homepageSettings: Record<string, string[]>
+  orderRequestsPendingCount?: number
 }
 
 const tabs = [
   { id: 'homepage', label: '🏠 Ana Sayfa' },
   { id: 'content', label: '✏️ İçerik' },
   { id: 'orders', label: '📦 Siparişler' },
+  { id: 'orderRequests', label: '📋 Müşteri Talepleri' },
   { id: 'products', label: '🛍️ Ürünler' },
   { id: 'campaigns', label: '🎯 Kampanyalar' },
   { id: 'reviews', label: '⭐ Yorumlar' },
@@ -44,7 +46,26 @@ const statusLabels: Record<string, string> = {
   cancelled: 'İptal',
 }
 
-export default function AdminDashboard({ orders, products, campaigns, syncLogs, reviews: initialReviews, homepageSettings }: AdminDashboardProps) {
+const requestTypeLabels: Record<string, string> = {
+  cancel: 'İptal',
+  return: 'İade',
+}
+
+const requestStatusLabels: Record<string, string> = {
+  pending: 'Beklemede',
+  approved: 'Onaylandı',
+  rejected: 'Reddedildi',
+}
+
+export default function AdminDashboard({
+  orders,
+  products,
+  campaigns,
+  syncLogs,
+  reviews: initialReviews,
+  homepageSettings,
+  orderRequestsPendingCount = 0,
+}: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState('homepage')
 
   const [localCampaigns, setLocalCampaigns] = useState(campaigns)
@@ -164,6 +185,82 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
       .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
   const router = useRouter()
+
+  const [orderRequests, setOrderRequests] = useState<any[]>([])
+  const [orderRequestsLoading, setOrderRequestsLoading] = useState(false)
+  const [orderRequestsError, setOrderRequestsError] = useState<string | null>(null)
+  const [orderRequestActionId, setOrderRequestActionId] = useState<string | null>(null)
+  const orderRequestFlightRef = useRef(false)
+
+  const adminApiErrorMessage = (json: unknown, fallback: string) => {
+    if (json && typeof json === 'object' && typeof (json as { error?: unknown }).error === 'string') {
+      return (json as { error: string }).error
+    }
+    return fallback
+  }
+
+  const loadOrderRequests = async () => {
+    setOrderRequestsLoading(true)
+    setOrderRequestsError(null)
+    try {
+      const res = await fetch('/api/admin/order-requests')
+      let json: unknown = {}
+      try {
+        json = await res.json()
+      } catch {
+        json = {}
+      }
+      if (res.ok && json && typeof json === 'object' && Array.isArray((json as { requests?: unknown }).requests)) {
+        setOrderRequests((json as { requests: any[] }).requests)
+        return
+      }
+      if (!res.ok) {
+        setOrderRequestsError(adminApiErrorMessage(json, 'Liste yüklenemedi.'))
+        return
+      }
+      setOrderRequests([])
+      setOrderRequestsError('Liste yüklenemedi.')
+    } catch {
+      setOrderRequestsError('Bağlantı hatası. Tekrar deneyin.')
+    } finally {
+      setOrderRequestsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'orderRequests') {
+      loadOrderRequests()
+    }
+  }, [activeTab])
+
+  const patchOrderRequest = async (id: string, action: 'approve' | 'reject') => {
+    if (orderRequestFlightRef.current) return
+    orderRequestFlightRef.current = true
+    setOrderRequestActionId(id)
+    try {
+      const res = await fetch(`/api/admin/order-requests/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+      let json: unknown = {}
+      try {
+        json = await res.json()
+      } catch {
+        json = {}
+      }
+      if (!res.ok) {
+        alert(adminApiErrorMessage(json, 'İşlem başarısız.'))
+        return
+      }
+      await loadOrderRequests()
+      router.refresh()
+    } finally {
+      orderRequestFlightRef.current = false
+      setOrderRequestActionId(null)
+    }
+  }
+
   const inputClass = 'w-full px-3 py-2 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none transition-colors'
 
   const handleLogout = async () => {
@@ -181,14 +278,14 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
-    let data: { error?: string } = {}
+    let data: unknown = {}
     try {
       data = await res.json()
     } catch {
-      /* ignore */
+      data = {}
     }
     if (!res.ok) {
-      alert(typeof data.error === 'string' ? data.error : 'Sipariş güncellenemedi')
+      alert(adminApiErrorMessage(data, 'Sipariş güncellenemedi'))
       router.refresh()
       return false
     }
@@ -367,6 +464,11 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
               className={`w-full text-left px-5 py-3 text-[12px] font-body transition-colors flex items-center gap-2 ${activeTab === tab.id ? 'bg-gold/20 text-gold' : 'text-champagne-mid/70 hover:text-champagne hover:bg-champagne-mid/5'}`}>
               {tab.label}
               {tab.id === 'orders' && pendingCount > 0 && <span className="ml-auto bg-gold text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center">{pendingCount}</span>}
+              {tab.id === 'orderRequests' && orderRequestsPendingCount > 0 && (
+                <span className="ml-auto bg-gold text-white text-[9px] min-w-[1.25rem] h-5 px-1 rounded-full flex items-center justify-center">
+                  {orderRequestsPendingCount > 99 ? '99+' : orderRequestsPendingCount}
+                </span>
+              )}
               {tab.id === 'products' && <span className="ml-auto text-[10px] text-text-muted">{localProducts.length}</span>}
             </button>
           ))}
@@ -515,6 +617,162 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ═══ MÜŞTERİ TALEPLERİ ═══ */}
+        {activeTab === 'orderRequests' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-heading text-[24px] text-text-primary">Müşteri Talepleri</h2>
+              <button
+                type="button"
+                onClick={() => loadOrderRequests()}
+                disabled={orderRequestsLoading}
+                className="text-[11px] uppercase tracking-wider font-body px-4 py-2 border border-champagne-mid hover:border-gold text-text-secondary hover:text-gold transition-colors disabled:opacity-50"
+              >
+                {orderRequestsLoading ? 'Yükleniyor...' : 'Yenile'}
+              </button>
+            </div>
+            <p className="text-[12px] font-body text-text-muted mb-4 max-w-2xl leading-relaxed">
+              Müşterilerin oluşturduğu iptal ve iade talepleri aşağıda listelenir. Bekleyen talepler üstte
+              gösterilir. İptal onayı, sipariş için mevcut güvenli iptal ve iade akışını çalıştırır.
+            </p>
+            {orderRequestsError ? (
+              <p className="text-red-700 font-body text-sm mb-4" role="alert">
+                {orderRequestsError}
+              </p>
+            ) : null}
+            {orderRequestsLoading && orderRequests.length === 0 ? (
+              <p className="text-text-muted font-body text-sm">Yükleniyor...</p>
+            ) : !orderRequestsError && orderRequests.length === 0 ? (
+              <p className="text-text-muted font-body text-sm">Kayıtlı talep yok.</p>
+            ) : orderRequests.length > 0 ? (
+              <div className="bg-white overflow-x-auto border border-champagne-mid/40">
+                <table className="w-full text-[12px] font-body">
+                  <thead>
+                    <tr className="border-b border-champagne-mid text-text-muted uppercase tracking-wider">
+                      <th className="text-left px-4 py-3">Talep</th>
+                      <th className="text-left px-4 py-3">Durum</th>
+                      <th className="text-left px-4 py-3">Sipariş</th>
+                      <th className="text-left px-4 py-3">Müşteri</th>
+                      <th className="text-left px-4 py-3">Sipariş durumu</th>
+                      <th className="text-left px-4 py-3">Tarih</th>
+                      <th className="text-left px-4 py-3 min-w-[200px]">Not</th>
+                      <th className="text-center px-4 py-3">İşlem</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orderRequests.map((req: any, reqIdx: number) => {
+                      const o = req?.orders != null && typeof req.orders === 'object' ? req.orders : null
+                      const busy = orderRequestActionId !== null
+                      const rowBusy = orderRequestActionId === req?.id
+                      const customerLabel =
+                        o?.guest_email?.trim() ||
+                        (req?.user_id ? `Kullanıcı ${String(req.user_id).slice(0, 8)}…` : '—')
+                      const createdRaw = req?.created_at
+                      const createdAt =
+                        createdRaw != null && !Number.isNaN(new Date(createdRaw).getTime())
+                          ? new Date(createdRaw).toLocaleString('tr-TR', {
+                              dateStyle: 'short',
+                              timeStyle: 'short',
+                            })
+                          : '—'
+                      return (
+                        <tr
+                          key={String(req?.id ?? `req-${reqIdx}`)}
+                          className="border-b border-champagne-mid/30 hover:bg-champagne/50 align-top"
+                        >
+                          <td className="px-4 py-3">
+                            <span className="font-medium text-text-primary">
+                              {requestTypeLabels[req?.request_type] || req?.request_type || '—'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-[10px] ${
+                                req?.status === 'pending'
+                                  ? 'bg-amber-100 text-amber-900'
+                                  : req?.status === 'approved'
+                                    ? 'bg-green-100 text-green-900'
+                                    : 'bg-gray-200 text-gray-800'
+                              }`}
+                            >
+                              {requestStatusLabels[req?.status] || req?.status || '—'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-medium">{o?.order_number ?? '—'}</td>
+                          <td className="px-4 py-3 text-text-secondary break-all max-w-[160px]">
+                            {customerLabel}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-[10px] ${
+                                statusColors[o?.status ?? ''] || 'bg-gray-100'
+                              }`}
+                            >
+                              {o?.status
+                                ? statusLabels[o.status] || o.status
+                                : '—'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-text-muted whitespace-nowrap">{createdAt}</td>
+                          <td className="px-4 py-3 text-text-secondary max-w-[220px]">
+                            {req?.reason ? (
+                              <span className="line-clamp-3" title={String(req.reason)}>
+                                {req.reason}
+                              </span>
+                            ) : (
+                              <span className="text-text-muted">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {req?.status === 'pending' ? (
+                              <div className="flex flex-col sm:flex-row gap-1 justify-center items-stretch">
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => {
+                                    if (!req?.id) return
+                                    if (
+                                      !confirm(
+                                        req.request_type === 'cancel'
+                                          ? 'İptal talebini onaylamak siparişi güvenli iptal akışıyla iptal eder. Devam edilsin mi?'
+                                          : 'İade talebini onaylamak talebi onaylı olarak işaretler (otomatik ödeme iadesi yapılmaz). Devam edilsin mi?'
+                                      )
+                                    ) {
+                                      return
+                                    }
+                                    patchOrderRequest(req.id, 'approve')
+                                  }}
+                                  className="text-[10px] bg-gold text-white px-2 py-1.5 rounded hover:bg-gold-light transition-colors disabled:opacity-50"
+                                >
+                                  {rowBusy ? '…' : 'Onayla'}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => {
+                                    if (!req?.id) return
+                                    if (!confirm('Talebi reddetmek istediğinize emin misiniz?')) return
+                                    patchOrderRequest(req.id, 'reject')
+                                  }}
+                                  className="text-[10px] border border-champagne-mid text-text-secondary px-2 py-1.5 rounded hover:border-gold transition-colors disabled:opacity-50"
+                                >
+                                  {rowBusy ? '…' : 'Reddet'}
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-text-muted">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
           </div>
         )}
 
