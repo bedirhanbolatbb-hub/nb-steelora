@@ -46,11 +46,6 @@ const statusLabels: Record<string, string> = {
 
 export default function AdminDashboard({ orders, products, campaigns, syncLogs, reviews: initialReviews, homepageSettings }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState('homepage')
-  const [localOrders, setLocalOrders] = useState(orders)
-
-  useEffect(() => {
-    setLocalOrders(orders)
-  }, [orders])
 
   const [localCampaigns, setLocalCampaigns] = useState(campaigns)
   const [localProducts, setLocalProducts] = useState(products)
@@ -61,18 +56,36 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   const [showCampaignForm, setShowCampaignForm] = useState(false)
   const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null)
   const [editingProduct, setEditingProduct] = useState<any>(null)
-  /** Single row: preparing → shipped flow (tracking draft). */
+  /** Which row is entering tracking (does not change persisted status until Gönder). */
   const [shippingDraftOrderId, setShippingDraftOrderId] = useState<string | null>(null)
-  const [shippingDraftTracking, setShippingDraftTracking] = useState('')
+  const [shippingDraftByOrderId, setShippingDraftByOrderId] = useState<Record<string, string>>({})
+
+  /** Until server props catch up after shipped PATCH — dropdown uses merged row. */
+  const [orderRowOverrides, setOrderRowOverrides] = useState<
+    Record<string, { status?: string; tracking_number?: string | null }>
+  >({})
 
   useEffect(() => {
-    if (!shippingDraftOrderId) return
-    const row = localOrders.find((o) => o.id === shippingDraftOrderId)
-    if (!row || row.status !== 'preparing') {
-      setShippingDraftOrderId(null)
-      setShippingDraftTracking('')
-    }
-  }, [localOrders, shippingDraftOrderId])
+    setOrderRowOverrides((prev) => {
+      if (Object.keys(prev).length === 0) return prev
+      const next = { ...prev }
+      let changed = false
+      for (const oid of Object.keys(next)) {
+        const srv = orders.find((o) => o.id === oid)
+        const want = next[oid]?.status
+        if (srv && want && srv.status === want) {
+          delete next[oid]
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [orders])
+
+  function mergedOrderRow(order: any) {
+    const o = orderRowOverrides[order.id]
+    return o ? { ...order, ...o } : order
+  }
 
   // Products tab state
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -167,7 +180,20 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
       return false
     }
     setShippingDraftOrderId(null)
-    setShippingDraftTracking('')
+    setShippingDraftByOrderId((prev) => {
+      const next = { ...prev }
+      delete next[orderId]
+      return next
+    })
+    if (status === 'shipped') {
+      setOrderRowOverrides((prev) => ({
+        ...prev,
+        [orderId]: {
+          status: 'shipped',
+          tracking_number: tracking ?? prev[orderId]?.tracking_number ?? null,
+        },
+      }))
+    }
     router.refresh()
     return true
   }
@@ -289,7 +315,7 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
     setEditingCell(null)
   }
 
-  const pendingCount = localOrders.filter((o) => o.status === 'pending').length
+  const pendingCount = orders.filter((o) => o.status === 'pending').length
   const categories = localProducts.reduce((acc: Record<string, number>, p: any) => {
     const cat = p.trendyol_category || 'Kategorisiz'
     acc[cat] = (acc[cat] || 0) + 1
@@ -351,74 +377,93 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
         {activeTab === 'orders' && (
           <div>
             <h2 className="font-heading text-[24px] text-text-primary mb-6">Siparişler</h2>
-            {localOrders.length === 0 ? <p className="text-text-muted font-body text-sm">Henüz sipariş yok.</p> : (
+            {orders.length === 0 ? <p className="text-text-muted font-body text-sm">Henüz sipariş yok.</p> : (
               <div className="bg-white overflow-x-auto">
                 <table className="w-full text-[12px] font-body">
                   <thead><tr className="border-b border-champagne-mid text-text-muted uppercase tracking-wider">
                     <th className="text-left px-4 py-3">Sipariş No</th><th className="text-left px-4 py-3">Tarih</th><th className="text-left px-4 py-3">Müşteri</th><th className="text-right px-4 py-3">Toplam</th><th className="text-center px-4 py-3">Durum</th><th className="text-center px-4 py-3">İşlem</th>
                   </tr></thead>
-                  <tbody>{localOrders.map((order) => (
+                  <tbody>{orders.map((order) => {
+                    const row = mergedOrderRow(order)
+                    const persistedStatus = order.status
+                    const displayStatus = row.status
+                    const showShippingDraft =
+                      shippingDraftOrderId === order.id && persistedStatus === 'preparing'
+                    const draftTracking =
+                      shippingDraftByOrderId[order.id] ?? order.tracking_number ?? ''
+
+                    return (
                     <tr key={order.id} className="border-b border-champagne-mid/30 hover:bg-champagne/50">
                       <td className="px-4 py-3 font-medium">{order.order_number}</td>
                       <td className="px-4 py-3 text-text-muted">{new Date(order.created_at).toLocaleDateString('tr-TR')}</td>
                       <td className="px-4 py-3">{order.guest_email || '-'}</td>
                       <td className="px-4 py-3 text-right text-gold font-medium">{formatPrice(order.total)}</td>
-                      <td className="px-4 py-3 text-center"><span className={`inline-block px-2 py-0.5 rounded text-[10px] ${statusColors[order.status] || 'bg-gray-100'}`}>{statusLabels[order.status] || order.status}</span></td>
+                      <td className="px-4 py-3 text-center"><span className={`inline-block px-2 py-0.5 rounded text-[10px] ${statusColors[displayStatus] || 'bg-gray-100'}`}>{statusLabels[displayStatus] || displayStatus}</span></td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex flex-col items-center gap-1">
                           <span className="text-[9px] text-text-muted leading-tight max-w-[140px]">
-                            {shippingDraftOrderId === order.id
-                              ? 'Kargoda — takip no girin'
-                              : (statusLabels[order.status] ?? order.status)}
+                            {statusLabels[displayStatus] ?? displayStatus}
                           </span>
+                          {showShippingDraft ? (
+                            <span className="text-[9px] text-text-muted leading-tight">Takip no girin</span>
+                          ) : null}
                           <select
-                            value={order.status}
+                            value={displayStatus}
                             onChange={async (e) => {
                               const v = e.target.value
                               if (shippingDraftOrderId === order.id && v !== 'shipped') {
                                 setShippingDraftOrderId(null)
-                                setShippingDraftTracking('')
+                                setShippingDraftByOrderId((prev) => {
+                                  const next = { ...prev }
+                                  delete next[order.id]
+                                  return next
+                                })
                               }
                               if (v === 'shipped') {
-                                if (order.status !== 'preparing') return
+                                if (persistedStatus !== 'preparing') return
                                 setShippingDraftOrderId(order.id)
-                                setShippingDraftTracking(order.tracking_number || '')
+                                setShippingDraftByOrderId({ [order.id]: order.tracking_number || '' })
                                 return
                               }
                               await updateOrderStatus(order.id, v)
                             }}
                             className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none"
                           >
-                            {getAdminSelectableOrderStatuses(order.status).map((s) => (
+                            {getAdminSelectableOrderStatuses(displayStatus).map((s) => (
                               <option key={s} value={s}>
                                 {statusLabels[s] ?? s}
                               </option>
                             ))}
                           </select>
-                          {shippingDraftOrderId === order.id && order.status === 'preparing' && (
+                          {showShippingDraft ? (
                             <div className="mt-1 flex flex-wrap justify-center gap-1">
                               <input
                                 type="text"
                                 placeholder="Takip No"
-                                value={shippingDraftTracking}
-                                onChange={(e) => setShippingDraftTracking(e.target.value)}
+                                value={draftTracking}
+                                onChange={(e) =>
+                                  setShippingDraftByOrderId((prev) => ({
+                                    ...prev,
+                                    [order.id]: e.target.value,
+                                  }))
+                                }
                                 className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none w-28"
                               />
                               <button
                                 type="button"
                                 onClick={async () => {
-                                  await updateOrderStatus(order.id, 'shipped', shippingDraftTracking)
+                                  await updateOrderStatus(order.id, 'shipped', draftTracking)
                                 }}
                                 className="text-[10px] bg-gold text-white px-2 py-1 rounded hover:bg-gold-light transition-colors"
                               >
                                 Gönder
                               </button>
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       </td>
                     </tr>
-                  ))}</tbody>
+                  )})}</tbody>
                 </table>
               </div>
             )}
