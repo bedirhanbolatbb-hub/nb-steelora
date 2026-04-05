@@ -57,7 +57,7 @@ export interface Order {
   subtotal: number;
   shipping: number;
   total: number;
-  status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'paid' | 'preparing' | 'shipped' | 'delivered' | 'cancelled';
   iyzico_payment_id: string | null;
   shipping_address: Address;
   created_at: string;

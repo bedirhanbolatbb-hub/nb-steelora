@@ -17,6 +17,7 @@ interface HesabimClientProps {
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   paid: 'bg-blue-100 text-blue-800',
+  preparing: 'bg-indigo-100 text-indigo-800',
   shipped: 'bg-orange-100 text-orange-800',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
@@ -25,6 +26,7 @@ const statusColors: Record<string, string> = {
 const statusLabels: Record<string, string> = {
   pending: 'Bekliyor',
   paid: 'Ödendi',
+  preparing: 'Hazırlanıyor',
   shipped: 'Kargoda',
   delivered: 'Teslim Edildi',
   cancelled: 'İptal',

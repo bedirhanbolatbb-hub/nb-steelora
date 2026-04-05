@@ -3,6 +3,15 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { refundFullPayment } from '@/lib/iyzico/client'
 import { increaseStock } from '@/lib/trendyol/stockUpdate'
+import { validateOrderStatusTransition } from '@/lib/orders/statusTransitions'
+
+function lineProductId(item: any): string | null {
+  const id = item?.productId ?? item?.product_id
+  if (id == null || id === '') return null
+  const s = String(id).trim()
+  if (!s || s === 'KARGO') return null
+  return s
+}
 
 export async function PATCH(
   request: Request,
@@ -31,7 +40,6 @@ export async function PATCH(
     return NextResponse.json({ success: true })
   }
 
-  // Update order status + optional tracking number (service role — reliable without Supabase session)
   const serviceClient = createServiceClient()
 
   const { data: existing, error: fetchErr } = await serviceClient
@@ -44,8 +52,15 @@ export async function PATCH(
     return NextResponse.json({ error: fetchErr?.message || 'Sipariş bulunamadı' }, { status: 404 })
   }
 
-  const updateData: any = {
-    status: body.status,
+  console.log('[admin-order] PATCH start', {
+    orderId: id,
+    orderNumber: existing.order_number,
+    fromStatus: existing.status,
+    toStatus: body.status,
+    hasTracking: Boolean(body.tracking_number),
+  })
+
+  const updateData: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
   }
   if (body.tracking_number) {
@@ -54,32 +69,110 @@ export async function PATCH(
 
   if (body.status === 'cancelled') {
     if (existing.status === 'cancelled') {
+      console.log('[admin-order] cancel idempotent — already cancelled', { orderId: id })
       return NextResponse.json({ success: true })
     }
 
-    if (existing.status === 'paid' && existing.iyzico_payment_id) {
+    const cancelErr = validateOrderStatusTransition(existing.status, 'cancelled')
+    if (cancelErr) {
+      console.warn('[admin-order] cancel rejected', { orderId: id, reason: cancelErr })
+      return NextResponse.json({ error: cancelErr }, { status: 400 })
+    }
+
+    const needsRefund =
+      (existing.status === 'paid' || existing.status === 'preparing') &&
+      Boolean(existing.iyzico_payment_id)
+
+    if (needsRefund && !existing.payment_refunded_at) {
+      console.log('[admin-order] refund start', {
+        orderId: id,
+        paymentId: existing.iyzico_payment_id,
+      })
       const refund = await refundFullPayment(String(existing.iyzico_payment_id))
+      console.log('[admin-order] refund result', {
+        orderId: id,
+        success: refund.success,
+        error: refund.error,
+      })
       if (!refund.success) {
         return NextResponse.json(
           { error: refund.error || 'iyzico iade başarısız' },
           { status: 502 }
         )
       }
+
+      const { error: refundStampErr } = await serviceClient
+        .from('orders')
+        .update({ payment_refunded_at: new Date().toISOString() })
+        .eq('id', id)
+
+      if (refundStampErr) {
+        console.error(
+          '[admin-order] CRITICAL: refund API succeeded but payment_refunded_at DB update failed — risk of duplicate refund on retry',
+          { orderId: id, refundStampErr }
+        )
+        return NextResponse.json(
+          { error: 'İade kaydı veritabanına yazılamadı' },
+          { status: 500 }
+        )
+      }
     }
 
-    if (existing.stock_deducted_at && !existing.stock_restored_at && existing.items) {
-      for (const item of existing.items as any[]) {
-        if (!item?.productId || item.productId === 'KARGO') continue
-        const inc = await increaseStock(item.productId, Number(item.quantity) || 1)
+    if (existing.stock_deducted_at && !existing.stock_restored_at) {
+      console.log('[admin-order] stock restore start', { orderId: id })
+      const items = Array.isArray(existing.items) ? (existing.items as any[]) : []
+      let restoredLines = 0
+      for (const item of items) {
+        const pid = lineProductId(item)
+        if (!pid) continue
+        const qty = Math.max(1, Number(item.quantity) || 1)
+        const inc = await increaseStock(pid, qty)
+        console.log('[admin-order] stock restore line', {
+          orderId: id,
+          productId: pid,
+          quantity: qty,
+          success: inc.success,
+          error: inc.error,
+        })
         if (!inc.success) {
+          console.error(
+            '[admin-order] CRITICAL: iyzico refund may have completed but stock restore failed — reconcile inventory manually',
+            { orderId: id, productId: pid, error: inc.error }
+          )
           return NextResponse.json(
-            { error: inc.error || 'Stok iadesi başarısız' },
+            {
+              error: inc.error || 'Stok iadesi başarısız',
+              code: 'STOCK_RESTORE_FAILED',
+            },
             { status: 500 }
           )
         }
+        restoredLines += 1
+      }
+      if (restoredLines === 0 && items.length > 0) {
+        console.warn('[admin-order] stock restore: no product lines to restore', { orderId: id })
       }
       updateData.stock_restored_at = new Date().toISOString()
+      console.log('[admin-order] stock restore complete', { orderId: id, restoredLines })
+    } else {
+      console.log('[admin-order] stock restore skip', {
+        orderId: id,
+        stock_deducted_at: existing.stock_deducted_at,
+        stock_restored_at: existing.stock_restored_at,
+      })
     }
+
+    updateData.status = 'cancelled'
+  } else {
+    const transitionErr = validateOrderStatusTransition(existing.status, body.status)
+    if (transitionErr) {
+      console.warn('[admin-order] transition rejected', {
+        orderId: id,
+        reason: transitionErr,
+      })
+      return NextResponse.json({ error: transitionErr }, { status: 400 })
+    }
+    updateData.status = body.status
   }
 
   const { data: order, error } = await serviceClient
@@ -89,9 +182,19 @@ export async function PATCH(
     .select('order_number, guest_email')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error(
+      '[admin-order] CRITICAL: final order update failed after side-effects (check refund/stock state)',
+      { orderId: id, error }
+    )
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
 
-  // Send shipping notification email
+  console.log('[admin-order] final status update success', {
+    orderId: id,
+    status: updateData.status,
+  })
+
   if (body.status === 'shipped' && body.tracking_number && order?.guest_email) {
     try {
       const { Resend } = await import('resend')
@@ -117,7 +220,7 @@ export async function PATCH(
     </div>
     <div style="background: #2A1E1E; padding: 20px; margin-bottom: 30px; text-align: center;">
       <p style="margin: 0 0 8px; font-size: 12px; color: #C89080; letter-spacing: 0.1em; text-transform: uppercase;">Kargo Takip Numarası</p>
-      <p style="margin: 0; font-size: 24px; font-weight: 600; color: #FFF8F6; letter-spacing: 0.1em;">${body.tracking_number}</p>
+      <p style="margin: 0; font-size: 24px; font-weight: 600; color: #FFF8F6; letter-spacing: 0.2em;">${body.tracking_number}</p>
     </div>
     <p style="color: #7A5048; font-size: 14px; line-height: 1.8;">
       Kargo firmasının web sitesine giderek takip numaranızı girin.<br>

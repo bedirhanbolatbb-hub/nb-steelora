@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import HomepageEditor from './HomepageEditor'
@@ -29,17 +29,27 @@ const tabs = [
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   paid: 'bg-blue-100 text-blue-800',
+  preparing: 'bg-indigo-100 text-indigo-800',
   shipped: 'bg-orange-100 text-orange-800',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
 }
 const statusLabels: Record<string, string> = {
-  pending: 'Bekliyor', paid: 'Hazırlanıyor', shipped: 'Kargoda', delivered: 'Teslim Edildi', cancelled: 'İptal',
+  pending: 'Bekliyor',
+  paid: 'Ödendi',
+  preparing: 'Hazırlanıyor',
+  shipped: 'Kargoda',
+  delivered: 'Teslim Edildi',
+  cancelled: 'İptal',
 }
 
 export default function AdminDashboard({ orders, products, campaigns, syncLogs, reviews: initialReviews, homepageSettings }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState('homepage')
   const [localOrders, setLocalOrders] = useState(orders)
+
+  useEffect(() => {
+    setLocalOrders(orders)
+  }, [orders])
   const [localCampaigns, setLocalCampaigns] = useState(campaigns)
   const [localProducts, setLocalProducts] = useState(products)
   const [localReviews, setLocalReviews] = useState(initialReviews)
@@ -127,8 +137,24 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   const updateOrderStatus = async (orderId: string, status: string, tracking?: string) => {
     const body: any = { status }
     if (tracking) body.tracking_number = tracking
-    await fetch(`/api/admin/orders/${orderId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    setLocalOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status, tracking_number: tracking || o.tracking_number } : o)))
+    const res = await fetch(`/api/admin/orders/${orderId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    let data: { error?: string } = {}
+    try {
+      data = await res.json()
+    } catch {
+      /* ignore */
+    }
+    if (!res.ok) {
+      alert(typeof data.error === 'string' ? data.error : 'Sipariş güncellenemedi')
+      router.refresh()
+      return false
+    }
+    router.refresh()
+    return true
   }
 
   // ─── Sync ───
@@ -324,13 +350,42 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                       <td className="px-4 py-3 text-right text-gold font-medium">{formatPrice(order.total)}</td>
                       <td className="px-4 py-3 text-center"><span className={`inline-block px-2 py-0.5 rounded text-[10px] ${statusColors[order.status] || 'bg-gray-100'}`}>{statusLabels[order.status] || order.status}</span></td>
                       <td className="px-4 py-3 text-center">
-                        <select value={order.status} onChange={(e) => { if (e.target.value === 'shipped') { setShippingOrderId(order.id); setTrackingNumber(order.tracking_number || '') } else { updateOrderStatus(order.id, e.target.value) } }} className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none">
-                          <option value="pending">Bekliyor</option><option value="paid">Hazırlanıyor</option><option value="shipped">Kargoda</option><option value="delivered">Teslim Edildi</option><option value="cancelled">İptal</option>
+                        <select
+                          value={order.status}
+                          onChange={async (e) => {
+                            const v = e.target.value
+                            if (v === 'shipped') {
+                              setShippingOrderId(order.id)
+                              setTrackingNumber(order.tracking_number || '')
+                              return
+                            }
+                            await updateOrderStatus(order.id, v)
+                          }}
+                          className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none"
+                        >
+                          <option value="pending">Bekliyor</option>
+                          <option value="paid">Ödendi</option>
+                          <option value="preparing">Hazırlanıyor</option>
+                          <option value="shipped">Kargoda</option>
+                          <option value="delivered">Teslim Edildi</option>
+                          <option value="cancelled">İptal</option>
                         </select>
                         {shippingOrderId === order.id && (
                           <div className="mt-2 flex gap-1">
                             <input type="text" placeholder="Takip No" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none w-28" />
-                            <button onClick={() => { updateOrderStatus(order.id, 'shipped', trackingNumber); setShippingOrderId(null); setTrackingNumber('') }} className="text-[10px] bg-gold text-white px-2 py-1 rounded hover:bg-gold-light transition-colors">Gönder</button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const ok = await updateOrderStatus(order.id, 'shipped', trackingNumber)
+                                if (ok) {
+                                  setShippingOrderId(null)
+                                  setTrackingNumber('')
+                                }
+                              }}
+                              className="text-[10px] bg-gold text-white px-2 py-1 rounded hover:bg-gold-light transition-colors"
+                            >
+                              Gönder
+                            </button>
                           </div>
                         )}
                       </td>
