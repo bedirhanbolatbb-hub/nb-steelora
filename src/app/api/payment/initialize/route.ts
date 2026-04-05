@@ -171,7 +171,10 @@ export async function POST(request: Request) {
     
     if (pendingError) {
       console.error('PENDING ORDER FAILED:', pendingError)
-      return NextResponse.json({ error: 'Order create failed' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Order create failed', details: pendingError.message },
+        { status: 500 }
+      )
     }
     
     console.log('PENDING ORDER CREATED:', orderNumber)
