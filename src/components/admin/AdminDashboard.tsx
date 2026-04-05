@@ -56,9 +56,10 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   const [showCampaignForm, setShowCampaignForm] = useState(false)
   const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null)
   const [editingProduct, setEditingProduct] = useState<any>(null)
-  /** Which row is entering tracking (does not change persisted status until Gönder). */
-  const [shippingDraftOrderId, setShippingDraftOrderId] = useState<string | null>(null)
-  const [shippingDraftByOrderId, setShippingDraftByOrderId] = useState<Record<string, string>>({})
+  /** Local typing for optional tracking only — never affects status badge or dropdown value. */
+  const [trackingFieldDraftByOrderId, setTrackingFieldDraftByOrderId] = useState<Record<string, string>>({})
+  /** Which row shows optional tracking editor (UI chrome only). */
+  const [trackingPanelOpenOrderId, setTrackingPanelOpenOrderId] = useState<string | null>(null)
 
   /** Until server props catch up after shipped PATCH — dropdown uses merged row. */
   const [orderRowOverrides, setOrderRowOverrides] = useState<
@@ -85,6 +86,18 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
   function mergedOrderRow(order: any) {
     const o = orderRowOverrides[order.id]
     return o ? { ...order, ...o } : order
+  }
+
+  function closeTrackingPanel(orderId?: string) {
+    setTrackingPanelOpenOrderId((open) => (orderId === undefined || open === orderId ? null : open))
+    if (orderId) {
+      setTrackingFieldDraftByOrderId((prev) => {
+        if (!(orderId in prev)) return prev
+        const next = { ...prev }
+        delete next[orderId]
+        return next
+      })
+    }
   }
 
   // Products tab state
@@ -179,21 +192,22 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
       router.refresh()
       return false
     }
-    setShippingDraftOrderId(null)
-    setShippingDraftByOrderId((prev) => {
+    setTrackingFieldDraftByOrderId((prev) => {
       const next = { ...prev }
       delete next[orderId]
       return next
     })
-    if (status === 'shipped') {
-      setOrderRowOverrides((prev) => ({
-        ...prev,
-        [orderId]: {
-          status: 'shipped',
-          tracking_number: tracking ?? prev[orderId]?.tracking_number ?? null,
-        },
-      }))
-    }
+    setTrackingPanelOpenOrderId((open) => (open === orderId ? null : open))
+    setOrderRowOverrides((prev) => ({
+      ...prev,
+      [orderId]: {
+        ...prev[orderId],
+        status,
+        ...(status === 'shipped' && tracking !== undefined && tracking !== ''
+          ? { tracking_number: tracking }
+          : {}),
+      },
+    }))
     router.refresh()
     return true
   }
@@ -385,12 +399,17 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                   </tr></thead>
                   <tbody>{orders.map((order) => {
                     const row = mergedOrderRow(order)
-                    const persistedStatus = order.status
                     const displayStatus = row.status
-                    const showShippingDraft =
-                      shippingDraftOrderId === order.id && persistedStatus === 'preparing'
-                    const draftTracking =
-                      shippingDraftByOrderId[order.id] ?? order.tracking_number ?? ''
+                    const savedTracking = row.tracking_number ?? ''
+                    const hasTrackingDraft = Object.prototype.hasOwnProperty.call(
+                      trackingFieldDraftByOrderId,
+                      order.id
+                    )
+                    const trackingInputValue = hasTrackingDraft
+                      ? trackingFieldDraftByOrderId[order.id]
+                      : String(savedTracking)
+                    const showTrackingPanel =
+                      displayStatus === 'shipped' && trackingPanelOpenOrderId === order.id
 
                     return (
                     <tr key={order.id} className="border-b border-champagne-mid/30 hover:bg-champagne/50">
@@ -404,25 +423,20 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                           <span className="text-[9px] text-text-muted leading-tight max-w-[140px]">
                             {statusLabels[displayStatus] ?? displayStatus}
                           </span>
-                          {showShippingDraft ? (
-                            <span className="text-[9px] text-text-muted leading-tight">Takip no girin</span>
-                          ) : null}
                           <select
                             value={displayStatus}
+                            onFocus={() => {
+                              if (
+                                trackingPanelOpenOrderId &&
+                                trackingPanelOpenOrderId !== order.id
+                              ) {
+                                closeTrackingPanel(trackingPanelOpenOrderId)
+                              }
+                            }}
                             onChange={async (e) => {
                               const v = e.target.value
-                              if (shippingDraftOrderId === order.id && v !== 'shipped') {
-                                setShippingDraftOrderId(null)
-                                setShippingDraftByOrderId((prev) => {
-                                  const next = { ...prev }
-                                  delete next[order.id]
-                                  return next
-                                })
-                              }
-                              if (v === 'shipped') {
-                                if (persistedStatus !== 'preparing') return
-                                setShippingDraftOrderId(order.id)
-                                setShippingDraftByOrderId({ [order.id]: order.tracking_number || '' })
+                              if (v === 'shipped' && displayStatus === 'preparing') {
+                                await updateOrderStatus(order.id, 'shipped')
                                 return
                               }
                               await updateOrderStatus(order.id, v)
@@ -435,29 +449,63 @@ export default function AdminDashboard({ orders, products, campaigns, syncLogs, 
                               </option>
                             ))}
                           </select>
-                          {showShippingDraft ? (
-                            <div className="mt-1 flex flex-wrap justify-center gap-1">
-                              <input
-                                type="text"
-                                placeholder="Takip No"
-                                value={draftTracking}
-                                onChange={(e) =>
-                                  setShippingDraftByOrderId((prev) => ({
-                                    ...prev,
-                                    [order.id]: e.target.value,
-                                  }))
-                                }
-                                className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none w-28"
-                              />
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  await updateOrderStatus(order.id, 'shipped', draftTracking)
-                                }}
-                                className="text-[10px] bg-gold text-white px-2 py-1 rounded hover:bg-gold-light transition-colors"
-                              >
-                                Gönder
-                              </button>
+                          {displayStatus === 'shipped' ? (
+                            <div className="mt-1 flex flex-col items-center gap-1 w-full max-w-[200px]">
+                              {!showTrackingPanel ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (
+                                      trackingPanelOpenOrderId &&
+                                      trackingPanelOpenOrderId !== order.id
+                                    ) {
+                                      closeTrackingPanel(trackingPanelOpenOrderId)
+                                    }
+                                    setTrackingPanelOpenOrderId(order.id)
+                                    setTrackingFieldDraftByOrderId((prev) => ({
+                                      ...prev,
+                                      [order.id]: String(savedTracking || ''),
+                                    }))
+                                  }}
+                                  className="text-[9px] text-text-muted hover:text-gold font-body underline"
+                                >
+                                  Takip no (isteğe bağlı)
+                                </button>
+                              ) : (
+                                <>
+                                  <input
+                                    type="text"
+                                    placeholder="Takip no"
+                                    value={trackingInputValue}
+                                    onChange={(e) =>
+                                      setTrackingFieldDraftByOrderId((prev) => ({
+                                        ...prev,
+                                        [order.id]: e.target.value,
+                                      }))
+                                    }
+                                    className="text-[11px] border border-champagne-mid px-2 py-1 rounded bg-white focus:outline-none w-full"
+                                  />
+                                  <div className="flex flex-wrap justify-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        const t = trackingInputValue.trim()
+                                        await updateOrderStatus(order.id, 'shipped', t || undefined)
+                                      }}
+                                      className="text-[10px] bg-gold text-white px-2 py-1 rounded hover:bg-gold-light transition-colors"
+                                    >
+                                      Kaydet
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => closeTrackingPanel(order.id)}
+                                      className="text-[10px] text-text-muted px-2 py-1 font-body hover:text-gold transition-colors"
+                                    >
+                                      Vazgeç
+                                    </button>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           ) : null}
                         </div>
