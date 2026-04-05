@@ -1,5 +1,4 @@
 import { updateTrendyolStock } from './client'
-import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 
 export async function increaseStock(
@@ -36,7 +35,8 @@ export async function decreaseStock(
   productId: string,
   quantity: number
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
+  // Service role: payment callback has no user cookies; anon client cannot update products under typical RLS.
+  const supabase = createServiceClient()
 
   try {
     const { data: product } = await supabase

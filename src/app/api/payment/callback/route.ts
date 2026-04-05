@@ -11,13 +11,24 @@ function getResend() {
 function itemsFromIyzicoTransactions(transactions: unknown) {
   if (!Array.isArray(transactions)) return []
   return transactions
-    .filter((t: any) => t?.itemId && String(t.itemId) !== 'KARGO')
+    .filter((t: any) => {
+      const id = t?.itemId ?? t?.item_id
+      return id && String(id) !== 'KARGO'
+    })
     .map((t: any) => ({
-      productId: String(t.itemId),
-      name: String(t.itemName ?? 'Ürün'),
+      productId: String(t.itemId ?? t.item_id),
+      name: String(t.itemName ?? t.item_name ?? 'Ürün'),
       quantity: 1,
       price: parseFloat(String(t.price ?? 0)) || 0,
     }))
+}
+
+function lineProductId(item: any): string | null {
+  const id = item?.productId ?? item?.product_id ?? item?.itemId ?? item?.item_id
+  if (id == null || id === '') return null
+  const s = String(id).trim()
+  if (!s || s === 'KARGO') return null
+  return s
 }
 
 const emptyShippingAddress = {
@@ -136,29 +147,55 @@ export async function POST(request: Request) {
       return NextResponse.redirect(`${siteUrl}/odeme/basarisiz`, { status: 302 })
     }
 
-    // Stok düş (yalnızca bir kez — stock_deducted_at ile idempotent)
-    const { data: stockGate } = await serviceClient
+    // Stok düş — sadece ödeme başarılı ve sipariş satırı yüklendikten sonra; stock_deducted_at ile tek sefer
+    const { data: stockGate, error: stockGateErr } = await serviceClient
       .from('orders')
       .select('stock_deducted_at')
       .eq('id', order.id)
       .single()
 
-    if (!stockGate?.stock_deducted_at && order.items) {
+    if (stockGateErr) {
+      console.error('[callback] stock gate select error:', stockGateErr.message, stockGateErr)
+    }
+
+    const itemsArr = Array.isArray(order.items) ? (order.items as any[]) : []
+
+    const alreadyDeducted = Boolean(stockGate?.stock_deducted_at)
+    if (alreadyDeducted) {
+      console.log('[callback] stock: skip (stock_deducted_at already set)', order.id)
+    } else if (itemsArr.length > 0) {
       let stockDecreaseOk = true
-      for (const item of order.items as any[]) {
-        if (!item?.productId || item.productId === 'KARGO') continue
-        const dec = await decreaseStock(item.productId, Number(item.quantity) || 1)
+      let linesWithProduct = 0
+      for (const item of itemsArr) {
+        const productId = lineProductId(item)
+        if (!productId) {
+          console.log('[callback] stock: skip line (no productId)', JSON.stringify(item))
+          continue
+        }
+        linesWithProduct += 1
+        const qty = Math.max(1, Number(item.quantity) || 1)
+        console.log('[callback] stock: decreaseStock call', { productId, quantity: qty })
+        const dec = await decreaseStock(productId, qty)
+        console.log('[callback] stock: decreaseStock result', { productId, quantity: qty, success: dec.success, error: dec.error })
         if (!dec.success) {
           stockDecreaseOk = false
-          console.error('[callback] decreaseStock failed:', item.productId, dec.error)
+          console.error('[callback] stock: decreaseStock failed', { productId, quantity: qty, error: dec.error })
         }
       }
-      if (stockDecreaseOk) {
-        await serviceClient
+      if (linesWithProduct === 0) {
+        console.error('[callback] stock: no line items with productId; order.items:', JSON.stringify(itemsArr).slice(0, 500))
+      }
+      if (stockDecreaseOk && linesWithProduct > 0) {
+        const { error: stampErr } = await serviceClient
           .from('orders')
           .update({ stock_deducted_at: new Date().toISOString() })
           .eq('id', order.id)
+        if (stampErr) {
+          console.error('[callback] stock: failed to set stock_deducted_at:', stampErr.message)
+        }
       }
+    } else {
+      console.warn('[callback] stock: order.items missing or empty; cannot decrease stock', order.id)
     }
 
     // Sipariş onay e-postası gönder
