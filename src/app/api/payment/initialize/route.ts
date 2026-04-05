@@ -153,32 +153,6 @@ export async function POST(request: Request) {
       )
     }
     
-    // 🔥 PENDING ORDER INSERT
-    const { error: pendingError } = await serviceClient
-      .from('orders')
-      .insert({
-        order_number: orderNumber,
-        status: 'pending',
-        user_id: userId || null,
-        guest_email: buyer?.email || null,
-        shipping_address,
-        items: orderItems,
-        subtotal,
-        shipping_cost: shippingCost,
-        total,
-        iyzico_payment_id: null,
-      })
-    
-    if (pendingError) {
-      console.error('PENDING ORDER FAILED:', pendingError)
-      return NextResponse.json(
-        { error: 'Order create failed', details: pendingError.message },
-        { status: 500 }
-      )
-    }
-    
-    console.log('PENDING ORDER CREATED:', orderNumber)
-    
     return NextResponse.json({
       success: true,
       htmlContent: result.threeDSHtmlContent,
