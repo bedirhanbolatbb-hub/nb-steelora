@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import ProductsClient from '@/components/store/ProductsClient'
+import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
 
 export default async function UrunlerPage({
   searchParams,
@@ -9,9 +10,10 @@ export default async function UrunlerPage({
   const params = await searchParams
   const supabase = await createClient()
 
+  // Sayfalama gruplandıktan sonra uygulanır — bkz. lib/catalog/listing.ts
   let query = supabase
     .from('products_display')
-    .select('*', { count: 'exact' })
+    .select(LISTING_COLUMNS)
 
   // Kategori filtresi
   if (params.kategori) {
@@ -46,13 +48,9 @@ export default async function UrunlerPage({
       query = query.order('is_featured', { ascending: false }).order('created_at', { ascending: false })
   }
 
-  // Sayfalama
   const sayfa = parseInt(params.sayfa || '1')
-  const perPage = 24
-  const from = (sayfa - 1) * perPage
-  query = query.range(from, from + perPage - 1)
-
-  const { data: products, count } = await query
+  const { data: products } = await query
+  const { cards, total } = paginateGroupedProducts((products || []) as any[], sayfa)
 
   // Kategorileri al
   const { data: categoryData } = await supabase
@@ -68,11 +66,11 @@ export default async function UrunlerPage({
 
   return (
     <ProductsClient
-      products={products || []}
-      total={count || 0}
+      cards={cards}
+      total={total}
       categories={categories}
       currentPage={sayfa}
-      perPage={perPage}
+      perPage={PER_PAGE}
       currentParams={{
         kategori: params.kategori || '',
         siralama: params.siralama || '',

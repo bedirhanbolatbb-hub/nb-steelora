@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import ProductsClient from '@/components/store/ProductsClient'
 import { notFound } from 'next/navigation'
 import { buildCategoryFilter, getCategory } from '@/lib/catalog/categories'
+import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
 
 export default async function KategoriPage({
   params,
@@ -21,7 +22,9 @@ export default async function KategoriPage({
 
   const filter = buildCategoryFilter(def, sp.tip)
 
-  let query = supabase.from('products_display').select('*', { count: 'exact' })
+  // Gruplama görüntüleme katmanında yapıldığı için sayfalama sunucuda değil,
+  // gruplandıktan sonra uygulanır; eşleşen tüm satırlar hafif kolonlarla çekilir.
+  let query = supabase.from('products_display').select(LISTING_COLUMNS)
   query =
     filter.kind === 'eq'
       ? query.eq(filter.column, filter.value)
@@ -56,19 +59,16 @@ export default async function KategoriPage({
   }
 
   const sayfa = parseInt(sp.sayfa || '1')
-  const perPage = 24
-  const from = (sayfa - 1) * perPage
-  query = query.range(from, from + perPage - 1)
-
-  const { data: products, count } = await query
+  const { data: products } = await query
+  const { cards, total } = paginateGroupedProducts((products || []) as any[], sayfa)
 
   return (
     <ProductsClient
-      products={products || []}
-      total={count || 0}
+      cards={cards}
+      total={total}
       categories={[kategori]}
       currentPage={sayfa}
-      perPage={perPage}
+      perPage={PER_PAGE}
       currentParams={{
         kategori,
         siralama: sp.siralama || '',

@@ -12,9 +12,11 @@ import type { Product } from '@/types'
 interface ProductCardProps {
   product: Product
   priority?: boolean
+  /** Aynı gruptaki diğer üye sayısı — "+N seçenek" rozeti olarak basılır. */
+  optionCount?: number
 }
 
-export default function ProductCard({ product, priority = false }: ProductCardProps) {
+export default function ProductCard({ product, priority = false, optionCount = 0 }: ProductCardProps) {
   const imageUrl = product.display_images?.[0] ?? (product as any).trendyol_images?.[0] ?? '/placeholder-product.jpg'
   const addItem = useCart((s) => s.addItem)
   const [added, setAdded] = useState(false)
@@ -54,6 +56,13 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             <WishlistButton productId={product.id} />
           </div>
         </div>
+
+        {/* Grup rozeti — aynı başlık/kategori/fiyat/gender kümesindeki diğer üyeler */}
+        {optionCount > 0 && (
+          <span className="absolute bottom-2 right-2 bg-white/90 text-text-primary text-[9px] px-2 py-0.5 font-body tracking-wide">
+            +{optionCount} seçenek
+          </span>
+        )}
 
         {/* Stock badge */}
         {outOfStock && (

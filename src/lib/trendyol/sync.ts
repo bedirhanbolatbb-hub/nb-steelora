@@ -31,6 +31,21 @@ type VariantRow = {
   description: string
   images: string[]
   category: string | null
+  variantLabel: string | null
+  gender: string | null
+}
+
+/** V2 content.attributes → "Cinsiyet" değerini gender kolonuna eşler. */
+function mapGender(value: string | undefined): string | null {
+  if (!value) return null
+  if (value.includes('Kadın')) return 'women'
+  if (value.trim() === 'Erkek') return 'men'
+  // Unisex ve bilinmeyen değerler eşlenmez; mevcut değer korunur.
+  return null
+}
+
+function findAttribute(attributes: any[] | undefined, name: string): string | undefined {
+  return (attributes || []).find((a: any) => a?.attributeName === name)?.attributeValue
 }
 
 /**
@@ -46,10 +61,17 @@ function flattenContents(contents: any[]): VariantRow[] {
       .map((img: any) => img?.url || img)
       .filter(Boolean)
 
-    for (const variant of content.variants || []) {
-      if (!variant?.barcode) continue
-      if (variant.archived || variant.onSale === false) continue
+    const gender = mapGender(findAttribute(content.attributes, 'Cinsiyet'))
+    const siblings = (content.variants || []).filter(
+      (v: any) => v?.barcode && !v.archived && v.onSale !== false
+    )
 
+    // "Beden" tüm kardeş varyantlarda aynıysa ayırt etmiyor demektir (ör.
+    // harf kolyelerinde hepsi "Battal Standart") — etiket olarak yazılmaz.
+    const labels = siblings.map((v: any) => findAttribute(v.attributes, 'Beden') ?? null)
+    const labelsDistinguish = new Set(labels.filter(Boolean)).size > 1
+
+    siblings.forEach((variant: any, i: number) => {
       rows.push({
         barcode: variant.barcode,
         variantId: String(variant.variantId ?? ''),
@@ -57,8 +79,10 @@ function flattenContents(contents: any[]): VariantRow[] {
         description: content.description || '',
         images,
         category: content.category?.name ?? null,
+        variantLabel: labelsDistinguish ? labels[i] : null,
+        gender,
       })
-    }
+    })
   }
 
   return rows
@@ -92,11 +116,11 @@ export async function syncTrendyolPage(page: number, size = 100) {
   // Sayfadaki barkodların mevcut satırlarını tek sorguda al.
   const { data: existingRows } = await supabase
     .from('products')
-    .select('id, trendyol_barcode')
+    .select('id, trendyol_barcode, gender')
     .in('trendyol_barcode', rows.map((r) => r.barcode))
 
   const existingByBarcode = new Map(
-    (existingRows || []).map((r: any) => [r.trendyol_barcode, r.id])
+    (existingRows || []).map((r: any) => [r.trendyol_barcode, r])
   )
 
   let added = 0
@@ -121,23 +145,29 @@ export async function syncTrendyolPage(page: number, size = 100) {
       trendyol_images: row.images,
       trendyol_category: row.category,
       trendyol_barcode: row.barcode,
+      variant_label: row.variantLabel,
       is_active: true,
       last_synced_at: new Date().toISOString(),
     }
 
-    const existingId = existingByBarcode.get(row.barcode)
+    const existing = existingByBarcode.get(row.barcode)
 
-    if (existingId) {
+    if (existing) {
       // trendyol_id'ye dokunulmaz: mevcut satırların dış referansı korunur.
+      // gender yalnızca boşsa doldurulur; mevcut (elle etiketlenmiş olabilecek)
+      // değerler sync tarafından ezilmez.
+      const genderPatch = !existing.gender && row.gender ? { gender: row.gender } : {}
+
       await supabase
         .from('products')
-        .update({ ...syncedFields, updated_at: new Date().toISOString() })
-        .eq('id', existingId)
+        .update({ ...syncedFields, ...genderPatch, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
 
       updated++
     } else {
       await supabase.from('products').insert({
         ...syncedFields,
+        gender: row.gender,
         trendyol_id: row.variantId,
         slug: generateSlug(row.title, row.barcode),
         is_featured: false,

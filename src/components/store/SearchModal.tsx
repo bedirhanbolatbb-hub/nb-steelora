@@ -120,6 +120,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 </p>
                 <p className="text-[11px] font-body text-text-muted mt-0.5">
                   {product.trendyol_category}
+                  {product.option_count > 0 && ` · +${product.option_count} seçenek`}
                 </p>
               </div>
               <p className="text-[13px] font-body text-gold font-medium shrink-0">

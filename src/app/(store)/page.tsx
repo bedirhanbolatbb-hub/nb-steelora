@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getSiteContent } from '@/lib/supabase/content'
-import { getHomepageSection, getHeroProductIds } from '@/lib/home/sections'
+import { getHomepageSection, getHeroProducts, ShownProducts } from '@/lib/home/sections'
 import { FREE_SHIPPING_MIN_LABEL } from '@/lib/shipping'
 import Hero from '@/components/home/Hero'
 import Marquee from '@/components/home/Marquee'
@@ -16,13 +16,15 @@ export default async function HomePage() {
   const c = await getSiteContent()
 
   // Küratörlü listeler: homepage_settings(section=...).product_ids
-  // Hero'daki ürünler ve öne çıkanlar dolguya girmez — aynı kart iki kez çıkmasın.
-  const heroIds = await getHeroProductIds()
-  const featured = await getHomepageSection('featured', heroIds)
-  const newArrivals = await getHomepageSection('new_arrivals', [
-    ...heroIds,
-    ...featured.map((p: any) => p.id),
-  ])
+  // Öncelik hero > featured > new_arrivals; üstte basılan ürün (veya grup
+  // kardeşi) altta tekrar basılmaz, yerine dolgu gelir.
+  const shown = new ShownProducts()
+  shown.add(await getHeroProducts())
+
+  const featured = await getHomepageSection('featured', shown)
+  shown.add(featured)
+
+  const newArrivals = await getHomepageSection('new_arrivals', shown)
 
   try {
     const supabase = await createClient()

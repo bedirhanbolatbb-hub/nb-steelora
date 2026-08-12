@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { getGroupKey, type GroupableProduct } from '@/lib/catalog/variants'
+import { LISTING_COLUMNS } from '@/lib/catalog/listing'
 
 // Anasayfadaki hiçbir bölüm bu sayıdan fazla kart basmaz.
 export const MAX_SECTION_ITEMS = 12
@@ -8,16 +10,47 @@ export const TARGET_SECTION_ITEMS = 8
 
 export type HomepageSection = 'featured' | 'new_arrivals'
 
-/** Hero'da gösterilen ürünler dolguya girmez — anasayfada aynı kart iki kez çıkmasın. */
-export async function getHeroProductIds(): Promise<string[]> {
+/**
+ * Bölümler arası tekilleştirme kümesi. Bir ürün üst bölümde basıldıysa
+ * kendisi de grubundan bir kardeşi de alt bölümde tekrar basılmaz.
+ */
+export class ShownProducts {
+  private ids = new Set<string>()
+  private groups = new Set<string>()
+
+  add(products: GroupableProduct[]) {
+    for (const p of products) {
+      this.ids.add(p.id)
+      this.groups.add(getGroupKey(p))
+    }
+  }
+
+  has(product: GroupableProduct): boolean {
+    return this.ids.has(product.id) || this.groups.has(getGroupKey(product))
+  }
+}
+
+/** Hero'da gösterilen ürünler — öncelik sırasının en üstü. */
+export async function getHeroProducts(): Promise<any[]> {
   try {
     const supabase = await createClient()
-    const { data } = await supabase
+    const { data: settings } = await supabase
       .from('homepage_settings')
       .select('product_ids')
       .in('section', ['hero_top', 'hero_bottom_left', 'hero_bottom_right'])
 
-    return (data || []).flatMap((row: any) => (row.product_ids as string[]) || []).filter(Boolean)
+    const ids = (settings || [])
+      .flatMap((row: any) => (row.product_ids as string[]) || [])
+      .filter(Boolean)
+
+    if (ids.length === 0) return []
+
+    const { data } = await supabase
+      .from('products_display')
+      .select(LISTING_COLUMNS)
+      .in('id', ids)
+
+    return data || []
   } catch {
     return []
   }
@@ -25,16 +58,15 @@ export async function getHeroProductIds(): Promise<string[]> {
 
 /**
  * homepage_settings tablosundaki küratörlü listeyi okur ve sırasını koruyarak döner.
- * products_display view'u yalnızca is_active = true satırları içerir, bu yüzden
- * pasife çekilmiş ürünler listede yer alsa bile ekrana basılmaz.
+ * products_display view'u yalnızca is_active = true satırları içerir.
  *
- * Küratörlü aktifler önce gelir; liste 8'e ulaşmıyorsa en yeni aktif ürünlerle
- * tamamlanır. Dolguya ne küratörlü ürünler ne de excludeIds (hero) girer.
- * Küratörlü listeden hiçbir ürün çözülemezse tamamen fallback'e düşülür.
+ * Öncelik kuralı: hero > featured > new_arrivals. Üst bölümde basılmış bir ürün
+ * (veya grubundan bir üye) küratörlü seçimde bile olsa alt bölümde basılmaz;
+ * yerine dolgu gelir. Küratörlü listeden hiç ürün kalmazsa tamamen dolguya düşülür.
  */
 export async function getHomepageSection(
   section: HomepageSection,
-  excludeIds: string[] = []
+  shown?: ShownProducts
 ): Promise<any[]> {
   try {
     const supabase = await createClient()
@@ -49,37 +81,45 @@ export async function getHomepageSection(
       .filter((id): id is string => typeof id === 'string' && id.length > 0)
       .slice(0, MAX_SECTION_ITEMS)
 
-    let curated: any[] = []
+    const selected: any[] = []
+    const local = new ShownProducts()
 
     if (curatedIds.length > 0) {
       const { data } = await supabase
         .from('products_display')
-        .select('*')
+        .select(LISTING_COLUMNS)
         .in('id', curatedIds)
 
       if (data && data.length > 0) {
         const byId = new Map(data.map((p: any) => [p.id, p]))
-        curated = curatedIds.map((id) => byId.get(id)).filter(Boolean)
+        for (const id of curatedIds) {
+          const product = byId.get(id)
+          if (!product) continue
+          if (shown?.has(product) || local.has(product)) continue
+          selected.push(product)
+          local.add([product])
+        }
       }
     }
 
-    if (curated.length >= TARGET_SECTION_ITEMS) {
-      return curated.slice(0, MAX_SECTION_ITEMS)
+    if (selected.length < TARGET_SECTION_ITEMS) {
+      // Dolgu: en yeni aktif ürünler. Üst bölümlerde basılanlar ve bu bölümde
+      // zaten seçilenler (grup kardeşleri dahil) alınmaz.
+      const { data: recent } = await supabase
+        .from('products_display')
+        .select(LISTING_COLUMNS)
+        .order('created_at', { ascending: false })
+        .limit(120)
+
+      for (const product of recent || []) {
+        if (selected.length >= TARGET_SECTION_ITEMS) break
+        if (shown?.has(product) || local.has(product)) continue
+        selected.push(product)
+        local.add([product])
+      }
     }
 
-    // Dolgu: en yeni aktif ürünler. Küratörlü ve hariç tutulan id'ler alınmaz.
-    const taken = new Set([...curated.map((p: any) => p.id), ...excludeIds])
-    const needed = TARGET_SECTION_ITEMS - curated.length
-
-    const { data: recent } = await supabase
-      .from('products_display')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(TARGET_SECTION_ITEMS + taken.size)
-
-    const filler = (recent || []).filter((p: any) => !taken.has(p.id)).slice(0, needed)
-
-    return [...curated, ...filler].slice(0, MAX_SECTION_ITEMS)
+    return selected.slice(0, MAX_SECTION_ITEMS)
   } catch {
     return []
   }

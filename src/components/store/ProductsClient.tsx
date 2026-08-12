@@ -22,7 +22,8 @@ const FIYAT_ARALIKLARI = [
 ]
 
 interface ProductsClientProps {
-  products: Product[]
+  /** Gruplanmış kartlar: kapak ürünü + gruptaki diğer üye sayısı */
+  cards: { product: Product; optionCount: number }[]
   total: number
   categories: string[]
   currentPage: number
@@ -34,7 +35,7 @@ interface ProductsClientProps {
 }
 
 function ProductsInner({
-  products,
+  cards,
   total,
   categories,
   currentPage,
@@ -281,7 +282,7 @@ function ProductsInner({
 
         {/* Product Grid */}
         <div className="flex-1">
-          {products.length === 0 ? (
+          {cards.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-text-muted font-body text-[13px] mb-4">
                 Bu kriterlere uygun ürün bulunamadı.
@@ -296,11 +297,12 @@ function ProductsInner({
           ) : (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-                {products.map((product, i) => (
+                {cards.map(({ product, optionCount }, i) => (
                   <ProductCard
                     key={product.id}
                     product={product}
                     priority={i < 4}
+                    optionCount={optionCount}
                   />
                 ))}
               </div>

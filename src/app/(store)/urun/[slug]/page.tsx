@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { FREE_SHIPPING_MIN_LABEL } from '@/lib/shipping'
 import ProductImageGallery from '@/components/store/ProductImageGallery'
+import ProductVariants from '@/components/store/ProductVariants'
 import AddToCartButton from '@/components/store/AddToCartButton'
 import RelatedProducts from '@/components/store/RelatedProducts'
 import ReviewList from '@/components/store/ReviewList'
@@ -33,10 +34,13 @@ export default async function UrunDetayPage({
     <div className="max-w-6xl mx-auto px-4 lg:px-8 py-12">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
         {/* Görsel galerisi */}
-        <ProductImageGallery
-          images={product.display_images || []}
-          title={product.display_title}
-        />
+        <div>
+          <ProductImageGallery
+            images={product.display_images || []}
+            title={product.display_title}
+          />
+          <ProductVariants product={product} />
+        </div>
 
         {/* Ürün bilgisi */}
         <div>
