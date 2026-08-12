@@ -74,7 +74,7 @@ export default async function Hero() {
             {c.hero_cta || 'Koleksiyonu Keşfet'}
           </Link>
           <Link
-            href="/kategori/kolye"
+            href="/#one-cikanlar"
             className="text-gold text-[11px] uppercase tracking-widest font-body underline underline-offset-4 hover:text-gold/70 transition-colors"
           >
             Çok Satanlar →

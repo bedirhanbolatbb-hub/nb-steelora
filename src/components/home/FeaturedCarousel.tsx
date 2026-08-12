@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo, useSyncExternalStore } from 'react'
 import ProductCard from '@/components/store/ProductCard'
 import type { Product } from '@/types'
 
@@ -13,6 +13,9 @@ const SWIPE_VELOCITY_FAST = 0.5
 const SWIPE_VELOCITY_NORMAL = 0.3
 const SWIPE_MIN_DISTANCE = 50
 const EASING = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+
+// Hidrasyon tespiti için değişmeyen abonelik (useSyncExternalStore sözleşmesi gereği sabit referans)
+const subscribeNoop = () => () => {}
 
 export default function FeaturedCarousel({ products }: { products: Product[] }) {
   const step = CARD_W + CARD_GAP
@@ -34,8 +37,15 @@ export default function FeaturedCarousel({ products }: { products: Product[] }) 
   useEffect(() => { offsetRef.current = offset }, [offset])
   useEffect(() => { if (!isDragging.current) setLiveTranslate(offset) }, [offset])
 
+  // Sonsuz döngü kopyası yalnızca hidrasyondan sonra eklenir: ilk HTML'de her ürün
+  // bir kez basılır, bölüm üst sınırı (12 kart) sunucu çıktısında da korunur.
+  const hydrated = useSyncExternalStore(subscribeNoop, () => true, () => false)
+
   // Sonsuz döngü için item listesini iki kez klonla — sadece products değişince yeniden oluştur
-  const loopedItems = useMemo(() => [...products, ...products], [products])
+  const loopedItems = useMemo(
+    () => (hydrated ? [...products, ...products] : products),
+    [products, hydrated]
+  )
 
   // Hedef pozisyona yumuşak git
   const snapTo = useCallback((next: number, durationMs = TRANSITION_NORMAL) => {

@@ -958,7 +958,7 @@ export default function AdminDashboard({
               <div key={c.id} className="bg-white p-4 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2"><span className="font-body text-[13px] font-medium text-text-primary">{c.name}</span><span className="text-[9px] bg-champagne-dark px-1.5 py-0.5 rounded text-text-muted uppercase">{c.type.replace('_', ' ')}</span>{!c.is_active && <span className="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded">Pasif</span>}</div>
-                  <div className="text-[11px] text-text-muted font-body mt-1 space-x-3">{c.code && <span>Kod: <strong>{c.code}</strong></span>}{c.discount_value && <span>{c.discount_type === 'percent' ? `%${c.discount_value}` : `${c.discount_value}₺`}</span>}{c.banner_text && <span>{c.banner_text}</span>}{c.max_uses && <span>Kullanım: {c.used_count}/{c.max_uses}</span>}</div>
+                  <div className="text-[11px] text-text-muted font-body mt-1 space-x-3">{c.code && <span>Kod: <strong>{c.code}</strong></span>}{c.discount_value && <span>{c.discount_type === 'percent' ? `%${c.discount_value}` : formatPrice(c.discount_value)}</span>}{c.banner_text && <span>{c.banner_text}</span>}{c.max_uses && <span>Kullanım: {c.used_count}/{c.max_uses}</span>}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => toggleCampaign(c.id, c.is_active)} className={`text-[10px] px-2 py-1 rounded transition-colors ${c.is_active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{c.is_active ? 'Aktif' : 'Pasif'}</button>

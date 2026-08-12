@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { formatPrice } from '@/lib/utils'
 
 export async function POST(request: Request) {
   const { code, cartTotal } = await request.json()
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
   }
   if (cartTotal < campaign.min_cart_amount) {
     return NextResponse.json(
-      { error: `Minimum ${campaign.min_cart_amount}₺ sepet tutarı gerekli` },
+      { error: `Minimum ${formatPrice(campaign.min_cart_amount)} sepet tutarı gerekli` },
       { status: 400 }
     )
   }

@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { getSiteContent } from '@/lib/supabase/content'
+import { getHomepageSection } from '@/lib/home/sections'
 import FeaturedCarousel from './FeaturedCarousel'
 
 interface Props {
@@ -9,40 +8,13 @@ interface Props {
 }
 
 export default async function FeaturedProducts({ title, subtitle }: Props = {}) {
-  let products: any[] = []
-
-  try {
-    const supabase = await createClient()
-
-    const { data } = await supabase
-      .from('products_display')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1000)
-
-    products = data || []
-
-    // Apply featured_order from site_content if present
-    const c = await getSiteContent()
-    if (c.featured_order) {
-      try {
-        const order: string[] = JSON.parse(c.featured_order)
-        if (order.length > 0) {
-          const map = new Map(products.map((p: any) => [p.id, p]))
-          const prioritized = order.map((id) => map.get(id)).filter(Boolean)
-          const rest = products.filter((p: any) => !order.includes(p.id))
-          products = [...prioritized, ...rest]
-        }
-      } catch { /* ignore malformed JSON */ }
-    }
-  } catch {
-    // Boş göster
-  }
+  // Küratörlü liste: homepage_settings(section='featured').product_ids — sırası korunur.
+  const products = await getHomepageSection('featured')
 
   if (products.length === 0) return null
 
   return (
-    <section className="max-w-7xl mx-auto px-4 lg:px-8 py-20">
+    <section id="one-cikanlar" className="max-w-7xl mx-auto px-4 lg:px-8 py-20">
       <div className="flex items-end justify-between mb-12">
         <div>
           <h2 className="font-heading text-[32px] text-text-primary">

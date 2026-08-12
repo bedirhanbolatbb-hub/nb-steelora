@@ -81,11 +81,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
         <h3 className="font-heading text-[15px] text-text-primary leading-tight group-hover:text-gold transition-colors">
           {product.display_title}
         </h3>
-        {product.trendyol_category && (
-          <p className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mt-1">
-            {product.trendyol_category}
-          </p>
-        )}
+        {/* Kategori etiketi kart yüzeyinden kaldırıldı; malzeme bilgisi PDP'de kalır. */}
         {(product as any).avg_rating > 0 && (
           <div className="flex items-center gap-1 mt-1">
             <div className="flex gap-0.5">

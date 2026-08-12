@@ -8,15 +8,10 @@ import { useCart } from '@/hooks/useCart'
 import { useWishlist } from '@/hooks/useWishlist'
 import CartDrawer from './CartDrawer'
 import SearchModal from './SearchModal'
+import { MENU_LINKS } from '@/lib/catalog/categories'
 
-const navLinks = [
-  { href: '/kategori/kolye', label: 'Kolye' },
-  { href: '/kategori/kupe', label: 'Küpe' },
-  { href: '/kategori/yuzuk', label: 'Yüzük' },
-  { href: '/kategori/bileklik', label: 'Bileklik' },
-  { href: '/kategori/setler', label: 'Setler' },
-  { href: '/blog', label: 'Blog' },
-]
+// Menü tek kaynaktan gelir: src/lib/catalog/categories.ts
+const navLinks = MENU_LINKS
 
 interface NavbarProps {
   bannerText?: string | null

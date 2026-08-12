@@ -1,14 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import ProductsClient from '@/components/store/ProductsClient'
 import { notFound } from 'next/navigation'
-
-const KATEGORI_MAP: Record<string, string> = {
-  kolye: 'Kolye',
-  kupe: 'Küpe',
-  yuzuk: 'Yüzük',
-  bileklik: 'Bileklik',
-  setler: 'Set',
-}
+import { buildCategoryFilter, getCategory } from '@/lib/catalog/categories'
 
 export default async function KategoriPage({
   params,
@@ -20,15 +13,19 @@ export default async function KategoriPage({
   const { slug } = await params
   const sp = await searchParams
 
-  const kategori = KATEGORI_MAP[slug]
-  if (!kategori) notFound()
+  const def = getCategory(slug)
+  if (!def) notFound()
 
+  const kategori = def.title
   const supabase = await createClient()
 
-  let query = supabase
-    .from('products_display')
-    .select('*', { count: 'exact' })
-    .ilike('trendyol_category', `%${kategori}%`)
+  const filter = buildCategoryFilter(def, sp.tip)
+
+  let query = supabase.from('products_display').select('*', { count: 'exact' })
+  query =
+    filter.kind === 'eq'
+      ? query.eq(filter.column, filter.value)
+      : query.or(filter.expression)
 
   // Fiyat aralığı
   if (sp.min_fiyat) {
@@ -78,8 +75,10 @@ export default async function KategoriPage({
         min_fiyat: sp.min_fiyat || '',
         max_fiyat: sp.max_fiyat || '',
         stok: sp.stok || '',
+        tip: sp.tip || '',
       }}
       title={kategori}
+      chips={def.chips?.map((c) => ({ value: c.value, label: c.label }))}
     />
   )
 }

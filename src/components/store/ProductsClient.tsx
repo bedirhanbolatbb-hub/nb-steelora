@@ -28,6 +28,8 @@ interface ProductsClientProps {
   perPage: number
   currentParams: Record<string, string>
   title?: string
+  /** Liste üstünde gösterilen daraltma çipleri (ör. Bileklik sayfasında Halhal) */
+  chips?: { value: string; label: string }[]
 }
 
 function ProductsInner({
@@ -38,6 +40,7 @@ function ProductsInner({
   perPage,
   currentParams,
   title = 'Tüm Ürünler',
+  chips,
 }: ProductsClientProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -76,6 +79,7 @@ function ProductsInner({
         </div>
 
         <select
+          aria-label="Sıralama"
           value={currentParams.siralama || ''}
           onChange={(e) => updateParams({ siralama: e.target.value })}
           className="w-full sm:w-auto px-4 py-2 border border-champagne-mid bg-white font-body text-[12px] text-text-primary focus:border-gold focus:outline-none transition-colors"
@@ -87,6 +91,35 @@ function ProductsInner({
           ))}
         </select>
       </div>
+
+      {/* Daraltma çipleri — kategori içi alt gruplar (ayrı menü maddesi değil) */}
+      {chips && chips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-8">
+          <button
+            onClick={() => updateParams({ tip: '' })}
+            className={`px-3 py-1.5 text-[11px] font-body border transition-colors ${
+              !currentParams.tip
+                ? 'border-gold text-gold'
+                : 'border-champagne-mid text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            Tümü
+          </button>
+          {chips.map((chip) => (
+            <button
+              key={chip.value}
+              onClick={() => updateParams({ tip: currentParams.tip === chip.value ? '' : chip.value })}
+              className={`px-3 py-1.5 text-[11px] font-body border transition-colors ${
+                currentParams.tip === chip.value
+                  ? 'border-gold text-gold'
+                  : 'border-champagne-mid text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="flex gap-8">
         {/* Sidebar */}

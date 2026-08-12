@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { completeThreeDS } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
 import { decreaseStock } from '@/lib/trendyol/stockUpdate'
+import { formatPrice } from '@/lib/utils'
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY)
@@ -225,18 +226,18 @@ export async function POST(request: Request) {
       return `
       <div style="padding: 12px 0; border-bottom: 1px solid #F0E8E0;">
         <p style="margin: 0; font-size: 14px;">${item.name}</p>
-        <p style="margin: 4px 0 0; font-size: 12px; color: #7A5048;">₺${line.toFixed(2)}</p>
+        <p style="margin: 4px 0 0; font-size: 12px; color: #7A5048;">${formatPrice(line)}</p>
       </div>
     `
     }).join('')}
     <div style="padding: 16px 0; border-top: 2px solid #E8D8D0; margin-top: 8px;">
       <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
         <span style="color: #7A5048;">Kargo</span>
-        <span>${(order.shipping ?? order.shipping_cost) === 0 ? 'Ücretsiz' : '₺' + Number(order.shipping ?? order.shipping_cost ?? 0).toFixed(2)}</span>
+        <span>${(order.shipping ?? order.shipping_cost) === 0 ? 'Ücretsiz' : formatPrice(order.shipping ?? order.shipping_cost ?? 0)}</span>
       </div>
       <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 600; margin-top: 12px;">
         <span>Toplam</span>
-        <span>₺${order.total?.toFixed(2)}</span>
+        <span>${formatPrice(order.total)}</span>
       </div>
     </div>
     <div style="margin-top: 30px; padding: 20px; background: #FFF8F6; border: 1px solid #E8D8D0;">
