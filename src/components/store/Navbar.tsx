@@ -91,7 +91,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
             <Link href="/favorilerim" className="hidden sm:block relative text-text-secondary hover:text-gold transition-colors" aria-label="Favoriler">
               <Heart size={18} />
               {wishlistCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gold text-white text-[10px] rounded-full flex items-center justify-center font-body">
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-ink text-bg text-[10px] rounded-full flex items-center justify-center font-body font-medium">
                   {wishlistCount}
                 </span>
               )}
@@ -106,7 +106,11 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
             >
               <ShoppingBag size={18} />
               {totalItems > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gold text-white text-[10px] rounded-full flex items-center justify-center font-body">
+                // key değişince animasyon yeniden oynar — sepete eklemede darbe efekti
+                <span
+                  key={totalItems}
+                  className="animate-cart-pulse absolute -top-1.5 -right-1.5 w-5 h-5 bg-ink text-bg text-[10px] rounded-full flex items-center justify-center font-body font-medium"
+                >
                   {totalItems}
                 </span>
               )}

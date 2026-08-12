@@ -1,29 +1,90 @@
 @import "tailwindcss";
 
+/* Faz 2A marka token'ları. Tailwind v4 CSS-first yapılandırma kullanıyor:
+   @theme bloğu tailwind.config extend'in karşılığıdır, aynı adlar :root'ta da
+   CSS değişkeni olarak açılır. Eski token adları (champagne/gold/dark …) yeni
+   palete yeniden eşlendi — tüm bileşenler tek noktadan renk değiştirir. */
 @theme inline {
-  --color-champagne: #ffffff;
-  --color-champagne-dark: #e8d5cf;
-  --color-champagne-mid: #f2e8e4;
-  --color-gold: #a0624a;
-  --color-gold-light: #b8775e;
-  --color-gold-pale: #f2e8e4;
-  --color-dark: #faf0ed;
-  --color-dark-mid: #3A2E2E;
-  --color-text-primary: #2A1E1E;
-  --color-text-secondary: #7A5848;
-  --color-text-muted: #B09080;
-  --font-heading: 'Cormorant Garamond', serif;
-  --font-body: 'Jost', sans-serif;
+  /* Ana palet */
+  --color-bg: #FAF8F4;
+  --color-surface: #FFFFFF;
+  --color-ink: #1C1A17;
+  --color-muted: #6E675E;
+  --color-line: #E7E1D8;
+  --color-accent: #B8934E;
+  --color-accent-deep: #8C6D33;
+
+  /* Eski adların yeni karşılıkları */
+  --color-champagne: #FAF8F4;
+  --color-champagne-mid: #E7E1D8;
+  --color-champagne-dark: #F2EFE9;
+  --color-gold: #B8934E;
+  --color-gold-light: #8C6D33;
+  --color-gold-pale: #F5EFE2;
+  --color-dark: #1C1A17;
+  --color-dark-mid: #26231F;
+  --color-text-primary: #1C1A17;
+  --color-text-secondary: #4A443C;
+  --color-text-muted: #6E675E;
+
+  --font-heading: var(--font-display), 'Playfair Display', serif;
+  --font-body: var(--font-sans), 'Inter', system-ui, sans-serif;
+}
+
+:root {
+  --bg: #FAF8F4;
+  --surface: #FFFFFF;
+  --ink: #1C1A17;
+  --muted: #6E675E;
+  --line: #E7E1D8;
+  --accent: #B8934E;
+  --accent-deep: #8C6D33;
 }
 
 body {
   font-family: var(--font-body);
-  color: var(--color-text-primary);
-  background: var(--color-champagne);
+  color: var(--ink);
+  background: var(--bg);
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
+}
+
+/* Bölüm başlığı üstündeki altın eyebrow */
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Fiyatlar: rakamlar sabit genişlik, satırlar hizalı kalsın */
+.price {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Başlıklarda 2 satır kırpma */
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Sepete eklendiğinde sayaç darbesi */
+@keyframes cart-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+.animate-cart-pulse {
+  animation: cart-pulse 600ms ease-out;
 }
 
 /* Marquee animation */

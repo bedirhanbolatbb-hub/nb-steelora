@@ -70,9 +70,10 @@ export default async function CategoryGrid() {
 
   return (
     <section className="max-w-7xl mx-auto px-4 lg:px-8 py-20">
-      <h2 className="font-heading text-[32px] text-center text-text-primary mb-12">
-        Kategoriler
-      </h2>
+      <div className="text-center mb-12">
+        <p className="eyebrow">Koleksiyon</p>
+        <h2 className="font-heading text-[34px] font-semibold text-ink mt-2">Kategoriler</h2>
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 lg:gap-6">
         {categories.map((cat) => {
           const imageUrl = categoryImages[cat.slug]
@@ -86,9 +87,12 @@ export default async function CategoryGrid() {
                     <span className="text-text-muted/30 text-[10px] font-body tracking-wider uppercase">{cat.name}</span>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-dark/50 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="font-heading text-[18px] text-champagne text-center">{cat.name}</h3>
+                {/* Etiketin okunurluğu için alttan koyu gradyan */}
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/75 via-ink/25 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <h3 className="font-heading text-[16px] font-semibold text-bg text-center drop-shadow-sm">
+                    {cat.name}
+                  </h3>
                 </div>
               </div>
             </Link>

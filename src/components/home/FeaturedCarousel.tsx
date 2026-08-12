@@ -6,7 +6,6 @@ import type { Product } from '@/types'
 
 const CARD_W = 192
 const CARD_GAP = 16
-const AUTOPLAY_INTERVAL = 3500
 const TRANSITION_FAST = 150
 const TRANSITION_NORMAL = 300
 const SWIPE_VELOCITY_FAST = 0.5
@@ -55,19 +54,11 @@ export default function FeaturedCarousel({ products }: { products: Product[] }) 
     setLiveTranslate(clamped)
   }, [total])
 
-  // Otomatik kaydırmayı başlat/sıfırla
+  // Otomatik kayma kapatıldı: kart tıklamasını ıskalatıyordu.
+  // Gezinme ok tuşları ve sürükleme ile yapılır.
   const startAutoplay = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current)
-    intervalRef.current = setInterval(() => {
-      snapTo(offsetRef.current + step)
-    }, AUTOPLAY_INTERVAL)
-  }, [step, snapTo])
-
-  useEffect(() => {
-    if (products.length < 2) return
-    startAutoplay()
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [products.length, startAutoplay])
+  }, [])
 
   // Sonraki/önceki slide'a git ve autoplay'i sıfırla
   const navigate = useCallback((dir: 1 | -1) => {

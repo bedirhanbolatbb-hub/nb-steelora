@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { formatPrice } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
 import WishlistButton from './WishlistButton'
+import ProductImage from './ProductImage'
 import { useCart } from '@/hooks/useCart'
 import type { Product } from '@/types'
 
@@ -16,8 +17,13 @@ interface ProductCardProps {
   optionCount?: number
 }
 
+const ADDED_FEEDBACK_MS = 1200
+
 export default function ProductCard({ product, priority = false, optionCount = 0 }: ProductCardProps) {
-  const imageUrl = product.display_images?.[0] ?? (product as any).trendyol_images?.[0] ?? '/placeholder-product.jpg'
+  const images = (product.display_images as string[] | null) ?? []
+  const primaryImage = images[0] ?? (product as any).trendyol_images?.[0] ?? null
+  const hoverImage = images[1] ?? null
+
   const addItem = useCart((s) => s.addItem)
   const [added, setAdded] = useState(false)
   const outOfStock = product.trendyol_stock === 0
@@ -26,22 +32,41 @@ export default function ProductCard({ product, priority = false, optionCount = 0
     e.preventDefault()
     e.stopPropagation()
     if (outOfStock || added) return
+    // Sepet çekmecesi bilerek açılmaz; geri bildirim kart üzerinde ve
+    // header'daki sayaç darbesiyle verilir.
     addItem(product)
     setAdded(true)
-    setTimeout(() => setAdded(false), 2000)
+    setTimeout(() => setAdded(false), ADDED_FEEDBACK_MS)
   }
 
   return (
     <Link href={`/urun/${product.slug}`} className="group block">
-      <div className="relative aspect-[3/4] overflow-hidden bg-champagne-dark">
-        <Image
-          src={imageUrl}
-          alt={product.display_title}
-          fill
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          priority={priority}
-        />
+      <div className="relative aspect-square overflow-hidden bg-surface border border-line rounded-[4px]">
+        <div className="absolute inset-0 p-3">
+          <div className="relative h-full w-full">
+            <ProductImage
+              src={primaryImage}
+              alt={product.display_title}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              priority={priority}
+              className={`object-contain transition-all duration-500 ${
+                hoverImage ? 'group-hover:opacity-0' : 'group-hover:scale-[1.04]'
+              }`}
+            />
+
+            {/* İkinci görsel varsa hover'da yumuşak geçiş */}
+            {hoverImage && (
+              <Image
+                src={hoverImage}
+                alt=""
+                aria-hidden
+                fill
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                className="object-contain opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+              />
+            )}
+          </div>
+        </div>
 
         {/* Badge */}
         {product.badge && (
@@ -52,69 +77,57 @@ export default function ProductCard({ product, priority = false, optionCount = 0
 
         {/* Wishlist */}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <div className="bg-white/80 rounded-full hover:bg-white transition-colors">
+          <div className="bg-surface/90 rounded-full hover:bg-surface transition-colors">
             <WishlistButton productId={product.id} />
           </div>
         </div>
 
-        {/* Grup rozeti — aynı başlık/kategori/fiyat/gender kümesindeki diğer üyeler */}
+        {/* Grup çipi — aynı başlık/kategori/fiyat/gender kümesindeki diğer üyeler */}
         {optionCount > 0 && (
-          <span className="absolute bottom-2 right-2 bg-white/90 text-text-primary text-[9px] px-2 py-0.5 font-body tracking-wide">
+          <span className="absolute bottom-2 right-2 bg-surface/95 border border-accent/60 text-ink text-[9px] px-2 py-0.5 font-body tracking-[0.08em] rounded-[2px]">
             +{optionCount} seçenek
           </span>
         )}
 
-        {/* Stock badge */}
+        {/* Stok durumu */}
         {outOfStock && (
-          <span className="absolute bottom-2 left-2 bg-red-600 text-white text-[9px] px-2 py-0.5 font-body">
-            Stok Tükendi
+          <span className="absolute bottom-2 left-2 bg-ink text-bg text-[9px] px-2 py-0.5 font-body tracking-[0.08em] rounded-[2px]">
+            Tükendi
           </span>
         )}
 
-        {/* Quick-add — hover on desktop, always visible on mobile */}
+        {/* Hızlı ekleme — mobilde görünür, masaüstünde hover */}
         <button
           onClick={handleQuickAdd}
           disabled={outOfStock}
-          className="absolute bottom-0 left-0 right-0 py-3 bg-text-primary/90 text-white text-[10px] tracking-[0.15em] uppercase font-body text-center
+          className="absolute bottom-0 left-0 right-0 py-3 bg-ink text-bg text-[10px] tracking-[0.15em] uppercase font-body font-medium text-center
             opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200
-            disabled:bg-champagne-mid disabled:text-text-muted disabled:cursor-not-allowed"
+            disabled:bg-line disabled:text-muted disabled:cursor-not-allowed"
         >
-          {outOfStock ? 'Tükendi' : added ? '✓ Eklendi' : 'Sepete Ekle'}
+          {outOfStock ? 'Tükendi' : added ? 'Eklendi ✓' : 'Sepete Ekle'}
         </button>
-
-        {/* Gold border on hover */}
-        <div className="absolute inset-0 border border-transparent group-hover:border-gold/30 transition-colors duration-300 pointer-events-none" />
       </div>
 
       <div className="pt-3 pb-1">
-        <h3 className="font-heading text-[15px] text-text-primary leading-tight group-hover:text-gold transition-colors">
+        <h3 className="font-body font-medium text-[13px] leading-snug text-ink clamp-2 min-h-[2.6em] group-hover:text-accent-deep transition-colors">
           {product.display_title}
         </h3>
-        {/* Kategori etiketi kart yüzeyinden kaldırıldı; malzeme bilgisi PDP'de kalır. */}
+
         {(product as any).avg_rating > 0 && (
-          <div className="flex items-center gap-1 mt-1">
-            <div className="flex gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <svg
-                  key={star}
-                  className={`w-3 h-3 ${star <= Math.round((product as any).avg_rating) ? 'fill-gold' : 'fill-champagne-mid'}`}
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                </svg>
-              ))}
-            </div>
-            <span className="text-[10px] font-body text-text-muted">
-              ({(product as any).review_count})
+          <div className="flex items-center gap-1 mt-1.5">
+            <span className="text-accent text-[11px] leading-none">★</span>
+            <span className="text-[11px] font-body text-muted">
+              {Number((product as any).avg_rating).toFixed(1)} ({(product as any).review_count})
             </span>
           </div>
         )}
-        <div className="flex items-center gap-2 mt-2">
-          <span className="text-[14px] font-body text-gold font-medium">
+
+        <div className="flex items-baseline gap-2 mt-2">
+          <span className="price text-[15px] text-ink">
             {formatPrice((product as any).custom_price ?? product.display_price)}
           </span>
           {((product as any).custom_price && (product as any).custom_price < product.display_price) && (
-            <span className="text-[12px] font-body text-text-muted line-through">
+            <span className="price text-[12px] text-muted line-through font-normal">
               {formatPrice(product.display_price)}
             </span>
           )}

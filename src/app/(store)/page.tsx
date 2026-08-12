@@ -96,16 +96,17 @@ export default async function HomePage() {
         <section className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
           <div className="flex items-end justify-between mb-8">
             <div>
-              <h2 className="font-heading text-[32px] text-text-primary">
-                {c.new_arrivals_title || (<>Yeni <span className="italic text-gold">Gelenler</span></>)}
+              <p className="eyebrow">Yeni Gelenler</p>
+              <h2 className="font-heading text-[34px] font-semibold text-ink mt-2">
+                {c.new_arrivals_title || 'Sezonun Yenileri'}
               </h2>
               {c.new_arrivals_subtitle && (
-                <p className="text-[12px] font-body text-text-muted mt-1">{c.new_arrivals_subtitle}</p>
+                <p className="text-[12px] font-body text-muted mt-1">{c.new_arrivals_subtitle}</p>
               )}
             </div>
             <Link
               href="/urunler?siralama=yeni"
-              className="text-[11px] uppercase tracking-[0.15em] font-body text-text-muted hover:text-gold transition-colors hidden sm:block"
+              className="text-[11px] uppercase tracking-[0.15em] font-body font-medium text-ink border-b border-accent pb-0.5 hover:text-accent-deep transition-colors hidden sm:block"
             >
               Tümünü Gör →
             </Link>
@@ -124,8 +125,9 @@ export default async function HomePage() {
       <section className="bg-champagne-dark py-16">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
           <div className="text-center mb-10">
-            <h2 className="font-heading text-[32px] text-text-primary">
-              Neden <span className="italic text-gold">NB Steelora?</span>
+            <p className="eyebrow">Neden NB Steelora</p>
+            <h2 className="font-heading text-[34px] font-semibold text-ink mt-2">
+              Her parçanın arkasında duruyoruz
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -135,8 +137,9 @@ export default async function HomePage() {
               { title: 'Kolay İade', text: 'Koşulsuz 14 gün iade hakkı.' },
               { title: 'Özel Hediye Paketi', text: 'Her sipariş için ücretsiz premium hediye kutusu.' },
             ].map((item) => (
-              <div key={item.title} className="bg-white border border-champagne-mid rounded-lg p-6 flex flex-col gap-3">
-                <h3 className="text-[11px] font-body uppercase tracking-[0.15em] text-gold">
+              <div key={item.title} className="bg-surface border border-line rounded-[4px] p-6 flex flex-col gap-3">
+                <span className="h-px w-8 bg-accent" />
+                <h3 className="text-[11px] font-body font-semibold uppercase tracking-[0.15em] text-ink">
                   {item.title}
                 </h3>
                 <p className="text-[13px] font-body text-text-secondary leading-relaxed">

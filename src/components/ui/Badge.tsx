@@ -15,11 +15,11 @@ export default function Badge({ variant, className }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-block px-3 py-1 text-[9px] font-medium uppercase tracking-[0.15em] font-body',
+        'inline-block px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.15em] font-body rounded-[2px]',
         {
-          'bg-gold text-white': variant === 'new',
-          'bg-dark text-champagne': variant === 'bestseller',
-          'bg-red-700 text-white': variant === 'sale',
+          'bg-surface border border-accent text-accent-deep': variant === 'new',
+          'bg-ink text-bg': variant === 'bestseller',
+          'bg-accent-deep text-bg': variant === 'sale',
         },
         className
       )}

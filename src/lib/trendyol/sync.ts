@@ -35,12 +35,20 @@ type VariantRow = {
   gender: string | null
 }
 
-/** V2 content.attributes → "Cinsiyet" değerini gender kolonuna eşler. */
-function mapGender(value: string | undefined): string | null {
-  if (!value) return null
-  if (value.includes('Kadın')) return 'women'
-  if (value.trim() === 'Erkek') return 'men'
-  // Unisex ve bilinmeyen değerler eşlenmez; mevcut değer korunur.
+/**
+ * gender kuralı — yalnızca DB'de değeri BOŞ olan satırlar için uygulanır.
+ * 1) Görünen başlıkta kelime olarak "erkek" geçiyorsa → men
+ * 2) Değilse V2 "Cinsiyet" değeri: Kadın→women, Erkek→men
+ * 3) Unisex / bilinmeyen → boş bırakılır
+ * Dolu gender değerleri hiçbir koşulda ezilmez.
+ */
+function resolveGender(title: string, cinsiyet: string | undefined): string | null {
+  const normalized = title.trim().replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase()
+  if (/(^|\s)erkek(\s|$|['’])/.test(normalized)) return 'men'
+
+  if (!cinsiyet) return null
+  if (cinsiyet.includes('Kadın')) return 'women'
+  if (cinsiyet.trim() === 'Erkek') return 'men'
   return null
 }
 
@@ -61,7 +69,7 @@ function flattenContents(contents: any[]): VariantRow[] {
       .map((img: any) => img?.url || img)
       .filter(Boolean)
 
-    const gender = mapGender(findAttribute(content.attributes, 'Cinsiyet'))
+    const gender = resolveGender(content.title || '', findAttribute(content.attributes, 'Cinsiyet'))
     const siblings = (content.variants || []).filter(
       (v: any) => v?.barcode && !v.archived && v.onSale !== false
     )

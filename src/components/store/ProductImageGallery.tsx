@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import ProductImage from './ProductImage'
 
 interface ProductImageGalleryProps {
   images: string[]
@@ -51,22 +52,13 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
           className="relative aspect-[3/4] bg-champagne-dark overflow-hidden cursor-zoom-in group"
           onClick={() => hasImages && setLightboxOpen(true)}
         >
-          {currentImage ? (
-            <Image
-              src={currentImage}
-              alt={title}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-text-muted/40 text-[11px] font-body tracking-wider uppercase">
-                Ürün Görseli
-              </span>
-            </div>
-          )}
+          <ProductImage
+            src={currentImage}
+            alt={title}
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            priority
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
         </div>
 
         {/* Thumbnails */}

@@ -53,13 +53,11 @@ export default async function Hero() {
     <section className="min-h-[580px] grid grid-cols-1 lg:grid-cols-2">
       {/* Sol: İçerik */}
       <div className="bg-champagne-dark flex flex-col justify-center px-8 lg:px-16 py-16 lg:py-0 order-2 lg:order-1">
-        <span className="text-gold text-[10px] uppercase tracking-[0.25em] font-body mb-6">
-          {c.hero_badge || 'Yeni Koleksiyon — 2026'}
-        </span>
-        <h1 className="font-heading text-[40px] sm:text-[48px] lg:text-[56px] font-light text-text-primary leading-[1.1]">
+        <span className="eyebrow mb-6">{c.hero_badge || 'Yeni Koleksiyon — 2026'}</span>
+        <h1 className="font-heading text-[40px] sm:text-[48px] lg:text-[56px] font-semibold text-ink leading-[1.1]">
           {c.hero_title_line1 || 'Her anın'}
           <br />
-          <span className="italic text-gold">{c.hero_title_line2 || 'zarif'}</span>
+          <span className="italic text-accent-deep">{c.hero_title_line2 || 'zarif'}</span>
           <br />
           {c.hero_title_line3 || 'tanığı'}
         </h1>
@@ -69,7 +67,7 @@ export default async function Hero() {
         <div className="flex items-center gap-6 mt-8">
           <Link
             href="/urunler"
-            className="inline-flex items-center border border-text-primary/40 text-text-primary text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3.5 hover:bg-gold hover:text-white hover:border-gold transition-all duration-300"
+            className="inline-flex items-center bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-all duration-300"
           >
             {c.hero_cta || 'Koleksiyonu Keşfet'}
           </Link>

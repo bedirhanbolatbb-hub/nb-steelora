@@ -1,5 +1,21 @@
 import type { Metadata } from 'next'
+import { Playfair_Display, Inter } from 'next/font/google'
 import './globals.css'
+
+// latin-ext olmadan ğ/ş/ı/İ gibi karakterler fallback fonta düşer.
+const display = Playfair_Display({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['600', '700'],
+  display: 'swap',
+  variable: '--font-display',
+})
+
+const sans = Inter({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['400', '500', '600'],
+  display: 'swap',
+  variable: '--font-sans',
+})
 
 export const metadata: Metadata = {
   title: {
@@ -39,22 +55,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="tr" className="h-full antialiased">
-      <head>
-        <link
-          rel="preconnect"
-          href="https://fonts.googleapis.com"
-        />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Jost:wght@300;400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="tr" className={`h-full antialiased ${display.variable} ${sans.variable}`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   )
