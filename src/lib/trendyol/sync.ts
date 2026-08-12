@@ -1,4 +1,4 @@
-import { fetchTrendyolProducts } from './client'
+import { fetchApprovedProducts, fetchStockAndPriceMap } from './client'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 function getServiceClient() {
@@ -24,7 +24,47 @@ function generateSlug(title: string, barcode: string): string {
   return `${base}-${barcode.slice(-6)}`
 }
 
-export async function syncTrendyolPage(page: number, size = 50) {
+type VariantRow = {
+  barcode: string
+  variantId: string
+  title: string
+  description: string
+  images: string[]
+  category: string | null
+}
+
+/**
+ * V2 content listesini ürün-başına-satır yapımıza düzleştirir.
+ * Bir content altındaki her variant ayrı satırdır; satır anahtarı barkoddur.
+ * Arşivli / satışta olmayan varyantlar atlanır (V1'deki onSale filtresinin karşılığı).
+ */
+function flattenContents(contents: any[]): VariantRow[] {
+  const rows: VariantRow[] = []
+
+  for (const content of contents) {
+    const images = (content.images || [])
+      .map((img: any) => img?.url || img)
+      .filter(Boolean)
+
+    for (const variant of content.variants || []) {
+      if (!variant?.barcode) continue
+      if (variant.archived || variant.onSale === false) continue
+
+      rows.push({
+        barcode: variant.barcode,
+        variantId: String(variant.variantId ?? ''),
+        title: content.title || '',
+        description: content.description || '',
+        images,
+        category: content.category?.name ?? null,
+      })
+    }
+  }
+
+  return rows
+}
+
+export async function syncTrendyolPage(page: number, size = 100) {
   const supabase = getServiceClient()
 
   // Sayfa 0 ise tüm ürünleri pasife çek
@@ -36,86 +76,92 @@ export async function syncTrendyolPage(page: number, size = 50) {
       .neq('id', '00000000-0000-0000-0000-000000000000')
   }
 
-  const data = await fetchTrendyolProducts(page, size)
-  const products = data.content || []
+  const data = await fetchApprovedProducts(page, size)
+  const contents = data.content || []
   const totalElements = data.totalElements || 0
   const totalPages = data.totalPages || Math.ceil(totalElements / size) || 1
 
-  console.log(`Sync sayfa ${page}/${totalPages}: ${products.length} ürün (toplam: ${totalElements})`)
+  const rows = flattenContents(contents)
+  console.log(
+    `Sync sayfa ${page}/${totalPages}: ${contents.length} content → ${rows.length} varyant (toplam content: ${totalElements})`
+  )
+
+  // Stok ve fiyat yalnızca inventory-and-price ucunda dönüyor.
+  const stockMap = await fetchStockAndPriceMap(rows.map((r) => r.barcode))
+
+  // Sayfadaki barkodların mevcut satırlarını tek sorguda al.
+  const { data: existingRows } = await supabase
+    .from('products')
+    .select('id, trendyol_barcode')
+    .in('trendyol_barcode', rows.map((r) => r.barcode))
+
+  const existingByBarcode = new Map(
+    (existingRows || []).map((r: any) => [r.trendyol_barcode, r.id])
+  )
 
   let added = 0
   let updated = 0
+  let skipped = 0
 
-  for (const product of products) {
-    const variants = product.variants?.length ? product.variants : [product]
+  for (const row of rows) {
+    const inventory = stockMap.get(row.barcode)
 
-    for (const variant of variants) {
-      const barcode = variant.barcode || product.barcode || product.stockCode || ''
-      const stock = variant.quantity ?? product.quantity ?? 0
-      const price = variant.salePrice ?? product.salePrice ?? 0
-      const images = (product.images || []).map((img: any) => img.url || img)
-      const trendyolId = String(product.id)
+    // Stok/fiyat alınamadıysa satıra dokunma: eksik veri 0 olarak yazılmaz.
+    if (!inventory) {
+      skipped++
+      console.warn(`Stok/fiyat alınamadı, atlandı: ${row.barcode}`)
+      continue
+    }
 
-      const { data: existing } = await supabase
+    const syncedFields = {
+      trendyol_title: row.title,
+      trendyol_description: row.description,
+      trendyol_price: inventory.salePrice,
+      trendyol_stock: inventory.quantity,
+      trendyol_images: row.images,
+      trendyol_category: row.category,
+      trendyol_barcode: row.barcode,
+      is_active: true,
+      last_synced_at: new Date().toISOString(),
+    }
+
+    const existingId = existingByBarcode.get(row.barcode)
+
+    if (existingId) {
+      // trendyol_id'ye dokunulmaz: mevcut satırların dış referansı korunur.
+      await supabase
         .from('products')
-        .select('id')
-        .eq('trendyol_id', trendyolId)
-        .single()
+        .update({ ...syncedFields, updated_at: new Date().toISOString() })
+        .eq('id', existingId)
 
-      if (existing) {
-        await supabase
-          .from('products')
-          .update({
-            trendyol_title: product.title,
-            trendyol_description: product.description || '',
-            trendyol_price: price,
-            trendyol_stock: stock,
-            trendyol_images: images,
-            trendyol_category: product.categoryName,
-            trendyol_barcode: barcode,
-            is_active: true,
-            updated_at: new Date().toISOString(),
-            last_synced_at: new Date().toISOString(),
-          })
-          .eq('trendyol_id', trendyolId)
+      updated++
+    } else {
+      await supabase.from('products').insert({
+        ...syncedFields,
+        trendyol_id: row.variantId,
+        slug: generateSlug(row.title, row.barcode),
+        is_featured: false,
+      })
 
-        updated++
-      } else {
-        const slug = generateSlug(product.title, barcode)
-
-        await supabase.from('products').insert({
-          trendyol_id: trendyolId,
-          slug,
-          trendyol_title: product.title,
-          trendyol_description: product.description || '',
-          trendyol_price: price,
-          trendyol_stock: stock,
-          trendyol_images: images,
-          trendyol_category: product.categoryName,
-          trendyol_barcode: barcode,
-          is_active: true,
-          is_featured: false,
-          last_synced_at: new Date().toISOString(),
-        })
-
-        added++
-      }
+      added++
     }
   }
 
-  const done = products.length < size || page >= totalPages - 1
+  const done = contents.length < size || page >= totalPages - 1
 
-  console.log(`Sayfa ${page} tamamlandı: +${added} eklendi, ${updated} güncellendi, done=${done}`)
+  console.log(
+    `Sayfa ${page} tamamlandı: +${added} eklendi, ${updated} güncellendi, ${skipped} atlandı, done=${done}`
+  )
 
   // Son sayfa ise sync log yaz
   if (done) {
     await supabase.from('sync_log').insert({
       products_updated: updated,
       products_added: added,
-      status: 'success',
-      error_message: null,
+      status: skipped > 0 ? 'partial' : 'success',
+      error_message: skipped > 0 ? `${skipped} varyant stok/fiyat alınamadığı için atlandı` : null,
     })
   }
 
-  return { page, added, updated, totalPages, totalElements, done }
+  return { page, added, updated, skipped, totalPages, totalElements, done }
 }

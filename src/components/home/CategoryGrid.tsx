@@ -2,14 +2,15 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { CATEGORIES, buildCategoryFilter } from '@/lib/catalog/categories'
 
-const categories = [
-  { name: 'Kolye', slug: 'kolye', search: 'Kolye', settingsKey: 'category_kolye' },
-  { name: 'Küpe', slug: 'kupe', search: 'Küpe', settingsKey: 'category_kupe' },
-  { name: 'Yüzük', slug: 'yuzuk', search: 'Yüzük', settingsKey: 'category_yuzuk' },
-  { name: 'Bileklik', slug: 'bileklik', search: 'Bileklik', settingsKey: 'category_bileklik' },
-  { name: 'Setler', slug: 'setler', search: 'Set', settingsKey: 'category_setler' },
-]
+// Menü ve footer ile birebir aynı liste — tek kaynak src/lib/catalog/categories.ts
+const categories = CATEGORIES.map((c) => ({
+  name: c.title,
+  slug: c.slug,
+  def: c,
+  settingsKey: `category_${c.slug}`,
+}))
 
 export default async function CategoryGrid() {
   const categoryImages: Record<string, string | null> = {}
@@ -51,13 +52,15 @@ export default async function CategoryGrid() {
       if (adminPid && adminProducts.has(adminPid)) {
         categoryImages[cat.slug] = adminProducts.get(adminPid) || null
       } else {
-        // Fallback: o kategoriden ilk aktif ürün
-        const { data } = await supabase
-          .from('products_display')
-          .select('display_images')
-          .ilike('trendyol_category', `%${cat.search}%`)
-          .limit(1)
-          .single()
+        // Fallback: o kategoriden ilk aktif ürün — kategori sayfasıyla aynı filtre
+        const filter = buildCategoryFilter(cat.def)
+        let query = supabase.from('products_display').select('display_images')
+        query =
+          filter.kind === 'eq'
+            ? query.eq(filter.column, filter.value)
+            : query.or(filter.expression)
+
+        const { data } = await query.limit(1).maybeSingle()
         categoryImages[cat.slug] = data?.display_images?.[0] || null
       }
     }
@@ -70,7 +73,7 @@ export default async function CategoryGrid() {
       <h2 className="font-heading text-[32px] text-center text-text-primary mb-12">
         Kategoriler
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 lg:gap-6">
         {categories.map((cat) => {
           const imageUrl = categoryImages[cat.slug]
           return (

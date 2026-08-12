@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getSiteContent } from '@/lib/supabase/content'
-import { getHomepageSection } from '@/lib/home/sections'
+import { getHomepageSection, getHeroProductIds } from '@/lib/home/sections'
+import { FREE_SHIPPING_MIN_LABEL } from '@/lib/shipping'
 import Hero from '@/components/home/Hero'
 import Marquee from '@/components/home/Marquee'
 import CategoryGrid from '@/components/home/CategoryGrid'
@@ -14,8 +15,14 @@ export default async function HomePage() {
   let activeCampaign: any = null
   const c = await getSiteContent()
 
-  // Küratörlü liste: homepage_settings(section='new_arrivals').product_ids
-  const newArrivals = await getHomepageSection('new_arrivals')
+  // Küratörlü listeler: homepage_settings(section=...).product_ids
+  // Hero'daki ürünler ve öne çıkanlar dolguya girmez — aynı kart iki kez çıkmasın.
+  const heroIds = await getHeroProductIds()
+  const featured = await getHomepageSection('featured', heroIds)
+  const newArrivals = await getHomepageSection('new_arrivals', [
+    ...heroIds,
+    ...featured.map((p: any) => p.id),
+  ])
 
   try {
     const supabase = await createClient()
@@ -81,7 +88,7 @@ export default async function HomePage() {
 
       <Marquee />
       <CategoryGrid />
-      <FeaturedProducts title={c.featured_title} subtitle={c.featured_subtitle} />
+      <FeaturedProducts title={c.featured_title} subtitle={c.featured_subtitle} products={featured} />
 
       {newArrivals.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
@@ -122,7 +129,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {[
               { title: '316L Medikal Çelik', text: 'Kararmaz, paslanmaz, solmaz. Her gün tak, her gün şık görün.' },
-              { title: 'Ücretsiz Kargo', text: '500₺ üzeri siparişlerde kargo bizden. 1-5 iş günü içinde teslimat.' },
+              { title: 'Ücretsiz Kargo', text: `${FREE_SHIPPING_MIN_LABEL} siparişlerde kargo bizden. 1-5 iş günü içinde teslimat.` },
               { title: 'Kolay İade', text: 'Koşulsuz 14 gün iade hakkı.' },
               { title: 'Özel Hediye Paketi', text: 'Her sipariş için ücretsiz premium hediye kutusu.' },
             ].map((item) => (

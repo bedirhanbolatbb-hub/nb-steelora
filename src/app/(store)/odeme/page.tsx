@@ -43,6 +43,7 @@ export default function OdemePage() {
     })
   }, [])
   const [loading, setLoading] = useState(false)
+  const [paymentError, setPaymentError] = useState('')
   const [discountCode, setDiscountCode] = useState('')
   const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; amount: number; description: string } | null>(null)
   const [discountError, setDiscountError] = useState('')
@@ -163,6 +164,7 @@ export default function OdemePage() {
 
   const handlePayment = async () => {
     if (!isFormValid) return
+    setPaymentError('')
     setLoading(true)
     try {
       const res = await fetch('/api/payment/initialize', {
@@ -214,10 +216,10 @@ export default function OdemePage() {
         document.body.appendChild(form)
         form.submit()
       } else {
-        alert('Ödeme başlatılamadı: ' + data.error)
+        setPaymentError(data.error ? `Ödeme başlatılamadı: ${data.error}` : 'Ödeme başlatılamadı.')
       }
     } catch {
-      alert('Bir hata oluştu, lütfen tekrar deneyin.')
+      setPaymentError('Bir hata oluştu, lütfen tekrar deneyin.')
     } finally {
       setLoading(false)
     }
@@ -431,6 +433,15 @@ export default function OdemePage() {
               </p>
             )}
           </div>
+
+          {paymentError && (
+            <div
+              role="alert"
+              className="mt-6 border border-red-300 bg-red-50 px-4 py-3 text-[12px] font-body text-red-700"
+            >
+              {paymentError}
+            </div>
+          )}
 
           <button
             onClick={handlePayment}

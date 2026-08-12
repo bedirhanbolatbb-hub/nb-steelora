@@ -1,5 +1,11 @@
+// Trendyol Ürün V2 servisleri.
+// V1 ürün servisleri 15 Eylül 2026'da kapanıyor; ürün çekme uçları V2'ye taşındı.
+// Stok/fiyat güncelleme ucu (updatePriceAndInventory) V1-V2 ortak, değişmedi.
 const PRODUCT_BASE = 'https://apigw.trendyol.com/integration/product'
 const INVENTORY_BASE = 'https://apigw.trendyol.com/integration/inventory'
+
+// inventory-and-price ucu tek çağrıda en fazla 50 barkod kabul ediyor.
+export const BARCODE_QUERY_LIMIT = 50
 
 function getHeaders() {
   const credentials = Buffer.from(
@@ -14,33 +20,59 @@ function getHeaders() {
   }
 }
 
-export async function fetchTrendyolProducts(page = 0, size = 50) {
-  const sellerId = process.env.TRENDYOL_SUPPLIER_ID
-  const url = `${PRODUCT_BASE}/sellers/${sellerId}/products?approved=true&onSale=true&page=${page}&size=${size}`
-
+async function getJson(url: string, timeoutMs = 20_000) {
   const res = await fetch(url, {
     headers: getHeaders(),
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(timeoutMs),
   })
   if (!res.ok) throw new Error(`Trendyol API error: ${res.status}`)
   return res.json()
 }
 
-export async function fetchAllTrendyolProducts() {
-  const allProducts: any[] = []
-  let page = 0
-  const size = 100
+/**
+ * V2 "Ürün Filtreleme - Onaylı Ürün".
+ * Content bazlı döner: her content altında variants dizisi var.
+ * status=onSale, V1'deki approved=true&onSale=true filtresinin karşılığı.
+ */
+export async function fetchApprovedProducts(page = 0, size = 100) {
+  const sellerId = process.env.TRENDYOL_SUPPLIER_ID
+  return getJson(
+    `${PRODUCT_BASE}/sellers/${sellerId}/products/approved?status=onSale&page=${page}&size=${size}`
+  )
+}
 
-  while (true) {
-    const data = await fetchTrendyolProducts(page, size)
-    const products = data.content || []
-    allProducts.push(...products)
+/**
+ * V2 "Onaylı Ürün Stok ve Fiyat" — quantity/salePrice yalnızca bu uçta dönüyor,
+ * onaylı ürün listesinde stok adedi yer almıyor.
+ */
+export async function fetchInventoryAndPrice(barcodes: string[]) {
+  const sellerId = process.env.TRENDYOL_SUPPLIER_ID
+  const query = barcodes.slice(0, BARCODE_QUERY_LIMIT).join(',')
+  return getJson(
+    `${PRODUCT_BASE}/sellers/${sellerId}/products/approved/inventory-and-price?barcodes=${encodeURIComponent(query)}&size=${BARCODE_QUERY_LIMIT}`
+  )
+}
 
-    if (products.length < size || page >= (data.totalPages - 1)) break
-    page++
+/** Barkod → { quantity, salePrice } eşlemesi (50'lik parçalar hâlinde sorgulanır). */
+export async function fetchStockAndPriceMap(
+  barcodes: string[]
+): Promise<Map<string, { quantity: number; salePrice: number }>> {
+  const map = new Map<string, { quantity: number; salePrice: number }>()
+
+  for (let i = 0; i < barcodes.length; i += BARCODE_QUERY_LIMIT) {
+    const chunk = barcodes.slice(i, i + BARCODE_QUERY_LIMIT)
+    const data = await fetchInventoryAndPrice(chunk)
+
+    for (const content of data.content || []) {
+      for (const variant of content.variants || []) {
+        if (!variant.barcode) continue
+        if (typeof variant.quantity !== 'number' || typeof variant.salePrice !== 'number') continue
+        map.set(variant.barcode, { quantity: variant.quantity, salePrice: variant.salePrice })
+      }
+    }
   }
 
-  return allProducts
+  return map
 }
 
 export async function updateTrendyolStock(barcode: string, quantity: number) {

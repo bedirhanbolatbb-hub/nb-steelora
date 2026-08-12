@@ -9,6 +9,7 @@ import { useWishlist } from '@/hooks/useWishlist'
 import CartDrawer from './CartDrawer'
 import SearchModal from './SearchModal'
 import { MENU_LINKS } from '@/lib/catalog/categories'
+import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
 
 // Menü tek kaynaktan gelir: src/lib/catalog/categories.ts
 const navLinks = MENU_LINKS
@@ -43,7 +44,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
       {/* Duyuru Şeridi */}
       <div className="text-center py-2 px-4" style={{ backgroundColor: bannerColor || '#2A1E1E' }}>
         <p className="text-gold text-[10px] tracking-[0.2em] uppercase font-body">
-          {bannerText || 'Tüm siparişlerde ücretsiz kargo • Premium Çelik Takılar'}
+          {bannerText || `${FREE_SHIPPING_LABEL} • Premium Çelik Takılar`}
         </p>
       </div>
 
@@ -84,7 +85,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
 
           {/* Sağ: İkonlar */}
           <div className="flex items-center gap-4">
-            <button className="hidden sm:block text-text-secondary hover:text-gold transition-colors" aria-label="Ara" onClick={() => setSearchOpen(true)}>
+            <button className="text-text-secondary hover:text-gold transition-colors" aria-label="Ara" onClick={() => setSearchOpen(true)}>
               <Search size={18} />
             </button>
             <Link href="/favorilerim" className="hidden sm:block relative text-text-secondary hover:text-gold transition-colors" aria-label="Favoriler">
@@ -129,9 +130,6 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
               </Link>
             ))}
             <div className="flex items-center gap-4 pt-3 border-t border-champagne-mid">
-              <button className="text-text-secondary hover:text-gold transition-colors" aria-label="Ara" onClick={() => { setSearchOpen(true); setMobileOpen(false) }}>
-                <Search size={18} />
-              </button>
               <Link href="/favorilerim" className="text-text-secondary hover:text-gold transition-colors" aria-label="Favoriler" onClick={() => setMobileOpen(false)}>
                 <Heart size={18} />
               </Link>

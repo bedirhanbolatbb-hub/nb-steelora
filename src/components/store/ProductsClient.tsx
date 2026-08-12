@@ -1,7 +1,8 @@
 'use client'
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { useCallback, Suspense } from 'react'
+import { useCallback, useState, Suspense } from 'react'
+import { SlidersHorizontal, X } from 'lucide-react'
 import ProductCard from './ProductCard'
 import type { Product } from '@/types'
 
@@ -45,6 +46,7 @@ function ProductsInner({
   const router = useRouter()
   const pathname = usePathname()
   const sp = useSearchParams()
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const updateParams = useCallback(
     (updates: Record<string, string>) => {
@@ -65,6 +67,119 @@ function ProductsInner({
   const totalPages = Math.ceil(total / perPage)
   const hasFilters = currentParams.kategori || currentParams.min_fiyat || currentParams.max_fiyat
 
+  // Aynı filtre bloğu hem masaüstü kenar çubuğunda hem mobil sheet içinde kullanılır.
+  const filterPanel = (
+    <>
+      {/* Active filters */}
+      {hasFilters && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body">
+              Aktif Filtreler
+            </span>
+            <button
+              onClick={() => router.push(pathname)}
+              className="text-[10px] text-gold hover:text-gold-light font-body transition-colors"
+            >
+              Temizle
+            </button>
+          </div>
+          {currentParams.kategori && (
+            <span className="inline-flex items-center gap-1 bg-champagne-dark px-2 py-1 text-[11px] font-body text-text-primary mr-2 mb-2">
+              {currentParams.kategori}
+              <button
+                onClick={() => updateParams({ kategori: '' })}
+                className="ml-1 hover:text-red-500"
+              >
+                ×
+              </button>
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Categories */}
+      <div className="mb-8">
+        <h3 className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-4">
+          Kategori
+        </h3>
+        <div className="space-y-2">
+          <button
+            onClick={() => updateParams({ kategori: '' })}
+            className={`block text-[12px] font-body w-full text-left py-1 transition-colors ${
+              !currentParams.kategori
+                ? 'text-text-primary font-medium'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            Tümü
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => updateParams({ kategori: cat })}
+              className={`block text-[12px] font-body w-full text-left py-1 transition-colors ${
+                currentParams.kategori === cat
+                  ? 'text-gold font-medium'
+                  : 'text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Price range */}
+      <div className="mb-8">
+        <h3 className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-4">
+          Fiyat Aralığı
+        </h3>
+        <div className="space-y-2">
+          {FIYAT_ARALIKLARI.map((range) => {
+            const isActive =
+              (currentParams.min_fiyat || '') === range.min &&
+              (currentParams.max_fiyat || '') === range.max
+            return (
+              <button
+                key={range.label}
+                onClick={() =>
+                  updateParams({
+                    min_fiyat: range.min,
+                    max_fiyat: range.max,
+                  })
+                }
+                className={`block text-[12px] font-body w-full text-left py-1 transition-colors ${
+                  isActive
+                    ? 'text-gold font-medium'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                {range.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Stock filter */}
+      <div className="mb-8">
+        <h3 className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-4">
+          Stok
+        </h3>
+        <label className="flex items-center gap-2 text-[12px] font-body text-text-secondary cursor-pointer hover:text-text-primary">
+          <input
+            type="checkbox"
+            checked={currentParams.stok === '1'}
+            onChange={(e) => updateParams({ stok: e.target.checked ? '1' : '' })}
+            className="accent-gold"
+          />
+          Sadece stokta olanlar
+        </label>
+      </div>
+    </>
+  )
+
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-8 py-12">
       {/* Header */}
@@ -78,18 +193,29 @@ function ProductsInner({
           </p>
         </div>
 
-        <select
-          aria-label="Sıralama"
-          value={currentParams.siralama || ''}
-          onChange={(e) => updateParams({ siralama: e.target.value })}
-          className="w-full sm:w-auto px-4 py-2 border border-champagne-mid bg-white font-body text-[12px] text-text-primary focus:border-gold focus:outline-none transition-colors"
-        >
-          {SIRALAMA_SECENEKLERI.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-3">
+          {/* Mobil filtre girişi — masaüstünde kenar çubuğu zaten görünür */}
+          <button
+            onClick={() => setFiltersOpen(true)}
+            className="lg:hidden flex items-center gap-2 px-4 py-2 border border-champagne-mid bg-white font-body text-[12px] text-text-primary hover:border-gold transition-colors"
+          >
+            <SlidersHorizontal size={14} />
+            Filtrele
+          </button>
+
+          <select
+            aria-label="Sıralama"
+            value={currentParams.siralama || ''}
+            onChange={(e) => updateParams({ siralama: e.target.value })}
+            className="w-full sm:w-auto px-4 py-2 border border-champagne-mid bg-white font-body text-[12px] text-text-primary focus:border-gold focus:outline-none transition-colors"
+          >
+            {SIRALAMA_SECENEKLERI.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Daraltma çipleri — kategori içi alt gruplar (ayrı menü maddesi değil) */}
@@ -121,119 +247,37 @@ function ProductsInner({
         </div>
       )}
 
-      <div className="flex gap-8">
-        {/* Sidebar */}
-        <aside className="w-52 shrink-0 hidden lg:block">
-          {/* Active filters */}
-          {hasFilters && (
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body">
-                  Aktif Filtreler
-                </span>
-                <button
-                  onClick={() => router.push(pathname)}
-                  className="text-[10px] text-gold hover:text-gold-light font-body transition-colors"
-                >
-                  Temizle
-                </button>
-              </div>
-              {currentParams.kategori && (
-                <span className="inline-flex items-center gap-1 bg-champagne-dark px-2 py-1 text-[11px] font-body text-text-primary mr-2 mb-2">
-                  {currentParams.kategori}
-                  <button
-                    onClick={() => updateParams({ kategori: '' })}
-                    className="ml-1 hover:text-red-500"
-                  >
-                    ×
-                  </button>
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Categories */}
-          <div className="mb-8">
-            <h3 className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-4">
-              Kategori
-            </h3>
-            <div className="space-y-2">
+      {/* Mobil filtre sheet — masaüstü kenar çubuğuyla aynı filtreler */}
+      {filtersOpen && (
+        <div className="fixed inset-0 z-[70] lg:hidden" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-dark/50" onClick={() => setFiltersOpen(false)} />
+          <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] overflow-y-auto bg-champagne border-t border-champagne-mid p-6">
+            <div className="flex items-center justify-between mb-6">
+              <span className="text-[11px] uppercase tracking-[0.15em] font-body text-text-primary">
+                Filtreler
+              </span>
               <button
-                onClick={() => updateParams({ kategori: '' })}
-                className={`block text-[12px] font-body w-full text-left py-1 transition-colors ${
-                  !currentParams.kategori
-                    ? 'text-text-primary font-medium'
-                    : 'text-text-secondary hover:text-text-primary'
-                }`}
+                onClick={() => setFiltersOpen(false)}
+                className="text-text-muted hover:text-text-primary transition-colors"
+                aria-label="Kapat"
               >
-                Tümü
+                <X size={18} />
               </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => updateParams({ kategori: cat })}
-                  className={`block text-[12px] font-body w-full text-left py-1 transition-colors ${
-                    currentParams.kategori === cat
-                      ? 'text-gold font-medium'
-                      : 'text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
             </div>
+            {filterPanel}
+            <button
+              onClick={() => setFiltersOpen(false)}
+              className="w-full py-3 bg-gold text-white text-[11px] uppercase tracking-[0.15em] font-body hover:bg-gold-light transition-colors"
+            >
+              {total} ürünü göster
+            </button>
           </div>
+        </div>
+      )}
 
-          {/* Price range */}
-          <div className="mb-8">
-            <h3 className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-4">
-              Fiyat Aralığı
-            </h3>
-            <div className="space-y-2">
-              {FIYAT_ARALIKLARI.map((range) => {
-                const isActive =
-                  (currentParams.min_fiyat || '') === range.min &&
-                  (currentParams.max_fiyat || '') === range.max
-                return (
-                  <button
-                    key={range.label}
-                    onClick={() =>
-                      updateParams({
-                        min_fiyat: range.min,
-                        max_fiyat: range.max,
-                      })
-                    }
-                    className={`block text-[12px] font-body w-full text-left py-1 transition-colors ${
-                      isActive
-                        ? 'text-gold font-medium'
-                        : 'text-text-secondary hover:text-text-primary'
-                    }`}
-                  >
-                    {range.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Stock filter */}
-          <div className="mb-8">
-            <h3 className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-4">
-              Stok
-            </h3>
-            <label className="flex items-center gap-2 text-[12px] font-body text-text-secondary cursor-pointer hover:text-text-primary">
-              <input
-                type="checkbox"
-                checked={currentParams.stok === '1'}
-                onChange={(e) =>
-                  updateParams({ stok: e.target.checked ? '1' : '' })
-                }
-                className="accent-gold"
-              />
-              Sadece stokta olanlar
-            </label>
-          </div>
-        </aside>
+      <div className="flex gap-8">
+        {/* Sidebar (masaüstü) */}
+        <aside className="w-52 shrink-0 hidden lg:block">{filterPanel}</aside>
 
         {/* Product Grid */}
         <div className="flex-1">

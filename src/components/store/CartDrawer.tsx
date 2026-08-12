@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
 import Button from '@/components/ui/Button'
+import { FREE_SHIPPING_LABEL, qualifiesForFreeShipping, shippingCostFor } from '@/lib/shipping'
 
 interface CartDrawerProps {
   isOpen: boolean
@@ -16,7 +17,7 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, totalPrice } = useCart()
   const subtotal = totalPrice()
-  const shipping = subtotal >= 500 ? 0 : 49.9
+  const shipping = shippingCostFor(subtotal)
   const hasItems = items.length > 0
 
   return (
@@ -123,9 +124,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             {/* Kargo bilgisi */}
             <div className="px-6 py-3 bg-champagne-dark/50 text-center">
               <p className="text-[10px] font-body text-text-muted tracking-wider uppercase">
-                {subtotal >= 500
+                {qualifiesForFreeShipping(subtotal)
                   ? '✓ Ücretsiz kargo'
-                  : `500₺ üzeri ücretsiz kargo · Kargo: ${formatPrice(shipping)}`}
+                  : `${FREE_SHIPPING_LABEL} · Kargo: ${formatPrice(shipping)}`}
               </p>
             </div>
 

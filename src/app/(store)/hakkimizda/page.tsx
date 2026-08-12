@@ -1,3 +1,5 @@
+import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
+
 export const metadata = { title: 'Hakkımızda' }
 
 export default function HakkimizdaPage() {
@@ -48,7 +50,7 @@ export default function HakkimizdaPage() {
           <div className="bg-champagne-dark/30 p-6">
             <p className="text-[14px] font-heading text-text-primary mb-2">Hızlı Kargo</p>
             <p className="text-[12px] text-text-muted">
-              1-5 iş günü teslimat, 500₺ üzeri ücretsiz kargo.
+              1-5 iş günü teslimat, {FREE_SHIPPING_LABEL}.
             </p>
           </div>
           <div className="bg-champagne-dark/30 p-6">

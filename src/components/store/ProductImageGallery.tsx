@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -22,6 +22,26 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
       setActiveIndex((index + images.length) % images.length)
     }
   }
+
+  // Lightbox açıkken: ESC ile kapan, ok tuşlarıyla gezin, arka plan scroll'unu kilitle.
+  useEffect(() => {
+    if (!lightboxOpen) return
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxOpen(false)
+      if (e.key === 'ArrowLeft') setActiveIndex((i) => (i - 1 + images.length) % images.length)
+      if (e.key === 'ArrowRight') setActiveIndex((i) => (i + 1) % images.length)
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [lightboxOpen, images.length])
 
   return (
     <>
@@ -76,7 +96,12 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
 
       {/* Lightbox */}
       {lightboxOpen && currentImage && (
-        <div className="fixed inset-0 z-[100] bg-dark/95 flex items-center justify-center">
+        <div
+          className="fixed inset-0 z-[100] bg-dark/95 flex items-center justify-center"
+          onClick={() => setLightboxOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
           <button
             onClick={() => setLightboxOpen(false)}
             className="absolute top-6 right-6 text-champagne hover:text-gold transition-colors"
@@ -88,14 +113,14 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
           {images.length > 1 && (
             <>
               <button
-                onClick={() => goTo(activeIndex - 1)}
+                onClick={(e) => { e.stopPropagation(); goTo(activeIndex - 1) }}
                 className="absolute left-4 text-champagne hover:text-gold transition-colors"
                 aria-label="Önceki"
               >
                 <ChevronLeft size={32} />
               </button>
               <button
-                onClick={() => goTo(activeIndex + 1)}
+                onClick={(e) => { e.stopPropagation(); goTo(activeIndex + 1) }}
                 className="absolute right-4 text-champagne hover:text-gold transition-colors"
                 aria-label="Sonraki"
               >
@@ -104,7 +129,10 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
             </>
           )}
 
-          <div className="relative w-full max-w-2xl aspect-[3/4]">
+          <div
+            className="relative w-full max-w-2xl aspect-[3/4]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Image
               src={currentImage}
               alt={title}

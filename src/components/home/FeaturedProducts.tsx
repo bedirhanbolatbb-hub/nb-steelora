@@ -1,16 +1,14 @@
 import Link from 'next/link'
-import { getHomepageSection } from '@/lib/home/sections'
 import FeaturedCarousel from './FeaturedCarousel'
 
 interface Props {
   title?: string
   subtitle?: string
+  /** Liste anasayfada hesaplanır; bölümler arası tekrar orada engellenir. */
+  products: any[]
 }
 
-export default async function FeaturedProducts({ title, subtitle }: Props = {}) {
-  // Küratörlü liste: homepage_settings(section='featured').product_ids — sırası korunur.
-  const products = await getHomepageSection('featured')
-
+export default function FeaturedProducts({ title, subtitle, products }: Props) {
   if (products.length === 0) return null
 
   return (

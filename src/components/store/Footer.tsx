@@ -1,12 +1,8 @@
 import Link from 'next/link'
+import { CATEGORIES } from '@/lib/catalog/categories'
 
-const categories = [
-  { href: '/kategori/kolye', label: 'Kolye' },
-  { href: '/kategori/kupe', label: 'Küpe' },
-  { href: '/kategori/yuzuk', label: 'Yüzük' },
-  { href: '/kategori/bileklik', label: 'Bileklik' },
-  { href: '/kategori/setler', label: 'Setler' },
-]
+// Menüyle birebir aynı liste — tek kaynak src/lib/catalog/categories.ts
+const categories = CATEGORIES.map((c) => ({ href: `/kategori/${c.slug}`, label: c.title }))
 
 const helpLinks = [
   { href: '/kargo-ve-iade', label: 'Kargo ve İade' },

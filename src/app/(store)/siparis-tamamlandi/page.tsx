@@ -1,12 +1,12 @@
 import Link from 'next/link'
 import { CheckCircle } from 'lucide-react'
 
-export default function SiparisTamamlandiPage({
+export default async function SiparisTamamlandiPage({
   searchParams,
 }: {
-  searchParams: { siparis?: string }
+  searchParams: Promise<{ siparis?: string }>
 }) {
-  const orderNumber = searchParams.siparis
+  const { siparis: orderNumber } = await searchParams
 
   return (
     <div className="max-w-lg mx-auto px-4 py-20 text-center">

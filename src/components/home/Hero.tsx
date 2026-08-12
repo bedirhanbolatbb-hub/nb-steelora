@@ -77,7 +77,7 @@ export default async function Hero() {
             href="/#one-cikanlar"
             className="text-gold text-[11px] uppercase tracking-widest font-body underline underline-offset-4 hover:text-gold/70 transition-colors"
           >
-            Çok Satanlar →
+            Öne Çıkanlar →
           </Link>
         </div>
       </div>

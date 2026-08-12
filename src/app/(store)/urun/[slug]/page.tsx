@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { notFound } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
+import { FREE_SHIPPING_MIN_LABEL } from '@/lib/shipping'
 import ProductImageGallery from '@/components/store/ProductImageGallery'
 import AddToCartButton from '@/components/store/AddToCartButton'
 import RelatedProducts from '@/components/store/RelatedProducts'
@@ -90,7 +91,7 @@ export default async function UrunDetayPage({
               <p className="text-[10px] font-body text-text-secondary font-medium">
                 Ücretsiz Kargo
               </p>
-              <p className="text-[9px] font-body text-text-muted">500₺ üzeri</p>
+              <p className="text-[9px] font-body text-text-muted">{FREE_SHIPPING_MIN_LABEL}</p>
             </div>
             <div className="text-center">
               <p className="text-[16px] mb-1">🔒</p>
