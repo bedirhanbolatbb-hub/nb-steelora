@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/client'
 
 interface WishlistStore {
   items: string[]
-  guestId: string
   addItem: (productId: string) => Promise<void>
   removeItem: (productId: string) => Promise<void>
   toggleItem: (productId: string) => Promise<void>
@@ -12,15 +11,13 @@ interface WishlistStore {
   syncWithServer: () => Promise<void>
 }
 
-function generateGuestId() {
-  return 'guest_' + Math.random().toString(36).substr(2, 9)
-}
-
+// Misafir listesi yalnızca localStorage'da tutulur. wishlists RLS politikası
+// satırları auth.uid() = user_id ile sınırlıyor, oturumsuz yazma reddedilir;
+// bu yüzden oturum yoksa sunucuya hiç gidilmez.
 export const useWishlist = create<WishlistStore>()(
   persist(
     (set, get) => ({
       items: [],
-      guestId: generateGuestId(),
 
       addItem: async (productId) => {
         set((state) => ({ items: [...state.items, productId] }))
@@ -29,10 +26,10 @@ export const useWishlist = create<WishlistStore>()(
           const {
             data: { user },
           } = await supabase.auth.getUser()
+          if (!user) return
           await supabase.from('wishlists').upsert({
             product_id: productId,
-            user_id: user?.id || null,
-            guest_id: user ? null : get().guestId,
+            user_id: user.id,
           })
         } catch (e) {
           console.error('Wishlist add error:', e)
@@ -48,19 +45,12 @@ export const useWishlist = create<WishlistStore>()(
           const {
             data: { user },
           } = await supabase.auth.getUser()
-          if (user) {
-            await supabase
-              .from('wishlists')
-              .delete()
-              .eq('product_id', productId)
-              .eq('user_id', user.id)
-          } else {
-            await supabase
-              .from('wishlists')
-              .delete()
-              .eq('product_id', productId)
-              .eq('guest_id', get().guestId)
-          }
+          if (!user) return
+          await supabase
+            .from('wishlists')
+            .delete()
+            .eq('product_id', productId)
+            .eq('user_id', user.id)
         } catch (e) {
           console.error('Wishlist remove error:', e)
         }
@@ -83,14 +73,12 @@ export const useWishlist = create<WishlistStore>()(
             data: { user },
           } = await supabase.auth.getUser()
 
-          let query = supabase.from('wishlists').select('product_id')
-          if (user) {
-            query = query.eq('user_id', user.id)
-          } else {
-            query = query.eq('guest_id', get().guestId)
-          }
+          if (!user) return
 
-          const { data } = await query
+          const { data } = await supabase
+            .from('wishlists')
+            .select('product_id')
+            .eq('user_id', user.id)
           if (data) {
             set({ items: data.map((w) => w.product_id) })
           }
