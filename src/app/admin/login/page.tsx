@@ -30,9 +30,9 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-champagne flex items-center justify-center">
+    <div className="min-h-screen bg-bg flex items-center justify-center">
       <div className="bg-white p-8 w-full max-w-sm shadow-sm">
-        <h1 className="font-heading text-[24px] font-light text-text-primary text-center mb-8">
+        <h1 className="font-heading text-[24px] font-light text-ink text-center mb-8">
           NB Steelora Admin
         </h1>
         <form onSubmit={handleLogin} className="space-y-4">
@@ -41,14 +41,14 @@ export default function AdminLogin() {
             placeholder="Şifre"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none transition-colors"
+            className="w-full px-4 py-3 border border-line bg-white font-body text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors"
             autoFocus
           />
           {error && <p className="text-red-500 text-sm font-body">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-text-primary text-white text-[11px] tracking-[0.15em] uppercase font-body hover:bg-gold hover:text-white transition-colors disabled:opacity-50"
+            className="w-full py-3 bg-ink text-white text-[11px] tracking-[0.15em] uppercase font-body hover:bg-accent hover:text-white transition-colors disabled:opacity-50"
           >
             {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
           </button>

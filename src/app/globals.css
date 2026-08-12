@@ -5,40 +5,41 @@
    CSS değişkeni olarak açılır. Eski token adları (champagne/gold/dark …) yeni
    palete yeniden eşlendi — tüm bileşenler tek noktadan renk değiştirir. */
 @theme inline {
-  /* Ana palet */
+  /* Zeminler */
   --color-bg: #FAF8F4;
   --color-surface: #FFFFFF;
+  --color-surface-muted: #F2EFE9;
+
+  /* Metin */
   --color-ink: #1C1A17;
+  --color-ink-soft: #4A443C;
+  --color-ink-deep: #26231F;
   --color-muted: #6E675E;
+
+  /* Çizgi ve vurgu */
   --color-line: #E7E1D8;
   --color-accent: #B8934E;
   --color-accent-deep: #8C6D33;
-
-  /* Eski adların yeni karşılıkları */
-  --color-champagne: #FAF8F4;
-  --color-champagne-mid: #E7E1D8;
-  --color-champagne-dark: #F2EFE9;
-  --color-gold: #B8934E;
-  --color-gold-light: #8C6D33;
-  --color-gold-pale: #F5EFE2;
-  --color-dark: #1C1A17;
-  --color-dark-mid: #26231F;
-  --color-text-primary: #1C1A17;
-  --color-text-secondary: #4A443C;
-  --color-text-muted: #6E675E;
+  --color-accent-soft: #F5EFE2;
 
   --font-heading: var(--font-display), 'Playfair Display', serif;
   --font-body: var(--font-sans), 'Inter', system-ui, sans-serif;
 }
 
+/* @theme inline değişkenleri utility'lere gömer, :root'a yaymaz —
+   doğrudan var() ile kullanılan yerler için palet burada da tanımlanır. */
 :root {
   --bg: #FAF8F4;
   --surface: #FFFFFF;
+  --surface-muted: #F2EFE9;
   --ink: #1C1A17;
+  --ink-soft: #4A443C;
+  --ink-deep: #26231F;
   --muted: #6E675E;
   --line: #E7E1D8;
   --accent: #B8934E;
   --accent-deep: #8C6D33;
+  --accent-soft: #F5EFE2;
 }
 
 body {
@@ -107,7 +108,7 @@ html {
   font-family: var(--font-heading);
   font-size: 1.6rem;
   font-weight: 300;
-  color: var(--color-text-primary);
+  color: var(--ink);
   margin-top: 2rem;
   margin-bottom: 0.75rem;
   line-height: 1.25;
@@ -116,21 +117,21 @@ html {
   font-family: var(--font-heading);
   font-size: 1.2rem;
   font-weight: 400;
-  color: var(--color-text-primary);
+  color: var(--ink);
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
 }
 .prose-blog p {
   font-family: var(--font-body);
   font-size: 0.9rem;
-  color: var(--color-text-secondary);
+  color: var(--ink-soft);
   line-height: 1.8;
   margin-bottom: 1rem;
 }
 .prose-blog ul, .prose-blog ol {
   font-family: var(--font-body);
   font-size: 0.9rem;
-  color: var(--color-text-secondary);
+  color: var(--ink-soft);
   line-height: 1.8;
   margin-bottom: 1rem;
   padding-left: 1.5rem;
@@ -139,11 +140,11 @@ html {
 .prose-blog ol { list-style-type: decimal; }
 .prose-blog li { margin-bottom: 0.25rem; }
 .prose-blog strong {
-  color: var(--color-text-primary);
+  color: var(--ink);
   font-weight: 600;
 }
 .prose-blog a {
-  color: var(--color-gold);
+  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 3px;
   transition: opacity 0.2s;
@@ -157,19 +158,19 @@ html {
   margin-bottom: 1.5rem;
 }
 .prose-blog th {
-  background: var(--color-champagne-dark);
-  color: var(--color-text-primary);
+  background: var(--surface-muted);
+  color: var(--ink);
   padding: 0.5rem 0.75rem;
   text-align: left;
   font-weight: 600;
-  border: 1px solid var(--color-champagne-mid);
+  border: 1px solid var(--line);
 }
 .prose-blog td {
   padding: 0.5rem 0.75rem;
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-champagne-mid);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
 }
-.prose-blog tr:nth-child(even) td { background: var(--color-champagne); }
+.prose-blog tr:nth-child(even) td { background: var(--bg); }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
@@ -177,14 +178,14 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-champagne);
+  background: var(--bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-champagne-mid);
+  background: var(--line);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gold);
+  background: var(--accent);
 }

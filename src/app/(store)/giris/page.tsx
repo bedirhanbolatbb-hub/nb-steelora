@@ -36,10 +36,10 @@ export default function GirisPage() {
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
       <div className="max-w-md w-full">
-        <h1 className="font-heading text-[36px] font-light text-text-primary mb-2 text-center">
+        <h1 className="font-heading text-[36px] font-light text-ink mb-2 text-center">
           Giriş Yap
         </h1>
-        <div className="w-16 h-px bg-gold mx-auto mb-10" />
+        <div className="w-16 h-px bg-accent mx-auto mb-10" />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -60,7 +60,7 @@ export default function GirisPage() {
           <div className="text-right">
             <Link
               href="/sifremi-unuttum"
-              className="text-[12px] font-body text-gold hover:text-gold-light transition-colors"
+              className="text-[12px] font-body text-accent hover:text-accent-deep transition-colors"
             >
               Şifremi unuttum
             </Link>
@@ -71,16 +71,16 @@ export default function GirisPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-text-primary text-white font-body text-[12px] tracking-[0.15em] uppercase hover:bg-gold transition-colors disabled:opacity-50"
+            className="w-full py-4 bg-ink text-white font-body text-[12px] tracking-[0.15em] uppercase hover:bg-accent transition-colors disabled:opacity-50"
           >
             {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
           </button>
 
-          <p className="text-center text-[13px] font-body text-text-secondary">
+          <p className="text-center text-[13px] font-body text-ink-soft">
             Üye değil misiniz?{' '}
             <Link
               href="/kayit"
-              className="text-gold hover:text-gold-light transition-colors"
+              className="text-accent hover:text-accent-deep transition-colors"
             >
               Üye olun
             </Link>

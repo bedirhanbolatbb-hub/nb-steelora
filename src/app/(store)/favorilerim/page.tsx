@@ -31,23 +31,23 @@ export default function FavorilerimPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
-      <h1 className="font-heading text-[36px] font-light text-text-primary mb-2">
+      <h1 className="font-heading text-[36px] font-light text-ink mb-2">
         Favorilerim
       </h1>
-      <div className="w-16 h-px bg-gold mb-10" />
+      <div className="w-16 h-px bg-accent mb-10" />
 
       {loading ? (
-        <p className="text-text-muted font-body text-[13px] text-center py-16">
+        <p className="text-muted font-body text-[13px] text-center py-16">
           Yükleniyor...
         </p>
       ) : items.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-text-muted font-body text-[13px] mb-6">
+          <p className="text-muted font-body text-[13px] mb-6">
             Henüz favoriye eklediğiniz ürün yok.
           </p>
           <Link
             href="/urunler"
-            className="inline-block py-3 px-8 bg-dark text-champagne text-[11px] tracking-[0.15em] uppercase font-body hover:bg-gold transition-colors"
+            className="inline-block py-3 px-8 bg-ink text-bg text-[11px] tracking-[0.15em] uppercase font-body hover:bg-accent transition-colors"
           >
             Ürünleri Keşfet
           </Link>

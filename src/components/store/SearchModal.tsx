@@ -57,25 +57,25 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[60] bg-dark/80 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[60] bg-ink/80 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-champagne max-w-2xl mx-auto mt-20 shadow-2xl"
+        className="bg-bg max-w-2xl mx-auto mt-20 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Input */}
-        <div className="flex items-center gap-4 p-6 border-b border-champagne-mid">
-          <Search size={18} className="text-text-muted shrink-0" />
+        <div className="flex items-center gap-4 p-6 border-b border-line">
+          <Search size={18} className="text-muted shrink-0" />
           <input
             ref={inputRef}
             type="text"
             placeholder="Ürün ara..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent font-heading text-[20px] text-text-primary placeholder:text-text-muted outline-none"
+            className="flex-1 bg-transparent font-heading text-[20px] text-ink placeholder:text-muted outline-none"
           />
           <button
             onClick={onClose}
-            className="text-text-muted hover:text-text-primary transition-colors"
+            className="text-muted hover:text-ink transition-colors"
           >
             <X size={18} />
           </button>
@@ -84,13 +84,13 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         {/* Results */}
         <div className="max-h-96 overflow-y-auto">
           {loading && (
-            <div className="p-6 text-center text-text-muted text-[13px] font-body">
+            <div className="p-6 text-center text-muted text-[13px] font-body">
               Aranıyor...
             </div>
           )}
 
           {!loading && query.length >= 2 && results.length === 0 && (
-            <div className="p-6 text-center text-text-muted text-[13px] font-body">
+            <div className="p-6 text-center text-muted text-[13px] font-body">
               &ldquo;{query}&rdquo; için sonuç bulunamadı
             </div>
           )}
@@ -99,9 +99,9 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             <button
               key={product.id}
               onClick={() => handleProductClick(product.slug)}
-              className="w-full flex items-center gap-4 p-4 hover:bg-champagne-dark transition-colors text-left border-b border-champagne-mid/30 last:border-0"
+              className="w-full flex items-center gap-4 p-4 hover:bg-surface-muted transition-colors text-left border-b border-line/30 last:border-0"
             >
-              <div className="w-14 h-14 bg-champagne-dark shrink-0 overflow-hidden">
+              <div className="w-14 h-14 bg-surface-muted shrink-0 overflow-hidden">
                 {product.display_images?.[0] ? (
                   <img
                     src={product.display_images[0]}
@@ -109,28 +109,28 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-text-muted text-[9px] font-body">
+                  <div className="w-full h-full flex items-center justify-center text-muted text-[9px] font-body">
                     Görsel
                   </div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-body text-text-primary font-medium truncate">
+                <p className="text-[13px] font-body text-ink font-medium truncate">
                   {product.display_title}
                 </p>
-                <p className="text-[11px] font-body text-text-muted mt-0.5">
+                <p className="text-[11px] font-body text-muted mt-0.5">
                   {product.trendyol_category}
                   {product.option_count > 0 && ` · +${product.option_count} seçenek`}
                 </p>
               </div>
-              <p className="text-[13px] font-body text-gold font-medium shrink-0">
+              <p className="text-[13px] font-body text-accent font-medium shrink-0">
                 {formatPrice(product.display_price)}
               </p>
             </button>
           ))}
 
           {!loading && query.length < 2 && (
-            <div className="p-6 text-center text-text-muted text-[13px] font-body">
+            <div className="p-6 text-center text-muted text-[13px] font-body">
               Aramak istediğiniz ürünü yazın
             </div>
           )}

@@ -37,13 +37,13 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 w-full bg-champagne border-b border-champagne-mid transition-shadow duration-300',
+        'sticky top-0 z-50 w-full bg-bg border-b border-line transition-shadow duration-300',
         scrolled && 'shadow-md'
       )}
     >
       {/* Duyuru Şeridi */}
       <div className="text-center py-2 px-4" style={{ backgroundColor: bannerColor || '#2A1E1E' }}>
-        <p className="text-gold text-[10px] tracking-[0.2em] uppercase font-body">
+        <p className="text-accent text-[10px] tracking-[0.2em] uppercase font-body">
           {bannerText || `${FREE_SHIPPING_LABEL} • Premium Çelik Takılar`}
         </p>
       </div>
@@ -53,7 +53,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
           {/* Sol: Hamburger (mobil) + Nav Linkleri (desktop) */}
           <div className="flex items-center gap-8">
             <button
-              className="lg:hidden text-text-primary"
+              className="lg:hidden text-ink"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Menü"
             >
@@ -65,7 +65,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-[11px] uppercase tracking-[0.15em] font-body text-text-secondary hover:text-gold transition-colors"
+                  className="text-[11px] uppercase tracking-[0.15em] font-body text-ink-soft hover:text-accent transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -75,20 +75,20 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
 
           {/* Orta: Logo */}
           <Link href="/" className="flex flex-col items-center">
-            <span className="font-heading text-[22px] font-light tracking-[0.15em] text-text-primary">
+            <span className="font-heading text-[22px] font-light tracking-[0.15em] text-ink">
               NB STEELORA
             </span>
-            <span className="text-[10px] uppercase tracking-[0.25em] text-gold font-body">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-accent font-body">
               Fine Jewellery
             </span>
           </Link>
 
           {/* Sağ: İkonlar */}
           <div className="flex items-center gap-4">
-            <button className="text-text-secondary hover:text-gold transition-colors" aria-label="Ara" onClick={() => setSearchOpen(true)}>
+            <button className="text-ink-soft hover:text-accent transition-colors" aria-label="Ara" onClick={() => setSearchOpen(true)}>
               <Search size={18} />
             </button>
-            <Link href="/favorilerim" className="hidden sm:block relative text-text-secondary hover:text-gold transition-colors" aria-label="Favoriler">
+            <Link href="/favorilerim" className="hidden sm:block relative text-ink-soft hover:text-accent transition-colors" aria-label="Favoriler">
               <Heart size={18} />
               {wishlistCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-ink text-bg text-[10px] rounded-full flex items-center justify-center font-body font-medium">
@@ -96,11 +96,11 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
                 </span>
               )}
             </Link>
-            <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="hidden sm:block text-text-secondary hover:text-gold transition-colors" aria-label="Hesap">
+            <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="hidden sm:block text-ink-soft hover:text-accent transition-colors" aria-label="Hesap">
               <User size={18} />
             </Link>
             <button
-              className="relative text-text-secondary hover:text-gold transition-colors"
+              className="relative text-ink-soft hover:text-accent transition-colors"
               aria-label="Sepet"
               onClick={() => setCartOpen(true)}
             >
@@ -121,23 +121,23 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
 
       {/* Mobil Menü */}
       {mobileOpen && (
-        <div className="lg:hidden bg-champagne border-t border-champagne-mid">
+        <div className="lg:hidden bg-bg border-t border-line">
           <div className="px-4 py-4 space-y-3">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="block text-[12px] uppercase tracking-[0.15em] font-body text-text-secondary hover:text-gold transition-colors py-2"
+                className="block text-[12px] uppercase tracking-[0.15em] font-body text-ink-soft hover:text-accent transition-colors py-2"
                 onClick={() => setMobileOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
-            <div className="flex items-center gap-4 pt-3 border-t border-champagne-mid">
-              <Link href="/favorilerim" className="text-text-secondary hover:text-gold transition-colors" aria-label="Favoriler" onClick={() => setMobileOpen(false)}>
+            <div className="flex items-center gap-4 pt-3 border-t border-line">
+              <Link href="/favorilerim" className="text-ink-soft hover:text-accent transition-colors" aria-label="Favoriler" onClick={() => setMobileOpen(false)}>
                 <Heart size={18} />
               </Link>
-              <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="text-text-secondary hover:text-gold transition-colors" aria-label="Hesap" onClick={() => setMobileOpen(false)}>
+              <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="text-ink-soft hover:text-accent transition-colors" aria-label="Hesap" onClick={() => setMobileOpen(false)}>
                 <User size={18} />
               </Link>
             </div>

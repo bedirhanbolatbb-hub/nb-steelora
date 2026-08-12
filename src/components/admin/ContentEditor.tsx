@@ -59,17 +59,17 @@ export default function ContentEditor() {
   }
 
   if (loading) {
-    return <p className="text-text-muted font-body text-sm">Yükleniyor...</p>
+    return <p className="text-muted font-body text-sm">Yükleniyor...</p>
   }
 
   return (
     <div>
-      <h2 className="font-heading text-[24px] text-text-primary mb-2">İçerik Yönetimi</h2>
-      <p className="text-[11px] font-body text-text-muted mb-8">Değişiklikler otomatik kaydedilir.</p>
-      <div className="bg-white divide-y divide-champagne-mid/30">
+      <h2 className="font-heading text-[24px] text-ink mb-2">İçerik Yönetimi</h2>
+      <p className="text-[11px] font-body text-muted mb-8">Değişiklikler otomatik kaydedilir.</p>
+      <div className="bg-white divide-y divide-line/30">
         {KEY_ORDER.map((key) => (
           <div key={key} className="flex items-center gap-4 px-4 py-3">
-            <label className="w-52 shrink-0 text-[12px] font-body text-text-muted">
+            <label className="w-52 shrink-0 text-[12px] font-body text-muted">
               {CONTENT_LABELS[key]}
             </label>
             <input
@@ -77,10 +77,10 @@ export default function ContentEditor() {
               value={content[key] ?? ''}
               onChange={(e) => handleChange(key, e.target.value)}
               placeholder={`(${CONTENT_LABELS[key]})`}
-              className="flex-1 px-3 py-2 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted/50 focus:border-gold focus:outline-none transition-colors"
+              className="flex-1 px-3 py-2 border border-line bg-white font-body text-sm text-ink placeholder:text-muted/50 focus:border-accent focus:outline-none transition-colors"
             />
             <span className="w-16 text-right text-[10px] font-body shrink-0">
-              {saving[key] && <span className="text-text-muted">kaydediliyor…</span>}
+              {saving[key] && <span className="text-muted">kaydediliyor…</span>}
               {!saving[key] && saved[key] && <span className="text-green-600">✓ kaydedildi</span>}
             </span>
           </div>

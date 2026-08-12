@@ -52,7 +52,7 @@ export default async function Hero() {
   return (
     <section className="min-h-[580px] grid grid-cols-1 lg:grid-cols-2">
       {/* Sol: İçerik */}
-      <div className="bg-champagne-dark flex flex-col justify-center px-8 lg:px-16 py-16 lg:py-0 order-2 lg:order-1">
+      <div className="bg-surface-muted flex flex-col justify-center px-8 lg:px-16 py-16 lg:py-0 order-2 lg:order-1">
         <span className="eyebrow mb-6">{c.hero_badge || 'Yeni Koleksiyon — 2026'}</span>
         <h1 className="font-heading text-[40px] sm:text-[48px] lg:text-[56px] font-semibold text-ink leading-[1.1]">
           {c.hero_title_line1 || 'Her anın'}
@@ -61,7 +61,7 @@ export default async function Hero() {
           <br />
           {c.hero_title_line3 || 'tanığı'}
         </h1>
-        <p className="text-[12px] font-body text-text-secondary max-w-sm mt-6 leading-relaxed">
+        <p className="text-[12px] font-body text-ink-soft max-w-sm mt-6 leading-relaxed">
           {c.hero_description || '316L medikal çelik. Kararmaz, paslanmaz, solmaz.\nHer gün tak, her gün şık görün.'}
         </p>
         <div className="flex items-center gap-6 mt-8">
@@ -73,7 +73,7 @@ export default async function Hero() {
           </Link>
           <Link
             href="/#one-cikanlar"
-            className="text-gold text-[11px] uppercase tracking-widest font-body underline underline-offset-4 hover:text-gold/70 transition-colors"
+            className="text-accent text-[11px] uppercase tracking-widest font-body underline underline-offset-4 hover:text-accent/70 transition-colors"
           >
             Öne Çıkanlar →
           </Link>

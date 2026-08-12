@@ -43,32 +43,32 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
     return (
       <div className="grid grid-rows-2 grid-cols-2 gap-1 order-1 lg:order-2 min-h-[400px] lg:min-h-0">
         {/* Top — hero_top */}
-        <div className="col-span-2 bg-champagne-dark relative overflow-hidden">
+        <div className="col-span-2 bg-surface-muted relative overflow-hidden">
           {items[0].image ? (
             <SlotImage image={items[0].image} slug={items[0].slug} sizes="(max-width: 1024px) 100vw, 50vw" alt="Koleksiyon" />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-b from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-              <span className="text-text-muted/40 text-[11px] font-body tracking-wider uppercase">Koleksiyon Görseli</span>
+            <div className="absolute inset-0 bg-gradient-to-b from-line/20 to-surface-muted flex items-center justify-center">
+              <span className="text-muted/40 text-[11px] font-body tracking-wider uppercase">Koleksiyon Görseli</span>
             </div>
           )}
         </div>
         {/* Bottom-left — hero_bottom_left */}
-        <div className="bg-champagne-dark relative overflow-hidden">
+        <div className="bg-surface-muted relative overflow-hidden">
           {items[1].image ? (
             <SlotImage image={items[1].image} slug={items[1].slug} sizes="(max-width: 1024px) 50vw, 25vw" alt="Ürün" />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-              <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 1</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-line/20 to-surface-muted flex items-center justify-center">
+              <span className="text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 1</span>
             </div>
           )}
         </div>
         {/* Bottom-right — hero_bottom_right */}
-        <div className="bg-champagne-dark relative overflow-hidden">
+        <div className="bg-surface-muted relative overflow-hidden">
           {items[2].image ? (
             <SlotImage image={items[2].image} slug={items[2].slug} sizes="(max-width: 1024px) 50vw, 25vw" alt="Ürün" />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-bl from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-              <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 2</span>
+            <div className="absolute inset-0 bg-gradient-to-bl from-line/20 to-surface-muted flex items-center justify-center">
+              <span className="text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 2</span>
             </div>
           )}
         </div>
@@ -91,12 +91,12 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
     <div className="flex flex-col gap-1 order-1 lg:order-2">
       {/* Top: full width, 2:1 */}
       <div
-        className="w-full aspect-[2/1] relative overflow-hidden bg-champagne-dark"
+        className="w-full aspect-[2/1] relative overflow-hidden bg-surface-muted"
         style={{ ...base, backgroundPosition: 'center center' }}
       >
         {!image && (
-          <div className="absolute inset-0 bg-gradient-to-b from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-            <span className="text-text-muted/40 text-[11px] font-body tracking-wider uppercase">Koleksiyon Görseli</span>
+          <div className="absolute inset-0 bg-gradient-to-b from-line/20 to-surface-muted flex items-center justify-center">
+            <span className="text-muted/40 text-[11px] font-body tracking-wider uppercase">Koleksiyon Görseli</span>
           </div>
         )}
         <SlotLink />
@@ -104,23 +104,23 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
       {/* Bottom: two equal squares */}
       <div className="flex gap-1">
         <div
-          className="flex-1 aspect-[1/1] relative overflow-hidden bg-champagne-dark"
+          className="flex-1 aspect-[1/1] relative overflow-hidden bg-surface-muted"
           style={{ ...base, backgroundPosition: 'left center' }}
         >
           {!image && (
-            <div className="absolute inset-0 bg-gradient-to-br from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-              <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 1</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-line/20 to-surface-muted flex items-center justify-center">
+              <span className="text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 1</span>
             </div>
           )}
           <SlotLink />
         </div>
         <div
-          className="flex-1 aspect-[1/1] relative overflow-hidden bg-champagne-dark"
+          className="flex-1 aspect-[1/1] relative overflow-hidden bg-surface-muted"
           style={{ ...base, backgroundPosition: 'right center' }}
         >
           {!image && (
-            <div className="absolute inset-0 bg-gradient-to-bl from-champagne-mid/20 to-champagne-dark flex items-center justify-center">
-              <span className="text-text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 2</span>
+            <div className="absolute inset-0 bg-gradient-to-bl from-line/20 to-surface-muted flex items-center justify-center">
+              <span className="text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 2</span>
             </div>
           )}
           <SlotLink />

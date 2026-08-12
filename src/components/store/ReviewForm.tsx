@@ -89,7 +89,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Star picker */}
       <div>
-        <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body block mb-2">
+        <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
           Puanınız *
         </label>
         <div className="flex items-center gap-1">
@@ -105,8 +105,8 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
               <svg
                 className={`w-8 h-8 transition-colors ${
                   star <= displayRating
-                    ? 'fill-gold text-gold'
-                    : 'fill-none text-champagne-mid'
+                    ? 'fill-accent text-accent'
+                    : 'fill-none text-line'
                 }`}
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -121,7 +121,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
             </button>
           ))}
           {displayRating > 0 && (
-            <span className="ml-2 text-[12px] font-body text-text-muted">
+            <span className="ml-2 text-[12px] font-body text-muted">
               {ratingLabels[displayRating]}
             </span>
           )}
@@ -132,7 +132,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
       {!isUser && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body block mb-2">
+            <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
               Adınız *
             </label>
             <Input
@@ -145,7 +145,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
             />
           </div>
           <div>
-            <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body block mb-2">
+            <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
               E-posta *
             </label>
             <Input
@@ -162,7 +162,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
 
       {/* Title */}
       <div>
-        <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body block mb-2">
+        <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
           Başlık (isteğe bağlı)
         </label>
         <Input
@@ -176,7 +176,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
 
       {/* Body */}
       <div>
-        <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body block mb-2">
+        <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
           Yorumunuz *
         </label>
         <textarea
@@ -186,9 +186,9 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
           required
           rows={4}
           maxLength={1000}
-          className="w-full border border-champagne-mid bg-white px-4 py-3 text-sm font-body text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none transition-colors resize-none"
+          className="w-full border border-line bg-white px-4 py-3 text-sm font-body text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors resize-none"
         />
-        <p className="text-[10px] font-body text-text-muted mt-1 text-right">
+        <p className="text-[10px] font-body text-muted mt-1 text-right">
           {form.body.length}/1000
         </p>
       </div>
@@ -198,7 +198,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
       <button
         type="submit"
         disabled={loading}
-        className="py-3 px-8 bg-dark text-champagne text-[11px] tracking-[0.15em] uppercase font-body hover:bg-gold transition-colors disabled:opacity-50"
+        className="py-3 px-8 bg-ink text-bg text-[11px] tracking-[0.15em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-50"
       >
         {loading ? 'Gönderiliyor...' : 'Yorum Gönder'}
       </button>

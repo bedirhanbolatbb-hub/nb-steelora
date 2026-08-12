@@ -64,9 +64,9 @@ function hasPendingCustomerRequest(requests: any[] | undefined) {
   return Array.isArray(requests) && requests.some((r) => r.status === 'pending')
 }
 
-const btnPrimary = 'py-3 px-8 bg-text-primary text-white text-[11px] tracking-[0.15em] uppercase font-body hover:bg-gold transition-colors disabled:opacity-50'
-const btnOutline = 'py-2 px-4 border border-champagne-mid text-text-secondary text-[10px] tracking-[0.12em] uppercase font-body hover:border-gold hover:text-gold transition-colors disabled:opacity-50 disabled:pointer-events-none'
-const inputClass = 'w-full px-3 py-2 border border-champagne-mid bg-white font-body text-sm text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none transition-colors'
+const btnPrimary = 'py-3 px-8 bg-ink text-white text-[11px] tracking-[0.15em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-50'
+const btnOutline = 'py-2 px-4 border border-line text-ink-soft text-[10px] tracking-[0.12em] uppercase font-body hover:border-accent hover:text-accent transition-colors disabled:opacity-50 disabled:pointer-events-none'
+const inputClass = 'w-full px-3 py-2 border border-line bg-white font-body text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors'
 
 export default function HesabimClient({ user, profile, orders }: HesabimClientProps) {
   const [tab, setTab] = useState('profil')
@@ -288,15 +288,15 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
 
   return (
     <div className="max-w-4xl mx-auto px-4 lg:px-8 py-16">
-      <h1 className="font-heading text-[36px] font-light text-text-primary mb-2">Hesabım</h1>
-      <div className="w-16 h-px bg-gold mb-8" />
+      <h1 className="font-heading text-[36px] font-light text-ink mb-2">Hesabım</h1>
+      <div className="w-16 h-px bg-accent mb-8" />
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-6 border-b border-champagne-mid mb-8">
+      <div className="flex flex-wrap gap-6 border-b border-line mb-8">
         {tabs.map((t) => (
           <button key={t.id} onClick={() => handleTabClick(t.id)}
             className={`pb-3 text-[11px] uppercase tracking-[0.15em] font-body transition-colors ${
-              tab === t.id ? 'border-b-2 border-gold text-text-primary font-medium' : 'text-text-muted hover:text-text-primary'
+              tab === t.id ? 'border-b-2 border-accent text-ink font-medium' : 'text-muted hover:text-ink'
             }`}>
             {t.label}
           </button>
@@ -307,22 +307,22 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
       {tab === 'profil' && (
         <div className="max-w-md space-y-4">
           <div>
-            <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body block mb-1">E-posta</label>
-            <p className="text-[14px] font-body text-text-primary">{user.email}</p>
+            <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-1">E-posta</label>
+            <p className="text-[14px] font-body text-ink">{user.email}</p>
           </div>
           <div>
-            <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body block mb-1">Ad Soyad</label>
+            <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-1">Ad Soyad</label>
             <Input type="text" value={profileForm.full_name} onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })} />
           </div>
           <div>
-            <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body block mb-1">Telefon</label>
+            <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-1">Telefon</label>
             <Input type="tel" value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} />
           </div>
           <button onClick={saveProfile} disabled={saving} className={btnPrimary}>
             {saving ? 'Kaydediliyor...' : saved ? 'Kaydedildi ✓' : 'Kaydet'}
           </button>
-          <div className="pt-8 border-t border-champagne-mid">
-            <button onClick={signOut} className="text-[12px] font-body text-text-muted hover:text-red-500 transition-colors">
+          <div className="pt-8 border-t border-line">
+            <button onClick={signOut} className="text-[12px] font-body text-muted hover:text-red-500 transition-colors">
               Çıkış Yap
             </button>
           </div>
@@ -333,7 +333,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
       {tab === 'siparisler' && (
         <div>
           {orders.length === 0 ? (
-            <p className="text-text-muted font-body text-[13px]">Henüz siparişiniz bulunmuyor.</p>
+            <p className="text-muted font-body text-[13px]">Henüz siparişiniz bulunmuyor.</p>
           ) : (
             <div className="space-y-6">
               {orders.map((order: any) => {
@@ -353,16 +353,16 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                     : null
 
                 return (
-                  <div key={order.id} className="border border-champagne-mid p-6 bg-white/40">
+                  <div key={order.id} className="border border-line p-6 bg-white/40">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
                       <div>
-                        <p className="font-body text-[11px] uppercase tracking-[0.15em] text-text-muted mb-1">
+                        <p className="font-body text-[11px] uppercase tracking-[0.15em] text-muted mb-1">
                           Sipariş numarası
                         </p>
-                        <p className="font-body text-[15px] font-medium text-text-primary">
+                        <p className="font-body text-[15px] font-medium text-ink">
                           {order.order_number}
                         </p>
-                        <p className="text-[12px] font-body text-text-muted mt-1">
+                        <p className="text-[12px] font-body text-muted mt-1">
                           {new Date(order.created_at).toLocaleString('tr-TR', {
                             dateStyle: 'long',
                             timeStyle: 'short',
@@ -377,29 +377,29 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                         >
                           {statusLabels[order.status] || order.status}
                         </span>
-                        <p className="font-body text-[16px] font-medium text-gold mt-2">
+                        <p className="font-body text-[16px] font-medium text-accent mt-2">
                           {formatPrice(order.total)}
                         </p>
                       </div>
                     </div>
 
                     {shippingLine ? (
-                      <div className="mb-4 pb-4 border-b border-champagne-mid/40">
-                        <p className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-1">
+                      <div className="mb-4 pb-4 border-b border-line/40">
+                        <p className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-1">
                           Teslimat adresi
                         </p>
-                        <p className="text-[12px] font-body text-text-secondary leading-relaxed">
+                        <p className="text-[12px] font-body text-ink-soft leading-relaxed">
                           {shippingLine}
                         </p>
                       </div>
                     ) : null}
 
                     {order.status === 'shipped' && order.tracking_number ? (
-                      <div className="mb-4 p-3 bg-champagne/80 border border-champagne-mid/50">
-                        <p className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-1">
+                      <div className="mb-4 p-3 bg-bg/80 border border-line/50">
+                        <p className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-1">
                           Kargo takip
                         </p>
-                        <p className="text-[13px] font-body text-text-primary font-medium tracking-wide">
+                        <p className="text-[13px] font-body text-ink font-medium tracking-wide">
                           {String(order.tracking_number)}
                         </p>
                       </div>
@@ -407,7 +407,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
 
                     {order.status === 'cancelled' ? (
                       <div className="mb-4 p-3 bg-red-50/90 border border-red-100">
-                        <p className="text-[12px] font-body text-text-secondary leading-relaxed">
+                        <p className="text-[12px] font-body text-ink-soft leading-relaxed">
                           Bu sipariş iptal edilmiştir. Ödeme iadesi süreçleri tamamlandıysa kartınıza
                           yansıması bankanıza bağlıdır.
                         </p>
@@ -415,36 +415,36 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                     ) : null}
 
                     <div className="mb-4">
-                      <p className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-2">
+                      <p className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-2">
                         Ürünler
                       </p>
                       <ul className="space-y-1">
                         {lines.length === 0 ? (
-                          <li className="text-[12px] font-body text-text-muted">Ürün satırı yok.</li>
+                          <li className="text-[12px] font-body text-muted">Ürün satırı yok.</li>
                         ) : (
                           lines.map((item: any, i: number) => (
                             <li
                               key={i}
-                              className="text-[12px] font-body text-text-secondary flex justify-between gap-4"
+                              className="text-[12px] font-body text-ink-soft flex justify-between gap-4"
                             >
                               <span>{item.name}</span>
-                              <span className="shrink-0 text-text-muted">× {item.quantity}</span>
+                              <span className="shrink-0 text-muted">× {item.quantity}</span>
                             </li>
                           ))
                         )}
                       </ul>
                     </div>
 
-                    <div className="mb-4 p-3 border border-champagne-mid/60 bg-champagne/30">
-                      <p className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-2">
+                    <div className="mb-4 p-3 border border-line/60 bg-bg/30">
+                      <p className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-2">
                         Talep durumu
                       </p>
                       {orderRequestsLoading && requests.length === 0 ? (
-                        <p className="text-[12px] font-body text-text-muted">Yükleniyor...</p>
+                        <p className="text-[12px] font-body text-muted">Yükleniyor...</p>
                       ) : latestRequest ? (
                         <div className="space-y-1">
-                          <p className="text-[12px] font-body text-text-primary">
-                            <span className="text-text-muted">Son talep:</span>{' '}
+                          <p className="text-[12px] font-body text-ink">
+                            <span className="text-muted">Son talep:</span>{' '}
                             {requestTypeLabels[latestRequest.request_type] ||
                               latestRequest.request_type}
                             {' · '}
@@ -452,7 +452,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                               {requestStatusLabels[latestRequest.status] || latestRequest.status}
                             </span>
                           </p>
-                          <p className="text-[11px] font-body text-text-muted">
+                          <p className="text-[11px] font-body text-muted">
                             {new Date(latestRequest.created_at).toLocaleString('tr-TR', {
                               dateStyle: 'medium',
                               timeStyle: 'short',
@@ -460,7 +460,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                           </p>
                         </div>
                       ) : (
-                        <p className="text-[12px] font-body text-text-muted">
+                        <p className="text-[12px] font-body text-muted">
                           Henüz bir iptal veya iade talebiniz yok.
                         </p>
                       )}
@@ -479,7 +479,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                     ) : null}
 
                     {pendingReq ? (
-                      <p className="text-[11px] font-body text-text-muted mb-2">
+                      <p className="text-[11px] font-body text-muted mb-2">
                         Bekleyen bir talebiniz var; yeni talep oluşturmadan önce sonuçlanmasını
                         bekleyin.
                       </p>
@@ -525,11 +525,11 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                     </div>
 
                     {formOpen ? (
-                      <div className="mt-4 pt-4 border-t border-champagne-mid/40 space-y-3">
+                      <div className="mt-4 pt-4 border-t border-line/40 space-y-3">
                         <label className="block">
-                          <span className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body block mb-1">
+                          <span className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-1">
                             Açıklama{' '}
-                            <span className="normal-case tracking-normal text-text-muted">
+                            <span className="normal-case tracking-normal text-muted">
                               (isteğe bağlı)
                             </span>
                           </span>
@@ -547,7 +547,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                             type="button"
                             disabled={busy}
                             onClick={() => submitOrderRequest(order.id, formOpen)}
-                            className="py-2 px-5 bg-gold text-white text-[10px] tracking-[0.12em] uppercase font-body hover:bg-gold-light transition-colors disabled:opacity-50"
+                            className="py-2 px-5 bg-accent text-white text-[10px] tracking-[0.12em] uppercase font-body hover:bg-accent-deep transition-colors disabled:opacity-50"
                           >
                             {busy ? 'Gönderiliyor...' : 'Talebi Gönder'}
                           </button>
@@ -577,28 +577,28 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
       {tab === 'adresler' && (
         <div>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-heading text-[20px] text-text-primary">Kayıtlı Adreslerim</h2>
+            <h2 className="font-heading text-[20px] text-ink">Kayıtlı Adreslerim</h2>
             <button onClick={() => setAddressForm({ ...emptyAddress })} className={btnPrimary}>+ Yeni Adres</button>
           </div>
 
           {!addressLoaded ? (
-            <p className="text-text-muted font-body text-sm">Yükleniyor...</p>
+            <p className="text-muted font-body text-sm">Yükleniyor...</p>
           ) : addresses.length === 0 ? (
-            <p className="text-text-muted font-body text-[13px]">Henüz kayıtlı adresiniz yok.</p>
+            <p className="text-muted font-body text-[13px]">Henüz kayıtlı adresiniz yok.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {addresses.map((addr) => (
-                <div key={addr.id} className="border border-champagne-mid p-5 relative">
+                <div key={addr.id} className="border border-line p-5 relative">
                   {addr.is_default && (
-                    <span className="text-[9px] bg-gold text-white px-2 py-0.5 uppercase tracking-wider font-body absolute top-3 right-3">Varsayılan</span>
+                    <span className="text-[9px] bg-accent text-white px-2 py-0.5 uppercase tracking-wider font-body absolute top-3 right-3">Varsayılan</span>
                   )}
-                  <p className="font-body text-[13px] font-semibold text-text-primary mb-1">{addr.title}</p>
-                  <p className="font-body text-[12px] text-text-secondary">{addr.full_name}</p>
-                  <p className="font-body text-[12px] text-text-secondary">{addr.phone}</p>
-                  <p className="font-body text-[12px] text-text-secondary">{addr.district}, {addr.city}</p>
-                  <p className="font-body text-[12px] text-text-secondary">{addr.address}</p>
+                  <p className="font-body text-[13px] font-semibold text-ink mb-1">{addr.title}</p>
+                  <p className="font-body text-[12px] text-ink-soft">{addr.full_name}</p>
+                  <p className="font-body text-[12px] text-ink-soft">{addr.phone}</p>
+                  <p className="font-body text-[12px] text-ink-soft">{addr.district}, {addr.city}</p>
+                  <p className="font-body text-[12px] text-ink-soft">{addr.address}</p>
                   <div className="flex gap-3 mt-3">
-                    <button onClick={() => setAddressForm({ ...addr })} className="text-[11px] text-gold hover:text-gold-light font-body transition-colors">Düzenle</button>
+                    <button onClick={() => setAddressForm({ ...addr })} className="text-[11px] text-accent hover:text-accent-deep font-body transition-colors">Düzenle</button>
                     <button onClick={() => deleteAddress(addr.id)} className="text-[11px] text-red-400 hover:text-red-600 font-body transition-colors">Sil</button>
                   </div>
                 </div>
@@ -624,10 +624,10 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                   Varsayılan adres olarak ayarla
                 </label>
                 <div className="flex gap-3 pt-2">
-                  <button onClick={saveAddress} disabled={addressSaving} className="flex-1 py-2 bg-gold text-white text-[11px] uppercase tracking-wider hover:bg-gold-light transition-colors disabled:opacity-50">
+                  <button onClick={saveAddress} disabled={addressSaving} className="flex-1 py-2 bg-accent text-white text-[11px] uppercase tracking-wider hover:bg-accent-deep transition-colors disabled:opacity-50">
                     {addressSaving ? 'Kaydediliyor...' : 'Kaydet'}
                   </button>
-                  <button onClick={() => setAddressForm(null)} className="flex-1 py-2 border border-champagne-mid text-text-muted text-[11px] uppercase tracking-wider hover:border-gold transition-colors">
+                  <button onClick={() => setAddressForm(null)} className="flex-1 py-2 border border-line text-muted text-[11px] uppercase tracking-wider hover:border-accent transition-colors">
                     İptal
                   </button>
                 </div>
@@ -640,14 +640,14 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
       {/* ── Fatura Bilgileri ── */}
       {tab === 'fatura' && (
         <div className="max-w-md">
-          <h2 className="font-heading text-[20px] text-text-primary mb-6">Fatura Bilgilerim</h2>
+          <h2 className="font-heading text-[20px] text-ink mb-6">Fatura Bilgilerim</h2>
 
           {/* Type toggle */}
-          <div className="flex gap-0 mb-6 border border-champagne-mid">
+          <div className="flex gap-0 mb-6 border border-line">
             {(['individual', 'corporate'] as const).map((type) => (
               <button key={type} onClick={() => setBillingForm((f) => ({ ...f, billing_type: type }))}
                 className={`flex-1 py-2 text-[11px] uppercase tracking-wider font-body transition-colors ${
-                  billingForm.billing_type === type ? 'bg-text-primary text-white' : 'text-text-muted hover:text-text-primary'
+                  billingForm.billing_type === type ? 'bg-ink text-white' : 'text-muted hover:text-ink'
                 }`}>
                 {type === 'individual' ? 'Bireysel' : 'Kurumsal'}
               </button>
@@ -684,7 +684,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
       {tab === 'favoriler' && (
         <div>
           {wishlistItems.length === 0 ? (
-            <p className="text-text-muted font-body text-[13px]">Henüz favoriye eklediğiniz ürün yok.</p>
+            <p className="text-muted font-body text-[13px]">Henüz favoriye eklediğiniz ürün yok.</p>
           ) : (
             <ProductGrid products={favProducts} />
           )}

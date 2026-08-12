@@ -230,15 +230,15 @@ export default function OdemePage() {
   if (items.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-20 text-center">
-        <h1 className="font-heading text-[32px] text-text-primary mb-4">
+        <h1 className="font-heading text-[32px] text-ink mb-4">
           Sepetiniz Boş
         </h1>
-        <p className="text-text-muted font-body text-sm mb-6">
+        <p className="text-muted font-body text-sm mb-6">
           Ödeme yapabilmek için sepetinize ürün ekleyin.
         </p>
         <a
           href="/urunler"
-          className="inline-block border border-gold text-gold text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:bg-gold hover:text-white transition-all"
+          className="inline-block border border-accent text-accent text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:bg-accent hover:text-white transition-all"
         >
           Ürünlere Git
         </a>
@@ -248,7 +248,7 @@ export default function OdemePage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 lg:px-8 py-12">
-      <h1 className="font-heading text-[32px] font-light text-text-primary mb-10">
+      <h1 className="font-heading text-[32px] font-light text-ink mb-10">
         Ödeme
       </h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
@@ -256,26 +256,26 @@ export default function OdemePage() {
         <div className="lg:col-span-2">
           {/* Üyelik uyarısı — sadece giriş yapılmamış kullanıcılara */}
           {!userId && (
-            <div className="bg-champagne border border-gold/40 border-l-4 border-l-gold p-4 mb-6 rounded-sm">
-              <p className="text-[14px] font-body font-medium text-text-primary mb-1">
+            <div className="bg-bg border border-accent/40 border-l-4 border-l-accent p-4 mb-6 rounded-sm">
+              <p className="text-[14px] font-body font-medium text-ink mb-1">
                 Üye olarak sipariş verin, daha fazlasını kazanın
               </p>
-              <p className="text-[13px] font-body text-text-secondary mb-3">
+              <p className="text-[13px] font-body text-ink-soft mb-3">
                 Kargo takibi, sipariş geçmişi ve özel kampanyalar için üye olun.
               </p>
               <div className="flex items-center gap-3 text-[13px] font-body">
-                <a href="/giris" className="text-gold hover:text-gold-light underline transition-colors">
+                <a href="/giris" className="text-accent hover:text-accent-deep underline transition-colors">
                   Giriş yap
                 </a>
-                <a href="/kayit" className="text-gold hover:text-gold-light underline transition-colors">
+                <a href="/kayit" className="text-accent hover:text-accent-deep underline transition-colors">
                   Üye ol
                 </a>
-                <span className="text-text-muted">veya misafir olarak devam edin ↓</span>
+                <span className="text-muted">veya misafir olarak devam edin ↓</span>
               </div>
             </div>
           )}
 
-          <h2 className="text-[11px] uppercase tracking-[0.2em] font-body text-gold mb-6">
+          <h2 className="text-[11px] uppercase tracking-[0.2em] font-body text-accent mb-6">
             Teslimat Bilgileri
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -326,7 +326,7 @@ export default function OdemePage() {
 
           {/* Kart Bilgileri */}
           <div className="mt-8">
-            <h2 className="text-[11px] uppercase tracking-[0.2em] font-body text-gold mb-6">
+            <h2 className="text-[11px] uppercase tracking-[0.2em] font-body text-accent mb-6">
               Kart Bilgileri
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -380,7 +380,7 @@ export default function OdemePage() {
 
           {/* Hediye Notu */}
           <div className="mt-4">
-            <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body block mb-2">
+            <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
               Hediye Notu (isteğe bağlı)
             </label>
             <textarea
@@ -389,14 +389,14 @@ export default function OdemePage() {
               onChange={(e) => setGiftNote(e.target.value)}
               rows={3}
               maxLength={300}
-              className="w-full border border-champagne-mid bg-white px-4 py-3 text-sm font-body text-text-primary placeholder:text-text-muted focus:border-gold focus:outline-none transition-colors resize-none"
+              className="w-full border border-line bg-white px-4 py-3 text-sm font-body text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors resize-none"
             />
-            <p className="text-[10px] font-body text-text-muted mt-1 text-right">{giftNote.length}/300</p>
+            <p className="text-[10px] font-body text-muted mt-1 text-right">{giftNote.length}/300</p>
           </div>
 
           {/* İndirim Kodu */}
-          <div className="mt-6 pt-6 border-t border-champagne-mid">
-            <p className="text-[11px] uppercase tracking-[0.2em] font-body text-text-muted mb-3">
+          <div className="mt-6 pt-6 border-t border-line">
+            <p className="text-[11px] uppercase tracking-[0.2em] font-body text-muted mb-3">
               İndirim Kodu
             </p>
             <div className="flex gap-2">
@@ -418,7 +418,7 @@ export default function OdemePage() {
                 <button
                   onClick={applyDiscount}
                   disabled={discountLoading || !discountCode.trim()}
-                  className="px-4 py-2 border border-gold text-gold text-[11px] uppercase tracking-wider hover:bg-gold hover:text-white transition-colors disabled:opacity-50"
+                  className="px-4 py-2 border border-accent text-accent text-[11px] uppercase tracking-wider hover:bg-accent hover:text-white transition-colors disabled:opacity-50"
                 >
                   {discountLoading ? '...' : 'Uygula'}
                 </button>
@@ -446,12 +446,12 @@ export default function OdemePage() {
           <button
             onClick={handlePayment}
             disabled={loading || !isFormValid}
-            className="mt-6 w-full py-4 bg-gold text-white font-body text-[12px] tracking-[0.15em] uppercase hover:bg-gold-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-6 w-full py-4 bg-accent text-white font-body text-[12px] tracking-[0.15em] uppercase hover:bg-accent-deep transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'İşleniyor...' : `${formatPrice(total)} Öde`}
           </button>
 
-          <div className="mt-4 flex items-center justify-center gap-4 text-[10px] font-body text-text-muted">
+          <div className="mt-4 flex items-center justify-center gap-4 text-[10px] font-body text-muted">
             <span>🔒 SSL Korumalı</span>
             <span>•</span>
             <span>3D Secure</span>
@@ -460,8 +460,8 @@ export default function OdemePage() {
           </div>
 
           {/* iyzico Güven Rozetleri */}
-          <div className="mt-6 pt-6 border-t border-champagne-mid">
-            <p className="text-[10px] text-text-muted text-center mb-4 uppercase tracking-[0.2em] font-body">
+          <div className="mt-6 pt-6 border-t border-line">
+            <p className="text-[10px] text-muted text-center mb-4 uppercase tracking-[0.2em] font-body">
               Güvenli Ödeme
             </p>
             <div className="flex items-center justify-center gap-6 flex-wrap">
@@ -470,7 +470,7 @@ export default function OdemePage() {
                 alt="iyzico ile öde"
                 className="h-10 object-contain"
               />
-              <div className="flex items-center gap-1 text-[11px] text-text-muted border border-text-muted/30 px-2 py-1 rounded">
+              <div className="flex items-center gap-1 text-[11px] text-muted border border-text-muted/30 px-2 py-1 rounded">
                 <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                 </svg>
@@ -481,17 +481,17 @@ export default function OdemePage() {
         </div>
 
         {/* Sipariş özeti — sağ 1/3 */}
-        <div className="bg-champagne-dark/50 p-6 h-fit">
-          <h2 className="font-heading text-[18px] text-text-primary mb-6">
+        <div className="bg-surface-muted/50 p-6 h-fit">
+          <h2 className="font-heading text-[18px] text-ink mb-6">
             Sipariş Özeti
           </h2>
           <div className="space-y-3">
             {items.map((item) => (
               <div
                 key={item.product.id}
-                className="flex items-center gap-3 pb-3 border-b border-champagne-mid/30"
+                className="flex items-center gap-3 pb-3 border-b border-line/30"
               >
-                <div className="relative w-12 h-14 bg-champagne-dark shrink-0">
+                <div className="relative w-12 h-14 bg-surface-muted shrink-0">
                   {item.product.display_images?.[0] && (
                     <Image
                       src={item.product.display_images[0]}
@@ -503,22 +503,22 @@ export default function OdemePage() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-body text-text-primary truncate">
+                  <p className="text-[12px] font-body text-ink truncate">
                     {item.product.display_title}
                   </p>
-                  <p className="text-[10px] font-body text-text-muted">
+                  <p className="text-[10px] font-body text-muted">
                     Adet: {item.quantity}
                   </p>
                 </div>
-                <p className="text-[12px] font-body text-text-primary shrink-0">
+                <p className="text-[12px] font-body text-ink shrink-0">
                   {formatPrice(item.product.display_price * item.quantity)}
                 </p>
               </div>
             ))}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-champagne-mid/50 space-y-2">
-            <div className="flex justify-between text-[12px] font-body text-text-secondary">
+          <div className="mt-4 pt-4 border-t border-line/50 space-y-2">
+            <div className="flex justify-between text-[12px] font-body text-ink-soft">
               <span>Ara Toplam</span>
               <span>{formatPrice(subtotal)}</span>
             </div>
@@ -534,13 +534,13 @@ export default function OdemePage() {
                 <span>-{formatPrice(appliedDiscount.amount)}</span>
               </div>
             )}
-            <div className="flex justify-between text-[12px] font-body text-text-secondary">
+            <div className="flex justify-between text-[12px] font-body text-ink-soft">
               <span>Kargo</span>
               <span>
                 {shipping === 0 ? 'Ücretsiz' : formatPrice(shipping)}
               </span>
             </div>
-            <div className="flex justify-between text-[14px] font-body text-gold font-medium pt-2 border-t border-champagne-mid/50">
+            <div className="flex justify-between text-[14px] font-body text-accent font-medium pt-2 border-t border-line/50">
               <span>Toplam</span>
               <span>{formatPrice(total)}</span>
             </div>

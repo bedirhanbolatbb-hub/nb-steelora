@@ -49,7 +49,7 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
       <div className="space-y-3">
         {/* Ana görsel */}
         <div
-          className="relative aspect-[3/4] bg-champagne-dark overflow-hidden cursor-zoom-in group"
+          className="relative aspect-[3/4] bg-surface-muted overflow-hidden cursor-zoom-in group"
           onClick={() => hasImages && setLightboxOpen(true)}
         >
           <ProductImage
@@ -69,8 +69,8 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
                 key={i}
                 onClick={() => setActiveIndex(i)}
                 className={cn(
-                  'relative w-16 h-20 shrink-0 bg-champagne-dark overflow-hidden border-2 transition-colors',
-                  i === activeIndex ? 'border-gold' : 'border-transparent'
+                  'relative w-16 h-20 shrink-0 bg-surface-muted overflow-hidden border-2 transition-colors',
+                  i === activeIndex ? 'border-accent' : 'border-transparent'
                 )}
               >
                 <Image
@@ -89,14 +89,14 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
       {/* Lightbox */}
       {lightboxOpen && currentImage && (
         <div
-          className="fixed inset-0 z-[100] bg-dark/95 flex items-center justify-center"
+          className="fixed inset-0 z-[100] bg-ink/95 flex items-center justify-center"
           onClick={() => setLightboxOpen(false)}
           role="dialog"
           aria-modal="true"
         >
           <button
             onClick={() => setLightboxOpen(false)}
-            className="absolute top-6 right-6 text-champagne hover:text-gold transition-colors"
+            className="absolute top-6 right-6 text-bg hover:text-accent transition-colors"
             aria-label="Kapat"
           >
             <X size={24} />
@@ -106,14 +106,14 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); goTo(activeIndex - 1) }}
-                className="absolute left-4 text-champagne hover:text-gold transition-colors"
+                className="absolute left-4 text-bg hover:text-accent transition-colors"
                 aria-label="Önceki"
               >
                 <ChevronLeft size={32} />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); goTo(activeIndex + 1) }}
-                className="absolute right-4 text-champagne hover:text-gold transition-colors"
+                className="absolute right-4 text-bg hover:text-accent transition-colors"
                 aria-label="Sonraki"
               >
                 <ChevronRight size={32} />

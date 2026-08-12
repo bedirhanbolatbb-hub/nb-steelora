@@ -25,7 +25,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       {/* Overlay */}
       <div
         className={cn(
-          'fixed inset-0 bg-dark/50 z-50 transition-opacity duration-300',
+          'fixed inset-0 bg-ink/50 z-50 transition-opacity duration-300',
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
         onClick={onClose}
@@ -34,18 +34,18 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       {/* Drawer */}
       <div
         className={cn(
-          'fixed top-0 right-0 h-full w-full max-w-md bg-champagne z-50 transform transition-transform duration-300 flex flex-col',
+          'fixed top-0 right-0 h-full w-full max-w-md bg-bg z-50 transform transition-transform duration-300 flex flex-col',
           isOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-champagne-mid">
-          <h2 className="font-heading text-[20px] text-text-primary">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-line">
+          <h2 className="font-heading text-[20px] text-ink">
             Sepetiniz ({items.length})
           </h2>
           <button
             onClick={onClose}
-            className="text-text-secondary hover:text-gold transition-colors"
+            className="text-ink-soft hover:text-accent transition-colors"
             aria-label="Kapat"
           >
             <X size={20} />
@@ -62,9 +62,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 return (
                   <div
                     key={item.product.id}
-                    className="flex gap-4 pb-4 border-b border-champagne-mid/50"
+                    className="flex gap-4 pb-4 border-b border-line/50"
                   >
-                    <div className="relative w-20 h-24 bg-champagne-dark shrink-0">
+                    <div className="relative w-20 h-24 bg-surface-muted shrink-0">
                       <Image
                         src={imageUrl}
                         alt={item.product.display_title}
@@ -74,22 +74,22 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-heading text-[14px] text-text-primary truncate">
+                      <h3 className="font-heading text-[14px] text-ink truncate">
                         {item.product.display_title}
                       </h3>
-                      <p className="text-[11px] text-text-muted font-body mt-0.5">
+                      <p className="text-[11px] text-muted font-body mt-0.5">
                         {item.product.trendyol_category}
                       </p>
-                      <p className="text-[13px] text-gold font-body font-medium mt-1">
+                      <p className="text-[13px] text-accent font-body font-medium mt-1">
                         {formatPrice(item.product.display_price)}
                       </p>
                       <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center border border-champagne-mid">
+                        <div className="flex items-center border border-line">
                           <button
                             onClick={() =>
                               updateQuantity(item.product.id, item.quantity - 1)
                             }
-                            className="w-7 h-7 flex items-center justify-center text-text-secondary hover:text-gold transition-colors"
+                            className="w-7 h-7 flex items-center justify-center text-ink-soft hover:text-accent transition-colors"
                             aria-label="Azalt"
                           >
                             <Minus size={12} />
@@ -101,7 +101,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             onClick={() =>
                               updateQuantity(item.product.id, item.quantity + 1)
                             }
-                            className="w-7 h-7 flex items-center justify-center text-text-secondary hover:text-gold transition-colors"
+                            className="w-7 h-7 flex items-center justify-center text-ink-soft hover:text-accent transition-colors"
                             aria-label="Artır"
                           >
                             <Plus size={12} />
@@ -109,7 +109,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         </div>
                         <button
                           onClick={() => removeItem(item.product.id)}
-                          className="text-text-muted hover:text-red-600 transition-colors"
+                          className="text-muted hover:text-red-600 transition-colors"
                           aria-label="Kaldır"
                         >
                           <Trash2 size={14} />
@@ -122,8 +122,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             </div>
 
             {/* Kargo bilgisi */}
-            <div className="px-6 py-3 bg-champagne-dark/50 text-center">
-              <p className="text-[10px] font-body text-text-muted tracking-wider uppercase">
+            <div className="px-6 py-3 bg-surface-muted/50 text-center">
+              <p className="text-[10px] font-body text-muted tracking-wider uppercase">
                 {qualifiesForFreeShipping(subtotal)
                   ? '✓ Ücretsiz kargo'
                   : `${FREE_SHIPPING_LABEL} · Kargo: ${formatPrice(shipping)}`}
@@ -131,25 +131,25 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             </div>
 
             {/* Alt kısım */}
-            <div className="px-6 py-5 border-t border-champagne-mid">
+            <div className="px-6 py-5 border-t border-line">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-[12px] font-body text-text-secondary uppercase tracking-wider">
+                <span className="text-[12px] font-body text-ink-soft uppercase tracking-wider">
                   Ara Toplam
                 </span>
-                <span className="text-[16px] font-body text-gold font-medium">
+                <span className="text-[16px] font-body text-accent font-medium">
                   {formatPrice(subtotal)}
                 </span>
               </div>
               <Link
                 href="/odeme"
                 onClick={onClose}
-                className="block w-full py-3.5 bg-gold text-white text-center text-[11px] uppercase tracking-[0.15em] font-body hover:bg-gold-light transition-colors"
+                className="block w-full py-3.5 bg-accent text-white text-center text-[11px] uppercase tracking-[0.15em] font-body hover:bg-accent-deep transition-colors"
               >
                 Ödemeye Geç
               </Link>
               <button
                 onClick={onClose}
-                className="w-full mt-2 py-2 border border-text-primary/30 text-text-primary text-[11px] uppercase tracking-[0.15em] font-body hover:border-text-primary transition-colors text-center"
+                className="w-full mt-2 py-2 border border-ink/30 text-ink text-[11px] uppercase tracking-[0.15em] font-body hover:border-ink transition-colors text-center"
               >
                 Alışverişe Devam Et
               </button>
@@ -157,8 +157,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center px-6">
-            <ShoppingBag size={48} className="text-champagne-mid mb-4" />
-            <p className="text-[13px] font-body text-text-muted">Sepetiniz boş</p>
+            <ShoppingBag size={48} className="text-line mb-4" />
+            <p className="text-[13px] font-body text-muted">Sepetiniz boş</p>
             <Button variant="outline" className="mt-6" onClick={onClose}>
               Alışverişe Başla
             </Button>

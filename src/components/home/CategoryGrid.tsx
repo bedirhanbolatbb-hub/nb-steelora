@@ -79,12 +79,12 @@ export default async function CategoryGrid() {
           const imageUrl = categoryImages[cat.slug]
           return (
             <Link key={cat.slug} href={`/kategori/${cat.slug}`} className="group">
-              <div className="aspect-square bg-champagne-dark relative overflow-hidden transition-transform duration-500 group-hover:-translate-y-2">
+              <div className="aspect-square bg-surface-muted relative overflow-hidden transition-transform duration-500 group-hover:-translate-y-2">
                 {imageUrl ? (
                   <Image src={imageUrl} alt={cat.name} fill className="object-cover" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw" />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-text-muted/30 text-[10px] font-body tracking-wider uppercase">{cat.name}</span>
+                    <span className="text-muted/30 text-[10px] font-body tracking-wider uppercase">{cat.name}</span>
                   </div>
                 )}
                 {/* Etiketin okunurluğu için alttan koyu gradyan */}

@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export default function BrandBanner() {
   return (
-    <section className="bg-champagne-dark">
+    <section className="bg-surface-muted">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-20 flex flex-col lg:flex-row items-center gap-10 lg:gap-20">
         {/* Sol: Marka çekimi (saten kare, statik asset) */}
         <div className="w-full lg:w-1/2 aspect-[4/3] relative overflow-hidden rounded-[4px] border border-line">
@@ -24,7 +24,7 @@ export default function BrandBanner() {
             <br />
             hediye paketi
           </h2>
-          <p className="text-[13px] font-body text-text-secondary mt-4 leading-relaxed max-w-md mx-auto lg:mx-0">
+          <p className="text-[13px] font-body text-ink-soft mt-4 leading-relaxed max-w-md mx-auto lg:mx-0">
             Her sipariş için ücretsiz premium hediye kutusu ile sevdiklerinizi mutlu edin.
           </p>
           <Link

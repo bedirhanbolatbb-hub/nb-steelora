@@ -50,8 +50,8 @@ export default async function HomePage() {
       <Hero />
 
       {c.promo_bar_text && (
-        <div className="bg-champagne-mid border-b border-champagne-dark py-2.5 px-8 text-center">
-          <p className="text-[11px] font-body text-text-primary uppercase tracking-[0.15em]">
+        <div className="bg-line border-b border-surface-muted py-2.5 px-8 text-center">
+          <p className="text-[11px] font-body text-ink uppercase tracking-[0.15em]">
             {c.promo_bar_emoji && <span className="mr-2">{c.promo_bar_emoji}</span>}
             {c.promo_bar_text}
           </p>
@@ -60,7 +60,7 @@ export default async function HomePage() {
 
       {activeCampaign && (
         <div
-          className="border-y border-gold/20 py-5 px-8 text-center"
+          className="border-y border-accent/20 py-5 px-8 text-center"
           style={{ background: activeCampaign.banner_color ? activeCampaign.banner_color : 'linear-gradient(135deg, #2A1E1E 0%, #4A2828 50%, #2A1E1E 100%)' }}
         >
           <p className="font-heading text-[24px] text-white font-light mb-1">
@@ -122,7 +122,7 @@ export default async function HomePage() {
       {/* Neden NB Steelora — metinler mevcut site içeriğinden derlendi:
           316L ifadesi Hero açıklamasından, kargo eşiği sepet/hakkımızda sayfasından,
           iade süresi hakkımızda sayfasından, hediye paketi BrandBanner'dan. */}
-      <section className="bg-champagne-dark py-16">
+      <section className="bg-surface-muted py-16">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
           <div className="text-center mb-10">
             <p className="eyebrow">Neden NB Steelora</p>
@@ -142,7 +142,7 @@ export default async function HomePage() {
                 <h3 className="text-[11px] font-body font-semibold uppercase tracking-[0.15em] text-ink">
                   {item.title}
                 </h3>
-                <p className="text-[13px] font-body text-text-secondary leading-relaxed">
+                <p className="text-[13px] font-body text-ink-soft leading-relaxed">
                   {item.text}
                 </p>
               </div>

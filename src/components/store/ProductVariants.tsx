@@ -46,7 +46,7 @@ export default async function ProductVariants({ product }: Props) {
 
   return (
     <div className="mt-6">
-      <p className="text-[10px] uppercase tracking-[0.2em] font-body text-text-muted mb-3">
+      <p className="text-[10px] uppercase tracking-[0.2em] font-body text-muted mb-3">
         Diğer seçenekler ({members.length})
       </p>
 
@@ -62,8 +62,8 @@ export default async function ProductVariants({ product }: Props) {
                 aria-current={isCurrent ? 'page' : undefined}
                 className={`px-3 py-1.5 text-[12px] font-body border transition-colors ${
                   isCurrent
-                    ? 'border-gold text-gold'
-                    : 'border-champagne-mid text-text-secondary hover:border-gold hover:text-gold'
+                    ? 'border-accent text-accent'
+                    : 'border-line text-ink-soft hover:border-accent hover:text-accent'
                 } ${outOfStock ? 'opacity-40' : ''}`}
               >
                 {member.variant_label}
@@ -84,8 +84,8 @@ export default async function ProductVariants({ product }: Props) {
                 href={`/urun/${member.slug}`}
                 aria-current={isCurrent ? 'page' : undefined}
                 title={normalizeTitle(member.display_title) ? member.display_title : undefined}
-                className={`relative w-16 h-20 shrink-0 bg-champagne-dark overflow-hidden border-2 transition-colors ${
-                  isCurrent ? 'border-gold' : 'border-transparent hover:border-champagne-mid'
+                className={`relative w-16 h-20 shrink-0 bg-surface-muted overflow-hidden border-2 transition-colors ${
+                  isCurrent ? 'border-accent' : 'border-transparent hover:border-line'
                 }`}
               >
                 {image && (
@@ -98,7 +98,7 @@ export default async function ProductVariants({ product }: Props) {
                   />
                 )}
                 {outOfStock && (
-                  <span className="absolute inset-x-0 bottom-0 bg-dark/70 text-champagne text-[8px] text-center py-0.5 font-body">
+                  <span className="absolute inset-x-0 bottom-0 bg-ink/70 text-bg text-[8px] text-center py-0.5 font-body">
                     Tükendi
                   </span>
                 )}

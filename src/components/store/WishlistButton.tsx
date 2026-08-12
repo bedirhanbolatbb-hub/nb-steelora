@@ -19,8 +19,8 @@ export default function WishlistButton({ productId }: { productId: string }) {
       <svg
         className={`w-5 h-5 transition-colors ${
           inWishlist
-            ? 'fill-gold stroke-gold'
-            : 'fill-none stroke-text-muted hover:stroke-gold'
+            ? 'fill-accent stroke-accent'
+            : 'fill-none stroke-text-muted hover:stroke-accent'
         }`}
         viewBox="0 0 24 24"
         strokeWidth={1.5}

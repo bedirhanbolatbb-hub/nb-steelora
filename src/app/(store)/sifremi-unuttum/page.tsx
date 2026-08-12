@@ -28,15 +28,15 @@ export default function SifremiUnuttumPage() {
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center">
           <div className="text-4xl mb-6">✉️</div>
-          <h1 className="font-heading text-[28px] font-light text-text-primary mb-4">
+          <h1 className="font-heading text-[28px] font-light text-ink mb-4">
             E-posta Gönderildi
           </h1>
-          <p className="text-[13px] font-body text-text-secondary mb-6">
+          <p className="text-[13px] font-body text-ink-soft mb-6">
             Şifre sıfırlama linki <strong>{email}</strong> adresine gönderildi.
           </p>
           <Link
             href="/giris"
-            className="text-gold hover:text-gold-light text-[12px] font-body transition-colors"
+            className="text-accent hover:text-accent-deep text-[12px] font-body transition-colors"
           >
             Giriş sayfasına dön
           </Link>
@@ -48,11 +48,11 @@ export default function SifremiUnuttumPage() {
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
       <div className="max-w-md w-full">
-        <h1 className="font-heading text-[36px] font-light text-text-primary mb-2 text-center">
+        <h1 className="font-heading text-[36px] font-light text-ink mb-2 text-center">
           Şifremi Unuttum
         </h1>
-        <div className="w-16 h-px bg-gold mx-auto mb-10" />
-        <p className="text-[13px] font-body text-text-secondary text-center mb-6">
+        <div className="w-16 h-px bg-accent mx-auto mb-10" />
+        <p className="text-[13px] font-body text-ink-soft text-center mb-6">
           E-posta adresinizi girin, şifre sıfırlama linki gönderelim.
         </p>
 
@@ -68,7 +68,7 @@ export default function SifremiUnuttumPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-dark text-champagne font-body text-[12px] tracking-[0.15em] uppercase hover:bg-gold transition-colors disabled:opacity-50"
+            className="w-full py-4 bg-ink text-bg font-body text-[12px] tracking-[0.15em] uppercase hover:bg-accent transition-colors disabled:opacity-50"
           >
             {loading ? 'Gönderiliyor...' : 'Link Gönder'}
           </button>
@@ -76,7 +76,7 @@ export default function SifremiUnuttumPage() {
           <p className="text-center text-[13px] font-body">
             <Link
               href="/giris"
-              className="text-gold hover:text-gold-light transition-colors"
+              className="text-accent hover:text-accent-deep transition-colors"
             >
               Giriş sayfasına dön
             </Link>

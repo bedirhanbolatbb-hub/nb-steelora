@@ -60,16 +60,16 @@ export default function KayitPage() {
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center">
           <div className="text-4xl mb-6">✉️</div>
-          <h1 className="font-heading text-[28px] font-light text-text-primary mb-4">
+          <h1 className="font-heading text-[28px] font-light text-ink mb-4">
             E-postanızı Doğrulayın
           </h1>
-          <p className="text-[13px] font-body text-text-secondary mb-6">
+          <p className="text-[13px] font-body text-ink-soft mb-6">
             <strong>{form.email}</strong> adresine doğrulama linki gönderdik.
             Lütfen e-postanızı kontrol edin.
           </p>
           <Link
             href="/giris"
-            className="text-gold hover:text-gold-light text-[12px] font-body transition-colors"
+            className="text-accent hover:text-accent-deep text-[12px] font-body transition-colors"
           >
             Giriş sayfasına dön
           </Link>
@@ -81,10 +81,10 @@ export default function KayitPage() {
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
       <div className="max-w-md w-full">
-        <h1 className="font-heading text-[36px] font-light text-text-primary mb-2 text-center">
+        <h1 className="font-heading text-[36px] font-light text-ink mb-2 text-center">
           Üye Ol
         </h1>
-        <div className="w-16 h-px bg-gold mx-auto mb-10" />
+        <div className="w-16 h-px bg-accent mx-auto mb-10" />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -123,16 +123,16 @@ export default function KayitPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-text-primary text-white font-body text-[12px] tracking-[0.15em] uppercase hover:bg-gold transition-colors disabled:opacity-50"
+            className="w-full py-4 bg-ink text-white font-body text-[12px] tracking-[0.15em] uppercase hover:bg-accent transition-colors disabled:opacity-50"
           >
             {loading ? 'Kaydediliyor...' : 'Üye Ol'}
           </button>
 
-          <p className="text-center text-[13px] font-body text-text-secondary">
+          <p className="text-center text-[13px] font-body text-ink-soft">
             Zaten üye misiniz?{' '}
             <Link
               href="/giris"
-              className="text-gold hover:text-gold-light transition-colors"
+              className="text-accent hover:text-accent-deep transition-colors"
             >
               Giriş yapın
             </Link>

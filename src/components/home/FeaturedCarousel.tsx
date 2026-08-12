@@ -151,10 +151,10 @@ export default function FeaturedCarousel({ products }: { products: Product[] }) 
         onClick={() => navigate(-1)}
         aria-label="Önceki"
         className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10
-          w-10 h-10 bg-white/90 border border-champagne-mid shadow-sm
+          w-10 h-10 bg-white/90 border border-line shadow-sm
           flex items-center justify-center
           opacity-0 group-hover:opacity-100 transition-opacity duration-200
-          hover:bg-gold hover:text-white hover:border-gold"
+          hover:bg-accent hover:text-white hover:border-accent"
       >
         <span className="text-[14px] font-body">‹</span>
       </button>
@@ -164,10 +164,10 @@ export default function FeaturedCarousel({ products }: { products: Product[] }) 
         onClick={() => navigate(1)}
         aria-label="Sonraki"
         className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10
-          w-10 h-10 bg-white/90 border border-champagne-mid shadow-sm
+          w-10 h-10 bg-white/90 border border-line shadow-sm
           flex items-center justify-center
           opacity-0 group-hover:opacity-100 transition-opacity duration-200
-          hover:bg-gold hover:text-white hover:border-gold"
+          hover:bg-accent hover:text-white hover:border-accent"
       >
         <span className="text-[14px] font-body">›</span>
       </button>

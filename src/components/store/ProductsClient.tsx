@@ -75,18 +75,18 @@ function ProductsInner({
       {hasFilters && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body">
+            <span className="text-[10px] uppercase tracking-[0.15em] text-muted font-body">
               Aktif Filtreler
             </span>
             <button
               onClick={() => router.push(pathname)}
-              className="text-[10px] text-gold hover:text-gold-light font-body transition-colors"
+              className="text-[10px] text-accent hover:text-accent-deep font-body transition-colors"
             >
               Temizle
             </button>
           </div>
           {currentParams.kategori && (
-            <span className="inline-flex items-center gap-1 bg-champagne-dark px-2 py-1 text-[11px] font-body text-text-primary mr-2 mb-2">
+            <span className="inline-flex items-center gap-1 bg-surface-muted px-2 py-1 text-[11px] font-body text-ink mr-2 mb-2">
               {currentParams.kategori}
               <button
                 onClick={() => updateParams({ kategori: '' })}
@@ -101,7 +101,7 @@ function ProductsInner({
 
       {/* Categories */}
       <div className="mb-8">
-        <h3 className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-4">
+        <h3 className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-4">
           Kategori
         </h3>
         <div className="space-y-2">
@@ -109,8 +109,8 @@ function ProductsInner({
             onClick={() => updateParams({ kategori: '' })}
             className={`block text-[12px] font-body w-full text-left py-1 transition-colors ${
               !currentParams.kategori
-                ? 'text-text-primary font-medium'
-                : 'text-text-secondary hover:text-text-primary'
+                ? 'text-ink font-medium'
+                : 'text-ink-soft hover:text-ink'
             }`}
           >
             Tümü
@@ -121,8 +121,8 @@ function ProductsInner({
               onClick={() => updateParams({ kategori: cat })}
               className={`block text-[12px] font-body w-full text-left py-1 transition-colors ${
                 currentParams.kategori === cat
-                  ? 'text-gold font-medium'
-                  : 'text-text-secondary hover:text-text-primary'
+                  ? 'text-accent font-medium'
+                  : 'text-ink-soft hover:text-ink'
               }`}
             >
               {cat}
@@ -133,7 +133,7 @@ function ProductsInner({
 
       {/* Price range */}
       <div className="mb-8">
-        <h3 className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-4">
+        <h3 className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-4">
           Fiyat Aralığı
         </h3>
         <div className="space-y-2">
@@ -152,8 +152,8 @@ function ProductsInner({
                 }
                 className={`block text-[12px] font-body w-full text-left py-1 transition-colors ${
                   isActive
-                    ? 'text-gold font-medium'
-                    : 'text-text-secondary hover:text-text-primary'
+                    ? 'text-accent font-medium'
+                    : 'text-ink-soft hover:text-ink'
                 }`}
               >
                 {range.label}
@@ -165,15 +165,15 @@ function ProductsInner({
 
       {/* Stock filter */}
       <div className="mb-8">
-        <h3 className="text-[10px] uppercase tracking-[0.15em] text-text-muted font-body mb-4">
+        <h3 className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-4">
           Stok
         </h3>
-        <label className="flex items-center gap-2 text-[12px] font-body text-text-secondary cursor-pointer hover:text-text-primary">
+        <label className="flex items-center gap-2 text-[12px] font-body text-ink-soft cursor-pointer hover:text-ink">
           <input
             type="checkbox"
             checked={currentParams.stok === '1'}
             onChange={(e) => updateParams({ stok: e.target.checked ? '1' : '' })}
-            className="accent-gold"
+            className="accent-accent"
           />
           Sadece stokta olanlar
         </label>
@@ -186,10 +186,10 @@ function ProductsInner({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
         <div>
-          <h1 className="font-heading text-[36px] font-light text-text-primary">
+          <h1 className="font-heading text-[36px] font-light text-ink">
             {title}
           </h1>
-          <p className="text-text-muted text-[12px] font-body mt-1">
+          <p className="text-muted text-[12px] font-body mt-1">
             {total} ürün
           </p>
         </div>
@@ -198,7 +198,7 @@ function ProductsInner({
           {/* Mobil filtre girişi — masaüstünde kenar çubuğu zaten görünür */}
           <button
             onClick={() => setFiltersOpen(true)}
-            className="lg:hidden flex items-center gap-2 px-4 py-2 border border-champagne-mid bg-white font-body text-[12px] text-text-primary hover:border-gold transition-colors"
+            className="lg:hidden flex items-center gap-2 px-4 py-2 border border-line bg-white font-body text-[12px] text-ink hover:border-accent transition-colors"
           >
             <SlidersHorizontal size={14} />
             Filtrele
@@ -208,7 +208,7 @@ function ProductsInner({
             aria-label="Sıralama"
             value={currentParams.siralama || ''}
             onChange={(e) => updateParams({ siralama: e.target.value })}
-            className="w-full sm:w-auto px-4 py-2 border border-champagne-mid bg-white font-body text-[12px] text-text-primary focus:border-gold focus:outline-none transition-colors"
+            className="w-full sm:w-auto px-4 py-2 border border-line bg-white font-body text-[12px] text-ink focus:border-accent focus:outline-none transition-colors"
           >
             {SIRALAMA_SECENEKLERI.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -226,8 +226,8 @@ function ProductsInner({
             onClick={() => updateParams({ tip: '' })}
             className={`px-3 py-1.5 text-[11px] font-body border transition-colors ${
               !currentParams.tip
-                ? 'border-gold text-gold'
-                : 'border-champagne-mid text-text-secondary hover:text-text-primary'
+                ? 'border-accent text-accent'
+                : 'border-line text-ink-soft hover:text-ink'
             }`}
           >
             Tümü
@@ -238,8 +238,8 @@ function ProductsInner({
               onClick={() => updateParams({ tip: currentParams.tip === chip.value ? '' : chip.value })}
               className={`px-3 py-1.5 text-[11px] font-body border transition-colors ${
                 currentParams.tip === chip.value
-                  ? 'border-gold text-gold'
-                  : 'border-champagne-mid text-text-secondary hover:text-text-primary'
+                  ? 'border-accent text-accent'
+                  : 'border-line text-ink-soft hover:text-ink'
               }`}
             >
               {chip.label}
@@ -251,15 +251,15 @@ function ProductsInner({
       {/* Mobil filtre sheet — masaüstü kenar çubuğuyla aynı filtreler */}
       {filtersOpen && (
         <div className="fixed inset-0 z-[70] lg:hidden" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-dark/50" onClick={() => setFiltersOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] overflow-y-auto bg-champagne border-t border-champagne-mid p-6">
+          <div className="absolute inset-0 bg-ink/50" onClick={() => setFiltersOpen(false)} />
+          <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] overflow-y-auto bg-bg border-t border-line p-6">
             <div className="flex items-center justify-between mb-6">
-              <span className="text-[11px] uppercase tracking-[0.15em] font-body text-text-primary">
+              <span className="text-[11px] uppercase tracking-[0.15em] font-body text-ink">
                 Filtreler
               </span>
               <button
                 onClick={() => setFiltersOpen(false)}
-                className="text-text-muted hover:text-text-primary transition-colors"
+                className="text-muted hover:text-ink transition-colors"
                 aria-label="Kapat"
               >
                 <X size={18} />
@@ -268,7 +268,7 @@ function ProductsInner({
             {filterPanel}
             <button
               onClick={() => setFiltersOpen(false)}
-              className="w-full py-3 bg-gold text-white text-[11px] uppercase tracking-[0.15em] font-body hover:bg-gold-light transition-colors"
+              className="w-full py-3 bg-accent text-white text-[11px] uppercase tracking-[0.15em] font-body hover:bg-accent-deep transition-colors"
             >
               {total} ürünü göster
             </button>
@@ -284,12 +284,12 @@ function ProductsInner({
         <div className="flex-1">
           {cards.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-text-muted font-body text-[13px] mb-4">
+              <p className="text-muted font-body text-[13px] mb-4">
                 Bu kriterlere uygun ürün bulunamadı.
               </p>
               <button
                 onClick={() => router.push(pathname)}
-                className="text-[12px] font-body text-gold hover:text-gold-light transition-colors"
+                className="text-[12px] font-body text-accent hover:text-accent-deep transition-colors"
               >
                 Filtreleri temizle
               </button>
@@ -321,8 +321,8 @@ function ProductsInner({
                         }}
                         className={`w-10 h-10 text-[12px] font-body transition-colors ${
                           page === currentPage
-                            ? 'bg-dark text-champagne'
-                            : 'bg-champagne-dark text-text-primary hover:bg-dark hover:text-champagne'
+                            ? 'bg-ink text-bg'
+                            : 'bg-surface-muted text-ink hover:bg-ink hover:text-bg'
                         }`}
                       >
                         {page}

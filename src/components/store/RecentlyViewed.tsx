@@ -32,8 +32,8 @@ export default function RecentlyViewed({ currentSlug }: { currentSlug: string })
   if (products.length === 0) return null
 
   return (
-    <div className="mt-16 pt-16 border-t border-champagne-mid">
-      <h2 className="font-heading text-[28px] font-light text-text-primary mb-8">
+    <div className="mt-16 pt-16 border-t border-line">
+      <h2 className="font-heading text-[28px] font-light text-ink mb-8">
         Son Görüntüledikleriniz
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
