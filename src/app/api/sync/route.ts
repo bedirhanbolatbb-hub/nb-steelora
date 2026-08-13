@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import {
   CHUNK_PAGES,
   closeStaleRuns,
@@ -48,11 +48,33 @@ async function runChunk(body: any, options: { selfTrigger: boolean }) {
     runStartedAt = start.runStartedAt
   }
 
-  const chunk = await processChunk({ supabase, runId, runStartedAt, startPage })
+  // Cron zincirinde iş, yanıt gönderildikten SONRA yapılır: çağıran beklemez,
+  // her halka kendi 60 sn'lik penceresinde tek sayfa işler.
+  if (options.selfTrigger) {
+    const id = runId
+    const startedAt = runStartedAt
+    after(async () => {
+      try {
+        const chunk = await processChunk({ supabase, runId: id, runStartedAt: startedAt, startPage })
+        if (!chunk.done && chunk.nextPage !== null) {
+          await triggerNextChunk(id, startedAt, chunk.nextPage)
+        }
+      } catch (error: any) {
+        console.error('[sync] zincir halkası hata verdi:', error?.message)
+      }
+    })
 
-  if (!chunk.done && chunk.nextPage !== null && options.selfTrigger) {
-    await triggerNextChunk(runId, runStartedAt, chunk.nextPage)
+    return NextResponse.json({
+      accepted: true,
+      run_id: runId,
+      run_started_at: runStartedAt,
+      page: startPage,
+      chunkPages: CHUNK_PAGES,
+    })
   }
+
+  // Admin manuel koşusu: sayfaları istemci sırayla ister, sonucu bekler.
+  const chunk = await processChunk({ supabase, runId, runStartedAt, startPage })
 
   return NextResponse.json({
     run_id: runId,

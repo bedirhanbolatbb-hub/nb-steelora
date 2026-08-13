@@ -4,12 +4,13 @@ import { syncTrendyolPage } from './sync'
 /**
  * Sayfalı sync zinciri.
  *
- * Tek istek en fazla CHUNK_PAGES sayfa işler ve kalan varsa kendi ucunu yeniden
- * tetikler; böylece hiçbir istek Vercel'in 60 sn sınırına yaklaşmaz. Koşunun
+ * Her halka yanıtı HEMEN döner, işi Next'in after() kancasında yapar ve bittiğinde
+ * bir sonraki halkayı tetikler. Böylece ne çağıran beklemede kalır ne de tek bir
+ * istek Vercel'in 60 sn sınırına yaklaşır (bir sayfa ≈ 18 sn). Koşunun
  * tamamı sync_log'daki tek satırda izlenir: başlangıçta status='running',
  * bitişte 'success'/'partial' + finished_at.
  */
-export const CHUNK_PAGES = 2
+export const CHUNK_PAGES = 1
 export const PAGE_SIZE = 50
 
 /** Bu süreden taze bir 'running' koşu varken yeni koşu başlatılmaz. */
@@ -180,23 +181,28 @@ export async function processChunk(params: {
 }
 
 /**
- * Zincirin bir sonraki halkasını tetikler. Yanıtı beklemez (fire-and-forget);
- * yalnız isteğin kabul edildiğini kısa bir zaman aşımıyla doğrular.
+ * Zincirin bir sonraki halkasını tetikler.
+ *
+ * Karşı taraf yanıtı hemen döndürüp işi kendi after() kancasında yaptığı için
+ * bu istek kısa sürer. İstek iptal EDİLMEZ: AbortSignal kullanmak çağrılan
+ * isteği de iptal ediyor ve zincir ilk halkada kopuyordu.
  */
 export async function triggerNextChunk(runId: string, runStartedAt: string, page: number) {
-  const url = selfUrl('/api/sync')
   try {
-    await fetch(url, {
+    const res = await fetch(selfUrl('/api/sync'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${process.env.CRON_SECRET}`,
       },
       body: JSON.stringify({ run_id: runId, run_started_at: runStartedAt, page }),
-      signal: AbortSignal.timeout(3000),
     })
-  } catch {
+    if (!res.ok) {
+      console.error('[sync] zincir halkası reddedildi:', res.status, await res.text())
+    }
+  } catch (error: any) {
     // Zincir kopabilir; satır 'running' kalır ve STALE_RUN_MIN sonrası
     // 'failed' olarak kapanır, bir sonraki cron temiz başlar.
+    console.error('[sync] zincir tetiklenemedi:', error?.message)
   }
 }
