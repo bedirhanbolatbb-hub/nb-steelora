@@ -101,7 +101,7 @@ export async function PATCH(
     .from('orders')
     .update(updateData)
     .eq('id', id)
-    .select('order_number, guest_email')
+    .select('order_number, guest_email, items, review_invite_sent_at')
     .single()
 
   if (error) {
@@ -158,6 +158,95 @@ export async function PATCH(
       })
     } catch (emailError) {
       console.error('Shipping notification email error:', emailError)
+    }
+  }
+
+  // Teslim edildi → değerlendirme daveti. Sipariş başına yalnız bir kez:
+  // review_invite_sent_at doluysa tekrar gönderilmez. Mail hatası durum
+  // geçişini engellemez (kargo bildirimiyle aynı desen).
+  if (body.status === 'delivered' && order?.guest_email && !order.review_invite_sent_at) {
+    try {
+      const items = Array.isArray(order.items) ? (order.items as any[]) : []
+      const productIds = items.map((i) => i?.productId).filter(Boolean)
+
+      let productRows: any[] = []
+      if (productIds.length > 0) {
+        const { data } = await serviceClient
+          .from('products_display')
+          .select('id, slug, display_title, display_images')
+          .in('id', productIds)
+        productRows = data || []
+      }
+
+      const productBlocks = productRows
+        .map((product) => {
+          const image = (product.display_images as string[] | null)?.[0]
+          const url = `https://www.nbsteelora.com/urun/${product.slug}#yorum`
+          return `
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #F0E8E0;" width="64">
+          ${image ? `<img src="${image}" width="56" height="56" alt="" style="display:block; width:56px; height:56px; object-fit:cover; border:1px solid #E8D8D0;">` : ''}
+        </td>
+        <td style="padding: 12px 12px; border-bottom: 1px solid #F0E8E0; font-size: 14px;">
+          ${product.display_title}
+        </td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #F0E8E0; text-align: right;">
+          <a href="${url}" style="color: #8C6D33; font-size: 12px; text-decoration: underline;">Değerlendir</a>
+        </td>
+      </tr>`
+        })
+        .join('')
+
+      const { Resend } = await import('resend')
+      const resend = new Resend(process.env.RESEND_API_KEY)
+
+      const result = await resend.emails.send({
+        from: 'NB Steelora <onboarding@resend.dev>',
+        to: order.guest_email,
+        subject: `Siparişiniz Teslim Edildi — ${order.order_number}`,
+        html: `<!DOCTYPE html>
+<html>
+<body style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #2A1E1E;">
+  <div style="text-align: center; padding: 30px 0; border-bottom: 1px solid #E8D8D0;">
+    <h1 style="letter-spacing: 0.3em; font-size: 20px; font-weight: 400; margin: 0;">NB STEELORA</h1>
+    <p style="font-size: 11px; color: #C89080; letter-spacing: 0.2em; margin: 5px 0 0;">FINE JEWELLERY</p>
+  </div>
+  <div style="padding: 40px 0;">
+    <h2 style="font-size: 24px; font-weight: 300; margin-bottom: 8px;">Siparişiniz Teslim Edildi</h2>
+    <p style="color: #7A5048; margin-bottom: 30px;">Umarız beğenirsiniz. Deneyiminizi paylaşırsanız diğer müşterilerimize yardımcı olursunuz.</p>
+    <div style="background: #FFF8F6; border: 1px solid #E8D8D0; padding: 20px; margin-bottom: 30px;">
+      <p style="margin: 0 0 8px; font-size: 12px; color: #C89080; letter-spacing: 0.1em; text-transform: uppercase;">Sipariş Numarası</p>
+      <p style="margin: 0; font-size: 16px; font-weight: 600;">${order.order_number}</p>
+    </div>
+    ${
+      productBlocks
+        ? `<h3 style="font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A5048; margin-bottom: 8px;">Ürünlerini Değerlendir</h3>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">${productBlocks}</table>`
+        : ''
+    }
+    <p style="color: #A88070; font-size: 12px; line-height: 1.8;">
+      Değerlendirmeler yayınlanmadan önce incelenir.
+    </p>
+  </div>
+  <div style="text-align: center; padding: 30px 0; border-top: 1px solid #E8D8D0; color: #A88070; font-size: 12px;">
+    <p style="margin: 0 0 8px;">Sorularınız için <a href="mailto:info@nbsteelora.com" style="color: #C89080;">info@nbsteelora.com</a></p>
+    <p style="margin: 0;"><a href="https://wa.me/905536552020" style="color: #C89080;">WhatsApp ile yazın</a></p>
+    <p style="margin: 8px 0 0; font-size: 11px;">© 2026 NB Steelora®</p>
+  </div>
+</body>
+</html>`,
+      })
+
+      if (result.error) {
+        console.error('Review invite email error:', result.error)
+      } else {
+        await serviceClient
+          .from('orders')
+          .update({ review_invite_sent_at: new Date().toISOString() })
+          .eq('id', id)
+      }
+    } catch (emailError) {
+      console.error('Review invite email error:', emailError)
     }
   }
 

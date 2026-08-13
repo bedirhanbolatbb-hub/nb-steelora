@@ -93,7 +93,7 @@ export default function ReviewList({ productId }: { productId: string }) {
   }
 
   return (
-    <div className="mt-16 pt-16 border-t border-line">
+    <div id="yorum" className="mt-16 pt-16 border-t border-line scroll-mt-24">
       <h2 className="font-heading text-[28px] font-light text-ink mb-8">
         Müşteri <span className="italic text-accent">Yorumları</span>
       </h2>
