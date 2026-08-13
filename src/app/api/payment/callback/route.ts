@@ -1,13 +1,9 @@
 import { NextResponse } from 'next/server'
-import { Resend } from 'resend'
 import { completeThreeDS } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
 import { decreaseStock } from '@/lib/trendyol/stockUpdate'
-import { formatPrice } from '@/lib/utils'
-
-function getResend() {
-  return new Resend(process.env.RESEND_API_KEY)
-}
+import { orderConfirmationEmail } from '@/lib/emails/templates'
+import { sendMail } from '@/lib/emails/send'
 
 function itemsFromIyzicoTransactions(transactions: unknown) {
   if (!Array.isArray(transactions)) return []
@@ -199,73 +195,10 @@ export async function POST(request: Request) {
       console.warn('[callback] stock: order.items missing or empty; cannot decrease stock', order.id)
     }
 
-    // Sipariş onay e-postası gönder
+    // Sipariş onay e-postası gönder (şablon: lib/emails/templates.ts)
     if (order?.guest_email) {
-      try {
-        const confirmationResult = await getResend().emails.send({
-          from: 'NB Steelora <siparis@nbsteelora.com>',
-          to: order.guest_email,
-          subject: `Siparişiniz Alındı — ${order.order_number}`,
-          html: `<!DOCTYPE html>
-<html>
-<body style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #2A1E1E;">
-  <div style="text-align: center; padding: 30px 0; border-bottom: 1px solid #E8D8D0;">
-    <h1 style="letter-spacing: 0.3em; font-size: 20px; font-weight: 400; margin: 0;">NB STEELORA</h1>
-    <p style="font-size: 11px; color: #C89080; letter-spacing: 0.2em; margin: 5px 0 0;">FINE JEWELLERY</p>
-  </div>
-  <div style="padding: 40px 0;">
-    <h2 style="font-size: 24px; font-weight: 300; margin-bottom: 8px;">Siparişiniz Alındı 🎁</h2>
-    <p style="color: #7A5048; margin-bottom: 30px;">Siparişiniz için teşekkür ederiz. En kısa sürede kargoya vereceğiz.</p>
-    <div style="background: #FFF8F6; border: 1px solid #E8D8D0; padding: 20px; margin-bottom: 30px;">
-      <p style="margin: 0 0 8px; font-size: 12px; color: #C89080; letter-spacing: 0.1em; text-transform: uppercase;">Sipariş Numarası</p>
-      <p style="margin: 0; font-size: 18px; font-weight: 600;">${order.order_number}</p>
-    </div>
-    <h3 style="font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A5048; margin-bottom: 16px;">Sipariş Detayları</h3>
-    ${(order.items as any[]).map((item: any) => {
-      const line = (Number(item.price) || 0) * (Number(item.quantity) || 1)
-      return `
-      <div style="padding: 12px 0; border-bottom: 1px solid #F0E8E0;">
-        <p style="margin: 0; font-size: 14px;">${item.name}</p>
-        <p style="margin: 4px 0 0; font-size: 12px; color: #7A5048;">${formatPrice(line)}</p>
-      </div>
-    `
-    }).join('')}
-    <div style="padding: 16px 0; border-top: 2px solid #E8D8D0; margin-top: 8px;">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <span style="color: #7A5048;">Kargo</span>
-        <span>${(order.shipping ?? order.shipping_cost) === 0 ? 'Ücretsiz' : formatPrice(order.shipping ?? order.shipping_cost ?? 0)}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 600; margin-top: 12px;">
-        <span>Toplam</span>
-        <span>${formatPrice(order.total)}</span>
-      </div>
-    </div>
-    <div style="margin-top: 30px; padding: 20px; background: #FFF8F6; border: 1px solid #E8D8D0;">
-      <h3 style="font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A5048; margin: 0 0 12px;">Teslimat Adresi</h3>
-      <p style="margin: 0; font-size: 14px; line-height: 1.8;">
-        ${order.shipping_address?.full_name}<br>
-        ${order.shipping_address?.address}<br>
-        ${order.shipping_address?.city}
-      </p>
-    </div>
-  </div>
-  <div style="text-align: center; padding: 30px 0; border-top: 1px solid #E8D8D0; color: #A88070; font-size: 12px;">
-    <p style="margin: 0 0 8px;">Sorularınız için: <a href="mailto:info@nbsteelora.com" style="color: #C89080;">info@nbsteelora.com</a></p>
-    <p style="margin: 0;"><a href="https://wa.me/905536552020" style="color: #C89080;">WhatsApp ile yazın</a></p>
-    <p style="margin: 16px 0 0; font-size: 11px;">© 2026 NB Steelora®. Tüm hakları saklıdır.</p>
-  </div>
-</body>
-</html>`,
-        })
-
-        // Resend hatayı fırlatmaz, yanıtta döner: kontrol edilmezse
-        // gönderilemeyen onay maili sessizce kaybolur.
-        if (confirmationResult.error) {
-          console.error('Order confirmation email rejected:', confirmationResult.error)
-        }
-      } catch (emailError) {
-        console.error('Order confirmation email error:', emailError)
-      }
+      const { subject, html } = orderConfirmationEmail(order as any)
+      await sendMail({ to: order.guest_email, subject, html, label: 'Order confirmation' })
     }
 
     return NextResponse.redirect(
