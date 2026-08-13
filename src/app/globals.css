@@ -229,9 +229,17 @@ h1, h2, h3, h4, h5, h6 {
   .gift-shine,
   .lightbox-enter,
   .lightbox-exit,
+  .skeleton,
+  .size-flash,
   .animate-marquee {
     animation: none !important;
     opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Yapışkan satın alma çubuğu animasyonsuz, doğrudan görünür olur. */
+  .sticky-buy {
+    transition: none !important;
     transform: none !important;
   }
 
@@ -344,4 +352,61 @@ html:has(:target) {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent);
+}
+
+/* ─── Faz 5A: mobil cila ─────────────────────────────────────────────────── */
+
+/* Ekran dışına park eden katmanlar (kapalı sepet çekmecesi) belgeyi birkaç
+   piksel sağa uzatıyor ve sayfa yatay kaydırılabiliyordu. clip kullanılıyor:
+   hidden'ın aksine kaydırma bağlamı YARATMAZ, yapışkan başlık çalışmaya
+   devam eder. */
+html {
+  overflow-x: clip;
+}
+
+/* Arama bekleme iskeleti — yalnız opacity anime edilir. */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 0.85; }
+}
+
+.skeleton {
+  background: var(--surface-muted);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+/* Arama sonucu görselleri yüklenene kadar boş kutu görünmesin. */
+.search-thumb {
+  opacity: 0;
+  transition: opacity 240ms ease-out;
+}
+.search-thumb[data-loaded='true'] { opacity: 1; }
+
+/* Yapışkan satın alma çubuğu — yalnız transform + opacity. */
+.sticky-buy {
+  transform: translateY(100%);
+  opacity: 0;
+  transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1), opacity 200ms ease-out;
+  pointer-events: none;
+}
+
+.sticky-buy[data-show='true'] {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Çekmece, menü veya arama açıkken çubuk hiç görünmez. */
+body[data-overlay='open'] .sticky-buy {
+  display: none;
+}
+
+/* Beden seçimine dikkat çekme — çubuktan basıldığında bir kez yanıp söner. */
+@keyframes size-flash {
+  0%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.35; }
+}
+
+.size-flash {
+  animation: size-flash 900ms ease-in-out 1;
 }

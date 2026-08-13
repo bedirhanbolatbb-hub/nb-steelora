@@ -23,7 +23,11 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
   if (members.length < 2) return null
 
   return (
-    <div className={variant === 'chips' ? 'mt-5' : 'mt-6'}>
+    <div
+      // Yapışkan çubuk bedenli üründe ilk basışta buraya kaydırıp vurguluyor.
+      id={variant === 'chips' ? 'beden-secimi' : undefined}
+      className={variant === 'chips' ? 'mt-5 scroll-mt-28' : 'mt-6'}
+    >
       <p className="text-[10px] uppercase tracking-[0.2em] font-body text-muted mb-3">
         {variant === 'chips' ? `Beden seçin (${members.length})` : `Diğer seçenekler (${members.length})`}
       </p>

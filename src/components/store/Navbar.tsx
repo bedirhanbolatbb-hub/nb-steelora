@@ -36,6 +36,17 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon }: 
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Açık katman işareti: ürün sayfasındaki yapışkan satın alma çubuğu bunu
+  // CSS ile okuyup gizleniyor (globals.css → body[data-overlay='open']).
+  useEffect(() => {
+    const open = mobileOpen || cartOpen || searchOpen
+    if (open) document.body.dataset.overlay = 'open'
+    else delete document.body.dataset.overlay
+    return () => {
+      delete document.body.dataset.overlay
+    }
+  }, [mobileOpen, cartOpen, searchOpen])
+
   return (
     <header
       className={cn(

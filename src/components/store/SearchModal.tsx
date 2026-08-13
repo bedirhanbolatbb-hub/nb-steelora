@@ -28,25 +28,38 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     }
   }, [isOpen])
 
+  // 300 ms debounce korunur (harf başına istek atmaz); ek olarak önceki istek
+  // iptal edilir — yavaş dönen eski yanıt yenisinin üstüne yazamaz.
   useEffect(() => {
     if (query.length < 2) {
       setResults([])
+      setLoading(false)
       return
     }
 
+    const controller = new AbortController()
     const timer = setTimeout(async () => {
       setLoading(true)
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+          signal: controller.signal,
+        })
         const data = await res.json()
         setResults(data)
-      } catch {
+        setLoading(false)
+      } catch (error: any) {
+        // İptal edilen istek yeni bir aramanın başladığı anlamına gelir:
+        // bekleme göstergesi açık kalmalı, sonuçlar boşaltılmamalı.
+        if (error?.name === 'AbortError') return
         setResults([])
+        setLoading(false)
       }
-      setLoading(false)
     }, 300)
 
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      controller.abort()
+    }
   }, [query])
 
   const handleProductClick = (slug: string) => {
@@ -82,17 +95,28 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         </div>
 
         {/* Results */}
-        <div className="max-h-96 overflow-y-auto">
-          {loading && (
-            <div className="p-6 text-center text-muted text-[13px] font-body">
-              Aranıyor...
+        <div className="max-h-[70vh] sm:max-h-96 overflow-y-auto">
+          {/* Bekleme: çıplak "Aranıyor..." yerine sonuç satırının iskeleti —
+              yanıt gelince satırlar yerinde belirir, liste zıplamaz. */}
+          {loading && results.length === 0 && (
+            <div aria-live="polite" aria-label="Aranıyor">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-4 p-4 border-b border-line/30 last:border-0">
+                  <div className="skeleton w-14 h-14 shrink-0 rounded-[2px]" />
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="skeleton h-3 w-3/5 rounded-[2px]" />
+                    <div className="skeleton h-2.5 w-2/5 rounded-[2px]" />
+                  </div>
+                  <div className="skeleton h-3 w-14 shrink-0 rounded-[2px]" />
+                </div>
+              ))}
             </div>
           )}
 
           {!loading && query.length >= 2 && results.length === 0 && (
-            <div className="p-6 text-center text-muted text-[13px] font-body">
-              &ldquo;{query}&rdquo; için sonuç bulunamadı
-            </div>
+            <p className="p-6 text-center text-muted text-[13px] font-body">
+              &ldquo;{query}&rdquo; için sonuç yok — başka bir kelime deneyin.
+            </p>
           )}
 
           {results.map((product) => (
@@ -101,12 +125,17 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
               onClick={() => handleProductClick(product.slug)}
               className="w-full flex items-center gap-4 p-4 hover:bg-surface-muted transition-colors text-left border-b border-line/30 last:border-0"
             >
-              <div className="w-14 h-14 bg-surface-muted shrink-0 overflow-hidden">
+              <div className="w-14 h-14 bg-surface-muted shrink-0 overflow-hidden rounded-[2px]">
                 {product.display_images?.[0] ? (
+                  // Yüklenene kadar boş kutu görünmesin: zemin dururken görsel
+                  // yerine oturunca yumuşak belirir.
                   <img
                     src={product.display_images[0]}
                     alt={product.display_title}
-                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    onLoad={(e) => e.currentTarget.setAttribute('data-loaded', 'true')}
+                    className="search-thumb w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted text-[9px] font-body">

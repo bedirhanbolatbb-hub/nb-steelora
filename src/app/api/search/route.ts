@@ -32,5 +32,10 @@ export async function GET(request: Request) {
     .slice(0, RESULT_LIMIT)
     .map((group) => ({ ...group.cover, option_count: group.optionCount }))
 
-  return NextResponse.json(results)
+  // Aynı sorgu kısa süre içinde tekrar yazıldığında (yaygın: silip yeniden
+  // yazma) yanıt kenardan döner. İçerik kişiye özel değil; stok/fiyat
+  // değişimi en geç bir dakika sonra yansır.
+  return NextResponse.json(results, {
+    headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' },
+  })
 }

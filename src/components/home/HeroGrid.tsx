@@ -67,7 +67,9 @@ export default function HeroGrid({
     return (
       <div
         id={id}
-        className={`grid grid-rows-2 grid-cols-2 gap-1 order-1 lg:order-2 min-h-[400px] lg:min-h-0 ${className}`}
+        // Mobilde metnin altında ve kısaltılmış: 400px'lik kolaj ilk ekranı tek
+        // başına dolduruyordu. Masaüstünde (lg) düzen ve yükseklik aynı.
+        className={`grid grid-rows-2 grid-cols-2 gap-1 order-2 min-h-[260px] sm:min-h-[340px] lg:min-h-0 ${className}`}
       >
         {/* Top — hero_top */}
         <div className="col-span-2 bg-surface-muted relative overflow-hidden">
@@ -115,10 +117,10 @@ export default function HeroGrid({
     image && slug ? <Link href={`/urun/${slug}`} className="absolute inset-0" aria-label="Ürüne git" /> : null
 
   return (
-    <div id={id} className={`flex flex-col gap-1 order-1 lg:order-2 ${className}`}>
-      {/* Top: full width, 2:1 */}
+    <div id={id} className={`flex flex-col gap-1 order-2 ${className}`}>
+      {/* Top: full width, 2:1 (mobilde daha alçak şerit — kırpma değişir, oran bozulmaz) */}
       <div
-        className="w-full aspect-[2/1] relative overflow-hidden bg-surface-muted"
+        className="w-full aspect-[5/2] sm:aspect-[2/1] relative overflow-hidden bg-surface-muted"
         style={{ ...base, backgroundPosition: 'center center' }}
       >
         {!image && (
@@ -131,7 +133,7 @@ export default function HeroGrid({
       {/* Bottom: two equal squares */}
       <div className="flex gap-1">
         <div
-          className="flex-1 aspect-[1/1] relative overflow-hidden bg-surface-muted"
+          className="flex-1 aspect-[4/3] sm:aspect-[1/1] relative overflow-hidden bg-surface-muted"
           style={{ ...base, backgroundPosition: 'left center' }}
         >
           {!image && (
@@ -142,7 +144,7 @@ export default function HeroGrid({
           <SlotLink />
         </div>
         <div
-          className="flex-1 aspect-[1/1] relative overflow-hidden bg-surface-muted"
+          className="flex-1 aspect-[4/3] sm:aspect-[1/1] relative overflow-hidden bg-surface-muted"
           style={{ ...base, backgroundPosition: 'right center' }}
         >
           {!image && (

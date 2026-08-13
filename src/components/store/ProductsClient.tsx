@@ -280,8 +280,11 @@ function ProductsInner({
         {/* Sidebar (masaüstü) */}
         <aside className="w-52 shrink-0 hidden lg:block">{filterPanel}</aside>
 
-        {/* Product Grid */}
-        <div className="flex-1">
+        {/* Product Grid.
+            min-w-0 şart: flex çocuğunun varsayılan min-width:auto'su, içindeki
+            en geniş satırın (sayfa numaraları) altına inmesini engelliyordu ve
+            ızgara dar ekranda 568px'te sabitlenip viewport dışına taşıyordu. */}
+        <div className="flex-1 min-w-0">
           {cards.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-muted font-body text-[13px] mb-4">
@@ -296,7 +299,7 @@ function ProductsInner({
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                 {cards.map(({ product, optionCount }, i) => (
                   <div
                     key={product.id}
@@ -312,9 +315,11 @@ function ProductsInner({
                 ))}
               </div>
 
-              {/* Pagination */}
+              {/* Pagination — flex-wrap şart: 12 sayfalık numara şeridi tek
+                  satırda 568px genişliğinde kalıyor ve dar ekranda ızgarayı
+                  viewport dışına itiyordu. */}
               {totalPages > 1 && (
-                <div className="flex justify-center gap-2 mt-12">
+                <div className="flex flex-wrap justify-center gap-2 mt-12">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                     (page) => (
                       <button

@@ -14,6 +14,7 @@ import ProductVariants from '@/components/store/ProductVariants'
 import { getVariantGroup } from '@/lib/catalog/variantGroup'
 import ProductAccordion from '@/components/store/ProductAccordion'
 import AddToCartButton from '@/components/store/AddToCartButton'
+import StickyBuyBar, { BUY_BLOCK_ID } from '@/components/store/StickyBuyBar'
 import RelatedProducts from '@/components/store/RelatedProducts'
 import ReviewList from '@/components/store/ReviewList'
 import RecentlyViewedTracker from '@/components/store/RecentlyViewedTracker'
@@ -155,8 +156,8 @@ export default async function UrunDetayPage({
             </div>
           )}
 
-          {/* Sepete ekle */}
-          <div className="mt-6">
+          {/* Sepete ekle — yapışkan çubuk bu bloğun görünürlüğünü izler */}
+          <div className="mt-6" id={BUY_BLOCK_ID}>
             <AddToCartButton
               product={mergedProduct}
               disabled={stock === 0}
@@ -281,6 +282,15 @@ export default async function UrunDetayPage({
       {/* Son Görüntülenenler */}
       <RecentlyViewedTracker slug={slug} />
       <RecentlyViewed currentSlug={slug} />
+
+      {/* Dar ekranda yapışkan satın alma çubuğu (sm altı) */}
+      <StickyBuyBar
+        product={mergedProduct}
+        title={product.display_title}
+        price={mergedProduct.custom_price ?? product.display_price}
+        outOfStock={stock === 0}
+        hasSizes={useLabels && variantMembers.length > 1}
+      />
     </div>
   )
 }

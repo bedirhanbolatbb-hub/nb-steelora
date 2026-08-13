@@ -20,11 +20,19 @@ export default function AddToCartButton({ product, disabled }: AddToCartButtonPr
     setTimeout(() => setAdded(false), 2000)
   }
 
+  // "Sepete Eklendi" onayı ink zeminde kalır: eklemeden sonra imleç butonun
+  // üstünde durduğu için hover'daki altın zemin onay hâline yapışıyordu.
+  // Altın zeminli tek büyük yüzey bilerek sepet çekmecesindeki "Ödemeye Geç".
+  // Boştaki hover rengi masaüstündeki hâliyle korunur; değişen yalnız onay hâli.
+  const tone = added
+    ? 'bg-ink text-white opacity-100'
+    : 'bg-ink text-white hover:bg-accent hover:text-white disabled:opacity-40 disabled:cursor-not-allowed'
+
   return (
     <button
       onClick={handleClick}
       disabled={disabled || added}
-      className="w-full py-4 bg-ink text-white font-body text-[12px] tracking-[0.15em] uppercase hover:bg-accent hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      className={`w-full py-4 font-body text-[12px] tracking-[0.15em] uppercase transition-colors flex items-center justify-center gap-2 ${tone}`}
     >
       {disabled ? (
         'Stok Tükendi'

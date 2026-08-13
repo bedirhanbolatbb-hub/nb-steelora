@@ -51,9 +51,11 @@ export default async function Hero({ hasMostLoved = false }: { hasMostLoved?: bo
   }
 
   return (
-    <section className="min-h-[580px] grid grid-cols-1 lg:grid-cols-2">
-      {/* Sol: İçerik */}
-      <div className="bg-surface-muted flex flex-col justify-center px-8 lg:px-16 py-16 lg:py-0 order-2 lg:order-1">
+    <section className="min-h-0 lg:min-h-[580px] grid grid-cols-1 lg:grid-cols-2">
+      {/* Sol: İçerik.
+          Mobilde metin ÖNCE gelir (order-1): görsel kolajı üstte olduğunda
+          başlık 614px'te başlıyor, birincil CTA ilk ekranın altında kalıyordu. */}
+      <div className="bg-surface-muted flex flex-col justify-center px-8 lg:px-16 py-10 sm:py-14 lg:py-0 order-1">
         {/* Giriş animasyonu saf CSS: JS beklemez, satırlar 70ms arayla yükselir */}
         <span className="eyebrow mb-6 hero-line">{c.hero_badge || 'Yeni Koleksiyon — 2026'}</span>
         <h1

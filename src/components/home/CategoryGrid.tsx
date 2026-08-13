@@ -78,15 +78,23 @@ export default async function CategoryGrid() {
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 lg:gap-6">
         {categories.map((cat, i) => {
           const imageUrl = categoryImages[cat.slug]
+          // Kategori sayısı tek olduğunda mobildeki iki kolonda son kutu yalnız
+          // kalıyordu; tam satır genişliğinde bir şeride dönüşür. object-cover
+          // olduğu için görsel esnemez, yalnız kırpma noktası değişir.
+          const isLoneLast = categories.length % 2 === 1 && i === categories.length - 1
           return (
             <Link
               key={cat.slug}
               href={`/kategori/${cat.slug}`}
-              className="group"
+              className={`group ${isLoneLast ? 'col-span-2 sm:col-span-1' : ''}`}
               data-reveal
               style={{ '--reveal-delay': `${i * 35}ms` } as React.CSSProperties}
             >
-              <div className="aspect-square bg-surface-muted relative overflow-hidden transition-transform duration-500 group-hover:-translate-y-2">
+              <div
+                className={`bg-surface-muted relative overflow-hidden transition-transform duration-500 group-hover:-translate-y-2 ${
+                  isLoneLast ? 'aspect-[2/1] sm:aspect-square' : 'aspect-square'
+                }`}
+              >
                 {imageUrl ? (
                   <Image src={imageUrl} alt={cat.name} fill className="object-cover" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 200px" quality={IMAGE_QUALITY} placeholder="blur" blurDataURL={BLUR_PLACEHOLDER} />
                 ) : (
