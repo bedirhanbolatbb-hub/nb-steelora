@@ -209,15 +209,7 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
     `Sayfa ${page} tamamlandı: +${added} eklendi, ${updated} güncellendi, ${skipped} atlandı, done=${done}`
   )
 
-  // Son sayfa ise sync log yaz
-  if (done) {
-    await supabase.from('sync_log').insert({
-      products_updated: updated,
-      products_added: added,
-      status: skipped > 0 ? 'partial' : 'success',
-      error_message: skipped > 0 ? `${skipped} varyant stok/fiyat alınamadığı için atlandı` : null,
-    })
-  }
+  // sync_log kaydını koşu sahibi tutar (lib/trendyol/syncRun.ts).
 
   return { page, added, updated, skipped, deactivated, totalPages, totalElements, done, runStartedAt: runStart }
 }

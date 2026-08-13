@@ -1,58 +1,106 @@
 import { NextResponse } from 'next/server'
-import { syncTrendyolPage } from '@/lib/trendyol/sync'
+import {
+  CHUNK_PAGES,
+  closeStaleRuns,
+  getServiceClient,
+  processChunk,
+  startRun,
+  triggerNextChunk,
+} from '@/lib/trendyol/syncRun'
 
 export const maxDuration = 60
 
-export async function POST(request: Request) {
-  const authHeader = request.headers.get('authorization')
+function isCronRequest(request: Request): boolean {
+  const secret = process.env.CRON_SECRET
+  return Boolean(secret) && request.headers.get('authorization') === `Bearer ${secret}`
+}
+
+function isAdminRequest(request: Request): boolean {
   const cookieHeader = request.headers.get('cookie') || ''
   const adminToken = cookieHeader.match(/admin_token=([^;]+)/)?.[1]
-  const cronSecret = process.env.CRON_SECRET
+  const secret = process.env.ADMIN_SECRET_TOKEN
+  return Boolean(secret) && adminToken === secret
+}
 
-  const isAuthorized =
-    authHeader === `Bearer ${cronSecret}` ||
-    adminToken === process.env.ADMIN_SECRET_TOKEN
+/**
+ * Zincirin bir halkası.
+ * - run_id yoksa yeni koşu açılır (taze bir koşu sürüyorsa atlanır).
+ * - En fazla CHUNK_PAGES sayfa işlenir; kalan varsa bir sonraki halka tetiklenir.
+ */
+async function runChunk(body: any, options: { selfTrigger: boolean }) {
+  const supabase = getServiceClient()
 
-  if (!isAuthorized) {
+  let runId: string | undefined = body?.run_id
+  let runStartedAt: string | undefined = body?.run_started_at
+  const startPage = Number(body?.page ?? 0) || 0
+
+  if (!runId || !runStartedAt) {
+    const start = await startRun(supabase)
+    if (!start.started) {
+      return NextResponse.json({
+        skipped: true,
+        reason: start.reason,
+        run_id: start.runId,
+        message: 'Taze bir sync koşusu sürüyor; bu tetikleme atlandı.',
+      })
+    }
+    runId = start.runId
+    runStartedAt = start.runStartedAt
+  }
+
+  const chunk = await processChunk({ supabase, runId, runStartedAt, startPage })
+
+  if (!chunk.done && chunk.nextPage !== null && options.selfTrigger) {
+    await triggerNextChunk(runId, runStartedAt, chunk.nextPage)
+  }
+
+  return NextResponse.json({
+    run_id: runId,
+    run_started_at: runStartedAt,
+    page: startPage,
+    pagesProcessed: chunk.pagesProcessed,
+    nextPage: chunk.nextPage,
+    done: chunk.done,
+    added: chunk.added,
+    updated: chunk.updated,
+    skipped: chunk.skipped,
+    deactivated: chunk.deactivated,
+    totalPages: chunk.totalPages,
+    totalElements: chunk.totalElements,
+    chunkPages: CHUNK_PAGES,
+  })
+}
+
+export async function POST(request: Request) {
+  const cron = isCronRequest(request)
+  if (!cron && !isAdminRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const body = await request.json().catch(() => ({}))
+
   try {
-    const body = await request.json().catch(() => ({}))
-    const page = body.page ?? 0
-    // Sayfalı çağrıda koşu başlangıcı çağırandan gelir; yoksa bu sayfa kendi
-    // damgasını kullanır (yalnız son sayfada pasife çekme yapılır).
-    const result = await syncTrendyolPage(page, 50, body.runStartedAt)
-    return NextResponse.json(result)
+    // Cron zinciri kendini tetikler; admin panelden gelen manuel koşuda
+    // sayfaları istemci sırayla ister, kendi kendine tetikleme yapılmaz.
+    return await runChunk(body, { selfTrigger: cron })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization')
-
-  // Vercel cron — sayfa 0'dan başlayıp tek seferde tamamla
-  if (authHeader === `Bearer ${process.env.CRON_SECRET}`) {
+  // Vercel cron: koşuyu başlatır, ilk parçayı işler, kalanı zincire bırakır.
+  if (isCronRequest(request)) {
     try {
-      let page = 0
-      let lastResult: any
-      let runStartedAt: string | undefined
-      while (true) {
-        lastResult = await syncTrendyolPage(page, 50, runStartedAt)
-        runStartedAt = lastResult.runStartedAt
-        if (lastResult.done) break
-        page++
-      }
-      return NextResponse.json(lastResult)
+      return await runChunk({}, { selfTrigger: true })
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
   }
 
-  // Normal GET — son sync durumunu göster
-  const { createClient } = await import('@/lib/supabase/server')
-  const supabase = await createClient()
+  // Normal GET — son sync durumu
+  const supabase = getServiceClient()
+  await closeStaleRuns(supabase)
 
   const { data: logs } = await supabase
     .from('sync_log')
@@ -63,9 +111,7 @@ export async function GET(request: Request) {
   const { count } = await supabase
     .from('products')
     .select('id', { count: 'exact', head: true })
+    .eq('is_active', true)
 
-  return NextResponse.json({
-    lastSyncs: logs,
-    totalProducts: count,
-  })
+  return NextResponse.json({ lastSyncs: logs, activeProducts: count })
 }

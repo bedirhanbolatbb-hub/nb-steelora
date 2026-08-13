@@ -313,22 +313,26 @@ export default function AdminDashboard({
   const triggerSync = async () => {
     setSyncing(true); setSyncResult(null); setSyncProgress('')
     let page = 0, totalAdded = 0, totalUpdated = 0, totalElements = 0
+    // Koşu kimliği ilk yanıtta gelir; sonraki parçalar aynı koşuya yazılır.
+    let runId: string | undefined, runStartedAt: string | undefined
     try {
       while (true) {
         setSyncProgress(`Sayfa ${page + 1} yükleniyor...`)
-        const res = await fetch('/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page }) })
+        const res = await fetch('/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page, run_id: runId, run_started_at: runStartedAt }) })
         const data = await res.json()
         if (data.error) { setSyncResult({ error: data.error }); break }
+        if (data.skipped) { setSyncResult({ error: 'Zaten süren bir sync koşusu var, birkaç dakika sonra tekrar deneyin.' }); break }
+        runId = data.run_id; runStartedAt = data.run_started_at
         totalAdded += data.added; totalUpdated += data.updated
         totalElements = data.totalElements || totalElements
-        setSyncProgress(`Sayfa ${data.page + 1}/${data.totalPages} (+${totalAdded} eklendi, ${totalUpdated} güncellendi)`)
+        setSyncProgress(`${data.pagesProcessed} sayfa işlendi (+${totalAdded} eklendi, ${totalUpdated} güncellendi)`)
         if (data.done) {
           const activeCount = totalAdded + totalUpdated
           const passiveCount = Math.max(0, localProducts.length - activeCount)
           setSyncResult({ success: true, productsAdded: totalAdded, productsUpdated: totalUpdated, activeCount, passiveCount, totalElements })
           break
         }
-        page++
+        page = data.nextPage ?? page + 1
       }
     } catch { setSyncResult({ error: 'Bağlantı hatası' }) }
     setSyncing(false)
@@ -1156,6 +1160,7 @@ export default function AdminDashboard({
         {activeTab === 'sync' && (
           <div>
             <h2 className="font-heading text-[24px] text-ink mb-6">Trendyol Sync</h2>
+            <SyncHealth logs={syncLogs} />
             <button onClick={triggerSync} disabled={syncing} className="px-6 py-3 bg-accent text-white text-[11px] uppercase tracking-wider hover:bg-accent-deep transition-colors disabled:opacity-50 mb-6">{syncing ? 'Sync yapılıyor...' : 'Manuel Sync Başlat'}</button>
             {syncing && syncProgress && <div className="p-4 mb-4 text-[12px] font-body bg-blue-50 text-blue-800">⏳ {syncProgress}</div>}
             {syncResult && <div className={`p-4 mb-6 text-[12px] font-body ${syncResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>{syncResult.success ? `✓ ${syncResult.productsAdded} ürün eklendi, ${syncResult.productsUpdated} güncellendi · ${syncResult.activeCount || 0} aktif, ${syncResult.passiveCount || 0} pasife çekildi` : `✗ Hata: ${syncResult.error}`}</div>}
@@ -1172,6 +1177,51 @@ export default function AdminDashboard({
           </div>
         )}
       </main>
+    </div>
+  )
+}
+
+
+/**
+ * Tek satırlık sync sağlık göstergesi.
+ * Son koşunun durumunu ve üzerinden geçen süreyi gösterir; koşu yarıda kalmışsa
+ * ya da uzun süredir bitmemişse kırmızı tonda uyarır.
+ */
+function SyncHealth({ logs }: { logs: any[] }) {
+  const last = logs?.[0]
+  if (!last) {
+    return (
+      <div className="mb-6 px-4 py-3 text-[12px] font-body bg-yellow-50 text-yellow-800">
+        Henüz sync koşusu kaydı yok.
+      </div>
+    )
+  }
+
+  const started = new Date(last.synced_at).getTime()
+  const minutesAgo = Math.max(0, Math.round((Date.now() - started) / 60000))
+  const running = last.status === 'running'
+  const stalled = running && minutesAgo >= 20
+  const failed = last.status === 'failed' || stalled
+
+  const durum = failed
+    ? `BAŞARISIZ (${minutesAgo} dk'dır bitmedi)`
+    : running
+      ? `çalışıyor (${last.pages_done ?? 0} sayfa)`
+      : last.status === 'partial'
+        ? 'kısmen başarılı'
+        : 'başarılı'
+
+  const tone = failed
+    ? 'bg-red-50 text-red-700 border border-red-200'
+    : running
+      ? 'bg-blue-50 text-blue-800'
+      : 'bg-green-50 text-green-800'
+
+  return (
+    <div className={`mb-6 px-4 py-3 text-[12px] font-body ${tone}`}>
+      Son sync: {minutesAgo} dk önce · {durum}
+      {last.pages_done > 0 && !running ? ` · ${last.pages_done} sayfa` : ''}
+      {last.error_message ? ` · ${last.error_message}` : ''}
     </div>
   )
 }
