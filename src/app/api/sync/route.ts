@@ -58,7 +58,7 @@ async function runChunk(body: any, options: { selfTrigger: boolean; origin?: str
       try {
         const chunk = await processChunk({ supabase, runId: id, runStartedAt: startedAt, startPage })
         if (!chunk.done && chunk.nextPage !== null) {
-          await triggerNextChunk(id, startedAt, chunk.nextPage, options.origin)
+          await triggerNextChunk(id, startedAt, chunk.nextPage, options.origin, supabase)
         }
       } catch (error: any) {
         console.error('[sync] zincir halkası hata verdi:', error?.message)

@@ -209,25 +209,42 @@ export async function triggerNextChunk(
   runId: string,
   runStartedAt: string,
   page: number,
-  requestOrigin?: string
+  requestOrigin?: string,
+  supabase?: SupabaseClient
 ) {
-  try {
-    const res = await fetch(selfUrl('/api/sync', requestOrigin), {
-      // Yönlendirme izlenmez: sessizce yetkisiz kalmak yerine hata versin.
-      redirect: 'error',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.CRON_SECRET}`,
-      },
-      body: JSON.stringify({ run_id: runId, run_started_at: runStartedAt, page }),
-    })
-    if (!res.ok) {
-      console.error('[sync] zincir halkası reddedildi:', res.status, await res.text())
+  const url = selfUrl('/api/sync', requestOrigin)
+  let lastProblem = ''
+
+  // İki deneme: geçici bir ağ hatası zinciri kopartmasın.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await fetch(url, {
+        // Yönlendirme izlenmez: sessizce yetkisiz kalmak yerine hata versin.
+        redirect: 'error',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.CRON_SECRET}`,
+        },
+        body: JSON.stringify({ run_id: runId, run_started_at: runStartedAt, page }),
+      })
+
+      if (res.ok) return
+      lastProblem = `HTTP ${res.status} — ${(await res.text()).slice(0, 120)}`
+    } catch (error: any) {
+      lastProblem = error?.message ?? 'bilinmeyen hata'
     }
-  } catch (error: any) {
-    // Zincir kopabilir; satır 'running' kalır ve STALE_RUN_MIN sonrası
-    // 'failed' olarak kapanır, bir sonraki cron temiz başlar.
-    console.error('[sync] zincir tetiklenemedi:', error?.message)
+    console.error(`[sync] zincir tetiklenemedi (deneme ${attempt}): ${lastProblem}`)
+  }
+
+  // Sunucu loglarına erişimi olmayan biri için hatayı koşu satırına yaz:
+  // zincirin nerede ve neden koptuğu admin panelinden görülebilsin.
+  if (supabase) {
+    await supabase
+      .from('sync_log')
+      .update({
+        error_message: `Zincir sayfa ${page} tetiklenirken koptu (${url}): ${lastProblem}`,
+      })
+      .eq('run_id', runId)
   }
 }
