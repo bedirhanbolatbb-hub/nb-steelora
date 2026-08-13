@@ -401,6 +401,17 @@ body[data-overlay='open'] .sticky-buy {
   display: none;
 }
 
+/* Çubuk görünürken WhatsApp düğmesi yukarı kayar; yoksa Sepete Ekle'yi örtüyor. */
+@media (max-width: 639px) {
+  .whatsapp-fab {
+    transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  body:has(.sticky-buy[data-show='true']) .whatsapp-fab {
+    transform: translateY(-62px);
+  }
+}
+
 /* Beden seçimine dikkat çekme — çubuktan basıldığında bir kez yanıp söner. */
 @keyframes size-flash {
   0%, 100% { opacity: 1; }

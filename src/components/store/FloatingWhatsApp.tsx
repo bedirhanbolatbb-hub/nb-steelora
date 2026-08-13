@@ -2,11 +2,13 @@
 
 export default function FloatingWhatsApp() {
   return (
+    // whatsapp-fab: yapışkan satın alma çubuğu göründüğünde buton yukarı kayar
+    // (globals.css) — yoksa çubuğun Sepete Ekle düğmesini örtüyor.
     <a
       href="https://wa.me/905536552020"
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-110"
+      className="whatsapp-fab fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-110"
       aria-label="WhatsApp ile iletişim"
     >
       <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
