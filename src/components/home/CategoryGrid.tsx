@@ -70,15 +70,21 @@ export default async function CategoryGrid() {
 
   return (
     <section className="max-w-7xl mx-auto px-4 lg:px-8 py-20">
-      <div className="text-center mb-12">
+      <div className="text-center mb-12" data-reveal>
         <p className="eyebrow">Koleksiyon</p>
         <h2 className="font-heading text-[34px] font-semibold text-ink mt-2">Kategoriler</h2>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 lg:gap-6">
-        {categories.map((cat) => {
+        {categories.map((cat, i) => {
           const imageUrl = categoryImages[cat.slug]
           return (
-            <Link key={cat.slug} href={`/kategori/${cat.slug}`} className="group">
+            <Link
+              key={cat.slug}
+              href={`/kategori/${cat.slug}`}
+              className="group"
+              data-reveal
+              style={{ '--reveal-delay': `${i * 45}ms` } as React.CSSProperties}
+            >
               <div className="aspect-square bg-surface-muted relative overflow-hidden transition-transform duration-500 group-hover:-translate-y-2">
                 {imageUrl ? (
                   <Image src={imageUrl} alt={cat.name} fill className="object-cover" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw" />

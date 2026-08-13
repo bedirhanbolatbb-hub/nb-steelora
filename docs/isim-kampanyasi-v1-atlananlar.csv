@@ -1,11 +1,11 @@
-barkod;mevcut_ad;uretilen_ad_reddedildi
-NBP008;Çelik Piercing;Piercing
-NBP009;Çelik Piercing;Piercing
-NBP001;Çelik Piercing;Piercing
-NBKP075;Çelik Küpe;Küpe
-NBP002;Çelik Piercing;Piercing
-NBK097;Zirkon Taşlı Kolye;Kolye
-NBP007;Çelik Piercing;Piercing
-NBP003;Çelik piercing;Piercing
-NBP006;Çelik Piercing;Piercing
-NBP004;Çelik piercing;Piercing
+barkod;mevcut_ad;durum
+NBP001;Çelik Piercing;çözüldü — At Nalı Piercing — Silver
+NBP002;Çelik Piercing;çözüldü — Kavisli Kristal Piercing
+NBP003;Çelik piercing;çözüldü — Çift Kristal Düz Piercing — Gold
+NBP004;Çelik piercing;çözüldü — At Nalı Piercing — Gold
+NBP006;Çelik Piercing;çözüldü — Tektaş Labret Piercing
+NBP007;Çelik Piercing;çözüldü — Kavisli Kristal Piercing
+NBP008;Çelik Piercing;çözüldü — Tek Kristal Düz Piercing
+NBP009;Çelik Piercing;çözüldü — Çift Kristal Düz Piercing — Silver
+NBKP075;Çelik Küpe;çözüldü — Yelpaze Küpe
+NBK097;Zirkon Taşlı Kolye;çözüldü — Baget Kolye

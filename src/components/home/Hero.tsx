@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getSiteContent } from '@/lib/supabase/content'
 import HeroGrid from './HeroGrid'
+import HeroParallax from '@/components/motion/HeroParallax'
 
 export default async function Hero() {
   const c = await getSiteContent()
@@ -53,18 +54,28 @@ export default async function Hero() {
     <section className="min-h-[580px] grid grid-cols-1 lg:grid-cols-2">
       {/* Sol: İçerik */}
       <div className="bg-surface-muted flex flex-col justify-center px-8 lg:px-16 py-16 lg:py-0 order-2 lg:order-1">
-        <span className="eyebrow mb-6">{c.hero_badge || 'Yeni Koleksiyon — 2026'}</span>
-        <h1 className="font-heading text-[40px] sm:text-[48px] lg:text-[56px] font-semibold text-ink leading-[1.1]">
+        {/* Giriş animasyonu saf CSS: JS beklemez, satırlar 70ms arayla yükselir */}
+        <span className="eyebrow mb-6 hero-line">{c.hero_badge || 'Yeni Koleksiyon — 2026'}</span>
+        <h1
+          className="font-heading text-[40px] sm:text-[48px] lg:text-[56px] font-semibold text-ink leading-[1.1] hero-line"
+          style={{ '--hero-delay': '70ms' } as React.CSSProperties}
+        >
           {c.hero_title_line1 || 'Her anın'}
           <br />
           <span className="italic text-accent-deep">{c.hero_title_line2 || 'zarif'}</span>
           <br />
           {c.hero_title_line3 || 'tanığı'}
         </h1>
-        <p className="text-[12px] font-body text-ink-soft max-w-sm mt-6 leading-relaxed">
+        <p
+          className="text-[12px] font-body text-ink-soft max-w-sm mt-6 leading-relaxed hero-line"
+          style={{ '--hero-delay': '140ms' } as React.CSSProperties}
+        >
           {c.hero_description || '316L medikal çelik. Kararmaz, paslanmaz, solmaz.\nHer gün tak, her gün şık görün.'}
         </p>
-        <div className="flex items-center gap-6 mt-8">
+        <div
+          className="flex items-center gap-6 mt-8 hero-line"
+          style={{ '--hero-delay': '210ms' } as React.CSSProperties}
+        >
           <Link
             href="/urunler"
             className="inline-flex items-center bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-all duration-300"
@@ -80,8 +91,14 @@ export default async function Hero() {
         </div>
       </div>
 
-      {/* Sağ: Görsel Grid */}
-      <HeroGrid items={heroItems} singleMode={singleMode} />
+      {/* Sağ: Görsel Grid — ölçek girişi + ince parallax */}
+      <HeroGrid
+        items={heroItems}
+        singleMode={singleMode}
+        id="hero-media"
+        className="hero-media hero-parallax"
+      />
+      <HeroParallax targetId="hero-media" />
     </section>
   )
 }

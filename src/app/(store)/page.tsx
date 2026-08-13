@@ -95,7 +95,7 @@ export default async function HomePage() {
       {newArrivals.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
           <div className="flex items-end justify-between mb-8">
-            <div>
+            <div data-reveal>
               <p className="eyebrow">Yeni Gelenler</p>
               <h2 className="font-heading text-[34px] font-semibold text-ink mt-2">
                 {c.new_arrivals_title || 'Sezonun Yenileri'}
@@ -112,8 +112,14 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-            {newArrivals.map((product: any) => (
-              <ProductCard key={product.id} product={product} />
+            {newArrivals.map((product: any, i: number) => (
+              <div
+                key={product.id}
+                data-reveal
+                style={{ '--reveal-delay': `${(i % 4) * 50}ms` } as React.CSSProperties}
+              >
+                <ProductCard product={product} />
+              </div>
             ))}
           </div>
         </section>
@@ -124,7 +130,7 @@ export default async function HomePage() {
           iade süresi hakkımızda sayfasından, hediye paketi BrandBanner'dan. */}
       <section className="bg-surface-muted py-16">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center mb-10">
+          <div className="text-center mb-10" data-reveal>
             <p className="eyebrow">Neden NB Steelora</p>
             <h2 className="font-heading text-[34px] font-semibold text-ink mt-2">
               Her parçanın arkasında duruyoruz

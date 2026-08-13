@@ -35,13 +35,25 @@ function SlotImage({
   return <Image src={image} alt={alt} fill className="object-cover" sizes={sizes} priority />
 }
 
-export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; singleMode: boolean }) {
+export default function HeroGrid({
+  items,
+  singleMode,
+  id,
+  className = '',
+}: {
+  items: HeroItem[]
+  singleMode: boolean
+  id?: string
+  className?: string
+}) {
 
   // ── Normal mode ───────────────────────────────────────────────────────────
   if (!singleMode) {
-    console.log('[HeroGrid] top slug:', items[0]?.slug, '| validSlug:', validSlug(items[0]?.slug ?? null))
     return (
-      <div className="grid grid-rows-2 grid-cols-2 gap-1 order-1 lg:order-2 min-h-[400px] lg:min-h-0">
+      <div
+        id={id}
+        className={`grid grid-rows-2 grid-cols-2 gap-1 order-1 lg:order-2 min-h-[400px] lg:min-h-0 ${className}`}
+      >
         {/* Top — hero_top */}
         <div className="col-span-2 bg-surface-muted relative overflow-hidden">
           {items[0].image ? (
@@ -88,7 +100,7 @@ export default function HeroGrid({ items, singleMode }: { items: HeroItem[]; sin
     image && slug ? <Link href={`/urun/${slug}`} className="absolute inset-0" aria-label="Ürüne git" /> : null
 
   return (
-    <div className="flex flex-col gap-1 order-1 lg:order-2">
+    <div id={id} className={`flex flex-col gap-1 order-1 lg:order-2 ${className}`}>
       {/* Top: full width, 2:1 */}
       <div
         className="w-full aspect-[2/1] relative overflow-hidden bg-surface-muted"

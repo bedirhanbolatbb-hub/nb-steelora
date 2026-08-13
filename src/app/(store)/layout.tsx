@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Navbar from '@/components/store/Navbar'
 import Footer from '@/components/store/Footer'
 import FloatingWhatsApp from '@/components/store/FloatingWhatsApp'
+import RevealController from '@/components/motion/RevealController'
 
 export default async function StoreLayout({
   children,
@@ -49,6 +50,7 @@ export default async function StoreLayout({
       <main className="flex-1">{children}</main>
       <Footer isLoggedIn={isLoggedIn} />
       <FloatingWhatsApp />
+      <RevealController />
     </>
   )
 }

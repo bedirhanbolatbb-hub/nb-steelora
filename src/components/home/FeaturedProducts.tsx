@@ -14,7 +14,7 @@ export default function FeaturedProducts({ title, subtitle, products }: Props) {
   return (
     <section id="one-cikanlar" className="max-w-7xl mx-auto px-4 lg:px-8 py-20">
       <div className="flex items-end justify-between mb-12">
-        <div>
+        <div data-reveal>
           <p className="eyebrow">Seçki</p>
           <h2 className="font-heading text-[34px] font-semibold text-ink mt-2">
             {title || 'Öne Çıkan Parçalar'}

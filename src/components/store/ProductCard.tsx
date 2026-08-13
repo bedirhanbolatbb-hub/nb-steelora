@@ -41,7 +41,13 @@ export default function ProductCard({ product, priority = false, optionCount = 0
 
   return (
     <Link href={`/urun/${product.slug}`} className="group block">
-      <div className="relative aspect-square overflow-hidden bg-surface border border-line rounded-[4px]">
+      <div
+        className={`relative aspect-square overflow-hidden bg-surface border border-line rounded-[4px] ${
+          // İkinci görsel varsa hover'da o gösterilir; ışık süpürmesi yalnız tek
+          // görselli kartlarda çalışır ki iki efekt çakışmasın.
+          hoverImage ? '' : 'sheen'
+        }`}
+      >
         <div className="absolute inset-0 p-3">
           <div className="relative h-full w-full">
             <ProductImage

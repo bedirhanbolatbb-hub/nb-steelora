@@ -4,17 +4,18 @@ Bu belge yalnızca kayıt amaçlıdır; **hiçbir adımı uygulanmadı**.
 
 ## Kampanya neydi
 
-Faz 2C'de `override_title` boş olan 404 aktif üründe görünen ad, uzun Trendyol
-başlığından türetilen kısa adla değiştirildi. Yazılan her satır `note = 'auto-title-v1'`
-ile işaretlendi.
+Faz 2C'de `override_title` boş olan aktif ürünlerde görünen ad, uzun Trendyol
+başlığından türetilen kısa adla değiştirildi (404 ürün). Faz 3'te otomatik
+üretimin ad veremediği 10 ürün, ürün görsellerine bakılarak elle adlandırıldı.
+Yazılan her satır `note = 'auto-title-v1'` ile işaretlendi.
 
-- Etkilenen satır: **404**
-- Dokunulmayanlar: `override_title` zaten dolu olan 26 ürün + kural dışı kalan 10 ürün
+- Etkilenen satır: **414** (404 otomatik + 10 elle)
+- Dokunulmayanlar: `override_title` zaten dolu olan 26 ürün
 - Yazılan kolonlar: `override_title`, `note`
 - **`trendyol_title` hiç değiştirilmedi** — SEO başlığı ve meta açıklaması hâlâ uzun addan üretiliyor.
 
 Tam liste: `docs/isim-kampanyasi-v1.csv` (barkod;eski_ad;yeni_ad)
-Atlananlar: `docs/isim-kampanyasi-v1-atlananlar.csv`
+Atlananlar: `docs/isim-kampanyasi-v1-atlananlar.csv` (10 ürün Faz 3-madde 0 ile görsellerine bakılarak adlandırıldı)
 
 ## Geri almak gerekirse
 

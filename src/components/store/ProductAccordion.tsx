@@ -30,11 +30,15 @@ export default function ProductAccordion({ sections }: { sections: Section[] }) 
                 className={`text-muted transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
               />
             </button>
-            {isOpen && (
-              <div className="pb-5 text-[13px] font-body text-ink-soft leading-relaxed">
-                {section.content}
+            {/* İçerik her zaman DOM'da: yükseklik yerine grid satırı anime edilir,
+                böylece layout sıçraması olmaz ve JS'siz de okunabilir kalır. */}
+            <div className="accordion-panel" data-open={isOpen} aria-hidden={!isOpen}>
+              <div>
+                <div className="pb-5 text-[13px] font-body text-ink-soft leading-relaxed">
+                  {section.content}
+                </div>
               </div>
-            )}
+            </div>
           </div>
         )
       })}

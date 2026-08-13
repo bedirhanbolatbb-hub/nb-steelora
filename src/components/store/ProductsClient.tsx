@@ -298,12 +298,17 @@ function ProductsInner({
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
                 {cards.map(({ product, optionCount }, i) => (
-                  <ProductCard
+                  <div
                     key={product.id}
-                    product={product}
-                    priority={i < 4}
-                    optionCount={optionCount}
-                  />
+                    data-reveal
+                    style={{ '--reveal-delay': `${(i % 4) * 50}ms` } as React.CSSProperties}
+                  >
+                    <ProductCard
+                      product={product}
+                      priority={i < 4}
+                      optionCount={optionCount}
+                    />
+                  </div>
                 ))}
               </div>
 

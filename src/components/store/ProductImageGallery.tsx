@@ -14,6 +14,16 @@ interface ProductImageGalleryProps {
 export default function ProductImageGallery({ images, title }: ProductImageGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [closing, setClosing] = useState(false)
+
+  // Kapanış animasyonu bitmeden DOM'dan kaldırılmasın
+  const closeLightbox = () => {
+    setClosing(true)
+    setTimeout(() => {
+      setLightboxOpen(false)
+      setClosing(false)
+    }, 180)
+  }
 
   const hasImages = images && images.length > 0
   const currentImage = hasImages ? images[activeIndex] : null
@@ -29,7 +39,7 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
     if (!lightboxOpen) return
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setLightboxOpen(false)
+      if (e.key === 'Escape') closeLightbox()
       if (e.key === 'ArrowLeft') setActiveIndex((i) => (i - 1 + images.length) % images.length)
       if (e.key === 'ArrowRight') setActiveIndex((i) => (i + 1) % images.length)
     }
@@ -89,13 +99,15 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
       {/* Lightbox */}
       {lightboxOpen && currentImage && (
         <div
-          className="fixed inset-0 z-[100] bg-ink/95 flex items-center justify-center"
-          onClick={() => setLightboxOpen(false)}
+          className={`fixed inset-0 z-[100] bg-ink/95 flex items-center justify-center ${
+            closing ? 'lightbox-exit' : 'lightbox-enter'
+          }`}
+          onClick={closeLightbox}
           role="dialog"
           aria-modal="true"
         >
           <button
-            onClick={() => setLightboxOpen(false)}
+            onClick={closeLightbox}
             className="absolute top-6 right-6 text-bg hover:text-accent transition-colors"
             aria-label="Kapat"
           >

@@ -88,6 +88,160 @@ h1, h2, h3, h4, h5, h6 {
   animation: cart-pulse 600ms ease-out;
 }
 
+/* ---------------------------------------------------------------------------
+   MOTION KATMANI (Faz 3)
+   Kurallar: yalnız transform + opacity anime edilir; hover efektleri yalnız
+   hover:hover cihazlarda; prefers-reduced-motion: reduce ile hepsi kapanır.
+   Reveal sınıfları JS tarafından eklenir — JS yoksa içerik olduğu gibi görünür.
+--------------------------------------------------------------------------- */
+
+/* Scroll-reveal: .reveal-ready yalnız JS ile eklenir */
+.reveal-ready {
+  opacity: 0;
+  transform: translateY(14px);
+  will-change: transform, opacity;
+}
+
+.reveal-ready.is-visible {
+  opacity: 1;
+  transform: none;
+  transition: opacity 620ms cubic-bezier(0.22, 0.61, 0.36, 1),
+              transform 620ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+/* Hero girişi — CSS ile çalışır, JS beklemez */
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.hero-line {
+  animation: hero-rise 520ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation-delay: var(--hero-delay, 0ms);
+}
+
+/* LCP görselinde opacity anime edilmez: yalnız ölçek */
+@keyframes hero-media-in {
+  from { transform: scale(1.03); }
+  to   { transform: none; }
+}
+
+.hero-media {
+  animation: hero-media-in 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* Hero parallax — JS yalnız --parallax değişkenini günceller */
+.hero-parallax {
+  transform: translate3d(0, var(--parallax, 0px), 0);
+  will-change: transform;
+}
+
+/* Kart ışık süpürmesi — tek diyagonal geçiş, yalnız hover'lı cihazlarda */
+@media (hover: hover) {
+  .sheen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      115deg,
+      transparent 35%,
+      rgba(255, 255, 255, 0.55) 50%,
+      transparent 65%
+    );
+    opacity: 0;
+    transform: translateX(-60%);
+  }
+
+  .group:hover .sheen::after {
+    opacity: 1;
+    transform: translateX(60%);
+    transition: transform 620ms ease-out, opacity 620ms ease-out;
+  }
+}
+
+/* Marquee hover'da durur */
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Lightbox açılış/kapanış */
+@keyframes lightbox-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.lightbox-enter { animation: lightbox-in 220ms ease-out both; }
+.lightbox-exit  { animation: lightbox-in 180ms ease-in reverse both; }
+
+/* Accordion — height değil, grid satırı anime edilir */
+.accordion-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.accordion-panel[data-open='true'] {
+  grid-template-rows: 1fr;
+}
+
+.accordion-panel > div {
+  overflow: hidden;
+}
+
+/* Hediye kutusu mikro-animasyonu (sipariş sonrası) */
+@keyframes gift-lid {
+  0%   { transform: translateY(0) rotate(0deg); }
+  45%  { transform: translateY(-16px) rotate(-7deg); }
+  100% { transform: translateY(-12px) rotate(-5deg); }
+}
+
+@keyframes gift-box-settle {
+  0%   { transform: translateY(8px) scale(0.96); opacity: 0; }
+  60%  { transform: translateY(0) scale(1.01); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+
+@keyframes gift-shine {
+  0%, 55% { opacity: 0; transform: scale(0.6); }
+  75%     { opacity: 1; transform: scale(1); }
+  100%    { opacity: 0.55; transform: scale(1); }
+}
+
+.gift-box  { animation: gift-box-settle 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+.gift-lid  { animation: gift-lid 1100ms cubic-bezier(0.34, 1.4, 0.64, 1) 500ms both; transform-origin: 50% 100%; }
+.gift-shine { animation: gift-shine 1800ms ease-out 400ms both; transform-origin: center; }
+
+/* Erişilebilirlik: hareket azaltma tercihi her şeyi kapatır */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-ready,
+  .reveal-ready.is-visible {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .hero-line,
+  .hero-media,
+  .gift-box,
+  .gift-lid,
+  .gift-shine,
+  .lightbox-enter,
+  .lightbox-exit,
+  .animate-marquee {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .hero-parallax { transform: none !important; }
+
+  .accordion-panel { transition: none !important; }
+
+  .sheen::after { display: none !important; }
+}
+
 /* Marquee animation */
 @keyframes marquee {
   0% { transform: translateX(0); }
