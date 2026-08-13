@@ -401,6 +401,12 @@ body[data-overlay='open'] .sticky-buy {
   display: none;
 }
 
+/* Aynı şekilde WhatsApp düğmesi: açık çekmecede sepet butonlarının üstüne
+   biniyordu. */
+body[data-overlay='open'] .whatsapp-fab {
+  display: none;
+}
+
 /* Çubuk görünürken WhatsApp düğmesi yukarı kayar; yoksa Sepete Ekle'yi örtüyor. */
 @media (max-width: 639px) {
   .whatsapp-fab {
