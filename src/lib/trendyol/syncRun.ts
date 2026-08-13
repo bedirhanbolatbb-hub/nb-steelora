@@ -26,11 +26,17 @@ export function getServiceClient(): SupabaseClient {
   )
 }
 
-/** Zincirin kendini tetiklerken kullanacağı mutlak adres. */
+/**
+ * Zincirin kendini tetiklerken kullanacağı mutlak adres.
+ * SYNC_SELF_URL çalışma zamanında okunur; NEXT_PUBLIC_* değişkenleri derleme
+ * anında gömüldüğü için yerel testte yanlışlıkla canlıya istek atılıyordu.
+ */
 export function selfUrl(path: string): string {
   const base =
+    process.env.SYNC_SELF_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+    'http://localhost:3000'
   return `${base.replace(/\/$/, '')}${path}`
 }
 
