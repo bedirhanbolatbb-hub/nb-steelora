@@ -107,5 +107,11 @@ export async function GET(request: Request) {
     .select('id', { count: 'exact', head: true })
     .eq('is_active', true)
 
-  return NextResponse.json({ lastSyncs: logs, activeProducts: count })
+  // syncMode: hangi sürümün canlıda olduğunu koşu başlatmadan görebilmek için.
+  return NextResponse.json({
+    lastSyncs: logs,
+    activeProducts: count,
+    syncMode: 'single-request-bulk-upsert',
+    pageSize: PAGE_SIZE,
+  })
 }
