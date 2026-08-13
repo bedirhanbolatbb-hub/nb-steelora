@@ -96,17 +96,21 @@ function flattenContents(contents: any[]): VariantRow[] {
   return rows
 }
 
-export async function syncTrendyolPage(page: number, size = 100) {
+/**
+ * Sync sayfası işler.
+ *
+ * ÖNEMLİ: Ürünler artık BAŞTA pasife çekilmiyor. Eskiden sayfa 0 tüm katalogu
+ * is_active=false yapıyor, sonraki sayfalar tek tek geri açıyordu; koşu yarıda
+ * kalırsa (Vercel'de 60 sn limiti) katalogun büyük kısmı görünmez kalıyordu —
+ * 13 Ağustos 2026'da 440 üründen 272'si bu yüzden siteden düştü.
+ *
+ * Yeni davranış: her sayfa dokunduğu satırı is_active=true + last_synced_at ile
+ * damgalar; katalogdan düşenler ancak koşu BAŞARIYLA tamamlandığında (done)
+ * ve yalnız bu koşuda hiç dokunulmamış olanlar pasife çekilir.
+ */
+export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: string) {
   const supabase = getServiceClient()
-
-  // Sayfa 0 ise tüm ürünleri pasife çek
-  if (page === 0) {
-    console.log('Sync başlıyor: tüm ürünler pasife çekiliyor...')
-    await supabase
-      .from('products')
-      .update({ is_active: false })
-      .neq('id', '00000000-0000-0000-0000-000000000000')
-  }
+  const runStart = runStartedAt ?? new Date().toISOString()
 
   const data = await fetchApprovedProducts(page, size)
   const contents = data.content || []
@@ -187,6 +191,20 @@ export async function syncTrendyolPage(page: number, size = 100) {
 
   const done = contents.length < size || page >= totalPages - 1
 
+  // Koşu tamamlandığında: bu koşuda hiç dokunulmamış aktif ürünler artık
+  // Trendyol'da satışta değil demektir; ancak burada pasife çekilirler.
+  let deactivated = 0
+  if (done) {
+    const { data: stale } = await supabase
+      .from('products')
+      .update({ is_active: false })
+      .eq('is_active', true)
+      .lt('last_synced_at', runStart)
+      .select('id')
+    deactivated = stale?.length ?? 0
+    if (deactivated > 0) console.log(`Sync: ${deactivated} ürün pasife çekildi (bu koşuda görülmedi)`)
+  }
+
   console.log(
     `Sayfa ${page} tamamlandı: +${added} eklendi, ${updated} güncellendi, ${skipped} atlandı, done=${done}`
   )
@@ -201,5 +219,5 @@ export async function syncTrendyolPage(page: number, size = 100) {
     })
   }
 
-  return { page, added, updated, skipped, totalPages, totalElements, done }
+  return { page, added, updated, skipped, deactivated, totalPages, totalElements, done, runStartedAt: runStart }
 }

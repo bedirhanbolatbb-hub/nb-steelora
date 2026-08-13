@@ -7,6 +7,7 @@ import { formatPrice } from '@/lib/utils'
 import { resolveBadge } from '@/lib/catalog/badge'
 import WishlistButton from './WishlistButton'
 import ProductImage from './ProductImage'
+import { IMAGE_QUALITY } from '@/lib/images'
 import { useCart } from '@/hooks/useCart'
 import type { Product } from '@/types'
 
@@ -54,7 +55,7 @@ export default function ProductCard({ product, priority = false, optionCount = 0
             <ProductImage
               src={primaryImage}
               alt={product.display_title}
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px"
               priority={priority}
               className={`object-contain transition-all duration-500 ${
                 hoverImage ? 'group-hover:opacity-0' : 'group-hover:scale-[1.04]'
@@ -68,7 +69,8 @@ export default function ProductCard({ product, priority = false, optionCount = 0
                 alt=""
                 aria-hidden
                 fill
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px"
+                quality={IMAGE_QUALITY}
                 className="object-contain opacity-0 transition-opacity duration-500 group-hover:opacity-100"
               />
             )}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY } from '@/lib/images'
 import ProductImage from './ProductImage'
 
 interface ProductImageGalleryProps {
@@ -65,7 +66,7 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
           <ProductImage
             src={currentImage}
             alt={title}
-            sizes="(max-width: 1024px) 100vw, 50vw"
+            sizes="(max-width: 1024px) 100vw, 600px"
             priority
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
@@ -89,6 +90,7 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
                   fill
                   className="object-cover"
                   sizes="64px"
+                  quality={IMAGE_QUALITY}
                 />
               </button>
             ))}
@@ -142,7 +144,10 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
               alt={title}
               fill
               className="object-contain"
-              sizes="100vw"
+              sizes="(max-width: 768px) 100vw, 700px"
+              quality={IMAGE_QUALITY}
+              placeholder="blur"
+              blurDataURL={BLUR_PLACEHOLDER}
             />
           </div>
         </div>

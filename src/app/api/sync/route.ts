@@ -20,7 +20,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}))
     const page = body.page ?? 0
-    const result = await syncTrendyolPage(page, 50)
+    // Sayfalı çağrıda koşu başlangıcı çağırandan gelir; yoksa bu sayfa kendi
+    // damgasını kullanır (yalnız son sayfada pasife çekme yapılır).
+    const result = await syncTrendyolPage(page, 50, body.runStartedAt)
     return NextResponse.json(result)
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -35,8 +37,10 @@ export async function GET(request: Request) {
     try {
       let page = 0
       let lastResult: any
+      let runStartedAt: string | undefined
       while (true) {
-        lastResult = await syncTrendyolPage(page, 50)
+        lastResult = await syncTrendyolPage(page, 50, runStartedAt)
+        runStartedAt = lastResult.runStartedAt
         if (lastResult.done) break
         page++
       }

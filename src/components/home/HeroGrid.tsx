@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY } from '@/lib/images'
 import Link from 'next/link'
 
 export interface HeroItem {
@@ -25,14 +26,28 @@ function SlotImage({
   alt: string
 }) {
   const href = validSlug(slug)
+  const img = (
+    <Image
+      src={image}
+      alt={alt}
+      fill
+      className="object-cover"
+      sizes={sizes}
+      quality={IMAGE_QUALITY}
+      placeholder="blur"
+      blurDataURL={BLUR_PLACEHOLDER}
+      priority
+    />
+  )
+
   if (href) {
     return (
       <Link href={`/urun/${href}`} className="block absolute inset-0">
-        <Image src={image} alt={alt} fill className="object-cover" sizes={sizes} priority />
+        {img}
       </Link>
     )
   }
-  return <Image src={image} alt={alt} fill className="object-cover" sizes={sizes} priority />
+  return img
 }
 
 export default function HeroGrid({
@@ -57,7 +72,7 @@ export default function HeroGrid({
         {/* Top — hero_top */}
         <div className="col-span-2 bg-surface-muted relative overflow-hidden">
           {items[0].image ? (
-            <SlotImage image={items[0].image} slug={items[0].slug} sizes="(max-width: 1024px) 100vw, 50vw" alt="Koleksiyon" />
+            <SlotImage image={items[0].image} slug={items[0].slug} sizes="(max-width: 1024px) 100vw, 800px" alt="Koleksiyon" />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-b from-line/20 to-surface-muted flex items-center justify-center">
               <span className="text-muted/40 text-[11px] font-body tracking-wider uppercase">Koleksiyon Görseli</span>
@@ -67,7 +82,7 @@ export default function HeroGrid({
         {/* Bottom-left — hero_bottom_left */}
         <div className="bg-surface-muted relative overflow-hidden">
           {items[1].image ? (
-            <SlotImage image={items[1].image} slug={items[1].slug} sizes="(max-width: 1024px) 50vw, 25vw" alt="Ürün" />
+            <SlotImage image={items[1].image} slug={items[1].slug} sizes="(max-width: 1024px) 50vw, 400px" alt="Ürün" />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-line/20 to-surface-muted flex items-center justify-center">
               <span className="text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 1</span>
@@ -77,7 +92,7 @@ export default function HeroGrid({
         {/* Bottom-right — hero_bottom_right */}
         <div className="bg-surface-muted relative overflow-hidden">
           {items[2].image ? (
-            <SlotImage image={items[2].image} slug={items[2].slug} sizes="(max-width: 1024px) 50vw, 25vw" alt="Ürün" />
+            <SlotImage image={items[2].image} slug={items[2].slug} sizes="(max-width: 1024px) 50vw, 400px" alt="Ürün" />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-bl from-line/20 to-surface-muted flex items-center justify-center">
               <span className="text-muted/40 text-[10px] font-body tracking-wider uppercase">Ürün 2</span>

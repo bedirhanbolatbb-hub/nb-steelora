@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY } from '@/lib/images'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { CATEGORIES, buildCategoryFilter } from '@/lib/catalog/categories'
@@ -83,11 +84,11 @@ export default async function CategoryGrid() {
               href={`/kategori/${cat.slug}`}
               className="group"
               data-reveal
-              style={{ '--reveal-delay': `${i * 45}ms` } as React.CSSProperties}
+              style={{ '--reveal-delay': `${i * 35}ms` } as React.CSSProperties}
             >
               <div className="aspect-square bg-surface-muted relative overflow-hidden transition-transform duration-500 group-hover:-translate-y-2">
                 {imageUrl ? (
-                  <Image src={imageUrl} alt={cat.name} fill className="object-cover" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw" />
+                  <Image src={imageUrl} alt={cat.name} fill className="object-cover" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 200px" quality={IMAGE_QUALITY} placeholder="blur" blurDataURL={BLUR_PLACEHOLDER} />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-muted/30 text-[10px] font-body tracking-wider uppercase">{cat.name}</span>

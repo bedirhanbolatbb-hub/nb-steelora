@@ -110,7 +110,7 @@ export default async function HomePage() {
               <div
                 key={product.id}
                 data-reveal
-                style={{ '--reveal-delay': `${(i % 4) * 50}ms` } as React.CSSProperties}
+                style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}
               >
                 <ProductCard product={product} />
               </div>
@@ -143,7 +143,7 @@ export default async function HomePage() {
               <div
                 key={product.id}
                 data-reveal
-                style={{ '--reveal-delay': `${(i % 4) * 50}ms` } as React.CSSProperties}
+                style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}
               >
                 <ProductCard product={product} />
               </div>

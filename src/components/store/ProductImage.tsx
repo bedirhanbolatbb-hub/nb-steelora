@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY } from '@/lib/images'
 
 type Props = {
   src?: string | null
@@ -35,6 +36,9 @@ export default function ProductImage({ src, alt, sizes, priority, className }: P
       alt={alt}
       fill
       sizes={sizes}
+      quality={IMAGE_QUALITY}
+      placeholder="blur"
+      blurDataURL={BLUR_PLACEHOLDER}
       priority={priority}
       className={className}
       onError={() => setFailed(true)}

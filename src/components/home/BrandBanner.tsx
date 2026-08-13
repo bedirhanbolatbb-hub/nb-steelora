@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY } from '@/lib/images'
 import Link from 'next/link'
 
 export default function BrandBanner() {
@@ -12,7 +13,10 @@ export default function BrandBanner() {
             alt="Saten kumaş üzerinde NB Steelora takı sunumu"
             fill
             className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 50vw"
+            sizes="(max-width: 1024px) 100vw, 640px"
+            quality={IMAGE_QUALITY}
+            placeholder="blur"
+            blurDataURL={BLUR_PLACEHOLDER}
           />
         </div>
 

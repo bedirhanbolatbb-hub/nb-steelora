@@ -35,6 +35,29 @@ const BOILERPLATE = [
   /^trendyol$/i,
 ]
 
+/**
+ * Malzeme beyanı yalnız tek kanonik yerde durur: başlık altı satır ve
+ * "Malzeme & Bakım" sekmesi (lib/catalog/material.ts). Açıklama metnindeki
+ * malzeme cümleleri buradan ayıklanır — aksi hâlde çelik ürünün açıklamasında
+ * "pirinçtir" yazan çelişkiler ekranda kalıyor.
+ */
+const MATERIAL_SENTENCES = [
+  /ürün(ün)? materyali/i,
+  /materyali\s*:?\s*(pirinç|çelik)/i,
+  /(pirinçtir|çeliktir)\.?$/i,
+  /malzemeden üretilmiştir/i,
+  /^\s*\(?316l\)?\s*paslanmaz çelik\b/i,
+  /paslanmaz çelik malzeme/i,
+  /ürün zinciri/i,
+]
+
+/** Kargo & İade sekmesinin zaten kapsadığı pazaryeri cümleleri. */
+const POLICY_SENTENCES = [
+  /hijyenik nedenlerle/i,
+  /sadece hasarlı,? yanlış veya eksik gönderim/i,
+  /sipariş vermeden önce açıklamayı dikkatle okuyunuz/i,
+]
+
 function decodeEntities(text: string): string {
   return text.replace(/&[a-z#0-9]+;/gi, (m) => ENTITIES[m.toLowerCase()] ?? ' ')
 }
@@ -47,23 +70,44 @@ function stripEmoji(text: string): string {
   )
 }
 
-function toLines(html: string): string[] {
-  const withBreaks = html
-    .replace(/<\s*br\s*\/?\s*>/gi, '\n')
-    .replace(/<\/\s*(p|div|li|tr|h[1-6])\s*>/gi, '\n')
-    .replace(/<\s*li[^>]*>/gi, '\n• ')
-    .replace(/<[^>]+>/g, ' ')
+function toLines(raw: string): string[] {
+  const isHtml = /<[a-z!/]/i.test(raw)
+
+  // Ürünlerin bir kısmında açıklama HTML değil, ";" ve "•" ile ayrılmış düz
+  // metin geliyor; bunlar da paragraf/madde satırlarına bölünür.
+  const withBreaks = isHtml
+    ? raw
+        .replace(/<\s*br\s*\/?\s*>/gi, '\n')
+        .replace(/<\/\s*(p|div|li|tr|h[1-6])\s*>/gi, '\n')
+        .replace(/<\s*li[^>]*>/gi, '\n• ')
+        .replace(/<[^>]+>/g, ' ')
+    : raw.replace(/\s*;\s*/g, '\n').replace(/\s+•\s*/g, '\n• ')
 
   return decodeEntities(stripEmoji(withBreaks))
     .split('\n')
-    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .map((line) => cleanFragments(line))
+}
+
+/** Bölme sonrası ortada kalan parantez kırıntılarını toparlar. */
+function cleanFragments(line: string): string {
+  let text = line.replace(/\s+/g, ' ').trim()
+  // Kapanmayan açılış parantezi: "(Bazı tenlerin …" → parantez atılır
+  if (text.startsWith('(') && !text.includes(')')) text = text.slice(1).trim()
+  // Baştaki yetim kapanış: ") • Şık kutusunda …" → atılır
+  text = text.replace(/^\)\s*/, '').trim()
+  // İçi boş parantezler
+  text = text.replace(/\(\s*\)/g, '').replace(/\s{2,}/g, ' ').trim()
+  return text
 }
 
 function isJunk(line: string): boolean {
   if (line.length < 3) return true
   // Yalnız noktalama/süs karakterinden ibaret satırlar
   if (!/[a-zçğıöşüA-ZÇĞİÖŞÜ0-9]/.test(line)) return true
-  return BOILERPLATE.some((pattern) => pattern.test(line))
+  if (BOILERPLATE.some((pattern) => pattern.test(line))) return true
+  if (MATERIAL_SENTENCES.some((pattern) => pattern.test(line))) return true
+  if (POLICY_SENTENCES.some((pattern) => pattern.test(line))) return true
+  return false
 }
 
 /**

@@ -11,6 +11,7 @@ import { materialCare, materialLabel } from '@/lib/catalog/material'
 import { resolveBadge } from '@/lib/catalog/badge'
 import ProductImageGallery from '@/components/store/ProductImageGallery'
 import ProductVariants from '@/components/store/ProductVariants'
+import { getVariantGroup } from '@/lib/catalog/variantGroup'
 import ProductAccordion from '@/components/store/ProductAccordion'
 import AddToCartButton from '@/components/store/AddToCartButton'
 import RelatedProducts from '@/components/store/RelatedProducts'
@@ -84,6 +85,10 @@ export default async function UrunDetayPage({
   const stock = Number(product.trendyol_stock) || 0
   const badge = resolveBadge(product)
 
+  // Grup üyeleri bir kez çekilir: etiketliyse satın alma kolonunda çip,
+  // değilse galerinin altında küçük resim şeridi olarak basılır.
+  const { members: variantMembers, useLabels } = await getVariantGroup(product)
+
   // Elle yazılmış açıklama varsa ham hâli gösterilir; pazaryeri metni temizlenir.
   const hasOverrideDescription = Boolean(product.override_description)
   const cleaned = hasOverrideDescription
@@ -99,7 +104,13 @@ export default async function UrunDetayPage({
             images={product.display_images || []}
             title={product.display_title}
           />
-          <ProductVariants product={product} />
+          {!useLabels && (
+            <ProductVariants
+              members={variantMembers}
+              currentId={product.id}
+              variant="thumbnails"
+            />
+          )}
         </div>
 
         {/* Ürün bilgisi */}
@@ -112,6 +123,10 @@ export default async function UrunDetayPage({
           <p className="mt-2 text-[11px] font-body text-muted tracking-[0.08em]">
             {[product.trendyol_category, material].filter(Boolean).join(' · ')}
           </p>
+
+          {useLabels && (
+            <ProductVariants members={variantMembers} currentId={product.id} variant="chips" />
+          )}
 
           {/* Fiyat */}
           <div className="flex items-baseline gap-3 mt-6">

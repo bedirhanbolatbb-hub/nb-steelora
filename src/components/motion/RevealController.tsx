@@ -10,13 +10,18 @@ import { useEffect } from 'react'
  * Ekranda hâlihazırda görünen öğelere hiç dokunulmaz (hero'da yanıp sönme olmaz,
  * LCP gecikmez). Her öğe bir kez oynar.
  */
+// Erken tetikleme payı (px) — hem "zaten görünür" kontrolünde hem observer'da.
+const EARLY_TRIGGER_PX = 200
+
 export default function RevealController() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     if (!('IntersectionObserver' in window)) return
 
-    const viewportBottom = window.innerHeight * 0.9
+    // Öğe viewport'a girmeden ~200px önce tetiklenir: hızlı scroll'da bölüm,
+    // kullanıcı durduğunda çoktan görünür olur.
+    const viewportBottom = window.innerHeight + EARLY_TRIGGER_PX
     const targets: HTMLElement[] = []
 
     document.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el) => {
@@ -42,7 +47,7 @@ export default function RevealController() {
           observer.unobserve(el)
         }
       },
-      { rootMargin: '0px 0px -8% 0px', threshold: 0.05 }
+      { rootMargin: `0px 0px ${EARLY_TRIGGER_PX}px 0px`, threshold: 0 }
     )
 
     targets.forEach((el) => observer.observe(el))
