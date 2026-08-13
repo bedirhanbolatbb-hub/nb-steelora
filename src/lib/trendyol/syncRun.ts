@@ -165,7 +165,10 @@ export async function processChunk(params: {
   return {
     runId,
     pagesProcessed,
-    nextPage: done ? null : page + 1,
+    // page, döngü sonunda ZATEN bir sonraki işlenecek sayfayı gösterir;
+    // buna bir daha eklemek araya sayfa atlatır (atlanan sayfadaki ürünler
+    // koşuda görülmediği için sonunda pasife çekilirdi).
+    nextPage: done ? null : page,
     done,
     added,
     updated,
