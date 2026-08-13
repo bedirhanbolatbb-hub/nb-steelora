@@ -312,27 +312,20 @@ export default function AdminDashboard({
   // ─── Sync ───
   const triggerSync = async () => {
     setSyncing(true); setSyncResult(null); setSyncProgress('')
-    let page = 0, totalAdded = 0, totalUpdated = 0, totalElements = 0
-    // Koşu kimliği ilk yanıtta gelir; sonraki parçalar aynı koşuya yazılır.
-    let runId: string | undefined, runStartedAt: string | undefined
+    // Koşunun tamamı tek istekte işlenir; istemci sayfa döngüsü kurmaz.
+    setSyncProgress('Trendyol katalogu okunuyor...')
     try {
-      while (true) {
-        setSyncProgress(`Sayfa ${page + 1} yükleniyor...`)
-        const res = await fetch('/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page, run_id: runId, run_started_at: runStartedAt }) })
-        const data = await res.json()
-        if (data.error) { setSyncResult({ error: data.error }); break }
-        if (data.skipped) { setSyncResult({ error: 'Zaten süren bir sync koşusu var, birkaç dakika sonra tekrar deneyin.' }); break }
-        runId = data.run_id; runStartedAt = data.run_started_at
-        totalAdded += data.added; totalUpdated += data.updated
-        totalElements = data.totalElements || totalElements
-        setSyncProgress(`${data.pagesProcessed} sayfa işlendi (+${totalAdded} eklendi, ${totalUpdated} güncellendi)`)
-        if (data.done) {
-          const activeCount = totalAdded + totalUpdated
-          const passiveCount = Math.max(0, localProducts.length - activeCount)
-          setSyncResult({ success: true, productsAdded: totalAdded, productsUpdated: totalUpdated, activeCount, passiveCount, totalElements })
-          break
-        }
-        page = data.nextPage ?? page + 1
+      const res = await fetch('/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      const data = await res.json()
+      if (data.error) { setSyncResult({ error: data.error }) }
+      else if (data.skipped) { setSyncResult({ error: 'Zaten süren bir sync koşusu var, birkaç dakika sonra tekrar deneyin.' }) }
+      else {
+        const totalAdded = data.products_added ?? 0
+        const totalUpdated = data.products_updated ?? 0
+        const activeCount = totalAdded + totalUpdated
+        const passiveCount = Math.max(0, localProducts.length - activeCount)
+        setSyncProgress(`${data.pages_done} sayfa · ${Math.round((data.duration_ms ?? 0) / 1000)} sn`)
+        setSyncResult({ success: true, productsAdded: totalAdded, productsUpdated: totalUpdated, activeCount, passiveCount, totalElements: data.totalElements ?? 0 })
       }
     } catch { setSyncResult({ error: 'Bağlantı hatası' }) }
     setSyncing(false)

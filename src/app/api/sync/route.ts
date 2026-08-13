@@ -1,12 +1,11 @@
-import { NextResponse, after } from 'next/server'
+import { NextResponse } from 'next/server'
 import {
-  CHUNK_PAGES,
   closeStaleRuns,
+  failRun,
   getServiceClient,
-  originFromRequest,
-  processChunk,
+  PAGE_SIZE,
+  processRun,
   startRun,
-  triggerNextChunk,
 } from '@/lib/trendyol/syncRun'
 
 export const maxDuration = 60
@@ -24,98 +23,70 @@ function isAdminRequest(request: Request): boolean {
 }
 
 /**
- * Zincirin bir halkası.
- * - run_id yoksa yeni koşu açılır (taze bir koşu sürüyorsa atlanır).
- * - En fazla CHUNK_PAGES sayfa işlenir; kalan varsa bir sonraki halka tetiklenir.
+ * Koşunun tamamı bu istekte yapılır: bütün sayfalar, sonra pasife çekme.
+ * Zincir (kendini tetikleyen halkalar) kaldırıldı — Vercel self-fetch'i
+ * HTTP 508 ile engelliyor; toplu upsert sayesinde zaten gerekmiyor.
  */
-async function runChunk(body: any, options: { selfTrigger: boolean; origin?: string }) {
+async function runSync() {
   const supabase = getServiceClient()
 
-  let runId: string | undefined = body?.run_id
-  let runStartedAt: string | undefined = body?.run_started_at
-  const startPage = Number(body?.page ?? 0) || 0
-
-  if (!runId || !runStartedAt) {
-    const start = await startRun(supabase)
-    if (!start.started) {
-      return NextResponse.json({
-        skipped: true,
-        reason: start.reason,
-        run_id: start.runId,
-        message: 'Taze bir sync koşusu sürüyor; bu tetikleme atlandı.',
-      })
-    }
-    runId = start.runId
-    runStartedAt = start.runStartedAt
+  const start = await startRun(supabase)
+  if (!start.started) {
+    return NextResponse.json({
+      skipped: true,
+      reason: start.reason,
+      run_id: start.runId,
+      message: 'Taze bir sync koşusu sürüyor; bu tetikleme atlandı.',
+    })
   }
 
-  // Cron zincirinde iş, yanıt gönderildikten SONRA yapılır: çağıran beklemez,
-  // her halka kendi 60 sn'lik penceresinde tek sayfa işler.
-  if (options.selfTrigger) {
-    const id = runId
-    const startedAt = runStartedAt
-    after(async () => {
-      try {
-        const chunk = await processChunk({ supabase, runId: id, runStartedAt: startedAt, startPage })
-        if (!chunk.done && chunk.nextPage !== null) {
-          await triggerNextChunk(id, startedAt, chunk.nextPage, options.origin, supabase)
-        }
-      } catch (error: any) {
-        console.error('[sync] zincir halkası hata verdi:', error?.message)
-      }
+  try {
+    const result = await processRun({
+      supabase,
+      runId: start.runId,
+      runStartedAt: start.runStartedAt,
     })
 
     return NextResponse.json({
-      accepted: true,
-      run_id: runId,
-      run_started_at: runStartedAt,
-      page: startPage,
-      chunkPages: CHUNK_PAGES,
+      run_id: result.runId,
+      run_started_at: start.runStartedAt,
+      status: result.status,
+      done: result.done,
+      pages_done: result.pagesDone,
+      products_added: result.added,
+      products_updated: result.updated,
+      skipped: result.skipped,
+      deactivated: result.deactivated,
+      totalPages: result.totalPages,
+      totalElements: result.totalElements,
+      duration_ms: result.durationMs,
+      note: result.note,
+      pageSize: PAGE_SIZE,
     })
+  } catch (error: any) {
+    // Satır 'running' kalırsa 20 dk boyunca yeni koşu başlamaz; hemen kapat.
+    await failRun(supabase, start.runId, error?.message ?? 'bilinmeyen hata')
+    throw error
   }
-
-  // Admin manuel koşusu: sayfaları istemci sırayla ister, sonucu bekler.
-  const chunk = await processChunk({ supabase, runId, runStartedAt, startPage })
-
-  return NextResponse.json({
-    run_id: runId,
-    run_started_at: runStartedAt,
-    page: startPage,
-    pagesProcessed: chunk.pagesProcessed,
-    nextPage: chunk.nextPage,
-    done: chunk.done,
-    added: chunk.added,
-    updated: chunk.updated,
-    skipped: chunk.skipped,
-    deactivated: chunk.deactivated,
-    totalPages: chunk.totalPages,
-    totalElements: chunk.totalElements,
-    chunkPages: CHUNK_PAGES,
-  })
 }
 
 export async function POST(request: Request) {
-  const cron = isCronRequest(request)
-  if (!cron && !isAdminRequest(request)) {
+  if (!isCronRequest(request) && !isAdminRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json().catch(() => ({}))
-
   try {
-    // Cron zinciri kendini tetikler; admin panelden gelen manuel koşuda
-    // sayfaları istemci sırayla ister, kendi kendine tetikleme yapılmaz.
-    return await runChunk(body, { selfTrigger: cron, origin: originFromRequest(request) })
+    return await runSync()
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
 export async function GET(request: Request) {
-  // Vercel cron: koşuyu başlatır, ilk parçayı işler, kalanı zincire bırakır.
+  // Vercel cron bu yoldan gelir: koşunun tamamı burada işlenir.
   if (isCronRequest(request)) {
     try {
-      return await runChunk({}, { selfTrigger: true, origin: originFromRequest(request) })
+      return await runSync()
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }

@@ -2,16 +2,36 @@ import { createClient as createSupabaseClient, type SupabaseClient } from '@supa
 import { syncTrendyolPage } from './sync'
 
 /**
- * Sayfalı sync zinciri.
+ * Sync koşusu — TEK istekte tamamlanır.
  *
- * Her halka yanıtı HEMEN döner, işi Next'in after() kancasında yapar ve bittiğinde
- * bir sonraki halkayı tetikler. Böylece ne çağıran beklemede kalır ne de tek bir
- * istek Vercel'in 60 sn sınırına yaklaşır (bir sayfa ≈ 18 sn). Koşunun
- * tamamı sync_log'daki tek satırda izlenir: başlangıçta status='running',
- * bitişte 'success'/'partial' + finished_at.
+ * Eskiden koşu, her halkası kendini bir sonraki sayfa için yeniden tetikleyen
+ * bir zincirdi. Vercel bunu 5. halkada HTTP 508 (INFINITE_LOOP_DETECTED) ile
+ * kesiyordu; kendini çağıran fonksiyon platformda kalıcı olarak engelli.
+ * Yazma artık sayfa başına tek toplu upsert olduğu için (bkz. sync.ts) tüm
+ * sayfalar tek çağrının 60 sn'lik penceresine sığıyor ve zincire gerek kalmadı.
+ *
+ * Koşunun tamamı sync_log'daki tek satırda izlenir: başlangıçta status='running',
+ * bitişte 'success' / 'partial' / 'failed' + finished_at.
  */
-export const CHUNK_PAGES = 1
 export const PAGE_SIZE = 50
+
+/** Tek koşuda işlenecek sayfa tavanı — sonsuz döngüye karşı sert sınır. */
+export const MAX_PAGES = 40
+
+/**
+ * Bu süreden sonra pasife çekme ADIMI ATLANIR.
+ *
+ * Koşu beklenenden uzun sürdüyse sayfaların hepsi gerçekten görüldü mü emin
+ * olamayız; görülmeyeni pasife çekmek katalogu düşürür. Böyle bir koşu
+ * 'partial' kapanır, katalog olduğu gibi kalır, bir sonraki koşu düzeltir.
+ */
+export const DEACTIVATE_BUDGET_MS = 45_000
+
+/**
+ * Sayfa döngüsünün bütçesi. Vercel'in 60 sn sınırına çarpıp koşuyu yanıtsız
+ * bırakmaktansa, kalan sayfaları bırakıp koşuyu 'partial' kapatmak yeğdir.
+ */
+export const PAGE_BUDGET_MS = 50_000
 
 /** Bu süreden taze bir 'running' koşu varken yeni koşu başlatılmaz. */
 export const CONCURRENT_WINDOW_MIN = 10
@@ -26,32 +46,6 @@ export function getServiceClient(): SupabaseClient {
   )
 }
 
-/**
- * Zincirin kendini tetiklerken kullanacağı mutlak adres.
- *
- * Öncelik isteğin KENDİ origin'idir: yapılandırmadaki adres (ör. apex alan)
- * www'ye 307 ile yönlenirse fetch, çapraz-origin yönlendirmede Authorization
- * başlığını düşürüyor ve zincir 401 alıp sessizce ölüyor — canlıda tam olarak
- * bu oldu. SYNC_SELF_URL yerel/staging için elle geçersiz kılma imkânı verir.
- */
-export function selfUrl(path: string, requestOrigin?: string): string {
-  const base =
-    process.env.SYNC_SELF_URL ||
-    requestOrigin ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
-    'http://localhost:3000'
-  return `${base.replace(/\/$/, '')}${path}`
-}
-
-/** İsteğin geldiği mutlak origin (proxy başlıklarına saygılı). */
-export function originFromRequest(request: Request): string | undefined {
-  const host = request.headers.get('x-forwarded-host') || request.headers.get('host')
-  if (!host) return undefined
-  const proto = request.headers.get('x-forwarded-proto') || (host.startsWith('localhost') ? 'http' : 'https')
-  return `${proto}://${host}`
-}
-
 /** Yarıda ölmüş koşuları kapatır — admin göstergesi ve yarış koruması için. */
 export async function closeStaleRuns(supabase: SupabaseClient): Promise<number> {
   const cutoff = new Date(Date.now() - STALE_RUN_MIN * 60_000).toISOString()
@@ -59,7 +53,7 @@ export async function closeStaleRuns(supabase: SupabaseClient): Promise<number> 
     .from('sync_log')
     .update({
       status: 'failed',
-      error_message: `Koşu ${STALE_RUN_MIN} dk içinde tamamlanmadı (zincir koptu).`,
+      error_message: `Koşu ${STALE_RUN_MIN} dk içinde tamamlanmadı.`,
       finished_at: new Date().toISOString(),
     })
     .eq('status', 'running')
@@ -105,10 +99,10 @@ export async function startRun(supabase: SupabaseClient): Promise<StartResult> {
   return { started: true, runId, runStartedAt }
 }
 
-export type ChunkResult = {
+export type RunResult = {
   runId: string
-  pagesProcessed: number
-  nextPage: number | null
+  status: 'success' | 'partial'
+  pagesDone: number
   done: boolean
   added: number
   updated: number
@@ -116,78 +110,99 @@ export type ChunkResult = {
   deactivated: number
   totalPages: number
   totalElements: number
+  durationMs: number
+  note: string | null
 }
 
 /**
- * Zincirin bir halkası: en fazla CHUNK_PAGES sayfa işler, ilerlemeyi sync_log'a
- * yazar. Son sayfa bittiyse koşuyu kapatır.
+ * Koşunun tamamı: tüm sayfalar, ardından pasife çekme ve kapanış.
+ * Pasife çekilenler yalnızca BU koşuda hiç görülmemiş aktif satırlardır.
  */
-export async function processChunk(params: {
+export async function processRun(params: {
   supabase: SupabaseClient
   runId: string
   runStartedAt: string
-  startPage: number
-}): Promise<ChunkResult> {
-  const { supabase, runId, runStartedAt, startPage } = params
+}): Promise<RunResult> {
+  const { supabase, runId, runStartedAt } = params
+  const startedMs = Date.now()
 
-  let page = startPage
-  let pagesProcessed = 0
+  let page = 0
+  let pagesDone = 0
   let added = 0
   let updated = 0
   let skipped = 0
-  let deactivated = 0
   let done = false
   let totalPages = 0
   let totalElements = 0
+  let note: string | null = null
 
-  while (pagesProcessed < CHUNK_PAGES) {
+  while (page < MAX_PAGES) {
     const result = await syncTrendyolPage(page, PAGE_SIZE, runStartedAt)
     added += result.added
     updated += result.updated
     skipped += result.skipped
-    deactivated += result.deactivated
     totalPages = result.totalPages
     totalElements = result.totalElements
-    pagesProcessed++
+    pagesDone++
     done = result.done
     if (done) break
+
     page++
+
+    if (Date.now() - startedMs > PAGE_BUDGET_MS) {
+      note = `Süre bütçesi aşıldı: ${pagesDone}/${totalPages} sayfa işlendi, kalanı sonraki koşuya bırakıldı.`
+      break
+    }
   }
 
-  // Toplamları koşu satırına ekle (zincir boyunca birikir).
-  const { data: current } = await supabase
+  const elapsedBeforeDeactivate = Date.now() - startedMs
+
+  // Güvenlik ağı: koşu tamamlanmadıysa VEYA 45 sn'yi aştıysa pasife çekme
+  // adımı atlanır. Katalogun düşmesindense eski satırın bir tur daha kalması.
+  let deactivated = 0
+  const canDeactivate = done && elapsedBeforeDeactivate <= DEACTIVATE_BUDGET_MS
+
+  if (canDeactivate) {
+    const { data: stale } = await supabase
+      .from('products')
+      .update({ is_active: false })
+      .eq('is_active', true)
+      .lt('last_synced_at', runStartedAt)
+      .select('id')
+    deactivated = stale?.length ?? 0
+    if (deactivated > 0) console.log(`Sync: ${deactivated} ürün pasife çekildi (bu koşuda görülmedi)`)
+  } else if (done) {
+    note = `Koşu ${Math.round(elapsedBeforeDeactivate / 1000)} sn sürdü (sınır ${DEACTIVATE_BUDGET_MS / 1000} sn); pasife çekme atlandı.`
+  }
+
+  if (skipped > 0) {
+    const skippedNote = `${skipped} varyant stok/fiyat alınamadığı için atlandı`
+    note = note ? `${note} ${skippedNote}` : skippedNote
+  }
+
+  const status: 'success' | 'partial' = done && canDeactivate && skipped === 0 ? 'success' : 'partial'
+  const durationMs = Date.now() - startedMs
+
+  await supabase
     .from('sync_log')
-    .select('products_added, products_updated, pages_done')
+    .update({
+      products_added: added,
+      products_updated: updated,
+      pages_done: pagesDone,
+      status,
+      error_message: note,
+      finished_at: new Date().toISOString(),
+    })
     .eq('run_id', runId)
-    .maybeSingle()
 
-  const totals = {
-    products_added: (current?.products_added ?? 0) + added,
-    products_updated: (current?.products_updated ?? 0) + updated,
-    pages_done: (current?.pages_done ?? 0) + pagesProcessed,
-  }
-
-  if (done) {
-    await supabase
-      .from('sync_log')
-      .update({
-        ...totals,
-        status: skipped > 0 ? 'partial' : 'success',
-        error_message: skipped > 0 ? `${skipped} varyant stok/fiyat alınamadığı için atlandı` : null,
-        finished_at: new Date().toISOString(),
-      })
-      .eq('run_id', runId)
-  } else {
-    await supabase.from('sync_log').update(totals).eq('run_id', runId)
-  }
+  console.log(
+    `[sync] ${runId}: ${pagesDone} sayfa, +${added}/${updated} güncellendi, ${skipped} atlandı, ${deactivated} pasife çekildi, ${durationMs} ms, ${status}`
+  )
 
   return {
     runId,
-    pagesProcessed,
-    // page, döngü sonunda ZATEN bir sonraki işlenecek sayfayı gösterir;
-    // buna bir daha eklemek araya sayfa atlatır (atlanan sayfadaki ürünler
-    // koşuda görülmediği için sonunda pasife çekilirdi).
-    nextPage: done ? null : page,
+    status,
+    pagesDone,
     done,
     added,
     updated,
@@ -195,56 +210,19 @@ export async function processChunk(params: {
     deactivated,
     totalPages,
     totalElements,
+    durationMs,
+    note,
   }
 }
 
-/**
- * Zincirin bir sonraki halkasını tetikler.
- *
- * Karşı taraf yanıtı hemen döndürüp işi kendi after() kancasında yaptığı için
- * bu istek kısa sürer. İstek iptal EDİLMEZ: AbortSignal kullanmak çağrılan
- * isteği de iptal ediyor ve zincir ilk halkada kopuyordu.
- */
-export async function triggerNextChunk(
-  runId: string,
-  runStartedAt: string,
-  page: number,
-  requestOrigin?: string,
-  supabase?: SupabaseClient
-) {
-  const url = selfUrl('/api/sync', requestOrigin)
-  let lastProblem = ''
-
-  // İki deneme: geçici bir ağ hatası zinciri kopartmasın.
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const res = await fetch(url, {
-        // Yönlendirme izlenmez: sessizce yetkisiz kalmak yerine hata versin.
-        redirect: 'error',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.CRON_SECRET}`,
-        },
-        body: JSON.stringify({ run_id: runId, run_started_at: runStartedAt, page }),
-      })
-
-      if (res.ok) return
-      lastProblem = `HTTP ${res.status} — ${(await res.text()).slice(0, 120)}`
-    } catch (error: any) {
-      lastProblem = error?.message ?? 'bilinmeyen hata'
-    }
-    console.error(`[sync] zincir tetiklenemedi (deneme ${attempt}): ${lastProblem}`)
-  }
-
-  // Sunucu loglarına erişimi olmayan biri için hatayı koşu satırına yaz:
-  // zincirin nerede ve neden koptuğu admin panelinden görülebilsin.
-  if (supabase) {
-    await supabase
-      .from('sync_log')
-      .update({
-        error_message: `Zincir sayfa ${page} tetiklenirken koptu (${url}): ${lastProblem}`,
-      })
-      .eq('run_id', runId)
-  }
+/** Koşu ölürse satır 'running' kalmasın: hata mesajıyla kapat. */
+export async function failRun(supabase: SupabaseClient, runId: string, message: string) {
+  await supabase
+    .from('sync_log')
+    .update({
+      status: 'failed',
+      error_message: message.slice(0, 400),
+      finished_at: new Date().toISOString(),
+    })
+    .eq('run_id', runId)
 }

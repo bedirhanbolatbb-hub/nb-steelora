@@ -97,16 +97,28 @@ function flattenContents(contents: any[]): VariantRow[] {
 }
 
 /**
+ * Sayfadaki satırların DB'ye yazılacak hâli.
+ *
+ * Yalnızca sync'in sahibi olduğu alanlar yazılır: trendyol_* alanları,
+ * variant_label, is_active, last_synced_at ve satır kimliği (slug, trendyol_id).
+ * Yönetici alanları (override_title / override_description / override_price,
+ * is_featured, badge...) yükün İÇİNDE YOKTUR; upsert onlara dokunamaz.
+ */
+type UpsertRow = Record<string, unknown>
+
+/**
  * Sync sayfası işler.
  *
- * ÖNEMLİ: Ürünler artık BAŞTA pasife çekilmiyor. Eskiden sayfa 0 tüm katalogu
+ * ÖNEMLİ 1: Ürünler BAŞTA pasife çekilmez. Eskiden sayfa 0 tüm katalogu
  * is_active=false yapıyor, sonraki sayfalar tek tek geri açıyordu; koşu yarıda
  * kalırsa (Vercel'de 60 sn limiti) katalogun büyük kısmı görünmez kalıyordu —
- * 13 Ağustos 2026'da 440 üründen 272'si bu yüzden siteden düştü.
+ * 13 Ağustos 2026'da 440 üründen 272'si bu yüzden siteden düştü. Her sayfa
+ * dokunduğu satırı is_active=true + last_synced_at ile damgalar; katalogdan
+ * düşenleri koşu sahibi (syncRun) yalnız koşu tamamlandığında pasife çeker.
  *
- * Yeni davranış: her sayfa dokunduğu satırı is_active=true + last_synced_at ile
- * damgalar; katalogdan düşenler ancak koşu BAŞARIYLA tamamlandığında (done)
- * ve yalnız bu koşuda hiç dokunulmamış olanlar pasife çekilir.
+ * ÖNEMLİ 2: Yazma ürün başına değil, sayfa başına TEK toplu upsert'tir
+ * (çakışma hedefi: trendyol_barcode tekil indeksi). Eskiden 50 satırlık bir
+ * sayfa 50 ayrı update/insert isteği demekti; koşu 60 sn'ye sığmıyordu.
  */
 export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: string) {
   const supabase = getServiceClient()
@@ -125,16 +137,22 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
   // Stok ve fiyat yalnızca inventory-and-price ucunda dönüyor.
   const stockMap = await fetchStockAndPriceMap(rows.map((r) => r.barcode))
 
-  // Sayfadaki barkodların mevcut satırlarını tek sorguda al.
+  // Sayfadaki barkodların mevcut satırları TEK sorguda alınır. slug ve
+  // trendyol_id de okunur: upsert'in insert kolu bu iki NOT NULL kolonu
+  // istiyor, mevcut satırlarda ise DEĞERİN AYNISI geri yazılarak URL'ler ve
+  // dış referanslar olduğu gibi korunuyor.
   const { data: existingRows } = await supabase
     .from('products')
-    .select('id, trendyol_barcode, gender')
+    .select('id, trendyol_barcode, gender, slug, trendyol_id')
     .in('trendyol_barcode', rows.map((r) => r.barcode))
 
   const existingByBarcode = new Map(
     (existingRows || []).map((r: any) => [r.trendyol_barcode, r])
   )
 
+  const now = new Date().toISOString()
+  const payload: UpsertRow[] = []
+  const seenBarcodes = new Set<string>()
   let added = 0
   let updated = 0
   let skipped = 0
@@ -149,67 +167,77 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
       continue
     }
 
-    const syncedFields = {
+    // Aynı barkod tek yükte iki kez bulunursa ON CONFLICT hata verir
+    // ("cannot affect row a second time") ve tüm sayfa yazılamaz.
+    if (seenBarcodes.has(row.barcode)) continue
+    seenBarcodes.add(row.barcode)
+
+    const existing = existingByBarcode.get(row.barcode)
+
+    payload.push({
+      trendyol_barcode: row.barcode,
       trendyol_title: row.title,
       trendyol_description: row.description,
       trendyol_price: inventory.salePrice,
       trendyol_stock: inventory.quantity,
       trendyol_images: row.images,
       trendyol_category: row.category,
-      trendyol_barcode: row.barcode,
       variant_label: row.variantLabel,
       is_active: true,
-      last_synced_at: new Date().toISOString(),
-    }
+      last_synced_at: now,
+      updated_at: now,
+      // gender yalnızca boşsa doldurulur; dolu (elle etiketlenmiş olabilecek)
+      // değer kendi değeriyle geri yazılır, yani ezilmez.
+      gender: existing ? (existing.gender ?? row.gender) : row.gender,
+      // Mevcut satırda ikisi de değişmeden geri yazılır; yeni satırda üretilir.
+      slug: existing ? existing.slug : generateSlug(row.title, row.barcode),
+      trendyol_id: existing ? existing.trendyol_id : row.variantId,
+    })
 
-    const existing = existingByBarcode.get(row.barcode)
+    if (existing) updated++
+    else added++
+  }
 
-    if (existing) {
-      // trendyol_id'ye dokunulmaz: mevcut satırların dış referansı korunur.
-      // gender yalnızca boşsa doldurulur; mevcut (elle etiketlenmiş olabilecek)
-      // değerler sync tarafından ezilmez.
-      const genderPatch = !existing.gender && row.gender ? { gender: row.gender } : {}
+  if (payload.length > 0) {
+    const { error } = await supabase
+      .from('products')
+      .upsert(payload, { onConflict: 'trendyol_barcode' })
 
-      await supabase
-        .from('products')
-        .update({ ...syncedFields, ...genderPatch, updated_at: new Date().toISOString() })
-        .eq('id', existing.id)
+    if (error) {
+      // Toplu yazma tek bir bozuk satır yüzünden düşerse (ör. trendyol_id
+      // çakışması) 50 ürünü birden kaybetmeyelim: satır satır dene, yalnız
+      // gerçekten yazılamayanı atla.
+      console.error(`Sayfa ${page} toplu upsert hatası, satır satır denenecek: ${error.message}`)
+      added = 0
+      updated = 0
+      let failed = 0
 
-      updated++
-    } else {
-      await supabase.from('products').insert({
-        ...syncedFields,
-        gender: row.gender,
-        trendyol_id: row.variantId,
-        slug: generateSlug(row.title, row.barcode),
-        is_featured: false,
-      })
+      for (const item of payload) {
+        const { error: rowError } = await supabase
+          .from('products')
+          .upsert([item], { onConflict: 'trendyol_barcode' })
 
-      added++
+        if (rowError) {
+          failed++
+          skipped++
+          console.error(`Satır yazılamadı (${item.trendyol_barcode}): ${rowError.message}`)
+          continue
+        }
+        if (existingByBarcode.has(item.trendyol_barcode as string)) updated++
+        else added++
+      }
+
+      if (failed > 0) console.error(`Sayfa ${page}: ${failed} satır yazılamadı`)
     }
   }
 
   const done = contents.length < size || page >= totalPages - 1
 
-  // Koşu tamamlandığında: bu koşuda hiç dokunulmamış aktif ürünler artık
-  // Trendyol'da satışta değil demektir; ancak burada pasife çekilirler.
-  let deactivated = 0
-  if (done) {
-    const { data: stale } = await supabase
-      .from('products')
-      .update({ is_active: false })
-      .eq('is_active', true)
-      .lt('last_synced_at', runStart)
-      .select('id')
-    deactivated = stale?.length ?? 0
-    if (deactivated > 0) console.log(`Sync: ${deactivated} ürün pasife çekildi (bu koşuda görülmedi)`)
-  }
-
   console.log(
     `Sayfa ${page} tamamlandı: +${added} eklendi, ${updated} güncellendi, ${skipped} atlandı, done=${done}`
   )
 
-  // sync_log kaydını koşu sahibi tutar (lib/trendyol/syncRun.ts).
-
-  return { page, added, updated, skipped, deactivated, totalPages, totalElements, done, runStartedAt: runStart }
+  // Pasife çekme ve sync_log kaydı koşu sahibindedir (lib/trendyol/syncRun.ts):
+  // tek sayfa değil, koşunun tamamı bittiğinde karar verilmesi gerekiyor.
+  return { page, added, updated, skipped, totalPages, totalElements, done, runStartedAt: runStart }
 }
