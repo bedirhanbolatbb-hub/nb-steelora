@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/utils'
 import { FREE_SHIPPING_LABEL, FREE_SHIPPING_MIN_LABEL } from '@/lib/shipping'
 import { cleanDescription, hasContent } from '@/lib/catalog/description'
 import { materialCare, materialLabel } from '@/lib/catalog/material'
+import { resolveBadge } from '@/lib/catalog/badge'
 import ProductImageGallery from '@/components/store/ProductImageGallery'
 import ProductVariants from '@/components/store/ProductVariants'
 import ProductAccordion from '@/components/store/ProductAccordion'
@@ -17,9 +18,9 @@ import ReviewList from '@/components/store/ReviewList'
 import RecentlyViewedTracker from '@/components/store/RecentlyViewedTracker'
 import RecentlyViewed from '@/components/store/RecentlyViewed'
 
-// Aciliyet yalnız gerçekten son adette basılır; katalogda stok 1-5 arası ürün
-// çoğunlukta olduğu için eşik 1'in üstüne çıkarılırsa sinyal gürültüye döner.
-const LOW_STOCK_THRESHOLD = 1
+// Aciliyet ve rozet mantığı lib/catalog/badge.ts'te: "Son 1 adet" yalnız gerçekten
+// son adette basılır; katalogda stok 1-5 arası ürün çoğunlukta olduğu için eşik
+// 1'in üstüne çıkarılırsa sinyal gürültüye döner.
 
 const WHATSAPP_URL = 'https://wa.me/905536552020'
 
@@ -81,7 +82,7 @@ export default async function UrunDetayPage({
 
   const material = materialLabel(product.material_type)
   const stock = Number(product.trendyol_stock) || 0
-  const lowStock = stock > 0 && stock <= LOW_STOCK_THRESHOLD
+  const badge = resolveBadge(product)
 
   // Elle yazılmış açıklama varsa ham hâli gösterilir; pazaryeri metni temizlenir.
   const hasOverrideDescription = Boolean(product.override_description)
@@ -124,11 +125,13 @@ export default async function UrunDetayPage({
             )}
           </div>
 
-          {/* Stok durumu — aciliyet yalnız gerçek düşük stokta */}
+          {/* Tek rozet: Son 1 adet > elle girilen badge > Yeni */}
           {stock > 0 ? (
-            lowStock && (
-              <p className="mt-2 text-[12px] font-body text-accent-deep font-medium">
-                Son {stock} adet
+            badge && (
+              <p className="mt-3">
+                <span className="bg-surface border border-accent text-accent-deep text-[10px] px-2.5 py-1 font-body font-medium uppercase tracking-[0.15em] rounded-[2px]">
+                  {badge.label}
+                </span>
               </p>
             )
           ) : (

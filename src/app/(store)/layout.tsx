@@ -3,6 +3,7 @@ import Navbar from '@/components/store/Navbar'
 import Footer from '@/components/store/Footer'
 import FloatingWhatsApp from '@/components/store/FloatingWhatsApp'
 import RevealController from '@/components/motion/RevealController'
+import { getCouponReminder } from '@/lib/campaigns.server'
 
 export default async function StoreLayout({
   children,
@@ -40,12 +41,16 @@ export default async function StoreLayout({
     // Defaults apply
   }
 
+  // Sepet çekmecesindeki kupon hatırlatması — metin campaigns'ten üretilir.
+  const coupon = await getCouponReminder()
+
   return (
     <>
       <Navbar
         bannerText={bannerText}
         bannerColor={bannerColor}
         isLoggedIn={isLoggedIn}
+        coupon={coupon}
       />
       <main className="flex-1">{children}</main>
       <Footer isLoggedIn={isLoggedIn} />

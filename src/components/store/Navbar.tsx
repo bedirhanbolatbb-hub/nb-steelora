@@ -10,6 +10,7 @@ import CartDrawer from './CartDrawer'
 import SearchModal from './SearchModal'
 import { MENU_LINKS } from '@/lib/catalog/categories'
 import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
+import type { CouponReminder } from '@/lib/campaigns'
 
 // Menü tek kaynaktan gelir: src/lib/catalog/categories.ts
 const navLinks = MENU_LINKS
@@ -18,9 +19,10 @@ interface NavbarProps {
   bannerText?: string | null
   bannerColor?: string | null
   isLoggedIn?: boolean
+  coupon?: CouponReminder | null
 }
 
-export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarProps) {
+export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
@@ -144,7 +146,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn }: NavbarPr
           </div>
         </div>
       )}
-      <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
+      <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} coupon={coupon} />
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   )

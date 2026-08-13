@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 import { formatPrice } from '@/lib/utils'
-import Badge from '@/components/ui/Badge'
+import { resolveBadge } from '@/lib/catalog/badge'
 import WishlistButton from './WishlistButton'
 import ProductImage from './ProductImage'
 import { useCart } from '@/hooks/useCart'
@@ -27,6 +27,7 @@ export default function ProductCard({ product, priority = false, optionCount = 0
   const addItem = useCart((s) => s.addItem)
   const [added, setAdded] = useState(false)
   const outOfStock = product.trendyol_stock === 0
+  const badge = resolveBadge(product as any)
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -74,11 +75,11 @@ export default function ProductCard({ product, priority = false, optionCount = 0
           </div>
         </div>
 
-        {/* Badge */}
-        {product.badge && (
-          <div className="absolute top-3 left-3">
-            <Badge variant={product.badge} />
-          </div>
+        {/* Tek rozet: Son 1 adet > elle girilen badge > Yeni */}
+        {badge && (
+          <span className="absolute top-3 left-3 bg-surface border border-accent text-accent-deep text-[9px] px-2.5 py-1 font-body font-medium uppercase tracking-[0.15em] rounded-[2px]">
+            {badge.label}
+          </span>
         )}
 
         {/* Wishlist */}

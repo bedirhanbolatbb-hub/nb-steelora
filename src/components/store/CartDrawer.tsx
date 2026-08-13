@@ -8,13 +8,15 @@ import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
 import Button from '@/components/ui/Button'
 import { FREE_SHIPPING_LABEL, qualifiesForFreeShipping, shippingCostFor } from '@/lib/shipping'
+import { couponApplies, type CouponReminder } from '@/lib/campaigns'
 
 interface CartDrawerProps {
   isOpen: boolean
   onClose: () => void
+  coupon?: CouponReminder | null
 }
 
-export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
+export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, totalPrice } = useCart()
   const subtotal = totalPrice()
   const shipping = shippingCostFor(subtotal)
@@ -129,6 +131,16 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   : `${FREE_SHIPPING_LABEL} · Kargo: ${formatPrice(shipping)}`}
               </p>
             </div>
+
+            {/* Kupon hatırlatması — yalnız kampanya bu sepete uygulanabiliyorsa */}
+            {couponApplies(coupon ?? null, subtotal) && (
+              <div className="px-6 py-2.5 border-t border-line">
+                <p className="text-[11px] font-body text-ink-soft">
+                  <span className="text-accent">✦</span> {coupon!.label}
+                  <span className="text-muted"> — ödeme adımında uygulanır</span>
+                </p>
+              </div>
+            )}
 
             {/* Alt kısım */}
             <div className="px-6 py-5 border-t border-line">
