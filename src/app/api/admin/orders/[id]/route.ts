@@ -122,8 +122,8 @@ export async function PATCH(
       const { Resend } = await import('resend')
       const resend = new Resend(process.env.RESEND_API_KEY)
 
-      await resend.emails.send({
-        from: 'NB Steelora <onboarding@resend.dev>',
+      const shippingResult = await resend.emails.send({
+        from: 'NB Steelora <siparis@nbsteelora.com>',
         to: order.guest_email,
         subject: `Siparişiniz Kargoya Verildi — ${order.order_number}`,
         html: `<!DOCTYPE html>
@@ -156,6 +156,12 @@ export async function PATCH(
 </body>
 </html>`,
       })
+
+      // Resend API hatayı fırlatmaz, yanıtta döner: kontrol edilmezse
+      // gönderilemeyen mail sessizce kaybolur.
+      if (shippingResult.error) {
+        console.error('Shipping notification email rejected:', shippingResult.error)
+      }
     } catch (emailError) {
       console.error('Shipping notification email error:', emailError)
     }
@@ -201,7 +207,7 @@ export async function PATCH(
       const resend = new Resend(process.env.RESEND_API_KEY)
 
       const result = await resend.emails.send({
-        from: 'NB Steelora <onboarding@resend.dev>',
+        from: 'NB Steelora <siparis@nbsteelora.com>',
         to: order.guest_email,
         subject: `Siparişiniz Teslim Edildi — ${order.order_number}`,
         html: `<!DOCTYPE html>

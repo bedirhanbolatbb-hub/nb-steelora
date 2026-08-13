@@ -202,8 +202,8 @@ export async function POST(request: Request) {
     // Sipariş onay e-postası gönder
     if (order?.guest_email) {
       try {
-        await getResend().emails.send({
-          from: 'NB Steelora <onboarding@resend.dev>',
+        const confirmationResult = await getResend().emails.send({
+          from: 'NB Steelora <siparis@nbsteelora.com>',
           to: order.guest_email,
           subject: `Siparişiniz Alındı — ${order.order_number}`,
           html: `<!DOCTYPE html>
@@ -257,6 +257,12 @@ export async function POST(request: Request) {
 </body>
 </html>`,
         })
+
+        // Resend hatayı fırlatmaz, yanıtta döner: kontrol edilmezse
+        // gönderilemeyen onay maili sessizce kaybolur.
+        if (confirmationResult.error) {
+          console.error('Order confirmation email rejected:', confirmationResult.error)
+        }
       } catch (emailError) {
         console.error('Order confirmation email error:', emailError)
       }
