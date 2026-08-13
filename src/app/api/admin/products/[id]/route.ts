@@ -16,7 +16,7 @@ export async function PATCH(
   const body = await request.json()
   const supabase = getServiceClient()
 
-  const allowed = ['custom_price', 'note', 'is_active', 'override_title', 'override_price', 'override_description', 'is_featured']
+  const allowed = ['custom_price', 'note', 'is_active', 'override_title', 'override_price', 'override_description', 'is_featured', 'badge']
   const update: any = { updated_at: new Date().toISOString() }
   for (const key of allowed) {
     if (key in body) update[key] = body[key]

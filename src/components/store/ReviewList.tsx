@@ -37,6 +37,14 @@ function StarRating({
   )
 }
 
+/** "Ayşe Kaya" → "Ayşe K." — soyadı yayınlanmaz. */
+function maskName(name: string | null | undefined): string {
+  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return 'Müşteri'
+  if (parts.length === 1) return parts[0]
+  return `${parts[0]} ${parts[parts.length - 1].charAt(0).toLocaleUpperCase('tr')}.`
+}
+
 export default function ReviewList({ productId }: { productId: string }) {
   const [reviews, setReviews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -129,19 +137,33 @@ export default function ReviewList({ productId }: { productId: string }) {
         </div>
       )}
 
+      {/* Henüz onaylı yorum yoksa yıldız/özet hiç basılmaz, davet satırı çıkar */}
+      {!loading && reviews.length === 0 && !submitted && (
+        <p className="mb-6 text-[13px] font-body text-ink-soft">
+          Bu ürün için henüz değerlendirme yok.{' '}
+          <button
+            onClick={() => setShowForm(true)}
+            className="text-accent-deep underline underline-offset-2"
+          >
+            İlk değerlendirmeyi sen yaz
+          </button>
+        </p>
+      )}
+
       {/* Write review button / form */}
       {!showForm && !submitted && (
         <button
           onClick={() => setShowForm(true)}
           className="mb-8 py-3 px-8 border border-ink text-ink text-[11px] tracking-[0.15em] uppercase font-body hover:bg-ink hover:text-bg transition-colors"
         >
-          Yorum Yaz
+          Değerlendirme Yaz
         </button>
       )}
 
       {submitted && (
-        <div className="mb-8 p-4 bg-green-50 border border-green-200 text-green-700 text-[12px] font-body">
-          Yorumunuz başarıyla gönderildi, teşekkür ederiz!
+        <div className="mb-8 p-4 bg-surface border border-accent/50 text-ink text-[12px] font-body">
+          <span className="text-accent mr-1">✓</span>
+          Teşekkürler! Değerlendirmen onaydan sonra yayınlanır.
         </div>
       )}
 
@@ -176,11 +198,7 @@ export default function ReviewList({ productId }: { productId: string }) {
             </div>
           ))}
         </div>
-      ) : reviews.length === 0 ? (
-        <p className="text-muted text-[13px] font-body py-8">
-          Henüz yorum yapılmamış. İlk yorumu siz yapın!
-        </p>
-      ) : (
+      ) : reviews.length === 0 ? null : (
         <div className="space-y-6">
           {reviews.map((review) => (
             <div
@@ -192,8 +210,8 @@ export default function ReviewList({ productId }: { productId: string }) {
                   <div className="flex items-center gap-2 mb-1">
                     <StarRating rating={review.rating} />
                     {review.is_verified_purchase && (
-                      <span className="text-[9px] font-body text-green-600 border border-green-200 px-1.5 py-0.5 rounded">
-                        Doğrulanmış Alım
+                      <span className="text-[9px] font-body text-accent-deep border border-accent/50 px-1.5 py-0.5 rounded-[2px]">
+                        Doğrulanmış alışveriş
                       </span>
                     )}
                   </div>
@@ -211,7 +229,7 @@ export default function ReviewList({ productId }: { productId: string }) {
                 {review.body}
               </p>
               <p className="text-[11px] font-body text-muted">
-                {review.guest_name || 'Üye'}
+                {maskName(review.guest_name)}
               </p>
             </div>
           ))}

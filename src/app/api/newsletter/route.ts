@@ -8,13 +8,23 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 export async function POST(request: Request) {
   let email = ''
   let source = 'homepage'
+  let consent = false
 
   try {
     const body = await request.json()
     email = String(body?.email ?? '').trim().toLowerCase()
+    consent = body?.consent === true
     if (typeof body?.source === 'string' && body.source.length <= 40) source = body.source
   } catch {
     return NextResponse.json({ error: 'Geçersiz istek' }, { status: 400 })
+  }
+
+  // Ticari elektronik ileti onayı olmadan kayıt açılmaz.
+  if (!consent) {
+    return NextResponse.json(
+      { error: 'Devam etmek için ticari elektronik ileti onayı gerekiyor' },
+      { status: 400 }
+    )
   }
 
   if (!email || email.length > 200 || !EMAIL_PATTERN.test(email)) {
@@ -35,7 +45,7 @@ export async function POST(request: Request) {
       if (existing.is_active === false) {
         await supabase
           .from('newsletter_subscribers')
-          .update({ is_active: true })
+          .update({ is_active: true, consented_at: new Date().toISOString() })
           .eq('id', existing.id)
       }
       return NextResponse.json({ success: true, alreadySubscribed: true })
@@ -43,7 +53,7 @@ export async function POST(request: Request) {
 
     const { error } = await supabase
       .from('newsletter_subscribers')
-      .insert({ email, source })
+      .insert({ email, source, consented_at: new Date().toISOString() })
 
     if (error) {
       console.error('Newsletter insert error:', error.message)

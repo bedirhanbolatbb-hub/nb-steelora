@@ -17,6 +17,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
     body: '',
     guest_name: '',
     guest_email: '',
+    website: '', // honeypot
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -42,38 +43,38 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
       return
     }
 
-    setLoading(true)
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    const reviewData: any = {
-      product_id: productId,
-      rating,
-      title: form.title || null,
-      body: form.body,
-      is_approved: true,
+    if (!form.guest_name.trim() || !form.guest_email.trim()) {
+      setError('Lütfen adınızı ve e-postanızı girin')
+      return
     }
 
-    if (user) {
-      reviewData.user_id = user.id
-    } else {
-      if (!form.guest_name.trim() || !form.guest_email.trim()) {
-        setError('Lütfen adınızı ve e-postanızı girin')
+    setLoading(true)
+
+    // Kayıt /api/reviews üzerinden geçer: reviews tablosuna doğrudan yazım
+    // RLS ile kapalı ve her yorum onay bekler.
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          rating,
+          title: form.title || null,
+          body: form.body,
+          name: form.guest_name,
+          email: form.guest_email,
+          website: form.website, // honeypot — dolu gelirse sunucu sessizce yok sayar
+        }),
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        setError(data.error || 'Yorum gönderilirken hata oluştu')
         setLoading(false)
         return
       }
-      reviewData.guest_name = form.guest_name
-      reviewData.guest_email = form.guest_email
-    }
-
-    const { error: insertError } = await supabase
-      .from('reviews')
-      .insert(reviewData)
-
-    if (insertError) {
-      setError('Yorum gönderilirken hata oluştu')
+    } catch {
+      setError('Bağlantı kurulamadı, lütfen tekrar deneyin')
       setLoading(false)
       return
     }
@@ -128,8 +129,9 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
         </div>
       </div>
 
-      {/* Guest fields */}
-      {!isUser && (
+      {/* İsim ve e-posta: e-posta yayınlanmaz, yalnız doğrulanmış alışveriş
+          eşleşmesi ve moderasyon için tutulur. */}
+      {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
@@ -156,9 +158,24 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
                 setForm({ ...form, guest_email: e.target.value })
               }
             />
+            <p className="text-[10px] font-body text-muted mt-1">Yayınlanmaz.</p>
           </div>
         </div>
-      )}
+      }
+
+      {/* Honeypot — ekranda görünmez, yalnız botlar doldurur */}
+      <div className="absolute left-[-9999px] w-px h-px overflow-hidden" aria-hidden="true">
+        <label>
+          Web sitesi
+          <input
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={form.website}
+            onChange={(e) => setForm({ ...form, website: e.target.value })}
+          />
+        </label>
+      </div>
 
       {/* Title */}
       <div>
@@ -193,15 +210,19 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
         </p>
       </div>
 
-      {error && <p className="text-red-500 text-[12px] font-body">{error}</p>}
+      {error && <p className="text-accent-deep text-[12px] font-body">{error}</p>}
 
       <button
         type="submit"
         disabled={loading}
         className="py-3 px-8 bg-ink text-bg text-[11px] tracking-[0.15em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-50"
       >
-        {loading ? 'Gönderiliyor...' : 'Yorum Gönder'}
+        {loading ? 'Gönderiliyor...' : 'Değerlendirmeyi Gönder'}
       </button>
+
+      <p className="text-[11px] font-body text-muted">
+        Değerlendirmeler yayınlanmadan önce incelenir.
+      </p>
     </form>
   )
 }

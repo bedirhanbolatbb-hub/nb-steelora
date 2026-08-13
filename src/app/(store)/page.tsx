@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getSiteContent } from '@/lib/supabase/content'
 import { getHomepageSection, getHeroProducts, ShownProducts } from '@/lib/home/sections'
+import { getMostLovedProducts } from '@/lib/home/mostLoved'
 import { FREE_SHIPPING_MIN_LABEL } from '@/lib/shipping'
 import Hero from '@/components/home/Hero'
 import Marquee from '@/components/home/Marquee'
@@ -26,6 +27,9 @@ export default async function HomePage() {
 
   const newArrivals = await getHomepageSection('new_arrivals', shown)
 
+  // Koşullu bölüm: yeterli onaylı yorum yoksa hiç render edilmez.
+  const mostLoved = await getMostLovedProducts()
+
   try {
     const supabase = await createClient()
     const now = new Date().toISOString()
@@ -47,7 +51,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero />
+      <Hero hasMostLoved={mostLoved.length > 0} />
 
       {c.promo_bar_text && (
         <div className="bg-line border-b border-surface-muted py-2.5 px-8 text-center">
@@ -91,6 +95,29 @@ export default async function HomePage() {
       <Marquee />
       <CategoryGrid />
       <FeaturedProducts title={c.featured_title} subtitle={c.featured_subtitle} products={featured} />
+
+      {/* Çok Beğenilenler — yalnız yeterli onaylı yorum biriktiğinde */}
+      {mostLoved.length > 0 && (
+        <section id="cok-begenilenler" className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
+          <div className="mb-8" data-reveal>
+            <p className="eyebrow">Müşteri Favorileri</p>
+            <h2 className="font-heading text-[34px] font-semibold text-ink mt-2">
+              Çok Beğenilenler
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+            {mostLoved.map((product: any, i: number) => (
+              <div
+                key={product.id}
+                data-reveal
+                style={{ '--reveal-delay': `${(i % 4) * 50}ms` } as React.CSSProperties}
+              >
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {newArrivals.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 lg:px-8 py-16">

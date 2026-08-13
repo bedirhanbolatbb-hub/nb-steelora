@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 
@@ -8,12 +9,20 @@ type Status = 'idle' | 'loading' | 'done' | 'error'
 
 export default function Newsletter() {
   const [email, setEmail] = useState('')
+  const [consent, setConsent] = useState(false)
   const [status, setStatus] = useState<Status>('idle')
   const [message, setMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (status === 'loading') return
+
+    // Onay kutusu işaretlenmeden gönderim yapılmaz.
+    if (!consent) {
+      setStatus('error')
+      setMessage('Devam etmek için ticari elektronik ileti onayı gerekiyor.')
+      return
+    }
 
     setStatus('loading')
     setMessage('')
@@ -22,7 +31,7 @@ export default function Newsletter() {
       const res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source: 'homepage' }),
+        body: JSON.stringify({ email, source: 'homepage', consent: true }),
       })
       const data = await res.json()
 
@@ -71,6 +80,28 @@ export default function Newsletter() {
             {status === 'loading' ? 'Gönderiliyor…' : 'Abone Ol'}
           </Button>
         </form>
+
+        <label className="flex items-start gap-2 max-w-md mx-auto mt-4 text-left cursor-pointer">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => {
+              setConsent(e.target.checked)
+              if (e.target.checked && status === 'error') {
+                setStatus('idle')
+                setMessage('')
+              }
+            }}
+            className="accent-accent mt-0.5 shrink-0"
+          />
+          <span className="text-[11px] font-body text-muted leading-relaxed">
+            Kampanya ve yeni koleksiyon duyuruları için tarafıma ticari elektronik ileti
+            gönderilmesine onay veriyorum.{' '}
+            <Link href="/kvkk" className="text-accent-deep underline underline-offset-2">
+              Aydınlatma Metni
+            </Link>
+          </span>
+        </label>
 
         {message && (
           <p

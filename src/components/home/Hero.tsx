@@ -4,7 +4,7 @@ import { getSiteContent } from '@/lib/supabase/content'
 import HeroGrid from './HeroGrid'
 import HeroParallax from '@/components/motion/HeroParallax'
 
-export default async function Hero() {
+export default async function Hero({ hasMostLoved = false }: { hasMostLoved?: boolean }) {
   const c = await getSiteContent()
   const singleMode = c.hero_single_mode === 'true'
 
@@ -82,11 +82,12 @@ export default async function Hero() {
           >
             {c.hero_cta || 'Koleksiyonu Keşfet'}
           </Link>
+          {/* Yeterli onaylı yorum varsa CTA "Çok Beğenilenler"e döner */}
           <Link
-            href="/#one-cikanlar"
+            href={hasMostLoved ? '/#cok-begenilenler' : '/#one-cikanlar'}
             className="text-accent text-[11px] uppercase tracking-widest font-body underline underline-offset-4 hover:text-accent/70 transition-colors"
           >
-            Öne Çıkanlar →
+            {hasMostLoved ? 'Çok Beğenilenler →' : 'Öne Çıkanlar →'}
           </Link>
         </div>
       </div>

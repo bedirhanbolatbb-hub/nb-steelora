@@ -391,7 +391,7 @@ export default function AdminDashboard({
   // ─── Product Override ───
   const saveProductOverride = async () => {
     if (!editingProduct) return
-    await fetch(`/api/admin/products/${editingProduct.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ override_title: editingProduct.override_title || null, custom_price: editingProduct.custom_price ? Number(editingProduct.custom_price) : null, override_description: editingProduct.override_description || null, is_featured: editingProduct.is_featured, is_active: editingProduct.is_active }) })
+    await fetch(`/api/admin/products/${editingProduct.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ override_title: editingProduct.override_title || null, custom_price: editingProduct.custom_price ? Number(editingProduct.custom_price) : null, override_description: editingProduct.override_description || null, is_featured: editingProduct.is_featured, is_active: editingProduct.is_active, badge: (editingProduct.badge || '').trim() || null }) })
     setLocalProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...editingProduct } : p)))
     setEditingProduct(null)
   }
@@ -904,6 +904,7 @@ export default function AdminDashboard({
                   <p className="text-[11px] text-muted font-body">Trendyol: {editingProduct.trendyol_title}</p>
                   <input className={inputClass} placeholder="Override Başlık" value={editingProduct.override_title || ''} onChange={(e) => setEditingProduct({ ...editingProduct, override_title: e.target.value })} />
                   <input className={inputClass} placeholder="Fiyat (boş = Trendyol fiyatı)" type="number" value={editingProduct.custom_price || ''} onChange={(e) => setEditingProduct({ ...editingProduct, custom_price: e.target.value })} />
+                  <input className={inputClass} placeholder="Rozet metni (boş = rozet yok)" value={editingProduct.badge || ''} onChange={(e) => setEditingProduct({ ...editingProduct, badge: e.target.value })} />
                   <textarea className={`${inputClass} resize-none`} rows={3} placeholder="Override Açıklama" value={editingProduct.override_description || ''} onChange={(e) => setEditingProduct({ ...editingProduct, override_description: e.target.value })} />
                   <label className="flex items-center gap-2 text-[12px] font-body"><input type="checkbox" checked={editingProduct.is_featured} onChange={(e) => setEditingProduct({ ...editingProduct, is_featured: e.target.checked })} /> Öne Çıkar</label>
                   <label className="flex items-center gap-2 text-[12px] font-body"><input type="checkbox" checked={editingProduct.is_active} onChange={(e) => setEditingProduct({ ...editingProduct, is_active: e.target.checked })} /> Aktif</label>
