@@ -17,8 +17,9 @@ import ReviewList from '@/components/store/ReviewList'
 import RecentlyViewedTracker from '@/components/store/RecentlyViewedTracker'
 import RecentlyViewed from '@/components/store/RecentlyViewed'
 
-// Stok bu eşiğin altındaysa (0 hariç) kalan adet gösterilir.
-const LOW_STOCK_THRESHOLD = 5
+// Aciliyet yalnız gerçekten son adette basılır; katalogda stok 1-5 arası ürün
+// çoğunlukta olduğu için eşik 1'in üstüne çıkarılırsa sinyal gürültüye döner.
+const LOW_STOCK_THRESHOLD = 1
 
 const WHATSAPP_URL = 'https://wa.me/905536552020'
 

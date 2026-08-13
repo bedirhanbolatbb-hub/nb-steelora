@@ -14,13 +14,18 @@ export async function GET(request: Request) {
 
   const supabase = await createClient()
 
+  // Arama hem görünen (kısa) ad hem de uzun Trendyol başlığı üzerinde çalışır:
+  // kısa adlar devreye girince "zirkon taşlı", "figürlü" gibi kelimelerle
+  // yapılan aramalar sonuçsuz kalmasın. Sonuç satırında görünen ad basılır.
   // Gruplama sonucu kart sayısını düşürdüğü için ham eşleşmeden fazlası çekilir.
   const { data } = await supabase
     .from('products_display')
     .select(
       'id, slug, display_title, display_price, display_images, trendyol_category, trendyol_stock, gender, created_at, variant_label'
     )
-    .or(`display_title.ilike.%${q}%,trendyol_category.ilike.%${q}%`)
+    .or(
+      `display_title.ilike.%${q}%,trendyol_title.ilike.%${q}%,trendyol_category.ilike.%${q}%`
+    )
     .limit(RESULT_LIMIT * 8)
 
   const results = groupProducts(data || [])
