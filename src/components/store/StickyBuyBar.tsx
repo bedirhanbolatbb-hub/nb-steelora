@@ -15,7 +15,7 @@ const ADDED_FEEDBACK_MS = 1600
  * Yalnız dar ekranda (sm altı) görünen yapışkan satın alma çubuğu.
  *
  * Görünürlük kuralları:
- * - Satın alma bloğu yukarı doğru ekrandan çıkınca görünür (IntersectionObserver).
+ * - Satın alma bloğu yukarı doğru ekrandan çıkınca görünür (kaydırmada ölçülür).
  * - Sepet çekmecesi / menü / arama açıkken CSS ile gizlenir
  *   (body[data-overlay='open'] — bkz. globals.css, Navbar).
  * - Klavye açıkken gizlenir: visualViewport yüksekliği belirgin düşerse ya da
@@ -43,18 +43,51 @@ export default function StickyBuyBar({
   // Beden seçimi bir kez teyit edildiyse çubuk doğrudan sepete ekler.
   const sizeConfirmed = useRef(false)
 
-  // Çubuk, satın alma bloğu YUKARI doğru ekrandan çıktığında belirir. Blok
-  // henüz aşağıdaysa (sayfanın başı) çubuk yok: kullanıcı butonu görmeden
-  // ekranı kapatmanın anlamı olmaz.
+  /**
+   * Çubuk, satın alma bloğu YUKARI doğru ekrandan çıktığında belirir. Blok
+   * henüz aşağıdaysa (sayfanın başı) çubuk yok: kullanıcı butonu görmeden
+   * ekranı kapatmanın anlamı olmaz.
+   *
+   * Ölçüm kaydırma anında yapılır, IntersectionObserver ile DEĞİL: IO yalnız
+   * kesişim durumu DEĞİŞTİĞİNDE haber verir. Blok açılışta katlama altındaysa
+   * (500x800'lük bir pencerede tam olarak böyle) ve kullanıcı hızlı kaydırıp
+   * bloğu hiçbir karede ekranda göstermeden geçerse, IO bir daha hiç
+   * tetiklenmiyor ve çubuk kalıcı olarak gizli kalıyordu.
+   *
+   * Klavye durumu da burada ölçülür: tek seferlik bir okuma yanlış çıkarsa
+   * (ör. açılış anında görsel viewport henüz oturmamışsa) çubuk sonsuza dek
+   * gizli kalırdı; her karede yeniden hesaplanınca böyle bir kilit oluşmaz.
+   */
   useEffect(() => {
     const target = document.getElementById(BUY_BLOCK_ID)
     if (!target) return
-    const observer = new IntersectionObserver(
-      ([entry]) => setPassedBuyBlock(!entry.isIntersecting && entry.boundingClientRect.top < 0),
-      { threshold: 0 }
-    )
-    observer.observe(target)
-    return () => observer.disconnect()
+
+    let frame = 0
+    const measure = () => {
+      frame = 0
+      setPassedBuyBlock(target.getBoundingClientRect().bottom < 0)
+
+      const vv = window.visualViewport
+      // Klavye ekranın altından belirgin bir pay kapatır; küçük tarayıcı
+      // çubukları (ör. 60-80px) çubuğu gizlemeye yetmemeli.
+      setKeyboardOpen(Boolean(vv) && vv!.height < window.innerHeight - 150)
+    }
+
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(measure)
+    }
+
+    measure()
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    window.visualViewport?.addEventListener('resize', schedule)
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+      window.visualViewport?.removeEventListener('resize', schedule)
+    }
   }, [])
 
   useEffect(() => {
@@ -71,15 +104,6 @@ export default function StickyBuyBar({
       document.removeEventListener('focusin', onFocus)
       document.removeEventListener('focusout', onBlur)
     }
-  }, [])
-
-  useEffect(() => {
-    const vv = window.visualViewport
-    if (!vv) return
-    const onResize = () => setKeyboardOpen(vv.height < window.innerHeight * 0.75)
-    vv.addEventListener('resize', onResize)
-    onResize()
-    return () => vv.removeEventListener('resize', onResize)
   }, [])
 
   const handleAdd = useCallback(() => {
