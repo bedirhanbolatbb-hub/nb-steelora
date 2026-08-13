@@ -28,16 +28,28 @@ export function getServiceClient(): SupabaseClient {
 
 /**
  * Zincirin kendini tetiklerken kullanacağı mutlak adres.
- * SYNC_SELF_URL çalışma zamanında okunur; NEXT_PUBLIC_* değişkenleri derleme
- * anında gömüldüğü için yerel testte yanlışlıkla canlıya istek atılıyordu.
+ *
+ * Öncelik isteğin KENDİ origin'idir: yapılandırmadaki adres (ör. apex alan)
+ * www'ye 307 ile yönlenirse fetch, çapraz-origin yönlendirmede Authorization
+ * başlığını düşürüyor ve zincir 401 alıp sessizce ölüyor — canlıda tam olarak
+ * bu oldu. SYNC_SELF_URL yerel/staging için elle geçersiz kılma imkânı verir.
  */
-export function selfUrl(path: string): string {
+export function selfUrl(path: string, requestOrigin?: string): string {
   const base =
     process.env.SYNC_SELF_URL ||
+    requestOrigin ||
     process.env.NEXT_PUBLIC_SITE_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
     'http://localhost:3000'
   return `${base.replace(/\/$/, '')}${path}`
+}
+
+/** İsteğin geldiği mutlak origin (proxy başlıklarına saygılı). */
+export function originFromRequest(request: Request): string | undefined {
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host')
+  if (!host) return undefined
+  const proto = request.headers.get('x-forwarded-proto') || (host.startsWith('localhost') ? 'http' : 'https')
+  return `${proto}://${host}`
 }
 
 /** Yarıda ölmüş koşuları kapatır — admin göstergesi ve yarış koruması için. */
@@ -193,9 +205,16 @@ export async function processChunk(params: {
  * bu istek kısa sürer. İstek iptal EDİLMEZ: AbortSignal kullanmak çağrılan
  * isteği de iptal ediyor ve zincir ilk halkada kopuyordu.
  */
-export async function triggerNextChunk(runId: string, runStartedAt: string, page: number) {
+export async function triggerNextChunk(
+  runId: string,
+  runStartedAt: string,
+  page: number,
+  requestOrigin?: string
+) {
   try {
-    const res = await fetch(selfUrl('/api/sync'), {
+    const res = await fetch(selfUrl('/api/sync', requestOrigin), {
+      // Yönlendirme izlenmez: sessizce yetkisiz kalmak yerine hata versin.
+      redirect: 'error',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

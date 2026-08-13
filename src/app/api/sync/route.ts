@@ -3,6 +3,7 @@ import {
   CHUNK_PAGES,
   closeStaleRuns,
   getServiceClient,
+  originFromRequest,
   processChunk,
   startRun,
   triggerNextChunk,
@@ -27,7 +28,7 @@ function isAdminRequest(request: Request): boolean {
  * - run_id yoksa yeni koşu açılır (taze bir koşu sürüyorsa atlanır).
  * - En fazla CHUNK_PAGES sayfa işlenir; kalan varsa bir sonraki halka tetiklenir.
  */
-async function runChunk(body: any, options: { selfTrigger: boolean }) {
+async function runChunk(body: any, options: { selfTrigger: boolean; origin?: string }) {
   const supabase = getServiceClient()
 
   let runId: string | undefined = body?.run_id
@@ -57,7 +58,7 @@ async function runChunk(body: any, options: { selfTrigger: boolean }) {
       try {
         const chunk = await processChunk({ supabase, runId: id, runStartedAt: startedAt, startPage })
         if (!chunk.done && chunk.nextPage !== null) {
-          await triggerNextChunk(id, startedAt, chunk.nextPage)
+          await triggerNextChunk(id, startedAt, chunk.nextPage, options.origin)
         }
       } catch (error: any) {
         console.error('[sync] zincir halkası hata verdi:', error?.message)
@@ -104,7 +105,7 @@ export async function POST(request: Request) {
   try {
     // Cron zinciri kendini tetikler; admin panelden gelen manuel koşuda
     // sayfaları istemci sırayla ister, kendi kendine tetikleme yapılmaz.
-    return await runChunk(body, { selfTrigger: cron })
+    return await runChunk(body, { selfTrigger: cron, origin: originFromRequest(request) })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
@@ -114,7 +115,7 @@ export async function GET(request: Request) {
   // Vercel cron: koşuyu başlatır, ilk parçayı işler, kalanı zincire bırakır.
   if (isCronRequest(request)) {
     try {
-      return await runChunk({}, { selfTrigger: true })
+      return await runChunk({}, { selfTrigger: true, origin: originFromRequest(request) })
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
