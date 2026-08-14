@@ -58,8 +58,9 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Yapısal veri — marka kimliği ve site kaydı */}
-      <JsonLd data={organizationJsonLd()} />
+      {/* Yapısal veri — marka kimliği ve site kaydı; sameAs yalnız dolu
+          sosyal adreslerle basılır (panel → Site Metinleri). */}
+      <JsonLd data={organizationJsonLd([c.instagram_url, c.facebook_url, c.x_url])} />
       <JsonLd data={websiteJsonLd()} />
 
       <Hero hasMostLoved={mostLoved.length > 0} />

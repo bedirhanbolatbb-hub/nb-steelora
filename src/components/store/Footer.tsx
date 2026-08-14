@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import { getCollectionCards } from '@/lib/collections'
+import { getSiteContent } from '@/lib/supabase/content'
 
 // Menüyle birebir aynı liste — tek kaynak src/lib/catalog/categories.ts
 const categories = CATEGORIES.map((c) => ({ href: `/kategori/${c.slug}`, label: c.title }))
@@ -25,6 +26,32 @@ const accountLinks = {
 export default async function Footer({ isLoggedIn }: { isLoggedIn?: boolean }) {
   // Koleksiyonlar üst menüye eklenmiyor (menü dolu); giriş noktası footer.
   const collections = await getCollectionCards()
+
+  // Sosyal adresler site_content'ten; boş anahtar ikon basmaz.
+  const content = await getSiteContent()
+  const sosyal = [
+    {
+      label: 'Instagram',
+      href: (content.instagram_url || '').trim(),
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+      ),
+    },
+    {
+      label: 'Facebook',
+      href: (content.facebook_url || '').trim(),
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+      ),
+    },
+    {
+      label: 'X',
+      href: (content.x_url || '').trim(),
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M4 20l6.768 -6.768m2.46 -2.46L20 4"/></svg>
+      ),
+    },
+  ].filter((s) => s.href)
 
   return (
     <footer className="bg-ink-deep text-line">
@@ -158,17 +185,24 @@ export default async function Footer({ isLoggedIn }: { isLoggedIn?: boolean }) {
           <p className="text-[10px] font-body text-line/50 tracking-wider">
             © 2026 NB Steelora®. Tüm hakları saklıdır.
           </p>
-          <div className="flex items-center gap-4">
-            <a href="#" className="text-line/50 hover:text-accent transition-colors" aria-label="Instagram">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-            </a>
-            <a href="#" className="text-line/50 hover:text-accent transition-colors" aria-label="Facebook">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-            </a>
-            <a href="#" className="text-line/50 hover:text-accent transition-colors" aria-label="X">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M4 20l6.768 -6.768m2.46 -2.46L20 4"/></svg>
-            </a>
-          </div>
+          {/* Sosyal ikonlar site_content'ten beslenir; yalnız DOLU adresler
+              basılır (panel → Site Metinleri). */}
+          {sosyal.length > 0 && (
+            <div className="flex items-center gap-4">
+              {sosyal.map((s) => (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-line/50 hover:text-accent transition-colors"
+                  aria-label={s.label}
+                >
+                  {s.icon}
+                </a>
+              ))}
+            </div>
+          )}
           </div>
         </div>
       </div>

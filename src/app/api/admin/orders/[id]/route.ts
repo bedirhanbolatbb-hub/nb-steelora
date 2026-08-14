@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { validateOrderStatusTransition } from '@/lib/orders/statusTransitions'
 import { executeAdminOrderCancellation } from '@/lib/admin/executeOrderCancellation'
@@ -22,28 +21,8 @@ export async function PATCH(
   } catch {
     return NextResponse.json({ success: false, error: 'Geçersiz gövde.' }, { status: 400 })
   }
-  const url = new URL(request.url)
-  const type = url.searchParams.get('type')
-  const supabase = await createClient()
-
-  if (type === 'product') {
-    const { error } = await supabase
-      .from('products')
-      .update({
-        override_title: body.override_title,
-        custom_price: body.custom_price ?? null,
-        override_description: body.override_description,
-        is_featured: body.is_featured,
-        is_active: body.is_active,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-
-    if (error)
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
-    return NextResponse.json({ success: true })
-  }
-
+  // type=product dalı eski panelle emekli oldu (Faz 7D) — ürün yazımı artık
+  // yalnız beyaz listeli /api/panel/products/[id] üzerinden.
   const serviceClient = createServiceClient()
 
   const { data: existing, error: fetchErr } = await serviceClient

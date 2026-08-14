@@ -38,10 +38,10 @@ export function truncate(text: string, max = 200): string {
   return `${(son > 40 ? kesik.slice(0, son) : kesik).trim()}…`
 }
 
-export function organizationJsonLd() {
-  // sameAs BASILMIYOR: footer'daki sosyal bağlantılar hâlâ "#" yer tutucusu,
-  // gerçek hesap adresi yok. Hesaplar açıldığında buraya eklenir.
-  return {
+export function organizationJsonLd(sameAs: (string | null | undefined)[] = []) {
+  // sameAs yalnız DOLU sosyal adreslerle basılır (site_content'ten gelir);
+  // hiç yoksa alan hiç eklenmez.
+  const data: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: ORG_NAME,
@@ -55,6 +55,9 @@ export function organizationJsonLd() {
       availableLanguage: 'Turkish',
     },
   }
+  const dolu = sameAs.map((s) => (s ?? '').trim()).filter(Boolean)
+  if (dolu.length > 0) data.sameAs = dolu
+  return data
 }
 
 export function websiteJsonLd() {

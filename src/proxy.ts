@@ -1,23 +1,24 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const adminToken = request.cookies.get('admin_token')?.value
+  const validToken = process.env.ADMIN_SECRET_TOKEN
+  const authed = Boolean(validToken) && adminToken === validToken
 
-  // /panel aynı admin çerezini kullanır (Faz 7A) — yeni bir auth yazılmadı.
-  if (pathname.startsWith('/admin') || pathname.startsWith('/panel')) {
-    const adminToken = request.cookies.get('admin_token')?.value
-    const validToken = process.env.ADMIN_SECRET_TOKEN
+  // Eski /admin emekli (Faz 7D): tüm alt yollar kalıcı olarak panele gider.
+  // (/api/admin uçları bu matcher'a girmez; panelin kullandıkları yaşıyor.)
+  if (pathname.startsWith('/admin')) {
+    return NextResponse.redirect(new URL('/panel', request.url), 308)
+  }
 
-    if (pathname === '/admin/login') {
-      if (adminToken === validToken) {
-        return NextResponse.redirect(new URL('/admin', request.url))
-      }
+  if (pathname.startsWith('/panel')) {
+    if (pathname === '/panel/login') {
+      if (authed) return NextResponse.redirect(new URL('/panel', request.url))
       return NextResponse.next()
     }
-
-    if (adminToken !== validToken) {
-      return NextResponse.redirect(new URL('/admin/login', request.url))
+    if (!authed) {
+      return NextResponse.redirect(new URL('/panel/login', request.url))
     }
   }
 
