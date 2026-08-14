@@ -1,15 +1,49 @@
 import type { Metadata } from 'next'
-import { PEmptyState } from '../_components/ui'
+import { createServiceClient } from '@/lib/supabase/service'
+import YorumlarClient, { type YorumSatiri } from './YorumlarClient'
 
 export const metadata: Metadata = { title: 'Yorumlar' }
+export const dynamic = 'force-dynamic'
 
-export default function YorumlarPage() {
-  return (
-    <div className="mx-auto max-w-5xl">
-      <PEmptyState
-        title="Yorumlar yakında"
-        description="Yorum onaylama ve yanıtlama araçları bu bölüme taşınacak (Faz 7B)."
-      />
-    </div>
-  )
+/** E-posta maskesi: ka****@ornek.com */
+function maskele(email: string | null): string {
+  if (!email) return '—'
+  const [ad, alan] = email.split('@')
+  if (!alan) return email
+  return `${ad.slice(0, 2)}****@${alan}`
+}
+
+export default async function PanelYorumlarPage() {
+  const supabase = createServiceClient()
+
+  const { data } = await supabase
+    .from('reviews')
+    .select(
+      'id, product_id, guest_name, guest_email, rating, title, body, is_approved, is_verified_purchase, created_at, products(slug, override_title, trendyol_title, override_images, trendyol_images)'
+    )
+    .order('created_at', { ascending: false })
+    .limit(300)
+
+  const satirlar: YorumSatiri[] = (data || []).map((r: any) => {
+    const p = r.products
+    return {
+      id: r.id,
+      urunAd: p ? p.override_title || p.trendyol_title : '(silinmiş ürün)',
+      urunSlug: p?.slug ?? null,
+      urunGorsel:
+        (p?.override_images as string[] | null)?.[0] ??
+        (p?.trendyol_images as string[] | null)?.[0] ??
+        null,
+      puan: r.rating ?? 0,
+      baslik: r.title,
+      metin: r.body ?? '',
+      gonderen: r.guest_name ?? '—',
+      email: maskele(r.guest_email),
+      dogrulanmis: Boolean(r.is_verified_purchase),
+      onayli: Boolean(r.is_approved),
+      tarih: r.created_at,
+    }
+  })
+
+  return <YorumlarClient satirlar={satirlar} />
 }
