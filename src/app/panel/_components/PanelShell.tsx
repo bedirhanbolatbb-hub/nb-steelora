@@ -93,8 +93,10 @@ export default function PanelShell({ children }: { children: ReactNode }) {
 
         {/* ── İçerik sütunu ── */}
         <div className="flex min-w-0 flex-1 flex-col">
-          {/* Üst bar: başlık + breadcrumb */}
-          <header className="sticky top-0 z-40 border-b border-[var(--p-line)] bg-[var(--p-surface)]/95 px-4 py-3 backdrop-blur-sm sm:px-6">
+          {/* Üst bar: başlık + breadcrumb.
+              Zemin OPAK: yarı saydam + blur, mobil kaydırmada içeriğin
+              başlıkla üst üste binmiş görünmesine yol açıyordu (7A bulgusu). */}
+          <header className="sticky top-0 z-40 border-b border-[var(--p-line)] bg-[var(--p-surface)] px-4 py-3 sm:px-6">
             <nav className="text-[11px] text-[var(--p-muted)]" aria-label="breadcrumb">
               <Link href="/panel" className="hover:text-[var(--p-ink)] transition-colors">
                 Panel

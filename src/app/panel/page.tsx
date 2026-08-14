@@ -183,7 +183,17 @@ export default async function PanelDashboard() {
                 <li key={p.id} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
                   <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
                     {p.display_images?.[0] && (
-                      <Image src={p.display_images[0]} alt="" fill sizes="40px" className="object-cover" />
+                      // Küçük varyant (w=96) + eager: liste ilk ekranda, geç
+                      // yüklenmesin (7A bulgusu).
+                      <Image
+                        src={p.display_images[0]}
+                        alt=""
+                        width={48}
+                        height={48}
+                        sizes="48px"
+                        loading="eager"
+                        className="h-10 w-10 object-cover"
+                      />
                     )}
                   </div>
                   <a
