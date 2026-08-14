@@ -1,0 +1,77 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Yönetim paneli tasarım token'ları (Faz 7A).
+
+   Panel vitrinden bağımsız kendi kitini kullanır; bu dosya yalnız /panel
+   rotalarında yüklenir. Karanlık tema yok. Altın yalnız vurgu rengidir;
+   yönetim yüzeyinde ek olarak durum renkleri (success/warning/danger) vardır.
+   Boşluklar 8px ızgarasında ilerler.
+   ───────────────────────────────────────────────────────────────────────── */
+.panel-root {
+  --p-bg: #f7f6f3;
+  --p-surface: #ffffff;
+  --p-ink: #1c1a17;
+  --p-ink-soft: #4a443c;
+  --p-muted: #6e675e;
+  --p-line: #e7e1d8;
+  --p-accent: #b8934e;
+  --p-accent-deep: #8c6d33;
+  --p-success: #15803d;
+  --p-success-bg: #ecfdf3;
+  --p-warning: #b45309;
+  --p-warning-bg: #fffbeb;
+  --p-danger: #b91c1c;
+  --p-danger-bg: #fef2f2;
+
+  background: var(--p-bg);
+  color: var(--p-ink);
+  min-height: 100dvh;
+}
+
+/* Panel gövde metni Inter'dir; Playfair yalnız marka yazısında (.panel-brand). */
+.panel-root {
+  font-family: var(--font-body);
+}
+
+.panel-brand {
+  font-family: var(--font-heading);
+}
+
+/* Yükleme iskeleti — vitrindeki .skeleton panele sızmasın diye kendi tanımı. */
+@keyframes panel-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.panel-skeleton {
+  background: var(--p-line);
+  border-radius: 4px;
+  animation: panel-pulse 1.4s ease-in-out infinite;
+}
+
+/* Toast girişi */
+@keyframes panel-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.panel-toast {
+  animation: panel-toast-in 200ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-skeleton,
+  .panel-toast {
+    animation: none;
+  }
+}
