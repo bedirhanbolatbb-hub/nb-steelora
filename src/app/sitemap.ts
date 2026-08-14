@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { CATEGORIES } from '@/lib/catalog/categories'
+import { getCollectionCards } from '@/lib/collections'
 
 const baseUrl = 'https://www.nbsteelora.com'
 
@@ -31,6 +32,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
+  // Küratörlü koleksiyonlar — adres listesi admin verisinden üretilir.
+  const collectionPages: MetadataRoute.Sitemap = (await getCollectionCards()).map((c) => ({
+    url: `${baseUrl}/koleksiyon/${c.slug}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }))
+
   // Gruplama yalnız listede tek kart gösteriyor; her üyenin kendi sayfası
   // ayrı URL olarak burada kalır (kapak olmayan üyeler de indekslenebilsin).
   let productPages: MetadataRoute.Sitemap = []
@@ -54,5 +63,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Ürünler alınamazsa statik + kategori haritası yine yayınlanır.
   }
 
-  return [...staticPages, ...categoryPages, ...productPages]
+  return [...staticPages, ...categoryPages, ...collectionPages, ...productPages]
 }

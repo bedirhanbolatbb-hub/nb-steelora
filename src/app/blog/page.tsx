@@ -20,41 +20,47 @@ export default async function BlogPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
-      <div className="text-center mb-12">
-        <h1 className="font-heading text-[40px] font-light text-ink">Blog</h1>
-        <p className="text-[12px] font-body text-muted mt-2 tracking-[0.15em] uppercase">
-          Takı dünyasından ipuçları ve ilhamlar
+      <div className="mb-10" data-reveal>
+        <p className="eyebrow">Günlük</p>
+        <h1 className="font-heading text-[34px] lg:text-[42px] font-semibold text-ink mt-2">
+          Blog
+        </h1>
+        <p className="text-[13px] font-body text-ink-soft mt-2">
+          Takı dünyasından ipuçları, bakım rehberleri ve ilhamlar.
         </p>
       </div>
 
       {(!posts || posts.length === 0) ? (
-        <p className="text-center text-muted font-body">Henüz yayınlanmış yazı yok.</p>
+        <p className="text-muted font-body text-[13px]">Henüz yayınlanmış yazı yok.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {posts.map((post) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+          {posts.map((post, i) => (
             <Link
               key={post.id}
               href={`/blog/${post.slug}`}
-              className="group bg-white border border-line hover:-translate-y-1 transition-transform duration-300 overflow-hidden"
+              className="group flex flex-col bg-surface border border-line rounded-[4px] overflow-hidden hover:border-accent/50 transition-colors"
+              data-reveal
+              style={{ '--reveal-delay': `${(i % 3) * 50}ms` } as React.CSSProperties}
             >
-              <div className="relative h-52 bg-surface-muted overflow-hidden">
+              <div className="relative aspect-[3/2] bg-surface-muted overflow-hidden">
                 {post.cover_image ? (
                   <Image
                     src={post.cover_image}
                     alt={post.title}
                     fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="font-heading text-[40px] text-line">NB</span>
+                    <span className="font-heading text-[36px] text-line">NB</span>
                   </div>
                 )}
               </div>
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-3">
+              <div className="flex flex-col flex-1 p-5">
+                <div className="flex items-center gap-2 text-[10px] font-body text-muted uppercase tracking-[0.12em]">
                   {post.published_at && (
-                    <span className="text-[10px] font-body text-muted uppercase tracking-wider">
+                    <span>
                       {new Date(post.published_at).toLocaleDateString('tr-TR', {
                         day: 'numeric',
                         month: 'long',
@@ -63,11 +69,9 @@ export default async function BlogPage() {
                     </span>
                   )}
                   <span className="text-line">·</span>
-                  <span className="text-[10px] font-body text-muted uppercase tracking-wider">
-                    {post.read_time} dk okuma
-                  </span>
+                  <span>{post.read_time} dk okuma</span>
                 </div>
-                <h2 className="font-heading text-[18px] text-ink leading-snug group-hover:text-accent transition-colors">
+                <h2 className="font-heading text-[19px] font-semibold text-ink leading-snug mt-2 group-hover:text-accent-deep transition-colors">
                   {post.title}
                 </h2>
                 {post.excerpt && (
@@ -75,7 +79,7 @@ export default async function BlogPage() {
                     {post.excerpt}
                   </p>
                 )}
-                <span className="inline-block mt-4 text-[11px] font-body text-accent uppercase tracking-wider">
+                <span className="mt-4 pt-1 text-[11px] uppercase tracking-[0.15em] font-body font-medium text-ink border-b border-accent pb-0.5 self-start">
                   Devamını Oku →
                 </span>
               </div>

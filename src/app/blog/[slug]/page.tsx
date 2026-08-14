@@ -83,18 +83,21 @@ export default async function BlogPostPage({
       />
       <main>
         {post.cover_image && (
-          <div className="relative h-64 w-full overflow-hidden bg-surface-muted">
-            <Image
-              src={post.cover_image}
-              alt={post.title}
-              fill
-              className="object-cover"
-              priority
-            />
+          <div className="max-w-4xl mx-auto px-4 lg:px-8 pt-8">
+            <div className="relative aspect-[16/9] sm:aspect-[2/1] w-full overflow-hidden rounded-[4px] bg-surface-muted">
+              <Image
+                src={post.cover_image}
+                alt={post.title}
+                fill
+                sizes="(max-width: 1024px) 100vw, 900px"
+                className="object-cover"
+                priority
+              />
+            </div>
           </div>
         )}
 
-        <div className="max-w-2xl mx-auto px-4 py-12">
+        <div className="max-w-[68ch] mx-auto px-4 py-12">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-[10px] font-body text-muted uppercase tracking-wider mb-8 flex-wrap">
             <Link href="/" className="hover:text-accent transition-colors">
@@ -110,9 +113,9 @@ export default async function BlogPostPage({
 
           {/* Header */}
           <div className="mb-10">
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <div className="flex items-center gap-2 mb-4 flex-wrap text-[10px] font-body text-muted uppercase tracking-[0.12em]">
               {post.published_at && (
-                <span className="text-[10px] font-body text-muted uppercase tracking-wider">
+                <span>
                   {new Date(post.published_at).toLocaleDateString('tr-TR', {
                     day: 'numeric',
                     month: 'long',
@@ -121,15 +124,13 @@ export default async function BlogPostPage({
                 </span>
               )}
               <span className="text-line">·</span>
-              <span className="text-[10px] font-body text-muted uppercase tracking-wider">
-                {post.read_time} dk okuma
-              </span>
+              <span>{post.read_time} dk okuma</span>
             </div>
-            <h1 className="font-heading text-[36px] sm:text-[42px] font-light text-ink leading-tight">
+            <h1 className="font-heading text-[34px] sm:text-[42px] font-semibold text-ink leading-tight">
               {post.title}
             </h1>
             {post.excerpt && (
-              <p className="text-[14px] font-body text-ink-soft mt-4 leading-relaxed border-l-2 border-accent pl-4 italic">
+              <p className="text-[14px] font-body text-ink-soft mt-4 leading-relaxed border-l-2 border-accent pl-4">
                 {post.excerpt}
               </p>
             )}
@@ -140,29 +141,48 @@ export default async function BlogPostPage({
             className="prose-blog"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
+
+          {/* Yazı sonu — vitrine dönüş */}
+          <div className="mt-12 pt-8 border-t border-line text-center">
+            <p className="text-[12px] font-body text-ink-soft mb-4">
+              Okuduklarını takıya dönüştür.
+            </p>
+            <Link
+              href="/urunler"
+              className="inline-flex items-center justify-center bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
+            >
+              Koleksiyonu Keşfet
+            </Link>
+          </div>
         </div>
 
         {/* Related posts */}
         {related && related.length > 0 && (
-          <section className="bg-surface-muted py-12">
+          <section className="bg-surface-muted border-t border-line py-14">
             <div className="max-w-7xl mx-auto px-4 lg:px-8">
-              <h2 className="font-heading text-[24px] text-ink mb-8 text-center">
-                Diğer Yazılar
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {related.map((p) => (
+              <div className="mb-8" data-reveal>
+                <p className="eyebrow">Devamı</p>
+                <h2 className="font-heading text-[26px] font-semibold text-ink mt-2">
+                  Diğer Yazılar
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 lg:gap-6">
+                {related.map((p, i) => (
                   <Link
                     key={p.id}
                     href={`/blog/${p.slug}`}
-                    className="group bg-white border border-line hover:-translate-y-1 transition-transform duration-300 overflow-hidden"
+                    className="group bg-surface border border-line rounded-[4px] overflow-hidden hover:border-accent/50 transition-colors"
+                    data-reveal
+                    style={{ '--reveal-delay': `${i * 50}ms` } as React.CSSProperties}
                   >
-                    <div className="relative h-40 bg-surface-muted overflow-hidden">
+                    <div className="relative aspect-[3/2] bg-surface-muted overflow-hidden">
                       {p.cover_image ? (
                         <Image
                           src={p.cover_image}
                           alt={p.title}
                           fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          sizes="(max-width: 640px) 100vw, 33vw"
+                          className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
@@ -171,10 +191,10 @@ export default async function BlogPostPage({
                       )}
                     </div>
                     <div className="p-4">
-                      <h3 className="font-heading text-[16px] text-ink group-hover:text-accent transition-colors leading-snug">
+                      <h3 className="font-heading text-[17px] font-semibold text-ink group-hover:text-accent-deep transition-colors leading-snug">
                         {p.title}
                       </h3>
-                      <span className="text-[10px] font-body text-muted mt-1 block">
+                      <span className="text-[10px] font-body text-muted uppercase tracking-[0.12em] mt-1.5 block">
                         {p.read_time} dk okuma
                       </span>
                     </div>

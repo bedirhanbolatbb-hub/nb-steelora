@@ -3,11 +3,13 @@ import { createClient } from '@/lib/supabase/server'
 import { getSiteContent } from '@/lib/supabase/content'
 import { getHomepageSection, getHeroProducts, ShownProducts } from '@/lib/home/sections'
 import { getMostLovedProducts } from '@/lib/home/mostLoved'
+import { getCollectionCards } from '@/lib/collections'
 import { FREE_SHIPPING_MIN_LABEL } from '@/lib/shipping'
 import Hero from '@/components/home/Hero'
 import Marquee from '@/components/home/Marquee'
 import CategoryGrid from '@/components/home/CategoryGrid'
 import FeaturedProducts from '@/components/home/FeaturedProducts'
+import CollectionStories from '@/components/home/CollectionStories'
 import BrandBanner from '@/components/home/BrandBanner'
 import Newsletter from '@/components/home/Newsletter'
 import ProductCard from '@/components/store/ProductCard'
@@ -29,6 +31,9 @@ export default async function HomePage() {
 
   // Koşullu bölüm: yeterli onaylı yorum yoksa hiç render edilmez.
   const mostLoved = await getMostLovedProducts()
+
+  // Küratörlü koleksiyonlar — hikâye şeridi (boşsa bölüm basılmaz)
+  const collections = await getCollectionCards()
 
   try {
     const supabase = await createClient()
@@ -95,6 +100,9 @@ export default async function HomePage() {
       <Marquee />
       <CategoryGrid />
       <FeaturedProducts title={c.featured_title} subtitle={c.featured_subtitle} products={featured} />
+
+      {/* Hikâye şeridi — küratörlü koleksiyonlar (ürün kartı değil) */}
+      <CollectionStories collections={collections} />
 
       {/* Çok Beğenilenler — yalnız yeterli onaylı yorum biriktiğinde */}
       {mostLoved.length > 0 && (

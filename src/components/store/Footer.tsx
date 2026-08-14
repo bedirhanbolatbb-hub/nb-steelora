@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { CATEGORIES } from '@/lib/catalog/categories'
+import { getCollectionCards } from '@/lib/collections'
 
 // Menüyle birebir aynı liste — tek kaynak src/lib/catalog/categories.ts
 const categories = CATEGORIES.map((c) => ({ href: `/kategori/${c.slug}`, label: c.title }))
@@ -21,7 +22,10 @@ const accountLinks = {
   ],
 }
 
-export default function Footer({ isLoggedIn }: { isLoggedIn?: boolean }) {
+export default async function Footer({ isLoggedIn }: { isLoggedIn?: boolean }) {
+  // Koleksiyonlar üst menüye eklenmiyor (menü dolu); giriş noktası footer.
+  const collections = await getCollectionCards()
+
   return (
     <footer className="bg-ink-deep text-line">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
@@ -60,6 +64,27 @@ export default function Footer({ isLoggedIn }: { isLoggedIn?: boolean }) {
                 </li>
               ))}
             </ul>
+
+            {/* Koleksiyonlar — adlar admin verisinden gelir */}
+            {collections.length > 0 && (
+              <>
+                <h4 className="text-[11px] uppercase tracking-[0.2em] text-accent font-body mt-8 mb-5">
+                  Koleksiyonlar
+                </h4>
+                <ul className="space-y-3">
+                  {collections.map((collection) => (
+                    <li key={collection.slug}>
+                      <Link
+                        href={`/koleksiyon/${collection.slug}`}
+                        className="text-[12px] font-body text-line/70 hover:text-accent transition-colors"
+                      >
+                        {collection.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
 
           {/* Yardım */}

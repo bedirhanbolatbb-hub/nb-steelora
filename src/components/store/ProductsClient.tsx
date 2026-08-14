@@ -68,6 +68,44 @@ function ProductsInner({
   const totalPages = Math.ceil(total / perPage)
   const hasFilters = currentParams.kategori || currentParams.min_fiyat || currentParams.max_fiyat
 
+  // Listenin üstündeki aktif filtre çipleri. Yeni filtre eklemez; yalnız
+  // hâlihazırda uygulanmış olanları görünür ve tek tek kaldırılabilir yapar.
+  //
+  // Kaynak ADRES ÇUBUĞUDUR (currentParams değil): kategori sayfasında kategori
+  // yolun parçasıdır, sorgu parametresi değildir — orada kaldırılabilir bir çip
+  // olarak göstermek işlemeyen bir düğme demek olurdu.
+  const qsKategori = sp.get('kategori') || ''
+  const qsTip = sp.get('tip') || ''
+  const qsMin = sp.get('min_fiyat') || ''
+  const qsMax = sp.get('max_fiyat') || ''
+  const qsStok = sp.get('stok') || ''
+
+  const priceLabel = (() => {
+    if (qsMin && qsMax) return `${qsMin} — ${qsMax} ₺`
+    if (qsMin) return `${qsMin} ₺ üzeri`
+    if (qsMax) return `${qsMax} ₺ altı`
+    return ''
+  })()
+
+  const activeChips: { key: string; label: string; clear: Record<string, string> }[] = [
+    ...(qsKategori ? [{ key: 'kategori', label: qsKategori, clear: { kategori: '' } }] : []),
+    ...(qsTip
+      ? [
+          {
+            key: 'tip',
+            label: chips?.find((c) => c.value === qsTip)?.label ?? qsTip,
+            clear: { tip: '' },
+          },
+        ]
+      : []),
+    ...(priceLabel
+      ? [{ key: 'fiyat', label: priceLabel, clear: { min_fiyat: '', max_fiyat: '' } }]
+      : []),
+    ...(qsStok === '1'
+      ? [{ key: 'stok', label: 'Sadece stokta olanlar', clear: { stok: '' } }]
+      : []),
+  ]
+
   // Aynı filtre bloğu hem masaüstü kenar çubuğunda hem mobil sheet içinde kullanılır.
   const filterPanel = (
     <>
@@ -219,6 +257,32 @@ function ProductsInner({
         </div>
       </div>
 
+      {/* Aktif filtreler — listenin üstünde, mobilde de görünür */}
+      {activeChips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <span className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mr-1">
+            Filtreler
+          </span>
+          {activeChips.map((chip) => (
+            <button
+              key={chip.key}
+              onClick={() => updateParams(chip.clear)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-body text-ink bg-surface border border-line rounded-[4px] hover:border-ink transition-colors"
+              aria-label={`${chip.label} filtresini kaldır`}
+            >
+              {chip.label}
+              <X size={12} className="text-muted" />
+            </button>
+          ))}
+          <button
+            onClick={() => router.push(pathname)}
+            className="text-[11px] font-body text-accent-deep underline underline-offset-4 hover:text-accent transition-colors ml-1"
+          >
+            Temizle
+          </button>
+        </div>
+      )}
+
       {/* Daraltma çipleri — kategori içi alt gruplar (ayrı menü maddesi değil) */}
       {chips && chips.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 mb-8">
@@ -286,13 +350,17 @@ function ProductsInner({
             ızgara dar ekranda 568px'te sabitlenip viewport dışına taşıyordu. */}
         <div className="flex-1 min-w-0">
           {cards.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-muted font-body text-[13px] mb-4">
-                Bu kriterlere uygun ürün bulunamadı.
+            <div className="text-center py-20 border border-line rounded-[4px] bg-surface px-6">
+              <p className="eyebrow">Sonuç yok</p>
+              <h2 className="font-heading text-[22px] font-semibold text-ink mt-2">
+                Bu seçimlerle eşleşen parça bulamadık
+              </h2>
+              <p className="text-[12px] font-body text-muted mt-2">
+                Filtreleri kaldırıp koleksiyonun tamamına göz atabilirsiniz.
               </p>
               <button
                 onClick={() => router.push(pathname)}
-                className="text-[12px] font-body text-accent hover:text-accent-deep transition-colors"
+                className="inline-flex items-center justify-center mt-6 bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
               >
                 Filtreleri temizle
               </button>
