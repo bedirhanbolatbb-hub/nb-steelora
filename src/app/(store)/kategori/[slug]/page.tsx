@@ -3,6 +3,8 @@ import ProductsClient from '@/components/store/ProductsClient'
 import { notFound } from 'next/navigation'
 import { buildCategoryFilter, getCategory } from '@/lib/catalog/categories'
 import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
+import JsonLd from '@/components/seo/JsonLd'
+import { breadcrumbJsonLd } from '@/lib/seo'
 
 export default async function KategoriPage({
   params,
@@ -63,7 +65,15 @@ export default async function KategoriPage({
   const { cards, total } = paginateGroupedProducts((products || []) as any[], sayfa)
 
   return (
-    <ProductsClient
+    <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Ana Sayfa', path: '/' },
+          { name: 'Ürünler', path: '/urunler' },
+          { name: kategori, path: `/kategori/${slug}` },
+        ])}
+      />
+      <ProductsClient
       cards={cards}
       total={total}
       categories={[kategori]}
@@ -79,6 +89,7 @@ export default async function KategoriPage({
       }}
       title={kategori}
       chips={def.chips?.map((c) => ({ value: c.value, label: c.label }))}
-    />
+      />
+    </>
   )
 }

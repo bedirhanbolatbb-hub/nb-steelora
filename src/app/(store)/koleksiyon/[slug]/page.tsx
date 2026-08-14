@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation'
 import ProductCard from '@/components/store/ProductCard'
 import { getCollection } from '@/lib/collections'
 import { BLUR_PLACEHOLDER, IMAGE_QUALITY } from '@/lib/images'
+import JsonLd from '@/components/seo/JsonLd'
+import { breadcrumbJsonLd } from '@/lib/seo'
 
 export async function generateMetadata({
   params,
@@ -44,6 +46,13 @@ export default async function KoleksiyonPage({
 
   return (
     <div>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Ana Sayfa', path: '/' },
+          { name: collection.name, path: `/koleksiyon/${slug}` },
+        ])}
+      />
+
       {/* Hikâye bandı */}
       <section className="bg-surface-muted border-b border-line">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-12 lg:py-16">

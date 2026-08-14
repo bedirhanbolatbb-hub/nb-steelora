@@ -4,6 +4,8 @@ import { getSiteContent } from '@/lib/supabase/content'
 import { getHomepageSection, getHeroProducts, ShownProducts } from '@/lib/home/sections'
 import { getMostLovedProducts } from '@/lib/home/mostLoved'
 import { getCollectionCards } from '@/lib/collections'
+import JsonLd from '@/components/seo/JsonLd'
+import { organizationJsonLd, websiteJsonLd } from '@/lib/seo'
 import { FREE_SHIPPING_MIN_LABEL } from '@/lib/shipping'
 import Hero from '@/components/home/Hero'
 import Marquee from '@/components/home/Marquee'
@@ -56,6 +58,10 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Yapısal veri — marka kimliği ve site kaydı */}
+      <JsonLd data={organizationJsonLd()} />
+      <JsonLd data={websiteJsonLd()} />
+
       <Hero hasMostLoved={mostLoved.length > 0} />
 
       {c.promo_bar_text && (

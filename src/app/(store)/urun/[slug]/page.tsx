@@ -15,6 +15,8 @@ import { getVariantGroup } from '@/lib/catalog/variantGroup'
 import ProductAccordion from '@/components/store/ProductAccordion'
 import AddToCartButton from '@/components/store/AddToCartButton'
 import StickyBuyBar, { BUY_BLOCK_ID } from '@/components/store/StickyBuyBar'
+import JsonLd from '@/components/seo/JsonLd'
+import { breadcrumbJsonLd, plainText, productJsonLd } from '@/lib/seo'
 import RelatedProducts from '@/components/store/RelatedProducts'
 import ReviewList from '@/components/store/ReviewList'
 import RecentlyViewedTracker from '@/components/store/RecentlyViewedTracker'
@@ -96,8 +98,37 @@ export default async function UrunDetayPage({
     ? { paragraphs: [], bullets: [] }
     : cleanDescription(product.trendyol_description)
 
+  // Yapısal veri: açıklama sanitize edilmiş metinden üretilir (pazaryeri
+  // kalıpları temizlenmiş hâli), puan yalnız gerçek onaylı yorum varsa basılır.
+  const seoDescription = hasOverrideDescription
+    ? plainText(product.override_description)
+    : plainText([...cleaned.paragraphs, ...cleaned.bullets].join(' '))
+
   return (
     <div className="max-w-6xl mx-auto px-4 lg:px-8 py-12">
+      <JsonLd
+        data={productJsonLd({
+          slug,
+          title: product.display_title,
+          description: seoDescription,
+          images: (product.display_images as string[] | null) ?? [],
+          price: mergedProduct.custom_price ?? product.display_price,
+          stock,
+          barcode: product.trendyol_barcode ?? null,
+          category: product.trendyol_category ?? null,
+          material,
+          rating: product.avg_rating ?? null,
+          reviewCount: product.review_count ?? null,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Ana Sayfa', path: '/' },
+          { name: 'Ürünler', path: '/urunler' },
+          { name: product.display_title, path: `/urun/${slug}` },
+        ])}
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
         {/* Görsel galerisi */}
         <div>

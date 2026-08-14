@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
 import type { Metadata } from 'next'
+import JsonLd from '@/components/seo/JsonLd'
+import { articleJsonLd, breadcrumbJsonLd } from '@/lib/seo'
 
 export const revalidate = 3600
 
@@ -59,27 +61,25 @@ export default async function BlogPostPage({
     .order('published_at', { ascending: false })
     .limit(3)
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: post.title,
-    description: post.excerpt || '',
-    datePublished: post.published_at,
-    dateModified: post.updated_at,
-    author: { '@type': 'Organization', name: 'NB Steelora' },
-    publisher: {
-      '@type': 'Organization',
-      name: 'NB Steelora',
-      logo: { '@type': 'ImageObject', url: '/logo.png' },
-    },
-    ...(post.cover_image && { image: post.cover_image }),
-  }
-
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      {/* Article + BreadcrumbList — boş alan basılmaz (bkz. lib/seo.ts) */}
+      <JsonLd
+        data={articleJsonLd({
+          slug,
+          title: post.title,
+          description: post.excerpt || '',
+          image: post.cover_image || null,
+          publishedAt: post.published_at || null,
+          updatedAt: post.updated_at || null,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Ana Sayfa', path: '/' },
+          { name: 'Blog', path: '/blog' },
+          { name: post.title, path: `/blog/${slug}` },
+        ])}
       />
       <main>
         {post.cover_image && (
