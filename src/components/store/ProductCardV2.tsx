@@ -37,7 +37,11 @@ export default function ProductCardV2({
 }: ProductCardV2Props) {
   const images = (product.display_images as string[] | null) ?? []
   const primaryImage = images[0] ?? (product as any).trendyol_images?.[0] ?? null
-  const hoverImage = images[1] ?? null
+  // Kaynağında ölü (403/404) hover görseli, üzerine gelindiğinde ana görselin
+  // yerine boş kutu bırakıyordu — yüklenemeyen hover görseli devre dışı kalır
+  // ve kart tek görselle çalışmayı sürdürür (Faz 9B).
+  const [hoverFailed, setHoverFailed] = useState(false)
+  const hoverImage = hoverFailed ? null : images[1] ?? null
 
   const addItem = useCart((s) => s.addItem)
   const [added, setAdded] = useState(false)
@@ -84,6 +88,7 @@ export default function ProductCardV2({
             sizes={buyuk ? '50vw' : '(max-width: 640px) 50vw, 340px'}
             quality={IMAGE_QUALITY}
             className="object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+            onError={() => setHoverFailed(true)}
           />
         )}
 
