@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -12,12 +12,17 @@ interface ProductImageGalleryProps {
   title: string
 }
 
+/**
+ * PDP galerisi v2 ("Sessiz Atölye"): çerçevesiz geniş görünüm + ince thumbnail
+ * şeridi (masaüstü); mobilde kaydırmalı şerit + nokta göstergesi.
+ * Lightbox davranışları (ESC/ok tuşları/scroll kilidi) aynen korunur.
+ */
 export default function ProductImageGallery({ images, title }: ProductImageGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [closing, setClosing] = useState(false)
+  const railRef = useRef<HTMLDivElement>(null)
 
-  // Kapanış animasyonu bitmeden DOM'dan kaldırılmasın
   const closeLightbox = () => {
     setClosing(true)
     setTimeout(() => {
@@ -35,7 +40,14 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
     }
   }
 
-  // Lightbox açıkken: ESC ile kapan, ok tuşlarıyla gezin, arka plan scroll'unu kilitle.
+  // Mobil şeritte hangi kare ortadaysa nokta o kareyi gösterir.
+  const onRailScroll = () => {
+    const rail = railRef.current
+    if (!rail) return
+    const i = Math.round(rail.scrollLeft / rail.clientWidth)
+    if (i !== activeIndex && i >= 0 && i < images.length) setActiveIndex(i)
+  }
+
   useEffect(() => {
     if (!lightboxOpen) return
 
@@ -57,39 +69,80 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
 
   return (
     <>
-      <div className="space-y-3">
-        {/* Ana görsel */}
+      {/* ── Mobil: kaydırmalı şerit + noktalar ── */}
+      <div className="sm:hidden">
         <div
-          className="relative aspect-[3/4] bg-surface-muted overflow-hidden cursor-zoom-in group"
+          ref={railRef}
+          onScroll={onRailScroll}
+          className="-mx-4 flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {(hasImages ? images : [null]).map((img, i) => (
+            <div
+              key={i}
+              className="relative aspect-[4/5] w-full shrink-0 snap-center bg-surface-muted"
+              onClick={() => hasImages && setLightboxOpen(true)}
+            >
+              <ProductImage
+                src={img}
+                alt={`${title} ${i + 1}`}
+                sizes="100vw"
+                priority={i === 0}
+                className="object-cover"
+              />
+            </div>
+          ))}
+        </div>
+        {hasImages && images.length > 1 && (
+          <div className="mt-3 flex items-center justify-center gap-1.5" aria-hidden>
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={cn(
+                  'h-1.5 rounded-full transition-all duration-300',
+                  i === activeIndex ? 'w-5 bg-accent' : 'w-1.5 bg-line'
+                )}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Masaüstü: geniş çerçevesiz görünüm + ince şerit ── */}
+      <div className="hidden sm:block space-y-3">
+        <div
+          className="relative aspect-[4/5] overflow-hidden rounded-[4px] bg-surface-muted cursor-zoom-in group"
           onClick={() => hasImages && setLightboxOpen(true)}
         >
           <ProductImage
             src={currentImage}
             alt={title}
-            sizes="(max-width: 1024px) 100vw, 600px"
+            sizes="(max-width: 1024px) 100vw, 640px"
             priority
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
           />
         </div>
 
-        {/* Thumbnails */}
         {hasImages && images.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto">
+          <div className="flex gap-2.5 overflow-x-auto pb-1">
             {images.map((img, i) => (
               <button
                 key={i}
                 onClick={() => setActiveIndex(i)}
+                aria-label={`Görsel ${i + 1}`}
                 className={cn(
-                  'relative w-16 h-20 shrink-0 bg-surface-muted overflow-hidden border-2 transition-colors',
-                  i === activeIndex ? 'border-accent' : 'border-transparent'
+                  'relative w-14 shrink-0 aspect-[4/5] overflow-hidden rounded-[3px] bg-surface-muted transition-opacity duration-300',
+                  i === activeIndex
+                    ? 'opacity-100 ring-1 ring-accent'
+                    : 'opacity-55 hover:opacity-90'
                 )}
               >
                 <Image
                   src={img}
-                  alt={`${title} ${i + 1}`}
+                  alt=""
                   fill
                   className="object-cover"
-                  sizes="64px"
+                  sizes="56px"
                   quality={IMAGE_QUALITY}
                 />
               </button>
@@ -98,7 +151,7 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
         )}
       </div>
 
-      {/* Lightbox */}
+      {/* ── Lightbox (davranış aynen) ── */}
       {lightboxOpen && currentImage && (
         <div
           className={`fixed inset-0 z-[100] bg-ink/95 flex items-center justify-center ${

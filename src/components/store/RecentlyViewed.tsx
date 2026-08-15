@@ -3,7 +3,7 @@
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import ProductCard from './ProductCard'
+import ProductCardV2 from './ProductCardV2'
 
 export default function RecentlyViewed({ currentSlug }: { currentSlug: string }) {
   const { items } = useRecentlyViewed()
@@ -33,12 +33,15 @@ export default function RecentlyViewed({ currentSlug }: { currentSlug: string })
 
   return (
     <div className="mt-16 pt-16 border-t border-line">
-      <h2 className="font-heading text-[28px] font-light text-ink mb-8">
-        Son Görüntüledikleriniz
-      </h2>
+      <div className="mb-8">
+        <p className="eyebrow">Gezinme geçmişi</p>
+        <h2 className="font-heading text-[26px] lg:text-[32px] font-medium text-ink mt-1.5">
+          Son Görüntüledikleriniz
+        </h2>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCardV2 key={product.id} product={product} />
         ))}
       </div>
     </div>

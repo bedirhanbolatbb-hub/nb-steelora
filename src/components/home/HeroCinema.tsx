@@ -12,10 +12,13 @@ export default function HeroCinema({
   c,
   image,
   imageHref,
+  blur,
 }: {
   c: Record<string, string>
   image: string | null
   imageHref: string | null
+  /** Görselden üretilmiş gerçek blur (lib/blur); yoksa marka tonu sabiti. */
+  blur?: string
 }) {
   const baslik1 = c.hero_title_line1 || 'Her anın'
   const baslik2 = c.hero_title_line2 || 'zarif'
@@ -91,7 +94,7 @@ export default function HeroCinema({
             quality={IMAGE_QUALITY}
             sizes="100vw"
             placeholder="blur"
-            blurDataURL={BLUR_PLACEHOLDER}
+            blurDataURL={blur || BLUR_PLACEHOLDER}
             className="object-cover hero-media"
           />
         </Link>
@@ -104,7 +107,7 @@ export default function HeroCinema({
           quality={IMAGE_QUALITY}
           sizes="100vw"
           placeholder="blur"
-          blurDataURL={BLUR_PLACEHOLDER}
+          blurDataURL={blur || BLUR_PLACEHOLDER}
           className="object-cover hero-media"
         />
       )}

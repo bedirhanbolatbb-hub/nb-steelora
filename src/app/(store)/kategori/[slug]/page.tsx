@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { buildCategoryFilter, getCategory } from '@/lib/catalog/categories'
 import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
 import JsonLd from '@/components/seo/JsonLd'
+import { getSiteContent } from '@/lib/supabase/content'
 import { breadcrumbJsonLd } from '@/lib/seo'
 
 export default async function KategoriPage({
@@ -21,6 +22,7 @@ export default async function KategoriPage({
 
   const kategori = def.title
   const supabase = await createClient()
+  const icerik = await getSiteContent()
 
   const filter = buildCategoryFilter(def, sp.tip)
 
@@ -88,6 +90,7 @@ export default async function KategoriPage({
         tip: sp.tip || '',
       }}
       title={kategori}
+      tanitim={icerik[`kategori_tanitim_${slug}`] || undefined}
       chips={def.chips?.map((c) => ({ value: c.value, label: c.label }))}
       />
     </>

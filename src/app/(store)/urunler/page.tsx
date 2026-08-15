@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import ProductsClient from '@/components/store/ProductsClient'
 import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
+import { getSiteContent } from '@/lib/supabase/content'
 
 export default async function UrunlerPage({
   searchParams,
@@ -9,6 +10,7 @@ export default async function UrunlerPage({
 }) {
   const params = await searchParams
   const supabase = await createClient()
+  const icerik = await getSiteContent()
 
   // Sayfalama gruplandıktan sonra uygulanır — bkz. lib/catalog/listing.ts
   let query = supabase
@@ -78,6 +80,7 @@ export default async function UrunlerPage({
         max_fiyat: params.max_fiyat || '',
         stok: params.stok || '',
       }}
+      tanitim={icerik['kategori_tanitim_tum-urunler'] || undefined}
     />
   )
 }

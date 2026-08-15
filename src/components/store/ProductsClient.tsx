@@ -3,7 +3,7 @@
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useCallback, useState, Suspense } from 'react'
 import { SlidersHorizontal, X } from 'lucide-react'
-import ProductCard from './ProductCard'
+import ProductCardV2 from './ProductCardV2'
 import type { Product } from '@/types'
 
 const SIRALAMA_SECENEKLERI = [
@@ -30,6 +30,8 @@ interface ProductsClientProps {
   perPage: number
   currentParams: Record<string, string>
   title?: string
+  /** Kategori tanıtım cümlesi (site_content'ten; boşsa basılmaz) */
+  tanitim?: string
   /** Liste üstünde gösterilen daraltma çipleri (ör. Bileklik sayfasında Halhal) */
   chips?: { value: string; label: string }[]
 }
@@ -42,6 +44,7 @@ function ProductsInner({
   perPage,
   currentParams,
   title = 'Tüm Ürünler',
+  tanitim,
   chips,
 }: ProductsClientProps) {
   const router = useRouter()
@@ -220,16 +223,21 @@ function ProductsInner({
   )
 
   return (
-    <div className="max-w-7xl mx-auto px-4 lg:px-8 py-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
-        <div>
-          <h1 className="font-heading text-[36px] font-light text-ink">
+    <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-12 lg:py-16">
+      {/* Editorial sayfa başı — Sessiz Atölye */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4 border-b border-line pb-6">
+        <div className="max-w-2xl">
+          <h1 className="font-heading text-[38px] lg:text-[48px] font-medium text-ink leading-tight">
             {title}
           </h1>
-          <p className="text-muted text-[12px] font-body mt-1">
+          <p className="text-muted text-[11px] uppercase tracking-[0.16em] font-body mt-2">
             {total} ürün
           </p>
+          {tanitim && (
+            <p className="text-[13px] font-body text-ink-soft leading-relaxed mt-3">
+              {tanitim}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -374,7 +382,7 @@ function ProductsInner({
                     data-reveal
                     style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}
                   >
-                    <ProductCard
+                    <ProductCardV2
                       product={product}
                       priority={i < 4}
                       optionCount={optionCount}

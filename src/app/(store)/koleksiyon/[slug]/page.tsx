@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import ProductCard from '@/components/store/ProductCard'
+import ProductCardV2 from '@/components/store/ProductCardV2'
 import { getCollection } from '@/lib/collections'
 import { BLUR_PLACEHOLDER, IMAGE_QUALITY } from '@/lib/images'
 import JsonLd from '@/components/seo/JsonLd'
@@ -55,15 +55,15 @@ export default async function KoleksiyonPage({
 
       {/* Hikâye bandı */}
       <section className="bg-surface-muted border-b border-line">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-12 lg:py-16">
+        <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-14 lg:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center">
             <div data-reveal>
               <p className="eyebrow">Koleksiyon</p>
-              <h1 className="font-heading text-[34px] lg:text-[44px] font-semibold text-ink leading-tight mt-2">
+              <h1 className="font-heading text-[40px] lg:text-[56px] font-medium text-ink leading-[1.08] mt-3">
                 {collection.name}
               </h1>
               {collection.description && (
-                <p className="text-[13px] lg:text-[14px] font-body text-ink-soft leading-relaxed mt-4 max-w-prose">
+                <p className="text-[14px] lg:text-[15px] font-body text-ink-soft leading-relaxed mt-5 max-w-prose">
                   {collection.description}
                 </p>
               )}
@@ -96,7 +96,7 @@ export default async function KoleksiyonPage({
       </section>
 
       {/* Ürünler */}
-      <section className="max-w-7xl mx-auto px-4 lg:px-8 py-12 lg:py-16">
+      <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-14 lg:py-20">
         {products.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-[13px] font-body text-muted mb-4">
@@ -117,7 +117,7 @@ export default async function KoleksiyonPage({
                 data-reveal
                 style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}
               >
-                <ProductCard product={product} priority={i < 4} />
+                <ProductCardV2 product={product} priority={i < 4} />
               </div>
             ))}
           </div>

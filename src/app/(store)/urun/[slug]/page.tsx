@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Gift, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { notFound } from 'next/navigation'
@@ -105,7 +106,7 @@ export default async function UrunDetayPage({
     : plainText([...cleaned.paragraphs, ...cleaned.bullets].join(' '))
 
   return (
-    <div className="max-w-6xl mx-auto px-4 lg:px-8 py-12">
+    <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8 lg:py-12">
       <JsonLd
         data={productJsonLd({
           slug,
@@ -129,7 +130,16 @@ export default async function UrunDetayPage({
         ])}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+      {/* Görünür breadcrumb — JSON-LD BreadcrumbList ile eşlenik */}
+      <nav aria-label="breadcrumb" className="mb-6 flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-body text-muted">
+        <Link href="/" className="hover:text-ink transition-colors">Ana Sayfa</Link>
+        <span aria-hidden>/</span>
+        <Link href="/urunler" className="hover:text-ink transition-colors">Ürünler</Link>
+        <span aria-hidden>/</span>
+        <span className="text-ink-soft normal-case tracking-normal truncate max-w-[240px]">{product.display_title}</span>
+      </nav>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20">
         {/* Görsel galerisi */}
         <div>
           <ProductImageGallery
@@ -147,22 +157,22 @@ export default async function UrunDetayPage({
 
         {/* Ürün bilgisi */}
         <div>
-          <h1 className="font-heading text-[30px] lg:text-[38px] font-semibold text-ink leading-tight">
-            {product.display_title}
-          </h1>
-
-          {/* Kategori · malzeme — malzeme beyanının tek kanonik yeri */}
-          <p className="mt-2 text-[11px] font-body text-muted tracking-[0.08em]">
+          {/* Kategori · malzeme — ince eyebrow hissiyatında (tek kanonik yer) */}
+          <p className="text-[10px] font-body text-accent-deep uppercase tracking-[0.22em]">
             {[product.trendyol_category, material].filter(Boolean).join(' · ')}
           </p>
+
+          <h1 className="mt-2.5 font-heading text-[34px] lg:text-[46px] font-medium text-ink leading-[1.1]">
+            {product.display_title}
+          </h1>
 
           {useLabels && (
             <ProductVariants members={variantMembers} currentId={product.id} variant="chips" />
           )}
 
           {/* Fiyat */}
-          <div className="flex items-baseline gap-3 mt-6">
-            <p className="price text-[26px] text-ink">
+          <div className="flex items-baseline gap-3 mt-6 pt-6 border-t border-line">
+            <p className="price text-[28px] text-ink">
               {formatPrice(mergedProduct.custom_price ?? product.display_price)}
             </p>
             {mergedProduct.custom_price && mergedProduct.custom_price < product.display_price && (
@@ -188,30 +198,30 @@ export default async function UrunDetayPage({
           )}
 
           {/* Sepete ekle — yapışkan çubuk bu bloğun görünürlüğünü izler */}
-          <div className="mt-6" id={BUY_BLOCK_ID}>
+          <div className="mt-7" id={BUY_BLOCK_ID}>
             <AddToCartButton
               product={mergedProduct}
               disabled={stock === 0}
             />
           </div>
 
-          {/* Güven şeridi — vaatler shipping sabitinden */}
-          <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] font-body text-ink-soft">
+          {/* Güven şeridi — tek sıra ikonlu kompakt satır (vaatler sabitlerden) */}
+          <ul className="mt-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-y border-line py-3 text-[10px] font-body text-ink-soft">
             {[
-              FREE_SHIPPING_LABEL,
-              '14 gün koşulsuz iade',
-              'Ücretsiz hediye paketi',
-              'iyzico ile güvenli ödeme',
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-1.5">
-                <span className="text-accent leading-none mt-0.5">✓</span>
-                {item}
+              { Icon: Truck, metin: FREE_SHIPPING_LABEL },
+              { Icon: RotateCcw, metin: '14 gün iade' },
+              { Icon: Gift, metin: 'Hediye paketi' },
+              { Icon: ShieldCheck, metin: 'iyzico güvencesi' },
+            ].map(({ Icon, metin }) => (
+              <li key={metin} className="flex items-center gap-1.5 whitespace-nowrap">
+                <Icon size={13} strokeWidth={1.5} className="text-accent-deep shrink-0" />
+                {metin}
               </li>
             ))}
           </ul>
 
           {/* Hediye satırı */}
-          <div className="mt-6 flex items-center gap-3 border border-line rounded-[4px] p-3">
+          <div className="mt-5 flex items-center gap-3.5 rounded-[4px] bg-surface-muted/60 p-3.5">
             <div className="relative w-14 h-14 shrink-0 overflow-hidden rounded-[2px]">
               <Image
                 src="/hediye-paketi.jpg"
@@ -231,7 +241,7 @@ export default async function UrunDetayPage({
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center justify-center w-full border border-ink text-ink text-[11px] uppercase tracking-[0.15em] font-body font-medium px-6 py-3 rounded-[4px] hover:bg-ink hover:text-bg transition-colors"
+            className="mt-4 inline-flex items-center justify-center w-full border border-line text-ink-soft text-[11px] uppercase tracking-[0.16em] font-body font-medium px-6 py-3 rounded-[4px] hover:border-ink hover:text-ink transition-colors"
           >
             Sorunuz mu var? WhatsApp&apos;tan yazın
           </a>

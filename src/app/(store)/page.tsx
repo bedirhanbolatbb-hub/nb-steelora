@@ -13,6 +13,7 @@ import BlogPreview from '@/components/home/BlogPreview'
 import Newsletter from '@/components/home/Newsletter'
 import ProductCardV2 from '@/components/store/ProductCardV2'
 import JsonLd from '@/components/seo/JsonLd'
+import { getBlurDataURL } from '@/lib/blur'
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo'
 
 /**
@@ -30,6 +31,7 @@ export default async function HomePage() {
   const heroProducts = await getHeroProducts()
   const heroProduct = heroProducts[0] ?? null
   const heroImage = (heroProduct?.display_images as string[] | null)?.[0] ?? null
+  const heroBlur = heroImage ? await getBlurDataURL(heroImage) : undefined
 
   const shown = new ShownProducts()
   shown.add(heroProducts)
@@ -67,7 +69,7 @@ export default async function HomePage() {
       <JsonLd data={websiteJsonLd()} />
 
       {/* 1 · Hero — full-bleed sinema karesi */}
-      <HeroCinema c={c} image={heroImage} imageHref={heroProduct ? `/urun/${heroProduct.slug}` : null} />
+      <HeroCinema c={c} image={heroImage} imageHref={heroProduct ? `/urun/${heroProduct.slug}` : null} blur={heroBlur} />
 
       {/* 2 · Promo şeridi — Inter, emojisiz, ince altın çizgi */}
       <PromoStrip campaign={activeCampaign} />

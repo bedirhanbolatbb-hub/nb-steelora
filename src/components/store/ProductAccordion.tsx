@@ -20,9 +20,9 @@ export default function ProductAccordion({ sections }: { sections: Section[] }) 
             <button
               onClick={() => setOpen(isOpen ? null : section.title)}
               aria-expanded={isOpen}
-              className="w-full flex items-center justify-between py-4 text-left"
+              className="w-full flex items-center justify-between py-[18px] text-left group"
             >
-              <span className="text-[11px] font-body font-semibold uppercase tracking-[0.15em] text-ink">
+              <span className={`text-[11px] font-body font-semibold uppercase tracking-[0.18em] transition-colors ${isOpen ? 'text-accent-deep' : 'text-ink group-hover:text-accent-deep'}`}>
                 {section.title}
               </span>
               <ChevronDown
