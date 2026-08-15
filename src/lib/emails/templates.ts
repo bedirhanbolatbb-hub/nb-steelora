@@ -104,7 +104,10 @@ export function shippingNotificationEmail(order: OrderLike, trackingNumber: stri
       <p style="margin: 0 0 8px; font-size: 12px; color: #C89080; letter-spacing: 0.1em; text-transform: uppercase;">Kargo Takip Numarası</p>
       <p style="margin: 0; font-size: 24px; font-weight: 600; color: #FFF8F6; letter-spacing: 0.2em;">${trackingNumber}</p>
     </div>
-    <p style="color: #7A5048; font-size: 14px; line-height: 1.8;">Kargo firmasının web sitesine giderek takip numaranızı girin.</p>`
+    <p style="text-align: center; margin-bottom: 24px;">
+      <a href="${SITE}/kargo-takip?kod=${encodeURIComponent(trackingNumber)}" style="display: inline-block; background: #C89080; color: #2A1E1E; padding: 14px 32px; text-decoration: none; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase;">Kargomu takip et</a>
+    </p>
+    <p style="color: #7A5048; font-size: 14px; line-height: 1.8;">Bağlantıya tıklayarak siparişinizin güncel durumunu görebilirsiniz.</p>`
     ),
   }
 }

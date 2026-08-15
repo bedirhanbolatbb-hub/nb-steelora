@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
@@ -402,6 +403,13 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                         <p className="text-[13px] font-body text-ink font-medium tracking-wide">
                           {String(order.tracking_number)}
                         </p>
+                        {/* Faz 10A: durum çizelgesi kargo takip sayfasında. */}
+                        <Link
+                          href={`/kargo-takip?kod=${encodeURIComponent(String(order.tracking_number))}`}
+                          className="mt-2 inline-block text-[12px] font-body text-accent underline underline-offset-4 hover:text-ink transition-colors"
+                        >
+                          Kargoyu takip et →
+                        </Link>
                       </div>
                     ) : null}
 

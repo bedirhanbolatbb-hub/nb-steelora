@@ -9,6 +9,7 @@ import { ArrowLeft, Check, ExternalLink } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { ORDER_STATUS, PBadge, PButton, PCard, PInput, PSelect } from '../../_components/ui'
 import { PDialog, useToast } from '../../_components/overlays'
+import KargoBlogu, { type KargoBloguProps } from './KargoBlogu'
 
 type Kalem = { ad: string; adet: number; birim: number; slug: string | null; image: string | null }
 
@@ -56,7 +57,13 @@ const ts = (t: string | null) =>
     ? new Date(t).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Istanbul' })
     : null
 
-export default function SiparisDetayClient({ siparis }: { siparis: SiparisDetay }) {
+export default function SiparisDetayClient({
+  siparis,
+  kargo,
+}: {
+  siparis: SiparisDetay
+  kargo: KargoBloguProps
+}) {
   const router = useRouter()
   const { push: toast } = useToast()
 
@@ -192,6 +199,11 @@ export default function SiparisDetayClient({ siparis }: { siparis: SiparisDetay 
         </div>
 
         <div className="space-y-4">
+          {/* Kargo (Faz 10A) — sipariş durum akışının hemen üstünde, çünkü
+              gönderi oluşturulup takip kodu alındıktan sonra durum «Kargoya
+              verildi»ye çekiliyor. */}
+          <KargoBlogu {...kargo} />
+
           {/* Durum akışı */}
           <PCard title="Durum akışı">
             <div className="space-y-3">
