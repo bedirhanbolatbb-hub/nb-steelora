@@ -18,11 +18,9 @@ export type KurasyonUrun = {
   active: boolean
 }
 
-const TEKLI = [
-  { key: 'hero_top', label: 'Hero — üst geniş görsel' },
-  { key: 'hero_bottom_left', label: 'Hero — alt sol' },
-  { key: 'hero_bottom_right', label: 'Hero — alt sağ' },
-] as const
+// Faz 8B: hero tek full-bleed görsele indi; hero_bottom_* slotları arayüzden
+// emekli (homepage_settings satırları veride duruyor, silinmedi).
+const TEKLI = [{ key: 'hero_top', label: 'Hero görseli (full-bleed)' }] as const
 
 /** Kategori kartı görselleri — seçilen ürünün ilk görseli kartta basılır. */
 const KATEGORILER = [
@@ -125,7 +123,7 @@ export default function KurasyonClient({
       </p>
 
       {/* ── Hero (tekli seçim, görsel önizlemeli) ── */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {TEKLI.map((t) => {
           const id = state[t.key]?.[0]
           const u = id ? cache[id] : undefined

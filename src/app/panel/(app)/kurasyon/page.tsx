@@ -5,7 +5,7 @@ import KurasyonClient, { type KurasyonUrun } from './KurasyonClient'
 export const metadata: Metadata = { title: 'Kürasyon' }
 export const dynamic = 'force-dynamic'
 
-const BOLUMLER = ['hero_top', 'hero_bottom_left', 'hero_bottom_right', 'featured', 'new_arrivals', 'category_kolye', 'category_kupe', 'category_bileklik', 'category_yuzuk', 'category_piercing', 'category_erkek', 'category_setler']
+const BOLUMLER = ['hero_top', 'featured', 'new_arrivals', 'category_kolye', 'category_kupe', 'category_bileklik', 'category_yuzuk', 'category_piercing', 'category_erkek', 'category_setler']
 
 export default async function PanelKurasyonPage() {
   const supabase = createServiceClient()

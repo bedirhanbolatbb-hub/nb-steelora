@@ -2,46 +2,48 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getSiteContent } from '@/lib/supabase/content'
 import { getHomepageSection, getHeroProducts, ShownProducts } from '@/lib/home/sections'
-import { getMostLovedProducts } from '@/lib/home/mostLoved'
 import { getCollectionCards } from '@/lib/collections'
+import HeroCinema from '@/components/home/HeroCinema'
+import PromoStrip from '@/components/home/PromoStrip'
+import CategoryRail from '@/components/home/CategoryRail'
+import CollectionsBand from '@/components/home/CollectionsBand'
+import GiftSplit from '@/components/home/GiftSplit'
+import WhyUs from '@/components/home/WhyUs'
+import BlogPreview from '@/components/home/BlogPreview'
+import Newsletter from '@/components/home/Newsletter'
+import ProductCardV2 from '@/components/store/ProductCardV2'
 import JsonLd from '@/components/seo/JsonLd'
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo'
-import { FREE_SHIPPING_MIN_LABEL } from '@/lib/shipping'
-import Hero from '@/components/home/Hero'
-import Marquee from '@/components/home/Marquee'
-import CategoryGrid from '@/components/home/CategoryGrid'
-import FeaturedProducts from '@/components/home/FeaturedProducts'
-import CollectionStories from '@/components/home/CollectionStories'
-import BrandBanner from '@/components/home/BrandBanner'
-import Newsletter from '@/components/home/Newsletter'
-import ProductCard from '@/components/store/ProductCard'
 
+/**
+ * Anasayfa v2 — "Sessiz Atölye" (Faz 8B). 10 bant:
+ * hero · promo · kategoriler · öne çıkanlar (editorial) · koleksiyonlar ·
+ * yeni gelenler (rail) · hediye · neden · blog · bülten.
+ * Tekilleştirme kuralı korunur: hero > featured > new_arrivals — hiçbir ürün
+ * (ya da grup kardeşi) iki bölümde birden basılmaz.
+ */
 export default async function HomePage() {
   let activeCampaign: any = null
   const c = await getSiteContent()
 
-  // Küratörlü listeler: homepage_settings(section=...).product_ids
-  // Öncelik hero > featured > new_arrivals; üstte basılan ürün (veya grup
-  // kardeşi) altta tekrar basılmaz, yerine dolgu gelir.
+  // Hero: Kürasyon'daki hero_top ürünü — görseli banda, kendisi tekilleştirmeye
+  const heroProducts = await getHeroProducts()
+  const heroProduct = heroProducts[0] ?? null
+  const heroImage = (heroProduct?.display_images as string[] | null)?.[0] ?? null
+
   const shown = new ShownProducts()
-  shown.add(await getHeroProducts())
+  shown.add(heroProducts)
 
   const featured = await getHomepageSection('featured', shown)
   shown.add(featured)
 
   const newArrivals = await getHomepageSection('new_arrivals', shown)
 
-  // Koşullu bölüm: yeterli onaylı yorum yoksa hiç render edilmez.
-  const mostLoved = await getMostLovedProducts()
-
-  // Küratörlü koleksiyonlar — hikâye şeridi (boşsa bölüm basılmaz)
   const collections = await getCollectionCards()
 
   try {
     const supabase = await createClient()
     const now = new Date().toISOString()
-
-    // Campaign — tüm aktif kampanya tipleri
     const { data: campaignData } = await supabase
       .from('campaigns')
       .select('*')
@@ -53,153 +55,108 @@ export default async function HomePage() {
       .single()
     activeCampaign = campaignData
   } catch {
-    // Defaults apply
+    // Kampanya yoksa şerit basılmaz
   }
+
+  const buyukler = featured.slice(0, 2)
+  const standartlar = featured.slice(2, 8)
 
   return (
     <>
-      {/* Yapısal veri — marka kimliği ve site kaydı; sameAs yalnız dolu
-          sosyal adreslerle basılır (panel → Site Metinleri). */}
       <JsonLd data={organizationJsonLd([c.instagram_url, c.facebook_url, c.x_url])} />
       <JsonLd data={websiteJsonLd()} />
 
-      <Hero hasMostLoved={mostLoved.length > 0} />
+      {/* 1 · Hero — full-bleed sinema karesi */}
+      <HeroCinema c={c} image={heroImage} imageHref={heroProduct ? `/urun/${heroProduct.slug}` : null} />
 
-      {c.promo_bar_text && (
-        <div className="bg-line border-b border-surface-muted py-2.5 px-8 text-center">
-          <p className="text-[11px] font-body text-ink uppercase tracking-[0.15em]">
-            {c.promo_bar_emoji && <span className="mr-2">{c.promo_bar_emoji}</span>}
-            {c.promo_bar_text}
-          </p>
-        </div>
-      )}
+      {/* 2 · Promo şeridi — Inter, emojisiz, ince altın çizgi */}
+      <PromoStrip campaign={activeCampaign} />
 
-      {activeCampaign && (
-        <div
-          className="border-y border-accent/20 py-5 px-8 text-center"
-          style={{ background: activeCampaign.banner_color ? activeCampaign.banner_color : 'linear-gradient(135deg, #2A1E1E 0%, #4A2828 50%, #2A1E1E 100%)' }}
-        >
-          <p className="font-heading text-[24px] text-white font-light mb-1">
-            {activeCampaign.type === 'discount_code' && `🎁 ${activeCampaign.name}`}
-            {activeCampaign.type === 'cart_discount' && `✨ ${activeCampaign.name}`}
-            {activeCampaign.type === 'free_shipping' && `🚚 ${activeCampaign.name}`}
-            {activeCampaign.type === 'buy_x_get_y' && `🎀 ${activeCampaign.name}`}
-            {activeCampaign.type === 'banner' && (activeCampaign.banner_text || activeCampaign.name)}
-          </p>
-          {activeCampaign.type === 'discount_code' && activeCampaign.code && (
-            <p className="text-[11px] tracking-[0.2em] uppercase font-body" style={{ color: '#C89080' }}>
-              Kod: {activeCampaign.code} — Sepete ekle, indirimi uygula
-            </p>
-          )}
-          {activeCampaign.type === 'buy_x_get_y' && activeCampaign.metadata && (
-            <p className="text-[11px] tracking-[0.15em] uppercase font-body" style={{ color: '#C89080' }}>
-              {activeCampaign.metadata.buy_quantity} al, {activeCampaign.metadata.pay_quantity} öde
-            </p>
-          )}
-          {activeCampaign.ends_at && (
-            <p className="text-[10px] text-white/40 font-body mt-1.5">
-              {new Date(activeCampaign.ends_at).toLocaleDateString('tr-TR')} tarihine kadar geçerli
-            </p>
-          )}
-        </div>
-      )}
+      {/* 3 · Kategoriler — yatay şerit */}
+      <CategoryRail />
 
-      <Marquee />
-      <CategoryGrid />
-      <FeaturedProducts title={c.featured_title} subtitle={c.featured_subtitle} products={featured} />
-
-      {/* Hikâye şeridi — küratörlü koleksiyonlar (ürün kartı değil) */}
-      <CollectionStories collections={collections} />
-
-      {/* Çok Beğenilenler — yalnız yeterli onaylı yorum biriktiğinde */}
-      {mostLoved.length > 0 && (
-        <section id="cok-begenilenler" className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
-          <div className="mb-8" data-reveal>
-            <p className="eyebrow">Müşteri Favorileri</p>
-            <h2 className="font-heading text-[34px] font-semibold text-ink mt-2">
-              Çok Beğenilenler
+      {/* 4 · Öne Çıkanlar — editorial karma: 2 büyük + 6 standart */}
+      {featured.length > 0 && (
+        <section id="one-cikanlar" className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-16 lg:pb-20">
+          <div className="mb-8 text-center" data-reveal>
+            <p className="eyebrow">Seçki</p>
+            <h2 className="font-heading text-[30px] lg:text-[36px] font-medium text-ink mt-2">
+              {c.featured_title || 'Öne Çıkanlar'}
             </h2>
+            {c.featured_subtitle && (
+              <p className="text-[12px] font-body text-muted mt-1.5">{c.featured_subtitle}</p>
+            )}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-            {mostLoved.map((product: any, i: number) => (
-              <div
-                key={product.id}
-                data-reveal
-                style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}
-              >
-                <ProductCard product={product} />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+            {buyukler.map((product: any, i: number) => (
+              <div key={product.id} data-reveal style={{ '--reveal-delay': `${i * 60}ms` } as React.CSSProperties}>
+                <ProductCardV2 product={product} priority buyuk />
               </div>
             ))}
           </div>
+
+          {standartlar.length > 0 && (
+            <div className="mt-4 lg:mt-6 grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+              {standartlar.map((product: any, i: number) => (
+                <div key={product.id} data-reveal style={{ '--reveal-delay': `${(i % 3) * 50}ms` } as React.CSSProperties}>
+                  <ProductCardV2 product={product} />
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
+      {/* 5 · Koleksiyonlar — full-bleed koyu bant */}
+      <CollectionsBand collections={collections} />
+
+      {/* 6 · Yeni Gelenler — peek'li yatay rail */}
       {newArrivals.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
-          <div className="flex items-end justify-between mb-8">
-            <div data-reveal>
-              <p className="eyebrow">Yeni Gelenler</p>
-              <h2 className="font-heading text-[34px] font-semibold text-ink mt-2">
-                {c.new_arrivals_title || 'Sezonun Yenileri'}
+        <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-16 lg:py-20">
+          <div className="mb-8 flex items-end justify-between" data-reveal>
+            <div>
+              <p className="eyebrow">Taze</p>
+              <h2 className="font-heading text-[30px] lg:text-[36px] font-medium text-ink mt-2">
+                {c.new_arrivals_title || 'Yeni Gelenler'}
               </h2>
-              {c.new_arrivals_subtitle && (
-                <p className="text-[12px] font-body text-muted mt-1">{c.new_arrivals_subtitle}</p>
-              )}
             </div>
             <Link
               href="/urunler?siralama=yeni"
-              className="text-[11px] uppercase tracking-[0.15em] font-body font-medium text-ink border-b border-accent pb-0.5 hover:text-accent-deep transition-colors hidden sm:block"
+              className="hidden sm:block text-[11px] uppercase tracking-[0.16em] font-body font-medium text-ink border-b border-accent pb-0.5 hover:text-accent-deep transition-colors"
             >
               Tümünü Gör →
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-            {newArrivals.map((product: any, i: number) => (
-              <div
-                key={product.id}
-                data-reveal
-                style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}
-              >
-                <ProductCard product={product} />
-              </div>
-            ))}
+
+          {/* Rail kendi kabında kayar; son kart "peek" ile devamı sezdirir */}
+          <div className="-mx-4 px-4 lg:mx-0 lg:px-0 overflow-x-auto pb-3" style={{ scrollbarWidth: 'thin' }}>
+            <div className="flex gap-4 lg:gap-5 snap-x snap-mandatory">
+              {newArrivals.map((product: any, i: number) => (
+                <div
+                  key={product.id}
+                  className="w-[68vw] sm:w-[280px] shrink-0 snap-start"
+                  data-reveal
+                  style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}
+                >
+                  <ProductCardV2 product={product} />
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       )}
 
-      {/* Neden NB Steelora — metinler mevcut site içeriğinden derlendi:
-          316L ifadesi Hero açıklamasından, kargo eşiği sepet/hakkımızda sayfasından,
-          iade süresi hakkımızda sayfasından, hediye paketi BrandBanner'dan. */}
-      <section className="bg-surface-muted py-16">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center mb-10" data-reveal>
-            <p className="eyebrow">Neden NB Steelora</p>
-            <h2 className="font-heading text-[34px] font-semibold text-ink mt-2">
-              Her parçanın arkasında duruyoruz
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              { title: '316L Medikal Çelik', text: 'Kararmaz, paslanmaz, solmaz. Her gün tak, her gün şık görün.' },
-              { title: 'Ücretsiz Kargo', text: `${FREE_SHIPPING_MIN_LABEL} siparişlerde kargo bizden. 1-5 iş günü içinde teslimat.` },
-              { title: 'Kolay İade', text: 'Koşulsuz 14 gün iade hakkı.' },
-              { title: 'Özel Hediye Paketi', text: 'Her sipariş için ücretsiz premium hediye kutusu.' },
-            ].map((item) => (
-              <div key={item.title} className="bg-surface border border-line rounded-[4px] p-6 flex flex-col gap-3">
-                <span className="h-px w-8 bg-accent" />
-                <h3 className="text-[11px] font-body font-semibold uppercase tracking-[0.15em] text-ink">
-                  {item.title}
-                </h3>
-                <p className="text-[13px] font-body text-ink-soft leading-relaxed">
-                  {item.text}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* 7 · Hediye — full-bleed split */}
+      <GiftSplit />
 
-      <BrandBanner />
+      {/* 8 · Neden NB Steelora — 4 sütun ikonlu */}
+      <WhyUs />
+
+      {/* 9 · Blog önizleme */}
+      <BlogPreview />
+
+      {/* 10 · Bülten */}
       <Newsletter />
     </>
   )

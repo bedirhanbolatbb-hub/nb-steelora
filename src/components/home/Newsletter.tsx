@@ -56,7 +56,8 @@ export default function Newsletter() {
   return (
     <section className="bg-bg">
       <div className="max-w-2xl mx-auto px-4 lg:px-8 py-20 text-center">
-        <h2 className="font-heading text-[32px] text-ink mb-3">
+        <p className="eyebrow mb-2">Bülten</p>
+        <h2 className="font-heading text-[30px] lg:text-[34px] font-medium text-ink mb-3">
           Yeni koleksiyonlardan ilk siz haberdar olun
         </h2>
         <p className="text-[12px] font-body text-muted mb-8">

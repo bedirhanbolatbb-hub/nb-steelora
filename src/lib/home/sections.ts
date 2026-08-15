@@ -30,14 +30,16 @@ export class ShownProducts {
   }
 }
 
-/** Hero'da gösterilen ürünler — öncelik sırasının en üstü. */
+/** Hero'da gösterilen ürün — öncelik sırasının en üstü.
+ * Faz 8B: hero tek görsele indi; hero_bottom_* slotları emekli (satırlar
+ * veride duruyor, okunmuyor). */
 export async function getHeroProducts(): Promise<any[]> {
   try {
     const supabase = await createClient()
     const { data: settings } = await supabase
       .from('homepage_settings')
       .select('product_ids')
-      .in('section', ['hero_top', 'hero_bottom_left', 'hero_bottom_right'])
+      .in('section', ['hero_top'])
 
     const ids = (settings || [])
       .flatMap((row: any) => (row.product_ids as string[]) || [])

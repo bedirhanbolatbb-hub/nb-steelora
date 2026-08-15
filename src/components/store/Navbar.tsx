@@ -12,7 +12,7 @@ import { MENU_LINKS } from '@/lib/catalog/categories'
 import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
 import type { CouponReminder } from '@/lib/campaigns'
 
-// Menü tek kaynaktan gelir: src/lib/catalog/categories.ts
+// Menü tek kaynaktan gelir: src/lib/catalog/categories.ts (7 kategori + Blog)
 const navLinks = MENU_LINKS
 
 interface NavbarProps {
@@ -22,8 +22,17 @@ interface NavbarProps {
   coupon?: CouponReminder | null
 }
 
+/**
+ * Header v2 (Faz 8B) — iki katlı klasik düzen.
+ * Üst sıra: ortada büyük marka yazısı, sağda ikonlar. Alt sıra: ortalanmış
+ * kategori navigasyonu. Aşağı inince iki sıra tek kompakt sıraya yoğuşur
+ * (üst sıra kapanır; nav sırasının soluna küçük logo, sağına ikonlar
+ * opacity/transform ile girer). Histerezis: 140px'te yoğuşur, 40px'te açılır —
+ * eşik çevresinde titremez. prefers-reduced-motion'da geçişler kapalı
+ * (motion-safe). Mobil tek sıra: hamburger · logo · arama+sepet.
+ */
 export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon }: NavbarProps) {
-  const [scrolled, setScrolled] = useState(false)
+  const [condensed, setCondensed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -31,13 +40,24 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon }: 
   const wishlistCount = useWishlist((s) => s.items.length)
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
+    let raf = 0
+    const onScroll = () => {
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        raf = 0
+        const y = window.scrollY
+        setCondensed((c) => (c ? y > 40 : y > 140))
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
   }, [])
 
-  // Açık katman işareti: ürün sayfasındaki yapışkan satın alma çubuğu bunu
-  // CSS ile okuyup gizleniyor (globals.css → body[data-overlay='open']).
+  // Açık katman işareti — PDP'deki yapışkan çubuk ve WhatsApp düğmesi okur.
   useEffect(() => {
     const open = mobileOpen || cartOpen || searchOpen
     if (open) document.body.dataset.overlay = 'open'
@@ -47,116 +67,152 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon }: 
     }
   }, [mobileOpen, cartOpen, searchOpen])
 
+  const ikonlar = (
+    <div className="flex items-center gap-4">
+      <button className="text-ink-soft hover:text-accent transition-colors" aria-label="Ara" onClick={() => setSearchOpen(true)}>
+        <Search size={18} strokeWidth={1.6} />
+      </button>
+      <Link href="/favorilerim" className="hidden sm:block relative text-ink-soft hover:text-accent transition-colors" aria-label="Favoriler">
+        <Heart size={18} strokeWidth={1.6} />
+        {wishlistCount > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 min-w-[18px] min-h-[18px] bg-ink text-bg text-[9px] rounded-full flex items-center justify-center font-body font-medium">
+            {wishlistCount}
+          </span>
+        )}
+      </Link>
+      <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="hidden sm:block text-ink-soft hover:text-accent transition-colors" aria-label="Hesap">
+        <User size={18} strokeWidth={1.6} />
+      </Link>
+      <button className="relative text-ink-soft hover:text-accent transition-colors" aria-label="Sepet" onClick={() => setCartOpen(true)}>
+        <ShoppingBag size={18} strokeWidth={1.6} />
+        {totalItems > 0 && (
+          <span
+            key={totalItems}
+            className="animate-cart-pulse absolute -top-1.5 -right-1.5 min-w-[18px] min-h-[18px] bg-ink text-bg text-[9px] rounded-full flex items-center justify-center font-body font-medium"
+          >
+            {totalItems}
+          </span>
+        )}
+      </button>
+    </div>
+  )
+
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-50 w-full bg-bg border-b border-line transition-shadow duration-300',
-        scrolled && 'shadow-md'
-      )}
-    >
-      {/* Duyuru Şeridi */}
+    <header className="sticky top-0 z-50 w-full bg-bg border-b border-line">
+      {/* Duyuru şeridi */}
       <div className="text-center py-2 px-4" style={{ backgroundColor: bannerColor || '#2A1E1E' }}>
         <p className="text-accent text-[10px] tracking-[0.2em] uppercase font-body">
           {bannerText || `${FREE_SHIPPING_LABEL} • Premium Çelik Takılar`}
         </p>
       </div>
 
-      <nav className="max-w-7xl mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
-          {/* Sol: Hamburger (mobil) + Nav Linkleri (desktop) */}
-          <div className="flex items-center gap-8">
-            <button
-              className="lg:hidden text-ink"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Menü"
-            >
-              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
-
-            <div className="hidden lg:flex items-center gap-6">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-[11px] uppercase tracking-[0.15em] font-body text-ink-soft hover:text-accent transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Orta: Logo */}
-          <Link href="/" className="flex flex-col items-center">
-            <span className="font-heading text-[22px] font-light tracking-[0.15em] text-ink">
+      {/* ── Mobil tek sıra ── */}
+      <div className="lg:hidden max-w-[1400px] mx-auto px-4">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center h-14">
+          <button className="text-ink p-1 -ml-1" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menü">
+            {mobileOpen ? <X size={22} strokeWidth={1.6} /> : <Menu size={22} strokeWidth={1.6} />}
+          </button>
+          <Link href="/" className="justify-self-center text-center">
+            <span className="font-heading text-[19px] font-light tracking-[0.16em] text-ink block leading-none">
               NB STEELORA
             </span>
-            <span className="text-[10px] uppercase tracking-[0.25em] text-accent font-body">
+            <span className="text-[8px] uppercase tracking-[0.3em] text-accent font-body">Fine Jewellery</span>
+          </Link>
+          <div className="justify-self-end">{ikonlar}</div>
+        </div>
+      </div>
+
+      {/* ── Masaüstü üst sıra: ortada büyük marka — yoğuşunca kapanır ── */}
+      <div className={cn('hidden lg:block', condensed && 'lg:hidden')}>
+        <div className="max-w-[1400px] mx-auto px-8 grid grid-cols-3 items-center h-[76px]">
+          <div />
+          <Link href="/" className="justify-self-center text-center motion-safe:transition-opacity motion-safe:duration-300">
+            <span className="font-heading text-[27px] font-light tracking-[0.2em] text-ink block leading-none">
+              NB STEELORA
+            </span>
+            <span className="text-[9px] uppercase tracking-[0.42em] text-accent font-body mt-1 block">
               Fine Jewellery
             </span>
           </Link>
-
-          {/* Sağ: İkonlar */}
-          <div className="flex items-center gap-4">
-            <button className="text-ink-soft hover:text-accent transition-colors" aria-label="Ara" onClick={() => setSearchOpen(true)}>
-              <Search size={18} />
-            </button>
-            <Link href="/favorilerim" className="hidden sm:block relative text-ink-soft hover:text-accent transition-colors" aria-label="Favoriler">
-              <Heart size={18} />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-ink text-bg text-[10px] rounded-full flex items-center justify-center font-body font-medium">
-                  {wishlistCount}
-                </span>
-              )}
-            </Link>
-            <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="hidden sm:block text-ink-soft hover:text-accent transition-colors" aria-label="Hesap">
-              <User size={18} />
-            </Link>
-            <button
-              className="relative text-ink-soft hover:text-accent transition-colors"
-              aria-label="Sepet"
-              onClick={() => setCartOpen(true)}
-            >
-              <ShoppingBag size={18} />
-              {totalItems > 0 && (
-                // key değişince animasyon yeniden oynar — sepete eklemede darbe efekti
-                <span
-                  key={totalItems}
-                  className="animate-cart-pulse absolute -top-1.5 -right-1.5 w-5 h-5 bg-ink text-bg text-[10px] rounded-full flex items-center justify-center font-body font-medium"
-                >
-                  {totalItems}
-                </span>
-              )}
-            </button>
-          </div>
+          <div className="justify-self-end">{ikonlar}</div>
         </div>
-      </nav>
+      </div>
 
-      {/* Mobil Menü */}
-      {mobileOpen && (
-        <div className="lg:hidden bg-bg border-t border-line">
-          <div className="px-4 py-4 space-y-3">
+      {/* ── Masaüstü nav sırası — yoğuşunca kompakt tek sıra olur ── */}
+      <nav
+        className={cn(
+          'hidden lg:block border-t border-line/60',
+          condensed && 'border-t-0'
+        )}
+        aria-label="Kategoriler"
+      >
+        <div className="max-w-[1400px] mx-auto px-8 grid grid-cols-[1fr_auto_1fr] items-center h-12">
+          {/* Küçük logo — yalnız kompakt hâlde görünür */}
+          <Link
+            href="/"
+            aria-hidden={!condensed}
+            tabIndex={condensed ? 0 : -1}
+            className={cn(
+              'justify-self-start font-heading text-[16px] font-light tracking-[0.16em] text-ink whitespace-nowrap',
+              'motion-safe:transition-all motion-safe:duration-300',
+              condensed ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 pointer-events-none'
+            )}
+          >
+            NB STEELORA
+          </Link>
+
+          <div className="flex items-center justify-center gap-7">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="block text-[12px] uppercase tracking-[0.15em] font-body text-ink-soft hover:text-accent transition-colors py-2"
+                className="text-[11px] uppercase tracking-[0.16em] font-body text-ink-soft hover:text-ink border-b border-transparent hover:border-accent pb-0.5 transition-colors whitespace-nowrap"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* İkonlar — yalnız kompakt hâlde bu sırada görünür */}
+          <div
+            aria-hidden={!condensed}
+            className={cn(
+              'justify-self-end',
+              'motion-safe:transition-all motion-safe:duration-300',
+              condensed ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2 pointer-events-none'
+            )}
+          >
+            {ikonlar}
+          </div>
+        </div>
+      </nav>
+
+      {/* ── Mobil menü ── */}
+      {mobileOpen && (
+        <div className="lg:hidden bg-bg border-t border-line">
+          <div className="px-4 py-4 space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="block text-[12px] uppercase tracking-[0.16em] font-body text-ink-soft hover:text-ink py-2.5 transition-colors"
                 onClick={() => setMobileOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
-            <div className="flex items-center gap-4 pt-3 border-t border-line">
-              <Link href="/favorilerim" className="text-ink-soft hover:text-accent transition-colors" aria-label="Favoriler" onClick={() => setMobileOpen(false)}>
-                <Heart size={18} />
+            <div className="flex items-center gap-5 pt-3 border-t border-line">
+              <Link href="/favorilerim" className="text-ink-soft hover:text-accent transition-colors py-2" aria-label="Favoriler" onClick={() => setMobileOpen(false)}>
+                <Heart size={18} strokeWidth={1.6} />
               </Link>
-              <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="text-ink-soft hover:text-accent transition-colors" aria-label="Hesap" onClick={() => setMobileOpen(false)}>
-                <User size={18} />
+              <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="text-ink-soft hover:text-accent transition-colors py-2" aria-label="Hesap" onClick={() => setMobileOpen(false)}>
+                <User size={18} strokeWidth={1.6} />
               </Link>
             </div>
           </div>
         </div>
       )}
+
       <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} coupon={coupon} />
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
