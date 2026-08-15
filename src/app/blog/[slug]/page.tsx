@@ -126,7 +126,7 @@ export default async function BlogPostPage({
               <span className="text-line">·</span>
               <span>{post.read_time} dk okuma</span>
             </div>
-            <h1 className="font-heading text-[34px] sm:text-[42px] font-semibold text-ink leading-tight">
+            <h1 className="font-heading text-[36px] sm:text-[46px] font-medium text-ink leading-[1.1]">
               {post.title}
             </h1>
             {post.excerpt && (
@@ -162,7 +162,7 @@ export default async function BlogPostPage({
             <div className="max-w-7xl mx-auto px-4 lg:px-8">
               <div className="mb-8" data-reveal>
                 <p className="eyebrow">Devamı</p>
-                <h2 className="font-heading text-[26px] font-semibold text-ink mt-2">
+                <h2 className="font-heading text-[28px] lg:text-[32px] font-medium text-ink mt-2">
                   Diğer Yazılar
                 </h2>
               </div>

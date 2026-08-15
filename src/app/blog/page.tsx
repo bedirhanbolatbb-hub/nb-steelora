@@ -22,7 +22,7 @@ export default async function BlogPage() {
     <main className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
       <div className="mb-10" data-reveal>
         <p className="eyebrow">Günlük</p>
-        <h1 className="font-heading text-[34px] lg:text-[42px] font-semibold text-ink mt-2">
+        <h1 className="font-heading text-[38px] lg:text-[48px] font-medium text-ink mt-2">
           Blog
         </h1>
         <p className="text-[13px] font-body text-ink-soft mt-2">

@@ -4,7 +4,7 @@ export const metadata = { title: 'Kargo ve İade' }
 
 export default function KargoVeIadePage() {
   return (
-    <LegalPageLayout title="Kargo ve İade">
+    <LegalPageLayout eyebrow="Destek" title="Kargo ve İade">
       <h2>Kargo Bilgileri</h2>
 
       <ul>

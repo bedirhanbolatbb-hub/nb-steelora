@@ -340,7 +340,7 @@ function ProductsInner({
             {filterPanel}
             <button
               onClick={() => setFiltersOpen(false)}
-              className="w-full py-3 bg-accent text-white text-[11px] uppercase tracking-[0.15em] font-body hover:bg-accent-deep transition-colors"
+              className="w-full py-3.5 bg-ink text-bg text-[11px] uppercase tracking-[0.18em] font-body font-medium rounded-[4px] hover:bg-accent-deep transition-colors"
             >
               {total} ürünü göster
             </button>

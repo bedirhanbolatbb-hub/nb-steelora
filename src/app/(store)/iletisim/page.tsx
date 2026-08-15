@@ -41,7 +41,7 @@ export default function IletisimPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 lg:px-8 py-16">
-      <h1 className="font-heading text-[36px] font-light text-ink mb-2">
+      <h1 className="font-heading text-[38px] lg:text-[48px] font-medium text-ink leading-tight mb-2">
         İletişim
       </h1>
       <div className="w-16 h-px bg-accent mb-10" />

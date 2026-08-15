@@ -4,7 +4,7 @@ export const metadata = { title: 'Mesafeli Satış Sözleşmesi' }
 
 export default function MesafeliSatisSozlesmesiPage() {
   return (
-    <LegalPageLayout title="Mesafeli Satış Sözleşmesi">
+    <LegalPageLayout eyebrow="Hukuk" title="Mesafeli Satış Sözleşmesi">
       <h2>1. Taraflar</h2>
       <p>
         <strong>SATICI:</strong><br />

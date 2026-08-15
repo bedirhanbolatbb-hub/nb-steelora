@@ -72,7 +72,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   return (
     <div className="fixed inset-0 z-[60] bg-ink/80 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-bg max-w-2xl mx-auto mt-20 shadow-2xl"
+        className="bg-bg max-w-2xl mx-auto mt-16 sm:mt-24 rounded-[6px] overflow-hidden border border-line shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Input */}
@@ -84,7 +84,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             placeholder="Ürün ara..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent font-heading text-[20px] text-ink placeholder:text-muted outline-none"
+            className="flex-1 bg-transparent font-body text-[16px] tracking-wide text-ink placeholder:text-muted outline-none"
           />
           <button
             onClick={onClose}

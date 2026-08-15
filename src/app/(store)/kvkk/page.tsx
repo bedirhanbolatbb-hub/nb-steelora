@@ -4,7 +4,7 @@ export const metadata = { title: 'KVKK Aydınlatma Metni' }
 
 export default function KvkkPage() {
   return (
-    <LegalPageLayout title="KVKK Aydınlatma Metni">
+    <LegalPageLayout eyebrow="Hukuk" title="KVKK Aydınlatma Metni">
       <p>
         6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında, kişisel verilerinizin
         işlenmesine ilişkin sizleri bilgilendirmek isteriz.

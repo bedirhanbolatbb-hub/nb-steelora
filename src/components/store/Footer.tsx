@@ -55,25 +55,25 @@ export default async function Footer({ isLoggedIn }: { isLoggedIn?: boolean }) {
 
   return (
     <footer className="bg-ink-deep text-line">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-          {/* Marka */}
-          <div>
-            <Link href="/" className="inline-block mb-4">
-              <span className="font-heading text-[20px] font-light tracking-[0.15em] text-bg">
-                NB STEELORA
-              </span>
-              <br />
-              <span className="text-[8px] uppercase tracking-[0.25em] text-accent font-body">
-                Fine Jewellery
-              </span>
-            </Link>
-            <p className="text-[12px] leading-relaxed text-line/70 font-body mt-4">
-              Premium çelik takı markası. Her parça, zarafeti ve kaliteyi bir arada sunar.
-              Stilinize değer katın.
-            </p>
-          </div>
+      {/* Ortada marka bloğu — Sessiz Atölye kapanışı */}
+      <div className="border-b border-line/10">
+        <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-12 text-center">
+          <Link href="/" className="inline-block">
+            <span className="font-heading text-[26px] font-light tracking-[0.2em] text-bg block">
+              NB STEELORA
+            </span>
+            <span className="text-[9px] uppercase tracking-[0.4em] text-accent font-body mt-1 block">
+              Fine Jewellery
+            </span>
+          </Link>
+          <p className="text-[12px] leading-relaxed text-line/60 font-body mt-4 max-w-md mx-auto">
+            Premium çelik takı markası. Her parça, zarafeti ve kaliteyi bir arada sunar.
+          </p>
+        </div>
+      </div>
 
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-14">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-10">
           {/* Kategoriler */}
           <div>
             <h4 className="text-[11px] uppercase tracking-[0.2em] text-accent font-body mb-5">

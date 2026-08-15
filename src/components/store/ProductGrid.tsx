@@ -1,4 +1,4 @@
-import ProductCard from './ProductCard'
+import ProductCardV2 from './ProductCardV2'
 import type { Product } from '@/types'
 
 interface ProductGridProps {
@@ -16,7 +16,7 @@ export default function ProductGrid({ products, columns = 4 }: ProductGridProps)
   return (
     <div className={`grid ${gridCols[columns]} gap-4 lg:gap-6`}>
       {products.map((product, i) => (
-        <ProductCard key={product.id} product={product} priority={i < 4} />
+        <ProductCardV2 key={product.id} product={product} priority={i < 4} />
       ))}
     </div>
   )

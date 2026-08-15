@@ -547,7 +547,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                             type="button"
                             disabled={busy}
                             onClick={() => submitOrderRequest(order.id, formOpen)}
-                            className="py-2 px-5 bg-accent text-white text-[10px] tracking-[0.12em] uppercase font-body hover:bg-accent-deep transition-colors disabled:opacity-50"
+                            className="py-2 px-5 bg-ink text-bg rounded-[4px] text-[10px] tracking-[0.12em] uppercase font-body hover:bg-accent-deep transition-colors disabled:opacity-50"
                           >
                             {busy ? 'Gönderiliyor...' : 'Talebi Gönder'}
                           </button>
@@ -590,7 +590,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
               {addresses.map((addr) => (
                 <div key={addr.id} className="border border-line p-5 relative">
                   {addr.is_default && (
-                    <span className="text-[9px] bg-accent text-white px-2 py-0.5 uppercase tracking-wider font-body absolute top-3 right-3">Varsayılan</span>
+                    <span className="text-[9px] bg-ink text-bg rounded-[4px] px-2 py-0.5 uppercase tracking-wider font-body absolute top-3 right-3">Varsayılan</span>
                   )}
                   <p className="font-body text-[13px] font-semibold text-ink mb-1">{addr.title}</p>
                   <p className="font-body text-[12px] text-ink-soft">{addr.full_name}</p>
@@ -624,7 +624,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                   Varsayılan adres olarak ayarla
                 </label>
                 <div className="flex gap-3 pt-2">
-                  <button onClick={saveAddress} disabled={addressSaving} className="flex-1 py-2 bg-accent text-white text-[11px] uppercase tracking-wider hover:bg-accent-deep transition-colors disabled:opacity-50">
+                  <button onClick={saveAddress} disabled={addressSaving} className="flex-1 py-2 bg-ink text-bg rounded-[4px] text-[11px] uppercase tracking-wider hover:bg-accent-deep transition-colors disabled:opacity-50">
                     {addressSaving ? 'Kaydediliyor...' : 'Kaydet'}
                   </button>
                   <button onClick={() => setAddressForm(null)} className="flex-1 py-2 border border-line text-muted text-[11px] uppercase tracking-wider hover:border-accent transition-colors">

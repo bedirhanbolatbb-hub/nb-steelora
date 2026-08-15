@@ -4,7 +4,7 @@ export const metadata = { title: 'Gizlilik Politikası' }
 
 export default function GizlilikPolitikasiPage() {
   return (
-    <LegalPageLayout title="Gizlilik Politikası">
+    <LegalPageLayout eyebrow="Hukuk" title="Gizlilik Politikası">
       <h2>1. Giriş</h2>
       <p>
         NB Steelora olarak müşterilerimizin gizliliğine büyük önem veriyoruz. Bu politika,
