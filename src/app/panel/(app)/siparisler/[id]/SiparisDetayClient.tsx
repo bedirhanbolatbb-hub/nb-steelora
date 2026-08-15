@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -139,7 +140,7 @@ export default function SiparisDetayClient({ siparis }: { siparis: SiparisDetay 
               {siparis.items.map((k, i) => (
                 <li key={i} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
                   <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
-                    {k.image && <Image src={k.image} alt="" width={44} height={44} sizes="44px" className="h-11 w-11 object-cover" />}
+                    {k.image && <Image src={k.image} unoptimized={isRemoteMedia(k.image)} alt="" width={44} height={44} sizes="44px" className="h-11 w-11 object-cover" />}
                   </span>
                   <span className="min-w-0 flex-1">
                     {k.slug ? (

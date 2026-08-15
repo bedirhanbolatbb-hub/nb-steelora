@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isMediaUrl } from '@/lib/images'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
 import type { HeroSlide } from '@/lib/home/homeData'
 
 type Slayt = HeroSlide & { href: string | null }
@@ -70,7 +70,7 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
             <>
               <Image
                 src={s.image_url}
-                unoptimized={isMediaUrl(s.image_url)}
+                unoptimized={isRemoteMedia(s.image_url)}
                 alt={s.title || ''}
                 fill
                 priority={i === 0}

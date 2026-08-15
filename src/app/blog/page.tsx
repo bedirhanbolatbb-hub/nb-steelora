@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { isMediaUrl } from '@/lib/images'
+import { isRemoteMedia } from '@/lib/images'
 import Image from 'next/image'
 import { createServiceClient } from '@/lib/supabase/service'
 import type { Metadata } from 'next'
@@ -47,7 +47,7 @@ export default async function BlogPage() {
                 {post.cover_image ? (
                   <Image
                     src={post.cover_image}
-                    unoptimized={isMediaUrl(post.cover_image)}
+                    unoptimized={isRemoteMedia(post.cover_image)}
                     alt={post.title}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"

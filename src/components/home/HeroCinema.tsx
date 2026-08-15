@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY } from '@/lib/images'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
 
 /**
  * Hero v2 ("Sessiz Atölye") — kolaj yerine tek full-bleed sinema karesi.
@@ -88,6 +88,7 @@ export default function HeroCinema({
         <Link href={imageHref} className="absolute inset-0" aria-label="Hero ürününe git">
           <Image
             src={image}
+            unoptimized={isRemoteMedia(image)}
             alt=""
             fill
             priority
@@ -101,6 +102,7 @@ export default function HeroCinema({
       ) : (
         <Image
           src={image}
+          unoptimized={isRemoteMedia(image)}
           alt=""
           fill
           priority

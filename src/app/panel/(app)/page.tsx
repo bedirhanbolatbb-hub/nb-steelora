@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { isRemoteMedia } from '@/lib/images'
 import { createServiceClient } from '@/lib/supabase/service'
 import { formatPrice } from '@/lib/utils'
 import { ORDER_STATUS, PBadge, PCard, type BadgeTone } from './_components/ui'
@@ -187,6 +188,7 @@ export default async function PanelDashboard() {
                       // yüklenmesin (7A bulgusu).
                       <Image
                         src={p.display_images[0]}
+                        unoptimized={isRemoteMedia(p.display_images[0])}
                         alt=""
                         width={48}
                         height={48}

@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -175,7 +176,7 @@ export default function UrunDetayClient({ urun }: { urun: UrunDetay }) {
                 {gorseller.map((url, i) => (
                   <div key={`${url}-${i}`} className="flex items-center gap-3 rounded-[4px] border border-[var(--p-line)] p-2">
                     <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
-                      <Image src={url} alt="" width={56} height={56} sizes="56px" className="h-14 w-14 object-cover" />
+                      <Image src={url} unoptimized={isRemoteMedia(url)} alt="" width={56} height={56} sizes="56px" className="h-14 w-14 object-cover" />
                     </span>
                     <span className="min-w-0 flex-1 truncate text-[11px] text-[var(--p-muted)]">{url}</span>
                     <span className="flex shrink-0 items-center gap-1">
@@ -212,7 +213,7 @@ export default function UrunDetayClient({ urun }: { urun: UrunDetay }) {
               <div className="flex flex-wrap gap-2">
                 {urun.trendyolImages.map((url, i) => (
                   <span key={i} className="relative h-16 w-16 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
-                    <Image src={url} alt="" width={64} height={64} sizes="64px" className="h-16 w-16 object-cover" />
+                    <Image src={url} unoptimized={isRemoteMedia(url)} alt="" width={64} height={64} sizes="64px" className="h-16 w-16 object-cover" />
                   </span>
                 ))}
               </div>

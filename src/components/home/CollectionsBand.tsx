@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { firstSentence, type CollectionCard } from '@/lib/collections'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isMediaUrl } from '@/lib/images'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
 
 /**
  * Koleksiyonlar v2 — full-bleed koyu bant, üç büyük görselli hikâye.
@@ -31,7 +31,7 @@ export default function CollectionsBand({ collections }: { collections: Collecti
                 {collection.cover ? (
                   <Image
                     src={collection.cover}
-                    unoptimized={isMediaUrl(collection.cover)}
+                    unoptimized={isRemoteMedia(collection.cover)}
                     alt={collection.name}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"

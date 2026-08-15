@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -246,7 +247,7 @@ export default function UrunlerClient({
                 <td className="px-3 py-2">
                   <Link href={`/panel/urunler/${p.id}`} className="flex items-center gap-3 group">
                     <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
-                      {p.image && <Image src={p.image} alt="" width={40} height={40} sizes="40px" className="h-10 w-10 object-cover" />}
+                      {p.image && <Image src={p.image} unoptimized={isRemoteMedia(p.image)} alt="" width={40} height={40} sizes="40px" className="h-10 w-10 object-cover" />}
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate font-medium text-[var(--p-ink)] group-hover:text-[var(--p-accent-deep)]">{p.title}</span>
@@ -277,7 +278,7 @@ export default function UrunlerClient({
             <input type="checkbox" checked={secili.has(p.id)} onChange={() => toggle(p.id)} aria-label={p.title} className="h-5 w-5 shrink-0 accent-[var(--p-accent)]" />
             <Link href={`/panel/urunler/${p.id}`} className="flex min-w-0 flex-1 items-center gap-3">
               <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
-                {p.image && <Image src={p.image} alt="" width={48} height={48} sizes="48px" className="h-12 w-12 object-cover" />}
+                {p.image && <Image src={p.image} unoptimized={isRemoteMedia(p.image)} alt="" width={48} height={48} sizes="48px" className="h-12 w-12 object-cover" />}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13px] font-medium text-[var(--p-ink)]">{p.title}</span>

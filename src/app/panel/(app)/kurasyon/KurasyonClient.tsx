@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { isRemoteMedia } from '@/lib/images'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { ArrowDown, ArrowUp, Plus, RefreshCcw, Trash2 } from 'lucide-react'
@@ -216,10 +217,15 @@ export default function KurasyonClient({
         }
       >
         {slides.length === 0 ? (
-          <p className="rounded-[4px] border border-dashed border-[var(--p-line)] px-3 py-6 text-center text-[12px] text-[var(--p-muted)]">
-            Slayt yok — vitrin tipografik fallback hero&apos;yu basar. Otomatik dönme bilinçli olarak yok;
-            ziyaretçi okla/kaydırmayla gezer.
-          </p>
+          <div className="rounded-[4px] border border-dashed border-[var(--p-line)] px-3 py-6 text-center">
+            <p className="text-[13px] font-medium text-[var(--p-ink)]">
+              Slayt ekleyin — görsel yükleyip başlık ve hedef seçin.
+            </p>
+            <p className="mx-auto mt-1.5 max-w-[46ch] text-[12px] leading-relaxed text-[var(--p-muted)]">
+              Slayt yokken anasayfada tipografik hero görünür (boş sayfa açılmaz, hiçbir yere
+              link vermez). Otomatik dönme bilinçli olarak yok; ziyaretçi okla/kaydırmayla gezer.
+            </p>
+          </div>
         ) : (
           <div className="space-y-4">
             {slides.map((s, i) => (
@@ -229,7 +235,7 @@ export default function KurasyonClient({
                   <div>
                     <div className="relative aspect-[4/3] overflow-hidden rounded-[4px] bg-[var(--p-ink)]">
                       {s.image_url ? (
-                        <Image src={s.image_url} alt="" fill sizes="280px" className="object-cover" />
+                        <Image src={s.image_url} unoptimized={isRemoteMedia(s.image_url)} alt="" fill sizes="280px" className="object-cover" />
                       ) : (
                         <span className="absolute inset-0 flex items-center justify-center text-[11px] text-white/40">
                           Görsel bekleniyor
@@ -384,7 +390,7 @@ export default function KurasyonClient({
                   <li key={id} className="flex flex-wrap items-center gap-2 rounded-[4px] border border-[var(--p-line)] p-2 sm:flex-nowrap sm:gap-3">
                     <span className="w-5 text-center text-[11px] tabular-nums text-[var(--p-muted)]">{i + 1}</span>
                     <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
-                      {u?.image && <Image src={u.image} alt="" width={40} height={40} sizes="40px" className="h-10 w-10 object-cover" />}
+                      {u?.image && <Image src={u.image} unoptimized={isRemoteMedia(u.image)} alt="" width={40} height={40} sizes="40px" className="h-10 w-10 object-cover" />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13px] text-[var(--p-ink)]">{u?.title ?? id}</span>
@@ -417,7 +423,7 @@ export default function KurasyonClient({
               <div className="space-y-2">
                 <div className="relative aspect-square overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
                   {gorunen ? (
-                    <Image src={gorunen} alt="" fill sizes="200px" className="object-cover" />
+                    <Image src={gorunen} unoptimized={isRemoteMedia(gorunen)} alt="" fill sizes="200px" className="object-cover" />
                   ) : (
                     <span className="absolute inset-0 flex items-center justify-center text-[11px] text-[var(--p-muted)]">
                       Otomatik

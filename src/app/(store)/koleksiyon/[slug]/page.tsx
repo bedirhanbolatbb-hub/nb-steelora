@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import ProductCardV2 from '@/components/store/ProductCardV2'
 import { getCollection } from '@/lib/collections'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isMediaUrl } from '@/lib/images'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
 import JsonLd from '@/components/seo/JsonLd'
 import { breadcrumbJsonLd } from '@/lib/seo'
 
@@ -80,7 +80,7 @@ export default async function KoleksiyonPage({
               >
                 <Image
                   src={cover}
-                  unoptimized={isMediaUrl(cover)}
+                  unoptimized={isRemoteMedia(cover)}
                   alt={collection.name}
                   fill
                   className="object-cover"

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { isMediaUrl } from '@/lib/images'
+import { isRemoteMedia } from '@/lib/images'
 import Image from 'next/image'
 import { useCart } from '@/hooks/useCart'
 import { createClient } from '@/lib/supabase/client'
@@ -500,7 +500,7 @@ export default function OdemePage() {
                   {item.product.display_images?.[0] && (
                     <Image
                       src={item.product.display_images[0]}
-                      unoptimized={isMediaUrl(item.product.display_images[0])}
+                      unoptimized={isRemoteMedia(item.product.display_images[0])}
                       alt={item.product.display_title}
                       fill
                       className="object-cover"

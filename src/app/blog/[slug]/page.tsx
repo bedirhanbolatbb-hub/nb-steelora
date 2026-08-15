@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { isMediaUrl } from '@/lib/images'
+import { isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
@@ -88,7 +88,7 @@ export default async function BlogPostPage({
             <div className="relative aspect-[16/9] sm:aspect-[2/1] w-full overflow-hidden rounded-[4px] bg-surface-muted">
               <Image
                 src={post.cover_image}
-                unoptimized={isMediaUrl(post.cover_image)}
+                unoptimized={isRemoteMedia(post.cover_image)}
                 alt={post.title}
                 fill
                 sizes="(max-width: 1024px) 100vw, 900px"
@@ -181,7 +181,7 @@ export default async function BlogPostPage({
                       {p.cover_image ? (
                         <Image
                           src={p.cover_image}
-                          unoptimized={isMediaUrl(p.cover_image)}
+                          unoptimized={isRemoteMedia(p.cover_image)}
                           alt={p.title}
                           fill
                           sizes="(max-width: 640px) 100vw, 33vw"

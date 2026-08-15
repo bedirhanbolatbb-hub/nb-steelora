@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { isRemoteMedia } from '@/lib/images'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { ArrowDown, ArrowUp, Lock, Plus, Trash2 } from 'lucide-react'
@@ -219,7 +220,7 @@ export default function KoleksiyonlarClient({
                       <li key={id} className="flex flex-wrap items-center gap-2 rounded-[4px] border border-[var(--p-line)] p-2 sm:flex-nowrap sm:gap-3">
                         <span className="w-5 text-center text-[11px] tabular-nums text-[var(--p-muted)]">{i + 1}</span>
                         <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
-                          {u?.image && <Image src={u.image} alt="" width={40} height={40} sizes="40px" className="h-10 w-10 object-cover" />}
+                          {u?.image && <Image src={u.image} unoptimized={isRemoteMedia(u.image)} alt="" width={40} height={40} sizes="40px" className="h-10 w-10 object-cover" />}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-[13px] text-[var(--p-ink)]">{u?.title ?? id}</span>

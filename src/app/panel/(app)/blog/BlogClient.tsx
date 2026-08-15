@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { isRemoteMedia } from '@/lib/images'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { ExternalLink, Lock, Plus } from 'lucide-react'
@@ -114,7 +115,7 @@ export default function BlogClient({ yazilar }: { yazilar: YaziSatiri[] }) {
               >
                 <div className="relative aspect-[3/2] bg-[var(--p-bg)]">
                   {y.coverImage && (
-                    <Image src={y.coverImage} alt="" fill sizes="320px" className="object-cover" />
+                    <Image src={y.coverImage} unoptimized={isRemoteMedia(y.coverImage)} alt="" fill sizes="320px" className="object-cover" />
                   )}
                   {!y.published && (
                     <span className="absolute left-2 top-2"><PBadge tone="warning">taslak</PBadge></span>

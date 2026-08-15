@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { isRemoteMedia } from '@/lib/images'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { ExternalLink, Star } from 'lucide-react'
@@ -131,7 +132,7 @@ export default function YorumlarClient({ satirlar }: { satirlar: YorumSatiri[] }
               />
               <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
                 {y.urunGorsel && (
-                  <Image src={y.urunGorsel} alt="" width={44} height={44} sizes="44px" className="h-11 w-11 object-cover" />
+                  <Image src={y.urunGorsel} unoptimized={isRemoteMedia(y.urunGorsel)} alt="" width={44} height={44} sizes="44px" className="h-11 w-11 object-cover" />
                 )}
               </span>
               <div className="min-w-0 flex-1">

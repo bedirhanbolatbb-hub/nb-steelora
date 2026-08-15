@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useLinkStatus } from 'next/link'
 import { useState, useEffect } from 'react'
 import { Search, Heart, User, ShoppingBag, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -14,6 +15,25 @@ import type { CouponReminder } from '@/lib/campaigns'
 
 // Menü tek kaynaktan gelir: src/lib/catalog/categories.ts (7 kategori + Blog)
 const navLinks = MENU_LINKS
+
+/**
+ * Logo tıklamasının "hiçbir şey olmadı" hissini bitiren geri bildirim (Faz 9B).
+ * Anasayfa dinamik olduğu ve loading.js bulunmadığı için geçiş, sunucudan RSC
+ * yanıtı gelene dek ekranda görünmez; useLinkStatus o aralıkta işareti verir.
+ * Salt görsel: yalnız opacity, reduced-motion'da da güvenli.
+ */
+function LogoPending() {
+  const { pending } = useLinkStatus()
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'pointer-events-none absolute inset-0 bg-bg/45 motion-safe:transition-opacity motion-safe:duration-200',
+        pending ? 'opacity-100' : 'opacity-0'
+      )}
+    />
+  )
+}
 
 interface NavbarProps {
   bannerText?: string | null
@@ -112,11 +132,18 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon }: 
           <button className="text-ink p-1 -ml-1" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menü">
             {mobileOpen ? <X size={22} strokeWidth={1.6} /> : <Menu size={22} strokeWidth={1.6} />}
           </button>
-          <Link href="/" className="justify-self-center text-center">
+          {/* Tıklama alanı yazının kutusundan geniş: py/px ile 44px'e tamamlanır
+              (negatif margin görsel yerleşimi bozmaz). */}
+          <Link
+            href="/"
+            aria-label="Anasayfa"
+            className="relative justify-self-center text-center flex flex-col justify-center min-h-[44px] px-4 -mx-4 py-1"
+          >
             <span className="font-heading text-[19px] font-light tracking-[0.16em] text-ink block leading-none">
               NB STEELORA
             </span>
             <span className="text-[8px] uppercase tracking-[0.3em] text-accent font-body">Fine Jewellery</span>
+            <LogoPending />
           </Link>
           <div className="justify-self-end">{ikonlar}</div>
         </div>
@@ -126,13 +153,18 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon }: 
       <div className={cn('hidden lg:block', condensed && 'lg:hidden')}>
         <div className="max-w-[1400px] mx-auto px-8 grid grid-cols-3 items-center h-[76px]">
           <div />
-          <Link href="/" className="justify-self-center text-center motion-safe:transition-opacity motion-safe:duration-300">
+          <Link
+            href="/"
+            aria-label="Anasayfa"
+            className="relative justify-self-center text-center px-6 -mx-6 py-3 -my-1 motion-safe:transition-opacity motion-safe:duration-300"
+          >
             <span className="font-heading text-[27px] font-light tracking-[0.2em] text-ink block leading-none">
               NB STEELORA
             </span>
             <span className="text-[9px] uppercase tracking-[0.42em] text-accent font-body mt-1 block">
               Fine Jewellery
             </span>
+            <LogoPending />
           </Link>
           <div className="justify-self-end">{ikonlar}</div>
         </div>
@@ -147,18 +179,24 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon }: 
         aria-label="Kategoriler"
       >
         <div className="max-w-[1400px] mx-auto px-8 grid grid-cols-[1fr_auto_1fr] items-center h-12">
-          {/* Küçük logo — yalnız kompakt hâlde görünür */}
+          {/* Küçük logo — yalnız kompakt hâlde görünür.
+              Faz 9B: tıklama alanı yazı kutusuyla sınırlıydı (137×24) ve satırın
+              tam soluna kaçtığı için ıskalanıyordu; artık dikeyde satırın tamamını
+              (44px+) ve sağa doğru bir miktar boşluğu kapsıyor. */}
           <Link
             href="/"
             aria-hidden={!condensed}
+            aria-label="Anasayfa"
             tabIndex={condensed ? 0 : -1}
             className={cn(
-              'justify-self-start font-heading text-[16px] font-light tracking-[0.16em] text-ink whitespace-nowrap',
+              'relative justify-self-start self-stretch flex items-center pr-8 pl-1 -ml-1',
+              'font-heading text-[16px] font-light tracking-[0.16em] text-ink whitespace-nowrap',
               'motion-safe:transition-all motion-safe:duration-300',
               condensed ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 pointer-events-none'
             )}
           >
             NB STEELORA
+            <LogoPending />
           </Link>
 
           <div className="flex items-center justify-center gap-7">

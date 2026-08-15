@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { formatPrice } from '@/lib/utils'
 import { resolveBadge } from '@/lib/catalog/badge'
 import ProductImage from './ProductImage'
-import { IMAGE_QUALITY, isMediaUrl } from '@/lib/images'
+import { IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
 import { useCart } from '@/hooks/useCart'
 import type { Product } from '@/types'
 
@@ -77,7 +77,7 @@ export default function ProductCardV2({
         {hoverImage && (
           <Image
             src={hoverImage}
-            unoptimized={isMediaUrl(hoverImage)}
+            unoptimized={isRemoteMedia(hoverImage)}
             alt=""
             aria-hidden
             fill
