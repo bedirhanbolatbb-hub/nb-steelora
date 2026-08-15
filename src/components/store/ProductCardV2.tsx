@@ -55,7 +55,13 @@ export default function ProductCardV2({
 
   return (
     <Link href={`/urun/${product.slug}`} className="group block">
-      <div className="relative aspect-[4/5] overflow-hidden bg-surface-muted rounded-[4px]">
+      <div
+        className={`relative overflow-hidden bg-surface-muted rounded-[4px] ${
+          // Editorial çift: masaüstünde iki büyük kart tek ekrana sığsın diye
+          // 5:4 (20 örnekli kırpım testi — ürünler merkezde, kadraj kaybı yok).
+          buyuk ? 'aspect-[4/5] sm:aspect-[5/4]' : 'aspect-[4/5]'
+        }`}
+      >
         {primaryImage && (
           <ProductImage
             src={primaryImage}

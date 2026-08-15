@@ -3,57 +3,39 @@ import Navbar from '@/components/store/Navbar'
 import Footer from '@/components/store/Footer'
 import FloatingWhatsApp from '@/components/store/FloatingWhatsApp'
 import RevealController from '@/components/motion/RevealController'
-import { getCouponReminder } from '@/lib/campaigns.server'
+import { getLayoutData } from '@/lib/layoutData'
 
 export default async function StoreLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  let bannerText: string | null = null
-  let bannerColor: string | null = null
-  let isLoggedIn = false
+  // Ortak vitrin verisi (banner + kupon + footer koleksiyon/sosyal) süreç içi
+  // önbellekten gelir (Faz 9A) — istek yolunda kişiye özel tek iş auth kalır.
+  const veri = await getLayoutData()
 
+  // Salt görsel karar (hesap ikonunun hedefi): oturumu çerezden okumak yeterli,
+  // ağ doğrulaması (getUser) TTFB'ye yüzlerce ms ekliyordu. Yazma yapan her uç
+  // kendi doğrulamasını zaten yapıyor.
+  let isLoggedIn = false
   try {
     const supabase = await createClient()
-    const now = new Date().toISOString()
-
-    const [bannerResult, userResult] = await Promise.all([
-      supabase
-        .from('campaigns')
-        .select('banner_text, banner_color')
-        .eq('type', 'banner')
-        .eq('is_active', true)
-        .lte('starts_at', now)
-        .or(`ends_at.is.null,ends_at.gte.${now}`)
-        .limit(1)
-        .single(),
-      supabase.auth.getUser(),
-    ])
-
-    if (bannerResult.data) {
-      bannerText = bannerResult.data.banner_text
-      bannerColor = bannerResult.data.banner_color
-    }
-
-    isLoggedIn = !!userResult.data?.user
+    const { data } = await supabase.auth.getSession()
+    isLoggedIn = !!data.session
   } catch {
     // Defaults apply
   }
 
-  // Sepet çekmecesindeki kupon hatırlatması — metin campaigns'ten üretilir.
-  const coupon = await getCouponReminder()
-
   return (
     <>
       <Navbar
-        bannerText={bannerText}
-        bannerColor={bannerColor}
+        bannerText={veri.bannerText}
+        bannerColor={veri.bannerColor}
         isLoggedIn={isLoggedIn}
-        coupon={coupon}
+        coupon={veri.coupon}
       />
       <main className="flex-1">{children}</main>
-      <Footer isLoggedIn={isLoggedIn} />
+      <Footer isLoggedIn={isLoggedIn} collections={veri.collections} content={veri.content} />
       <FloatingWhatsApp />
       <RevealController />
     </>

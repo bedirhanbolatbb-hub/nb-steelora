@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react'
 import { ExternalLink, Lock, Plus } from 'lucide-react'
 import { PBadge, PButton, PInput, PTextarea } from '../_components/ui'
 import { PTabs, useToast } from '../_components/overlays'
+import MediaUpload from '../_components/MediaUpload'
 
 export type YaziSatiri = {
   id: string
@@ -171,6 +172,9 @@ export default function BlogClient({ yazilar }: { yazilar: YaziSatiri[] }) {
               <div>
                 <label className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]">Kapak görseli URL</label>
                 <PInput value={form.coverImage} onChange={(e) => setForm({ ...form, coverImage: e.target.value })} placeholder="https://…" />
+                <div className="mt-2">
+                  <MediaUpload etiket="Kapak yükle" onUploaded={(url) => setForm((f) => (f ? { ...f, coverImage: url } : f))} />
+                </div>
                 {form.coverImage && (
                   <span className="relative mt-2 block h-24 w-40 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}

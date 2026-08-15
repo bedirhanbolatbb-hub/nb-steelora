@@ -8,6 +8,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, ExternalLink, Trash2 } from 'lucide-reac
 import { formatPrice } from '@/lib/utils'
 import { PBadge, PButton, PCard, PInput, PSelect, PTextarea } from '../../_components/ui'
 import { useToast } from '../../_components/overlays'
+import MediaUpload from '../../_components/MediaUpload'
 
 export type UrunDetay = {
   id: string
@@ -194,6 +195,7 @@ export default function UrunDetayClient({ urun }: { urun: UrunDetay }) {
                   <PInput placeholder="https://…  yeni görsel adresi" value={yeniUrl} onChange={(e) => setYeniUrl(e.target.value)} />
                   <PButton variant="ghost" onClick={ekle} disabled={!yeniUrl.trim()}>Ekle</PButton>
                 </div>
+                <MediaUpload etiket="Bilgisayardan/telefondan görsel yükle" onUploaded={(url) => set('overrideImages', [...(gorseller ?? []), url])} />
                 <button
                   onClick={() => set('overrideImages', null)}
                   className="text-[12px] text-[var(--p-muted)] underline underline-offset-2 hover:text-[var(--p-ink)]"

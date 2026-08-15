@@ -45,6 +45,7 @@ export default async function PanelKoleksiyonlarPage() {
     name: c.name,
     slug: c.slug,
     description: c.description ?? '',
+    imageUrl: c.image_url ?? null,
     productIds: (c.product_ids || []) as string[],
   }))
 

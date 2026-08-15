@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp, Lock, Plus, Trash2 } from 'lucide-react'
 import { PBadge, PButton, PCard, PInput, PTextarea } from '../_components/ui'
 import { PDialog, useToast } from '../_components/overlays'
 import ProductPicker, { type PickerUrun } from '../_components/ProductPicker'
+import MediaUpload from '../_components/MediaUpload'
 
 export type UyeVeri = {
   id: string
@@ -23,6 +24,7 @@ export type KoleksiyonVeri = {
   name: string
   slug: string
   description: string
+  imageUrl: string | null
   productIds: string[]
 }
 
@@ -37,7 +39,7 @@ export default function KoleksiyonlarClient({
   const { push: toast } = useToast()
 
   const [acikId, setAcikId] = useState<string | null>(null)
-  const [form, setForm] = useState<{ name: string; description: string; productIds: string[] } | null>(null)
+  const [form, setForm] = useState<{ name: string; description: string; imageUrl: string | null; productIds: string[] } | null>(null)
   const [picker, setPicker] = useState(false)
   const [kaydediliyor, setKaydediliyor] = useState(false)
 
@@ -49,13 +51,14 @@ export default function KoleksiyonlarClient({
 
   const ac = (c: KoleksiyonVeri) => {
     setAcikId(c.id)
-    setForm({ name: c.name, description: c.description, productIds: [...c.productIds] })
+    setForm({ name: c.name, description: c.description, imageUrl: c.imageUrl, productIds: [...c.productIds] })
   }
 
   const degisti =
     acik && form
       ? form.name !== acik.name ||
         form.description !== acik.description ||
+        form.imageUrl !== acik.imageUrl ||
         JSON.stringify(form.productIds) !== JSON.stringify(acik.productIds)
       : false
 
@@ -69,6 +72,7 @@ export default function KoleksiyonlarClient({
         body: JSON.stringify({
           name: form.name,
           description: form.description,
+          image_url: form.imageUrl,
           product_ids: form.productIds,
         }),
       })
@@ -173,6 +177,21 @@ export default function KoleksiyonlarClient({
                 </label>
                 <PInput value={acik.slug} disabled className="opacity-60" />
               </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]">
+                Kapak görseli <span className="text-[var(--p-muted)]">(boşsa ilk aktif ürünün görseli)</span>
+              </label>
+              {form.imageUrl && (
+                <div className="mb-2 flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={form.imageUrl} alt="Kapak" className="h-16 w-24 rounded-[4px] border border-[var(--p-line)] object-cover" />
+                  <button onClick={() => setForm({ ...form, imageUrl: null })} className="text-[11px] text-[var(--p-muted)] underline underline-offset-2 hover:text-[var(--p-ink)]">
+                    Kaldır
+                  </button>
+                </div>
+              )}
+              <MediaUpload etiket="Kapak yükle" onUploaded={(url) => setForm({ ...form, imageUrl: url })} />
             </div>
             <div>
               <label className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]">Açıklama</label>

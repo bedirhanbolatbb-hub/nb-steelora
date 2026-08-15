@@ -1,23 +1,38 @@
 import type { Metadata } from 'next'
 import { createServiceClient } from '@/lib/supabase/service'
-import KurasyonClient, { type KurasyonUrun } from './KurasyonClient'
+import KurasyonClient, { type KurasyonUrun, type PanelSlayt } from './KurasyonClient'
 
 export const metadata: Metadata = { title: 'Kürasyon' }
 export const dynamic = 'force-dynamic'
 
-const BOLUMLER = ['hero_top', 'featured', 'new_arrivals', 'category_kolye', 'category_kupe', 'category_bileklik', 'category_yuzuk', 'category_piercing', 'category_erkek', 'category_setler']
+const BOLUMLER = [
+  'featured',
+  'new_arrivals',
+  'category_kolye',
+  'category_kupe',
+  'category_bileklik',
+  'category_yuzuk',
+  'category_piercing',
+  'category_erkek',
+  'category_setler',
+]
 
 export default async function PanelKurasyonPage() {
   const supabase = createServiceClient()
 
-  const { data: settings } = await supabase
-    .from('homepage_settings')
-    .select('section, product_ids')
-    .in('section', BOLUMLER)
+  const [{ data: settings }, { data: slidesRow }, { data: koleksiyonlar }] = await Promise.all([
+    supabase.from('homepage_settings').select('section, product_ids, payload').in('section', BOLUMLER),
+    supabase.from('homepage_settings').select('payload').eq('section', 'hero_slides').maybeSingle(),
+    supabase.from('collections').select('slug, name').eq('is_active', true).order('sort_order'),
+  ])
 
   const bolumler: Record<string, string[]> = Object.fromEntries(BOLUMLER.map((b) => [b, []]))
+  const kategoriGorselleri: Record<string, string | null> = {}
   for (const row of settings || []) {
     bolumler[row.section] = (row.product_ids || []) as string[]
+    if (row.section.startsWith('category_')) {
+      kategoriGorselleri[row.section] = row.payload?.image_url ?? null
+    }
   }
 
   const tumIdler = [...new Set(Object.values(bolumler).flat())]
@@ -46,5 +61,17 @@ export default async function PanelKurasyonPage() {
     )
   }
 
-  return <KurasyonClient bolumler={bolumler} urunler={urunler} />
+  const slaytlar: PanelSlayt[] = Array.isArray(slidesRow?.payload?.slides)
+    ? slidesRow!.payload.slides
+    : []
+
+  return (
+    <KurasyonClient
+      bolumler={bolumler}
+      urunler={urunler}
+      slaytlar={slaytlar}
+      kategoriGorselleri={kategoriGorselleri}
+      koleksiyonlar={(koleksiyonlar || []).map((k: any) => ({ slug: k.slug, name: k.name }))}
+    />
+  )
 }

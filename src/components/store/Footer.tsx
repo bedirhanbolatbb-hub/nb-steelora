@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { CATEGORIES } from '@/lib/catalog/categories'
-import { getCollectionCards } from '@/lib/collections'
-import { getSiteContent } from '@/lib/supabase/content'
+import type { CollectionCard } from '@/lib/collections'
 
 // Menüyle birebir aynı liste — tek kaynak src/lib/catalog/categories.ts
 const categories = CATEGORIES.map((c) => ({ href: `/kategori/${c.slug}`, label: c.title }))
@@ -23,12 +22,18 @@ const accountLinks = {
   ],
 }
 
-export default async function Footer({ isLoggedIn }: { isLoggedIn?: boolean }) {
+export default function Footer({
+  isLoggedIn,
+  collections,
+  content,
+}: {
+  isLoggedIn?: boolean
   // Koleksiyonlar üst menüye eklenmiyor (menü dolu); giriş noktası footer.
-  const collections = await getCollectionCards()
-
+  // Veri layout'un süreç içi önbelleğinden gelir (Faz 9A).
+  collections: CollectionCard[]
   // Sosyal adresler site_content'ten; boş anahtar ikon basmaz.
-  const content = await getSiteContent()
+  content: Record<string, string>
+}) {
   const sosyal = [
     {
       label: 'Instagram',

@@ -1,8 +1,6 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { getSiteContent } from '@/lib/supabase/content'
-import { getHomepageSection, getHeroProducts, ShownProducts } from '@/lib/home/sections'
-import { getCollectionCards } from '@/lib/collections'
+import { getHomeData } from '@/lib/home/homeData'
+import HeroSlider from '@/components/home/HeroSlider'
 import HeroCinema from '@/components/home/HeroCinema'
 import PromoStrip from '@/components/home/PromoStrip'
 import CategoryRail from '@/components/home/CategoryRail'
@@ -13,72 +11,43 @@ import BlogPreview from '@/components/home/BlogPreview'
 import Newsletter from '@/components/home/Newsletter'
 import ProductCardV2 from '@/components/store/ProductCardV2'
 import JsonLd from '@/components/seo/JsonLd'
-import { getBlurDataURL } from '@/lib/blur'
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo'
 
 /**
- * Anasayfa v2 — "Sessiz Atölye" (Faz 8B). 10 bant:
- * hero · promo · kategoriler · öne çıkanlar (editorial) · koleksiyonlar ·
- * yeni gelenler (rail) · hediye · neden · blog · bülten.
- * Tekilleştirme kuralı korunur: hero > featured > new_arrivals — hiçbir ürün
- * (ya da grup kardeşi) iki bölümde birden basılmaz.
+ * Anasayfa — "Sessiz Atölye" (Faz 9A veri katmanıyla).
+ * Tüm veri tek TTL önbellekli paralel yükleyiciden gelir (lib/home/homeData);
+ * istek yolunda ne ardışık sorgu ne görsel indirme kalır (logo gecikmesi
+ * düzeltmesi). Hero artık kampanya bandı: 1-4 slayt, otomatik dönme yok;
+ * hiç aktif slayt yoksa ivory tipografik fallback.
+ * Tekilleştirme: featured > new_arrivals (grup kardeşi dahil) aynen sürer.
  */
 export default async function HomePage() {
-  let activeCampaign: any = null
-  const c = await getSiteContent()
+  const veri = await getHomeData()
+  const c = veri.content
 
-  // Hero: Kürasyon'daki hero_top ürünü — görseli banda, kendisi tekilleştirmeye
-  const heroProducts = await getHeroProducts()
-  const heroProduct = heroProducts[0] ?? null
-  const heroImage = (heroProduct?.display_images as string[] | null)?.[0] ?? null
-  const heroBlur = heroImage ? await getBlurDataURL(heroImage) : undefined
-
-  const shown = new ShownProducts()
-  shown.add(heroProducts)
-
-  const featured = await getHomepageSection('featured', shown)
-  shown.add(featured)
-
-  const newArrivals = await getHomepageSection('new_arrivals', shown)
-
-  const collections = await getCollectionCards()
-
-  try {
-    const supabase = await createClient()
-    const now = new Date().toISOString()
-    const { data: campaignData } = await supabase
-      .from('campaigns')
-      .select('*')
-      .eq('is_active', true)
-      .lte('starts_at', now)
-      .or(`ends_at.is.null,ends_at.gte.${now}`)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-    activeCampaign = campaignData
-  } catch {
-    // Kampanya yoksa şerit basılmaz
-  }
-
-  const buyukler = featured.slice(0, 2)
-  const standartlar = featured.slice(2, 8)
+  const buyukler = veri.featured.slice(0, 2)
+  const standartlar = veri.featured.slice(2, 8)
 
   return (
     <>
       <JsonLd data={organizationJsonLd([c.instagram_url, c.facebook_url, c.x_url])} />
       <JsonLd data={websiteJsonLd()} />
 
-      {/* 1 · Hero — full-bleed sinema karesi */}
-      <HeroCinema c={c} image={heroImage} imageHref={heroProduct ? `/urun/${heroProduct.slug}` : null} blur={heroBlur} />
+      {/* 1 · Hero — kampanya bandı (slayt yoksa tipografik fallback) */}
+      {veri.slides.length > 0 ? (
+        <HeroSlider slides={veri.slides} />
+      ) : (
+        <HeroCinema c={c} image={null} imageHref={null} />
+      )}
 
-      {/* 2 · Promo şeridi — Inter, emojisiz, ince altın çizgi */}
-      <PromoStrip campaign={activeCampaign} />
+      {/* 2 · Promo şeridi */}
+      <PromoStrip campaign={veri.campaign} />
 
-      {/* 3 · Kategoriler — yatay şerit */}
-      <CategoryRail />
+      {/* 3 · Kategoriler */}
+      <CategoryRail categoryImages={veri.categoryImages} />
 
-      {/* 4 · Öne Çıkanlar — editorial karma: 2 büyük + 6 standart */}
-      {featured.length > 0 && (
+      {/* 4 · Öne Çıkanlar — editorial: 2 büyük (masaüstünde 5:4) + 6 standart */}
+      {veri.featured.length > 0 && (
         <section id="one-cikanlar" className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-16 lg:pb-20">
           <div className="mb-8 text-center" data-reveal>
             <p className="eyebrow">Seçki</p>
@@ -110,11 +79,11 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* 5 · Koleksiyonlar — full-bleed koyu bant */}
-      <CollectionsBand collections={collections} />
+      {/* 5 · Koleksiyonlar */}
+      <CollectionsBand collections={veri.collections} />
 
-      {/* 6 · Yeni Gelenler — peek'li yatay rail */}
-      {newArrivals.length > 0 && (
+      {/* 6 · Yeni Gelenler — peek'li rail */}
+      {veri.newArrivals.length > 0 && (
         <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-16 lg:py-20">
           <div className="mb-8 flex items-end justify-between" data-reveal>
             <div>
@@ -131,10 +100,9 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          {/* Rail kendi kabında kayar; son kart "peek" ile devamı sezdirir */}
           <div className="-mx-4 px-4 lg:mx-0 lg:px-0 overflow-x-auto pb-3" style={{ scrollbarWidth: 'thin' }}>
             <div className="flex gap-4 lg:gap-5 snap-x snap-mandatory">
-              {newArrivals.map((product: any, i: number) => (
+              {veri.newArrivals.map((product: any, i: number) => (
                 <div
                   key={product.id}
                   className="w-[68vw] sm:w-[280px] shrink-0 snap-start"
@@ -149,14 +117,14 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* 7 · Hediye — full-bleed split */}
+      {/* 7 · Hediye */}
       <GiftSplit />
 
-      {/* 8 · Neden NB Steelora — 4 sütun ikonlu */}
+      {/* 8 · Neden NB Steelora */}
       <WhyUs />
 
       {/* 9 · Blog önizleme */}
-      <BlogPreview />
+      <BlogPreview posts={veri.blogPosts} />
 
       {/* 10 · Bülten */}
       <Newsletter />

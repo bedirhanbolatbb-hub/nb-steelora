@@ -42,6 +42,17 @@ export async function POST(request: Request) {
     )
   }
 
+  // Kategori kapağı için panelden yüklenen görsel (Faz 9A) — payload'da durur;
+  // null gönderilirse temizlenir, alan hiç yoksa mevcut payload korunur.
+  let payloadGuncelle: { payload: any } | {} = {}
+  if ('image_url' in (body ?? {})) {
+    const img = body.image_url
+    if (img !== null && (typeof img !== 'string' || !/^https?:\/\//.test(img))) {
+      return NextResponse.json({ error: 'Geçersiz görsel adresi' }, { status: 400 })
+    }
+    payloadGuncelle = { payload: img ? { image_url: img } : null }
+  }
+
   const supabase = createServiceClient()
   // Mevcut admin API deseniyle aynı: satır varsa güncelle, yoksa ekle.
   const { data: mevcut } = await supabase
@@ -51,8 +62,13 @@ export async function POST(request: Request) {
     .maybeSingle()
 
   const { error } = mevcut
-    ? await supabase.from('homepage_settings').update({ product_ids: tekil }).eq('section', section)
-    : await supabase.from('homepage_settings').insert({ section, product_ids: tekil })
+    ? await supabase
+        .from('homepage_settings')
+        .update({ product_ids: tekil, ...payloadGuncelle })
+        .eq('section', section)
+    : await supabase
+        .from('homepage_settings')
+        .insert({ section, product_ids: tekil, ...payloadGuncelle })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })

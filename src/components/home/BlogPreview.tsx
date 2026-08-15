@@ -1,23 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { createServiceClient } from '@/lib/supabase/service'
 
-/** Blog önizleme (YENİ bant) — son 3 yayında yazı, kapaklı kart. */
-export default async function BlogPreview() {
-  let posts: any[] = []
-  try {
-    const supabase = createServiceClient()
-    const { data } = await supabase
-      .from('blog_posts')
-      .select('id, title, slug, excerpt, cover_image, read_time, published_at')
-      .eq('published', true)
-      .order('published_at', { ascending: false })
-      .limit(3)
-    posts = data || []
-  } catch {
-    return null
-  }
-
+/** Blog önizleme — son 3 yazı homeData katmanından gelir (Faz 9A). */
+export default function BlogPreview({ posts }: { posts: any[] }) {
   if (posts.length === 0) return null
 
   return (

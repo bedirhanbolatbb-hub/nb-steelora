@@ -29,6 +29,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if ('description' in body) {
     patch.description = typeof body.description === 'string' ? body.description.trim() || null : null
   }
+  if ('image_url' in body) {
+    const img = body.image_url
+    if (img !== null && (typeof img !== 'string' || !/^https?:\/\//.test(img))) {
+      return NextResponse.json({ error: 'Geçersiz görsel adresi' }, { status: 400 })
+    }
+    patch.image_url = img || null
+  }
   if ('product_ids' in body) {
     const ids = body.product_ids
     if (!Array.isArray(ids) || !ids.every((x: unknown) => typeof x === 'string') || ids.length > 100) {

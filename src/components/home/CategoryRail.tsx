@@ -1,61 +1,18 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { BLUR_PLACEHOLDER, IMAGE_QUALITY } from '@/lib/images'
-import { createClient } from '@/lib/supabase/server'
-import { createServiceClient } from '@/lib/supabase/service'
-import { CATEGORIES, buildCategoryFilter } from '@/lib/catalog/categories'
+import { CATEGORIES } from '@/lib/catalog/categories'
 
 /**
  * Kategoriler v2 — yatay kaydırmalı şerit (7 kapak).
- * Görsel çözümü eski CategoryGrid ile aynı: panel Kürasyon'daki seçim,
- * yoksa kategorinin ilk aktif ürünü.
+ * Görseller homeData katmanından gelir (Faz 9A: sayfada sorgu kalmadı);
+ * öncelik panelden yüklenen kapak > seçili ürün > kategorinin ilk ürünü.
  */
-export default async function CategoryRail() {
-  const categoryImages: Record<string, string | null> = {}
-
-  try {
-    const service = createServiceClient()
-    const supabase = await createClient()
-
-    const { data: settings } = await service
-      .from('homepage_settings')
-      .select('section, product_ids')
-      .in('section', CATEGORIES.map((c) => `category_${c.slug}`))
-
-    const adminIds = new Map<string, string>()
-    for (const s of settings || []) {
-      const pid = s.product_ids?.[0]
-      if (pid) adminIds.set(s.section, pid)
-    }
-
-    const selectedIds = [...adminIds.values()]
-    let adminProducts = new Map<string, string>()
-    if (selectedIds.length > 0) {
-      const { data } = await service
-        .from('products')
-        .select('id, trendyol_images')
-        .in('id', selectedIds)
-      adminProducts = new Map(
-        (data || []).map((p: any) => [p.id, (p.trendyol_images as string[])?.[0]])
-      )
-    }
-
-    for (const cat of CATEGORIES) {
-      const adminPid = adminIds.get(`category_${cat.slug}`)
-      if (adminPid && adminProducts.has(adminPid)) {
-        categoryImages[cat.slug] = adminProducts.get(adminPid) || null
-        continue
-      }
-      const filter = buildCategoryFilter(cat)
-      let query = supabase.from('products_display').select('display_images')
-      query = filter.kind === 'eq' ? query.eq(filter.column, filter.value) : query.or(filter.expression)
-      const { data } = await query.limit(1).maybeSingle()
-      categoryImages[cat.slug] = data?.display_images?.[0] || null
-    }
-  } catch {
-    // Yer tutucu kalır
-  }
-
+export default function CategoryRail({
+  categoryImages,
+}: {
+  categoryImages: Record<string, string | null>
+}) {
   return (
     <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-16 lg:py-20">
       <div className="mb-8 text-center" data-reveal>
