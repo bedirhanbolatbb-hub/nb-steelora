@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'cdn.dsmcdn.com' },
       { protocol: 'https', hostname: '**.trendyol.com' },
       { protocol: 'https', hostname: '**.ty-cdn.com' },
+      // Faz 9A: panelden yüklenen medya (public "media" bucket'ı).
+      {
+        protocol: 'https',
+        hostname: 'npvanotrzbqsnxvasmxm.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
     ],
     // Kaynak görseller Trendyol CDN'inden ~1200px geliyor; 1920/3840 istemek
     // upscale demek ve ilk boyamayı saniyelerce geciktiriyordu. Üst sınır 1600.
