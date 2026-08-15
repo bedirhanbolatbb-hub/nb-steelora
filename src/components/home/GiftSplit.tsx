@@ -13,6 +13,10 @@ export default function GiftSplit() {
         <div className="relative aspect-[4/3] lg:aspect-auto lg:min-h-[480px]">
           <Image
             src="/hediye-paketi.jpg"
+            // Faz 9B: Vercel dönüşüm kotası dolu olduğu için bu yerel görselin
+            // /_next/image isteği de 402 alıp boş kalıyordu. Dosya kaynağında
+            // 1400px/187KB'ye düşürüldü ve doğrudan servis ediliyor.
+            unoptimized
             alt="Saten kumaş üzerinde NB Steelora hediye paketi"
             fill
             className="object-cover"
