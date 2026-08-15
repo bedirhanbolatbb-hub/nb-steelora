@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { isMediaUrl } from '@/lib/images'
 import Link from 'next/link'
 
 /** Blog önizleme — son 3 yazı homeData katmanından gelir (Faz 9A). */
@@ -36,6 +37,7 @@ export default function BlogPreview({ posts }: { posts: any[] }) {
                 {post.cover_image ? (
                   <Image
                     src={post.cover_image}
+                    unoptimized={isMediaUrl(post.cover_image)}
                     alt={post.title}
                     fill
                     sizes="(max-width: 640px) 100vw, 33vw"

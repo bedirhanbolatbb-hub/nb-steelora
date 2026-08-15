@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY } from '@/lib/images'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isMediaUrl } from '@/lib/images'
 
 type Props = {
   src?: string | null
@@ -33,6 +33,7 @@ export default function ProductImage({ src, alt, sizes, priority, className }: P
   return (
     <Image
       src={src}
+      unoptimized={isMediaUrl(src)}
       alt={alt}
       fill
       sizes={sizes}

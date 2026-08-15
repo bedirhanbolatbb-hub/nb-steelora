@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { isMediaUrl } from '@/lib/images'
 import Link from 'next/link'
 import { useSyncExternalStore } from 'react'
 import { Minus, Plus, Trash2 } from 'lucide-react'
@@ -57,6 +58,7 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                   {product.display_images?.[0] && (
                     <Image
                       src={product.display_images[0]}
+                      unoptimized={isMediaUrl(product.display_images[0])}
                       alt={product.display_title}
                       fill
                       className="object-cover"

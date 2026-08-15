@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY } from '@/lib/images'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isMediaUrl } from '@/lib/images'
 import { CATEGORIES } from '@/lib/catalog/categories'
 
 /**
@@ -37,6 +37,7 @@ export default function CategoryRail({
                   {imageUrl ? (
                     <Image
                       src={imageUrl}
+                      unoptimized={isMediaUrl(imageUrl)}
                       alt={cat.title}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-[1.05]"

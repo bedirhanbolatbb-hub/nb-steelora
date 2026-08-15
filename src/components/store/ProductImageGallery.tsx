@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY } from '@/lib/images'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isMediaUrl } from '@/lib/images'
 import ProductImage from './ProductImage'
 
 interface ProductImageGalleryProps {
@@ -139,6 +139,7 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
               >
                 <Image
                   src={img}
+                  unoptimized={isMediaUrl(img)}
                   alt=""
                   fill
                   className="object-cover"
@@ -194,6 +195,7 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
           >
             <Image
               src={currentImage}
+              unoptimized={isMediaUrl(currentImage)}
               alt={title}
               fill
               className="object-contain"

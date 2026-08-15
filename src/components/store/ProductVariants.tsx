@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { IMAGE_QUALITY } from '@/lib/images'
+import { IMAGE_QUALITY, isMediaUrl } from '@/lib/images'
 import type { VariantMember } from '@/lib/catalog/variantGroup'
 
 type Props = {
@@ -73,6 +73,7 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
                 {image && (
                   <Image
                     src={image}
+                    unoptimized={isMediaUrl(image)}
                     alt={member.display_title}
                     fill
                     className={`object-cover ${outOfStock ? 'opacity-40' : ''}`}

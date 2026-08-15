@@ -13,3 +13,13 @@ export const IMAGE_QUALITY = 72
  */
 export const BLUR_PLACEHOLDER =
   'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiNFRkVBRTIiLz48L3N2Zz4='
+
+/**
+ * Panelden yüklenen medya (Supabase "media" bucket'ı) zaten istemcide
+ * küçültülmüş webp/jpeg'dir (uzun kenar ≤2400px). Bu görseller next/image
+ * optimizasyonundan muaf tutulur: ikinci bir dönüşüm kazandırmaz ve Vercel
+ * görsel dönüşüm kotasını tüketmez (kota dolunca yeni dönüşümler 402 verir).
+ */
+export function isMediaUrl(url: string | null | undefined): boolean {
+  return typeof url === 'string' && url.includes('/storage/v1/object/public/media/')
+}

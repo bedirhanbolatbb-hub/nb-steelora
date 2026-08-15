@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { isMediaUrl } from '@/lib/images'
 import Link from 'next/link'
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -73,6 +74,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                     <div className="relative w-20 h-24 bg-surface-muted shrink-0">
                       <Image
                         src={imageUrl}
+                        unoptimized={isMediaUrl(imageUrl)}
                         alt={item.product.display_title}
                         fill
                         className="object-cover"
