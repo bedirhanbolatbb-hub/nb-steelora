@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Product } from '@/types'
-import { izle } from '@/lib/analytics/client'
+import { izle } from '@/lib/analytics/izle'
 
 interface CartItem {
   product: Product

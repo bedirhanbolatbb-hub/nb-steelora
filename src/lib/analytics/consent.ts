@@ -38,40 +38,6 @@ export const DEFAULT_CONSENT: ConsentCategories = {
   pazarlama: false,
 }
 
-export const KATEGORI_METINLERI: {
-  key: keyof ConsentCategories
-  baslik: string
-  aciklama: string
-  kilitli?: boolean
-  pasif?: boolean
-}[] = [
-  {
-    key: 'zorunlu',
-    baslik: 'Zorunlu',
-    aciklama:
-      'Sepetiniz, oturumunuz ve güvenlik için gereken teknik kayıtlar. Ayrıca kimliğinizle ' +
-      'ilişkilendirilmeyen, tamamen anonim ziyaret sayımı yaparız — çerez kullanmadan, ' +
-      'IP adresinizi saklamadan. Bu kapatılamaz.',
-    kilitli: true,
-  },
-  {
-    key: 'analitik_gelismis',
-    baslik: 'Analitik — gelişmiş',
-    aciklama:
-      'Tarayıcınıza kalıcı bir ziyaretçi kimliği yazılır; böylece tekrar gelen ziyaretçileri ' +
-      've ziyaretler arası yolculuğu görebiliriz. Yalnız bizim sunucumuzda tutulur, ' +
-      'üçüncü tarafla paylaşılmaz.',
-  },
-  {
-    key: 'pazarlama',
-    baslik: 'Pazarlama',
-    aciklama:
-      'Şu anda sitemizde hiçbir reklam pikseli ya da izleyici bulunmuyor. Bu kategori, ' +
-      'ileride eklenmesi hâlinde onayınızın sorulacağı yeri şimdiden ayırır.',
-    pasif: true,
-  },
-]
-
 /** Çerez değerini güvenle çözer; bozuksa null. */
 export function parseConsent(raw: string | undefined | null): ConsentState | null {
   if (!raw) return null

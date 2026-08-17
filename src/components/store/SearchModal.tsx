@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
-import { izle } from '@/lib/analytics/client'
+import { izle } from '@/lib/analytics/izle'
 
 interface SearchModalProps {
   isOpen: boolean

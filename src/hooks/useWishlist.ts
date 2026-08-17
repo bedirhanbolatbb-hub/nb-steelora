@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { createClient } from '@/lib/supabase/client'
-import { izle } from '@/lib/analytics/client'
+import { izle } from '@/lib/analytics/izle'
 
 interface WishlistStore {
   items: string[]

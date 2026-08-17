@@ -3,7 +3,7 @@ import Navbar from '@/components/store/Navbar'
 import Footer from '@/components/store/Footer'
 import FloatingWhatsApp from '@/components/store/FloatingWhatsApp'
 import RevealController from '@/components/motion/RevealController'
-import ConsentBanner from '@/components/store/ConsentBanner'
+import ConsentGate from '@/components/store/ConsentGate'
 import { getLayoutData } from '@/lib/layoutData'
 import { sunucuOlayi } from '@/lib/analytics/server'
 
@@ -44,7 +44,7 @@ export default async function StoreLayout({
       <Footer isLoggedIn={isLoggedIn} collections={veri.collections} content={veri.content} />
       <FloatingWhatsApp />
       <RevealController />
-      <ConsentBanner />
+      <ConsentGate />
     </>
   )
 }

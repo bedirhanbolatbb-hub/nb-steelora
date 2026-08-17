@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import Input from '@/components/ui/Input'
 import CheckoutSteps from '@/components/store/CheckoutSteps'
-import { izle } from '@/lib/analytics/client'
+import { izle } from '@/lib/analytics/izle'
 
 export default function OdemePage() {
   const { items, totalPrice, clearCart } = useCart()

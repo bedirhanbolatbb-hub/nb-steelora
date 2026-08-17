@@ -2,14 +2,70 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import {
-  CONSENT_COOKIE,
-  CONSENT_VERSION,
-  DEFAULT_CONSENT,
-  KATEGORI_METINLERI,
-  parseConsent,
-  type ConsentCategories,
-} from '@/lib/analytics/consent'
+// Rıza modülü (lib/analytics/consent) sunucu tarafında kalır; band yalnız
+// ihtiyacı olan iki sabiti ve kendi çözümleyicisini taşır — böylece o modül
+// istemci paketine hiç girmez (Faz 12 cilası).
+const CONSENT_COOKIE = 'nb_consent'
+const CONSENT_VERSION = '2026-08-1'
+
+type ConsentCategories = { zorunlu: true; analitik_gelismis: boolean; pazarlama: boolean }
+const DEFAULT_CONSENT: ConsentCategories = { zorunlu: true, analitik_gelismis: false, pazarlama: false }
+
+function parseConsent(ham: string | undefined): { categories: ConsentCategories; version: string } | null {
+  if (!ham) return null
+  try {
+    const d = JSON.parse(decodeURIComponent(ham))
+    if (!d?.categories) return null
+    return {
+      categories: {
+        zorunlu: true,
+        analitik_gelismis: Boolean(d.categories.analitik_gelismis),
+        pazarlama: Boolean(d.categories.pazarlama),
+      },
+      version: String(d.version ?? ''),
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Kategori açıklamaları yalnız bu bandda kullanılıyor; ortak modülde
+ * durduğunda rıza kararı vermiş ziyaretçilerin paketine de giriyordu (Faz 12 cilası).
+ */
+const KATEGORI_METINLERI: {
+  key: keyof ConsentCategories
+  baslik: string
+  aciklama: string
+  kilitli?: boolean
+  pasif?: boolean
+}[] = [
+  {
+    key: 'zorunlu',
+    baslik: 'Zorunlu',
+    aciklama:
+      'Sepetiniz, oturumunuz ve güvenlik için gereken teknik kayıtlar. Ayrıca kimliğinizle ' +
+      'ilişkilendirilmeyen, tamamen anonim ziyaret sayımı yaparız — çerez kullanmadan, ' +
+      'IP adresinizi saklamadan. Bu kapatılamaz.',
+    kilitli: true,
+  },
+  {
+    key: 'analitik_gelismis',
+    baslik: 'Analitik — gelişmiş',
+    aciklama:
+      'Tarayıcınıza kalıcı bir ziyaretçi kimliği yazılır; böylece tekrar gelen ziyaretçileri ' +
+      've ziyaretler arası yolculuğu görebiliriz. Yalnız bizim sunucumuzda tutulur, ' +
+      'üçüncü tarafla paylaşılmaz.',
+  },
+  {
+    key: 'pazarlama',
+    baslik: 'Pazarlama',
+    aciklama:
+      'Şu anda sitemizde hiçbir reklam pikseli ya da izleyici bulunmuyor. Bu kategori, ' +
+      'ileride eklenmesi hâlinde onayınızın sorulacağı yeri şimdiden ayırır.',
+    pasif: true,
+  },
+]
 
 /**
  * KVKK rıza bandı (Faz 12).
@@ -20,12 +76,16 @@ import {
  * (window event: nb:consent-ac).
  */
 export default function ConsentBanner() {
-  const [acik, setAcik] = useState(false)
+  // Gösterim kararını ConsentGate verir; bu bileşen yüklendiyse zaten
+  // gösterilecek demektir (Faz 12 cilası).
+  const [acik, setAcik] = useState(true)
   const [ayarlar, setAyarlar] = useState(false)
   const [secim, setSecim] = useState<ConsentCategories>(DEFAULT_CONSENT)
   const [gonderiliyor, setGonderiliyor] = useState(false)
 
   useEffect(() => {
+    // Daha önce karar verilmişse (footer'dan yeniden açılış) mevcut seçimler
+    // işaretli gelsin.
     const cerez = document.cookie
       .split(';')
       .map((c) => c.trim())
@@ -33,9 +93,12 @@ export default function ConsentBanner() {
       ?.slice(CONSENT_COOKIE.length + 1)
 
     const durum = parseConsent(cerez)
-    // Karar yoksa ya da rıza metni sürümü değiştiyse tekrar sorulur.
-    if (!durum || durum.version !== CONSENT_VERSION) setAcik(true)
-    else setSecim(durum.categories)
+    if (durum) {
+      setSecim(durum.categories)
+      // Kararını vermiş ziyaretçi bandı ancak footer bağlantısıyla açar:
+      // doğrudan ayarlar görünümü daha anlamlı.
+      if (durum.version === CONSENT_VERSION) setAyarlar(true)
+    }
 
     const yenidenAc = () => {
       setAyarlar(true)
