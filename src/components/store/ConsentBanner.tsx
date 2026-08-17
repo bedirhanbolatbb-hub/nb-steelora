@@ -37,6 +37,8 @@ const KATEGORI_METINLERI: {
   key: keyof ConsentCategories
   baslik: string
   aciklama: string
+  /** Tek satırlık künye: süre · hukuki sebep (KVKK). */
+  kunye: string
   kilitli?: boolean
   pasif?: boolean
 }[] = [
@@ -47,6 +49,7 @@ const KATEGORI_METINLERI: {
       'Sepetiniz, oturumunuz ve güvenlik için gereken teknik kayıtlar. Ayrıca kimliğinizle ' +
       'ilişkilendirilmeyen, tamamen anonim ziyaret sayımı yaparız — çerez kullanmadan, ' +
       'IP adresinizi saklamadan. Bu kapatılamaz.',
+    kunye: 'Süre: tercih kaydı 365 gün, sepet/favori siz silene kadar · Hukuki sebep: sözleşmenin ifası ve meşru menfaat (KVKK m.5/2-c, f)',
     kilitli: true,
   },
   {
@@ -56,6 +59,7 @@ const KATEGORI_METINLERI: {
       'Tarayıcınıza kalıcı bir ziyaretçi kimliği yazılır; böylece tekrar gelen ziyaretçileri ' +
       've ziyaretler arası yolculuğu görebiliriz. Yalnız bizim sunucumuzda tutulur, ' +
       'üçüncü tarafla paylaşılmaz.',
+    kunye: 'Süre: 13 ay (rızayı geri alırsanız hemen silinir) · Hukuki sebep: açık rıza (KVKK m.5/1)',
   },
   {
     key: 'pazarlama',
@@ -63,6 +67,7 @@ const KATEGORI_METINLERI: {
     aciklama:
       'Şu anda sitemizde hiçbir reklam pikseli ya da izleyici bulunmuyor. Bu kategori, ' +
       'ileride eklenmesi hâlinde onayınızın sorulacağı yeri şimdiden ayırır.',
+    kunye: 'Süre: — · Hukuki sebep: açık rıza (KVKK m.5/1); şu an hiçbir çerez çalıştırılmıyor',
     pasif: true,
   },
 ]
@@ -145,6 +150,10 @@ export default function ConsentBanner() {
               <Link href="/cerez-politikasi" className="text-accent underline underline-offset-4">
                 Çerez Politikası
               </Link>
+              {' · '}
+              <Link href="/kvkk" className="text-accent underline underline-offset-4">
+                KVKK Aydınlatma Metni
+              </Link>
             </p>
             <div className="flex w-full shrink-0 gap-2 lg:w-auto">
               {/* Aynı ağırlık: iki düğme de aynı boyut ve kontrast ailesinde. */}
@@ -182,6 +191,16 @@ export default function ConsentBanner() {
               <h2 className="font-heading text-[20px] font-medium text-ink">Çerez tercihleri</h2>
               <span className="text-[11px] text-muted">Sürüm {CONSENT_VERSION}</span>
             </div>
+            <p className="text-[12px] text-ink-soft">
+              Ayrıntılar:{' '}
+              <Link href="/cerez-politikasi" className="text-accent underline underline-offset-4">
+                Çerez Politikası
+              </Link>
+              {' · '}
+              <Link href="/kvkk" className="text-accent underline underline-offset-4">
+                KVKK Aydınlatma Metni
+              </Link>
+            </p>
 
             <ul className="space-y-3">
               {KATEGORI_METINLERI.map((k) => {
@@ -204,6 +223,10 @@ export default function ConsentBanner() {
                       </span>
                       <span className="mt-0.5 block max-w-[80ch] text-[12px] leading-relaxed text-ink-soft">
                         {k.aciklama}
+                      </span>
+                      {/* Süre ve hukuki sebep — KVKK şeffaflık gereği tek satırda. */}
+                      <span className="mt-1 block text-[11px] leading-relaxed text-muted">
+                        {k.kunye}
                       </span>
                     </label>
                   </li>

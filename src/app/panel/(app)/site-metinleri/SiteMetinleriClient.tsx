@@ -25,6 +25,15 @@ const ETIKETLER: Record<string, { etiket: string; not?: string; genis?: boolean 
   instagram_url: { etiket: 'Instagram adresi', not: 'Boşsa vitrinde ikon ve şema alanı basılmaz.' },
   facebook_url: { etiket: 'Facebook adresi', not: 'Boşsa vitrinde ikon ve şema alanı basılmaz.' },
   x_url: { etiket: 'X (Twitter) adresi', not: 'Boşsa vitrinde ikon ve şema alanı basılmaz.' },
+  // Hukuki metinler (Faz 12) — KVKK zorunlu unsurları
+  veri_sorumlusu_unvan: { etiket: 'Veri sorumlusu — unvan', not: 'ZORUNLU. Ticari unvan ya da ad soyad. Boşsa künye eksik basılır.' },
+  veri_sorumlusu_adres: { etiket: 'Veri sorumlusu — adres', not: 'ZORUNLU. Açık adres (mahalle, cadde, no, ilçe/il).', genis: true },
+  veri_sorumlusu_iletisim: { etiket: 'Veri sorumlusu — iletişim', not: 'ZORUNLU. E-posta ve telefon; başvuru kanallarında da kullanılır.' },
+  veri_sorumlusu_vergi: { etiket: 'Vergi no / MERSİS', not: 'Varsa yazın; boşsa sayfada hiç basılmaz.' },
+  veri_sorumlusu_kep: { etiket: 'KEP adresi', not: 'Varsa yazın; KVKK başvuru kanalı olarak listelenir.' },
+  cerez_politikasi: { etiket: 'Çerez Politikası — giriş bölümü', not: 'HTML. Boşsa taslak metin basılır. Zorunlu bölümler (tablo, haklar, yurt dışı) koddan gelir.', genis: true },
+  cerez_politikasi_surum: { etiket: 'Çerez Politikası — sürüm', not: "Rıza kaydındaki sürümle AYNI olmalı (şu an: 2026-08-1). Boşsa koddaki sürüm basılır." },
+  cerez_politikasi_yururluk: { etiket: 'Çerez Politikası — yürürlük tarihi', not: 'Ör. 17 Ağustos 2026. Boşsa satır basılmaz.' },
 }
 
 const GRUPLAR: { baslik: string; anahtarlar: string[] }[] = [
@@ -34,6 +43,14 @@ const GRUPLAR: { baslik: string; anahtarlar: string[] }[] = [
     anahtarlar: ['hero_badge', 'hero_title_line1', 'hero_title_line2', 'hero_title_line3', 'hero_description', 'hero_cta', 'hero_single_mode'],
   },
   { baslik: 'Sosyal bağlantılar', anahtarlar: ['instagram_url', 'facebook_url', 'x_url'] },
+  {
+    baslik: 'Hukuki — veri sorumlusu künyesi',
+    anahtarlar: ['veri_sorumlusu_unvan', 'veri_sorumlusu_adres', 'veri_sorumlusu_iletisim', 'veri_sorumlusu_vergi', 'veri_sorumlusu_kep'],
+  },
+  {
+    baslik: 'Hukuki — çerez politikası',
+    anahtarlar: ['cerez_politikasi', 'cerez_politikasi_surum', 'cerez_politikasi_yururluk'],
+  },
   { baslik: 'Diğer', anahtarlar: [] },
 ]
 
@@ -105,8 +122,25 @@ export default function SiteMetinleriClient({
     )
   }
 
+  // KVKK künyesi eksikse panelde görünür uyarı (Faz 12 hukuki tamamlama):
+  // boş alanlar hukuki metinlerde hiç basılmaz, bu yüzden fark edilmeleri gerekir.
+  const ZORUNLU_KUNYE = [
+    ['veri_sorumlusu_unvan', 'Unvan'],
+    ['veri_sorumlusu_adres', 'Adres'],
+    ['veri_sorumlusu_iletisim', 'İletişim'],
+  ] as const
+  const eksikKunye = ZORUNLU_KUNYE.filter(([k]) => !(degerler[k] ?? '').trim()).map(([, e]) => e)
+
   return (
     <div className="mx-auto max-w-3xl space-y-4">
+      {eksikKunye.length > 0 && (
+        <p className="rounded-[4px] border border-[var(--p-warning)]/30 bg-[var(--p-warning-bg)] px-3 py-2 text-[12px] leading-relaxed text-[var(--p-warning)]">
+          <strong>Veri sorumlusu künyesi eksik:</strong> {eksikKunye.join(', ')}. KVKK gereği bu
+          bilgiler Çerez Politikası ve KVKK Aydınlatma Metni'nin başında yer almalıdır; boş
+          bırakılan alanlar sayfada hiç basılmaz. Aşağıdaki «Hukuki — veri sorumlusu künyesi»
+          bölümünden doldurun.
+        </p>
+      )}
       {GRUPLAR.map((g) => {
         const anahtarlar = g.baslik === 'Diğer' ? digerleri : g.anahtarlar.filter((k) => k in orijinal)
         if (anahtarlar.length === 0) return null
