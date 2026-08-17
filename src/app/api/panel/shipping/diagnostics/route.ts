@@ -60,6 +60,31 @@ export async function GET(request: Request) {
     return NextResponse.json(sonuc)
   }
 
+  // 0b) Taslak temizleme denemeleri (yalnız açık istekle; kredi harcamaz)
+  const silId = sp.get('sil')
+  if (silId) {
+    const token = process.env.KARGONOMI_TOKEN || ''
+    const dene = async (yol: string, method: string, govde?: any) => {
+      const res = await fetch(`${BASE}${yol}`, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+          ...(govde ? { 'Content-Type': 'application/json' } : {}),
+        },
+        ...(govde ? { body: JSON.stringify(govde) } : {}),
+      })
+      const t = await res.text()
+      return { yol, method, status: res.status, yanit: t.slice(0, 200) }
+    }
+    sonuc.silDenemeleri = [
+      await dene(`/shipments/${silId}`, 'DELETE'),
+      await dene('/shipments/cancel', 'POST', { shipment_id: Number(silId) }),
+      await dene('/shipments/cancel', 'POST', { shipment_ids: [Number(silId)] }),
+    ]
+    return NextResponse.json(sonuc)
+  }
+
   // 1) Bakiye / yetki
   sonuc.credit = await kargonomiGet('/user/credit')
 
