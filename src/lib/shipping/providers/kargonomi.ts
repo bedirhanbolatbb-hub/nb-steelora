@@ -34,6 +34,18 @@ const DURUM_ESLEME: Record<string, KargoDurumu> = {
   request_for_cancellation: 'iptal',
 }
 
+/**
+ * Kargonomi telefonu 10 RAKAM olarak ister (5xxxxxxxxx).
+ * Sipariş adreslerinde numara "05551112233" ya da "+90 555 111 22 33" gibi
+ * geliyor; baştaki 0 / +90 ayıklanır (Faz 10B — canlıda doğrulandı).
+ */
+export function telefonNormalize(ham: string): string {
+  let d = (ham || '').replace(/\D/g, '')
+  if (d.startsWith('90') && d.length === 12) d = d.slice(2)
+  if (d.startsWith('0') && d.length === 11) d = d.slice(1)
+  return d.slice(-10)
+}
+
 function slugla(ad: string): string {
   return ad
     .toLocaleLowerCase('tr-TR')
@@ -86,7 +98,7 @@ export class KargonomiProvider implements CarrierProvider {
   async createShipment(girdi: GonderiOlusturGirdi): Promise<GonderiOlusturSonuc> {
     const shipment: Record<string, unknown> = {
       buyer_name: girdi.alici.ad,
-      buyer_phone: girdi.alici.telefon,
+      buyer_phone: telefonNormalize(girdi.alici.telefon),
       buyer_address: girdi.alici.adres,
       buyer_state_id: girdi.alici.stateId,
       buyer_city_id: girdi.alici.cityId,
