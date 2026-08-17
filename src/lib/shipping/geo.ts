@@ -20,7 +20,13 @@ export function adAnahtari(metin: string): string {
 
 export type Bolge = { providerId: number; ad: string }
 
-/** Sağlayıcıdan il/ilçe listesini çekip carrier_regions'a yazar. */
+/**
+ * İl listesini senkronlar (tek istek — hızlı).
+ *
+ * İlçeler burada çekilmez: 81 il için ardışık /cities çağrısı hem sağlayıcının
+ * hız sınırına takılıyor hem de sunucu fonksiyonu süresini aşıyordu (Faz 10B).
+ * İlçeler ihtiyaç anında, il bazında `ilceleriSenkronla` ile getirilir.
+ */
 export async function bolgeleriSenkronla(): Promise<{ il: number; ilce: number }> {
   const saglayici = getCarrierProvider() as any
   if (typeof saglayici.getStates !== 'function') return { il: 0, ilce: 0 }
@@ -29,7 +35,7 @@ export async function bolgeleriSenkronla(): Promise<{ il: number; ilce: number }
   const iller: Bolge[] = (await saglayici.getStates()).map((s: any) => ({ providerId: s.id, ad: s.ad }))
   if (iller.length === 0) return { il: 0, ilce: 0 }
 
-  const satirlar: any[] = iller.map((i) => ({
+  const satirlar = iller.map((i) => ({
     provider: saglayici.slug,
     kind: 'state',
     provider_id: i.providerId,
@@ -39,42 +45,35 @@ export async function bolgeleriSenkronla(): Promise<{ il: number; ilce: number }
     synced_at: new Date().toISOString(),
   }))
 
-  let ilceSayisi = 0
-  for (const il of iller) {
-    // Kargonomi hız sınırı uyguluyor (81 ardışık ilçe isteği 429 döndürüyor):
-    // istekler arasına küçük bir bekleme koyup 429'da geri çekilerek tekrar
-    // deneriz. Senkron seyrek çalışan bir işlem olduğu için bu maliyet kabul
-    // edilebilir (Faz 10B).
-    let ilceler: Bolge[] = []
-    for (let deneme = 0; deneme < 4; deneme++) {
-      try {
-        ilceler = (await saglayici.getCities(il.providerId)).map((c: any) => ({
-          providerId: c.id,
-          ad: c.ad,
-        }))
-        break
-      } catch (e: any) {
-        if (!/429|Too Many Requests/i.test(String(e?.message)) || deneme === 3) throw e
-        await new Promise((r) => setTimeout(r, 2000 * (deneme + 1)))
-      }
-    }
-    await new Promise((r) => setTimeout(r, 120))
-    ilceSayisi += ilceler.length
-    for (const ilce of ilceler) {
-      satirlar.push({
-        provider: saglayici.slug,
-        kind: 'city',
-        provider_id: ilce.providerId,
-        name: ilce.ad,
-        name_key: adAnahtari(ilce.ad),
-        parent_provider_id: il.providerId,
-        synced_at: new Date().toISOString(),
-      })
-    }
-  }
-
   await supabase.from('carrier_regions').upsert(satirlar, { onConflict: 'provider,kind,provider_id' })
-  return { il: iller.length, ilce: ilceSayisi }
+  return { il: iller.length, ilce: 0 }
+}
+
+/** Tek bir ilin ilçelerini sağlayıcıdan çekip önbelleğe yazar. */
+export async function ilceleriSenkronla(stateId: number): Promise<number> {
+  const saglayici = getCarrierProvider() as any
+  if (typeof saglayici.getCities !== 'function') return 0
+
+  const ilceler: Bolge[] = (await saglayici.getCities(stateId)).map((c: any) => ({
+    providerId: c.id,
+    ad: c.ad,
+  }))
+  if (ilceler.length === 0) return 0
+
+  const supabase = createServiceClient()
+  await supabase.from('carrier_regions').upsert(
+    ilceler.map((c) => ({
+      provider: saglayici.slug,
+      kind: 'city',
+      provider_id: c.providerId,
+      name: c.ad,
+      name_key: adAnahtari(c.ad),
+      parent_provider_id: stateId,
+      synced_at: new Date().toISOString(),
+    })),
+    { onConflict: 'provider,kind,provider_id' }
+  )
+  return ilceler.length
 }
 
 export type EslesmeSonuc = {
@@ -117,6 +116,17 @@ export async function bolgeEslestir(il: string, ilce: string): Promise<EslesmeSo
   }
 
   const ilceKey = adAnahtari(ilce)
+  // İlin ilçeleri henüz önbellekte yoksa yalnız o il için çekilir (tembel).
+  if (ilceKey) {
+    const { count } = await supabase
+      .from('carrier_regions')
+      .select('id', { count: 'exact', head: true })
+      .eq('provider', saglayici.slug)
+      .eq('kind', 'city')
+      .eq('parent_provider_id', ilSatir.provider_id)
+    if (!count) await ilceleriSenkronla(ilSatir.provider_id).catch(() => 0)
+  }
+
   const { data: ilceSatir } = ilceKey
     ? await supabase
         .from('carrier_regions')
@@ -165,12 +175,20 @@ export async function illeriGetir(): Promise<Bolge[]> {
 
 export async function ilceleriGetir(stateId: number): Promise<Bolge[]> {
   const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('carrier_regions')
-    .select('provider_id, name')
-    .eq('provider', getCarrierProvider().slug)
-    .eq('kind', 'city')
-    .eq('parent_provider_id', stateId)
-    .order('name')
-  return (data || []).map((r: any) => ({ providerId: r.provider_id, ad: r.name }))
+  const oku = async () => {
+    const { data } = await supabase
+      .from('carrier_regions')
+      .select('provider_id, name')
+      .eq('provider', getCarrierProvider().slug)
+      .eq('kind', 'city')
+      .eq('parent_provider_id', stateId)
+      .order('name')
+    return (data || []).map((r: any) => ({ providerId: r.provider_id, ad: r.name }))
+  }
+  let liste = await oku()
+  if (liste.length === 0) {
+    await ilceleriSenkronla(stateId).catch(() => 0)
+    liste = await oku()
+  }
+  return liste
 }
