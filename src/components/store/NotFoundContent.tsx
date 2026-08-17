@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { WHATSAPP_URL } from '@/lib/contact'
 
 /**
  * Markalı 404 içeriği. Hem kök not-found hem de mağaza içi not-found bunu kullanır.
@@ -33,7 +34,7 @@ export default function NotFoundContent() {
       <p className="mt-10 text-[11px] font-body text-muted">
         Aradığınızı bulamadıysanız{' '}
         <a
-          href="https://wa.me/905536552020"
+          href={WHATSAPP_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="text-accent-deep underline underline-offset-2"

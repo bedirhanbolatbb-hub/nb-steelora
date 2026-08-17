@@ -143,6 +143,10 @@ export default function KampanyalarClient({ satirlar }: { satirlar: KampanyaSati
     setIsleniyor(false)
   }
 
+  // Yürürlük rozetleri — vitrindeki kuralın (lib/campaigns/pricing.ts) panel karşılığı.
+  const suresiDolduMu = (c: KampanyaSatiri) => Boolean(c.endsAt && new Date(c.endsAt) < new Date())
+  const henuzBaslamadiMi = (c: KampanyaSatiri) => Boolean(c.startsAt && new Date(c.startsAt) > new Date())
+
   const tarihAraligi = (c: KampanyaSatiri) => {
     const f = (t: string | null) =>
       t ? new Date(t).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', timeZone: 'Europe/Istanbul' }) : null
@@ -193,7 +197,14 @@ export default function KampanyalarClient({ satirlar }: { satirlar: KampanyaSati
                 kullanım {c.usedCount}/{c.maxUses}
               </span>
             )}
-            <span className="ml-auto">
+            <span className="ml-auto flex items-center gap-1.5">
+              {/* Faz 11: tarihi geçmiş kampanya "aktif" görünüp kafa karıştırıyordu.
+                  Vitrinde ve indirim hesabında zaten hiç dikkate alınmaz. */}
+              {suresiDolduMu(c) && <PBadge tone="danger">süresi doldu</PBadge>}
+              {henuzBaslamadiMi(c) && <PBadge tone="warning">henüz başlamadı</PBadge>}
+              {c.maxUses != null && c.usedCount >= c.maxUses && (
+                <PBadge tone="danger">limit doldu</PBadge>
+              )}
               <PBadge tone={c.isActive ? 'success' : 'neutral'}>{c.isActive ? 'aktif' : 'pasif'}</PBadge>
             </span>
           </button>

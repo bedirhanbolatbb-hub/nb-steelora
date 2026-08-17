@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { isRemoteMedia } from '@/lib/images'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -44,9 +45,29 @@ const KATEGORILER = [
   { key: 'category_setler', label: 'Kategori — Setler' },
 ] as const
 
+/**
+ * Anasayfa gerçeği (Faz 11) — src/lib/home/sections.ts ile birebir aynı.
+ * Panel kaç öğenin basıldığını göstermezken 4 ürün seçili bölüm "4 slotluk"
+ * sanılıyordu; artık hedef/tavan ve dolgu davranışı panelde yazılı.
+ */
+const HEDEF_SLOT = 8
+const TAVAN_SLOT = 12
+
 const COKLU = [
-  { key: 'featured', label: 'Öne Çıkanlar' },
-  { key: 'new_arrivals', label: 'Yeni Gelenler' },
+  {
+    key: 'featured',
+    label: 'Öne Çıkanlar',
+    aciklama:
+      `Anasayfada ${HEDEF_SLOT} ürün basılır — ilk 2'si büyük editorial kart. ` +
+      `Seçtikleriniz sırayla gelir; eksik kalan slotlar en yeni ürünlerle otomatik doldurulur. Tavan ${TAVAN_SLOT}.`,
+  },
+  {
+    key: 'new_arrivals',
+    label: 'Yeni Gelenler',
+    aciklama:
+      `Anasayfada ${HEDEF_SLOT} ürün basılır. Seçtikleriniz sırayla gelir; eksik kalan slotlar ` +
+      `en yeni ürünlerle otomatik doldurulur. Öne Çıkanlar'da basılan ürün burada tekrar etmez. Tavan ${TAVAN_SLOT}.`,
+  },
 ] as const
 
 function UrunUyari({ u }: { u: KurasyonUrun | undefined }) {
@@ -205,6 +226,7 @@ export default function KurasyonClient({
     <div className="mx-auto max-w-5xl space-y-4">
       <p className="text-[13px] text-[var(--p-muted)]">
         Anasayfa küratörlü alanları. Kayıt sonrası vitrin birkaç dakika içinde güncellenir (önbellek).
+        Her bölümün başlığındaki sayı, anasayfada kaç öğe basıldığını gösterir.
       </p>
 
       {/* ── Hero slaytları (Faz 9A — kampanya bandı) ── */}
@@ -216,6 +238,10 @@ export default function KurasyonClient({
           </PButton>
         }
       >
+        <p className="mb-3 text-[12px] leading-relaxed text-[var(--p-muted)]">
+          Anasayfada 1–4 slayt gösterilir; yalnız «aktif» ve görseli olan slaytlar basılır.
+          {slides.length > 1 && ' Ziyaretçi ok, nokta, klavye ve kaydırmayla gezer — otomatik dönme yok.'}
+        </p>
         {slides.length === 0 ? (
           <div className="rounded-[4px] border border-dashed border-[var(--p-line)] px-3 py-6 text-center">
             <p className="text-[13px] font-medium text-[var(--p-ink)]">
@@ -368,19 +394,38 @@ export default function KurasyonClient({
       </PCard>
 
       {/* ── Sıralı çoklu listeler ── */}
-      {COKLU.map((c) => (
+      {COKLU.map((c) => {
+        const secili = state[c.key]?.length ?? 0
+        const dolgu = Math.max(0, HEDEF_SLOT - secili)
+        return (
         <PCard
           key={c.key}
-          title={`${c.label} (${state[c.key]?.length ?? 0})`}
+          title={`${c.label} (${secili}/${HEDEF_SLOT})`}
           action={
-            <PButton variant="ghost" onClick={() => setPickerFor(c.key)}>
+            <PButton
+              variant="ghost"
+              onClick={() => setPickerFor(c.key)}
+              disabled={secili >= TAVAN_SLOT}
+            >
               <Plus size={14} /> Ekle
             </PButton>
           }
         >
+          {/* Anasayfa gerçeği panelde yazılı — kaç öğe basılıyor, eksikse ne oluyor. */}
+          <p className="mb-3 text-[12px] leading-relaxed text-[var(--p-muted)]">
+            {c.aciklama}
+            {dolgu > 0 && (
+              <span className="text-[var(--p-ink-soft)]">
+                {' '}Şu an {secili} seçili, kalan {dolgu} slot otomatik dolduruluyor.
+              </span>
+            )}
+            {secili >= TAVAN_SLOT && (
+              <span className="text-[var(--p-warning)]"> Tavana ulaşıldı ({TAVAN_SLOT}).</span>
+            )}
+          </p>
           {(state[c.key] || []).length === 0 ? (
             <p className="rounded-[4px] border border-dashed border-[var(--p-line)] px-3 py-6 text-center text-[12px] text-[var(--p-muted)]">
-              Ürün seçilmedi — vitrin bu bölümü otomatik doldurur.
+              Ürün seçilmedi — {HEDEF_SLOT} slotun tamamı en yeni ürünlerle otomatik doldurulur.
             </p>
           ) : (
             <ul className="space-y-1.5">
@@ -409,9 +454,19 @@ export default function KurasyonClient({
           )}
           <KaydetSatiri bolum={c.key} />
         </PCard>
-      ))}
+        )
+      })}
 
       {/* ── Kategori kartı görselleri ── */}
+      <div className="pt-2">
+        <h2 className="text-[13px] font-semibold text-[var(--p-ink)]">
+          Kategori kartları ({KATEGORILER.length}/{KATEGORILER.length})
+        </h2>
+        <p className="mt-1 text-[12px] leading-relaxed text-[var(--p-muted)]">
+          Anasayfada {KATEGORILER.length} kategori kartı basılır — sabit liste, azaltılamaz.
+          Kapak görseli seçmezseniz kategoriye uyan ilk ürünün görseli kullanılır.
+        </p>
+      </div>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {KATEGORILER.map((t) => {
           const id = state[t.key]?.[0]
@@ -451,6 +506,24 @@ export default function KurasyonClient({
           )
         })}
       </div>
+
+      {/* Koleksiyonlar bandı burada yönetilmiyor — nerede yönetildiği yazılı olsun
+          ki panel, anasayfanın tamamını karşılamış görünsün (Faz 11). */}
+      <PCard title={`Koleksiyonlar bandı (${koleksiyonlar.length})`}>
+        <p className="text-[12px] leading-relaxed text-[var(--p-muted)]">
+          Anasayfada aktif koleksiyonların tamamı basılır — şu an {koleksiyonlar.length} koleksiyon
+          {koleksiyonlar.length > 0 ? `: ${koleksiyonlar.map((k) => k.name).join(', ')}` : ''}.
+          Sıra, ad ve kapak görseli <Link href="/panel/koleksiyonlar" className="text-[var(--p-accent-deep)] underline underline-offset-2">Koleksiyonlar</Link> sayfasından
+          yönetilir. Koleksiyon yoksa bant hiç basılmaz.
+        </p>
+      </PCard>
+
+      <PCard title="Blog şeridi (3)">
+        <p className="text-[12px] leading-relaxed text-[var(--p-muted)]">
+          Anasayfada en son yayımlanan 3 yazı basılır; seçim yapılmaz.
+          Yazılar <Link href="/panel/blog" className="text-[var(--p-accent-deep)] underline underline-offset-2">Blog</Link> sayfasından yönetilir.
+        </p>
+      </PCard>
 
       <ProductPicker
         open={pickerFor !== null}

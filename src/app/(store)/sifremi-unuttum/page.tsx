@@ -15,8 +15,11 @@ export default function SifremiUnuttumPage() {
     e.preventDefault()
     setLoading(true)
 
+    // Bağlantı önce /auth/callback'e gider: oturum orada kurulur, sonra yeni
+    // şifre ekranına aktarılır. Doğrudan /auth/sifremi-sifirla'ya gitmek
+    // oturumsuz bir sayfa açıyordu ve şifre güncelleme hata veriyordu (Faz 11).
     await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/sifremi-sifirla`,
+      redirectTo: `${window.location.origin}/auth/callback?next=/auth/sifremi-sifirla`,
     })
 
     setSent(true)

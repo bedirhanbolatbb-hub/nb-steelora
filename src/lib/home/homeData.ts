@@ -3,6 +3,7 @@ import { ShownProducts, MAX_SECTION_ITEMS, TARGET_SECTION_ITEMS } from './sectio
 import { LISTING_COLUMNS } from '@/lib/catalog/listing'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import { firstSentence, type CollectionCard } from '@/lib/collections'
+import { yururlukte } from '@/lib/campaigns/pricing'
 
 /**
  * Anasayfanın TEK veri katmanı (Faz 9A — logo gecikmesi düzeltmesi).
@@ -217,7 +218,10 @@ async function yukle(): Promise<HomeData> {
     featured,
     newArrivals,
     collections,
-    campaign: campaignRes.data ?? null,
+    // Promo şeridi: tarih penceresi sorguda süzülüyor; kullanım limiti dolmuş
+    // kampanya da basılmaz (Faz 11 — tek yürürlük kuralı).
+    campaign:
+      campaignRes.data && yururlukte(campaignRes.data as any) ? campaignRes.data : null,
     categoryImages,
     blogPosts: blogRes.data || [],
   }

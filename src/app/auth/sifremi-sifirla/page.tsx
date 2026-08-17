@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -10,8 +11,17 @@ export default function SifreSifirlaPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  // Oturum durumu: bağlantı geçersiz/süresi dolmuşsa formu hiç göstermeyip
+  // kullanıcıyı yeni bağlantı istemeye yönlendiririz (Faz 11).
+  const [oturum, setOturum] = useState<'bekliyor' | 'var' | 'yok'>('bekliyor')
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setOturum(data.session ? 'var' : 'yok')
+    })
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,7 +38,12 @@ export default function SifreSifirlaPage() {
     const { error } = await supabase.auth.updateUser({ password })
 
     if (error) {
-      setError('Hata oluştu')
+      // Gerçek sebep gösterilir; "Hata oluştu" tek satırı sorunu gizliyordu.
+      setError(
+        /session|Auth session missing/i.test(error.message)
+          ? 'Bağlantının süresi dolmuş görünüyor. Lütfen yeni bir sıfırlama bağlantısı isteyin.'
+          : `Şifre güncellenemedi: ${error.message}`
+      )
       setLoading(false)
       return
     }
@@ -49,6 +64,35 @@ export default function SifreSifirlaPage() {
         </div>
       </div>
     )
+
+  if (oturum === 'bekliyor') {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <p className="font-body text-[13px] text-muted">Bağlantı doğrulanıyor…</p>
+      </div>
+    )
+  }
+
+  if (oturum === 'yok') {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center">
+          <h1 className="font-heading text-[30px] font-light text-ink">Bağlantı geçersiz</h1>
+          <div className="w-16 h-px bg-accent mx-auto my-6" />
+          <p className="font-body text-[13px] leading-relaxed text-ink-soft">
+            Şifre sıfırlama bağlantısı kullanılmış ya da süresi dolmuş olabilir.
+            Yeni bir bağlantı isteyip tekrar deneyin.
+          </p>
+          <Link
+            href="/sifremi-unuttum"
+            className="mt-8 inline-block bg-ink px-8 py-3.5 font-body text-[12px] uppercase tracking-[0.15em] text-bg transition-colors hover:bg-accent"
+          >
+            Yeni bağlantı iste
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import type { CollectionCard } from '@/lib/collections'
+import { WHATSAPP_URL } from '@/lib/contact'
 
 // Menüyle birebir aynı liste — tek kaynak src/lib/catalog/categories.ts
 const categories = CATEGORIES.map((c) => ({ href: `/kategori/${c.slug}`, label: c.title }))
@@ -162,7 +163,7 @@ export default function Footer({
               <li>Mezitli / Mersin / Türkiye</li>
               <li>
                 <a
-                  href="https://wa.me/905536552020"
+                  href={WHATSAPP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 hover:text-accent transition-colors"

@@ -22,12 +22,13 @@ import RelatedProducts from '@/components/store/RelatedProducts'
 import ReviewList from '@/components/store/ReviewList'
 import RecentlyViewedTracker from '@/components/store/RecentlyViewedTracker'
 import RecentlyViewed from '@/components/store/RecentlyViewed'
+import { WHATSAPP_URL } from '@/lib/contact'
 
 // Aciliyet ve rozet mantığı lib/catalog/badge.ts'te: "Son 1 adet" yalnız gerçekten
 // son adette basılır; katalogda stok 1-5 arası ürün çoğunlukta olduğu için eşik
 // 1'in üstüne çıkarılırsa sinyal gürültüye döner.
 
-const WHATSAPP_URL = 'https://wa.me/905536552020'
+
 
 /**
  * SEO başlığı ve açıklaması UZUN Trendyol adından üretilir; sayfadaki H1

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Mail, MapPin, Clock } from 'lucide-react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import { WHATSAPP_URL } from '@/lib/contact'
 
 export default function IletisimPage() {
   const [form, setForm] = useState({
@@ -81,7 +82,7 @@ export default function IletisimPage() {
                   WhatsApp
                 </p>
                 <a
-                  href="https://wa.me/905536552020"
+                  href={WHATSAPP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[13px] font-body text-ink hover:text-accent transition-colors"

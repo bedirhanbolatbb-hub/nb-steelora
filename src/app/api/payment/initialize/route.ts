@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { initializeThreeDS, generateConversationId } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
+import { kuponDogrula, otomatikKampanyalar } from '@/lib/campaigns/pricing'
 
 function toAscii(str: string): string {
   return str
@@ -15,7 +16,7 @@ function toAscii(str: string): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { items, buyer, shippingAddress, paymentCard, userId } = body
+    const { items, buyer, shippingAddress, paymentCard, userId, discountCode, giftNote } = body
 
     const safeName = (buyer?.firstName || buyer?.full_name || '').trim().split(/\s+/)
     const firstName = toAscii(String(buyer?.firstName || safeName[0] || 'Musteri')).substring(0, 30)
@@ -33,8 +34,46 @@ export async function POST(request: Request) {
       (sum: number, item: any) => sum + item.price * item.quantity,
       0
     )
-    const shippingCost = subtotal >= 500 ? 0 : 49.9
-    const total = subtotal + shippingCost
+
+    // ── İndirim: ödeme anında SUNUCUDA yeniden doğrulanır (Faz 11) ──────────
+    // İstemciden yalnız kodun kendisi gelir; tutar burada hesaplanır, böylece
+    // ekranda görünen indirim ile karttan çekilen tutar birbirini tutar.
+    const serviceClient = createServiceClient()
+    const urunFiyatlari: number[] = items.flatMap((i: any) =>
+      Array.from({ length: Number(i.quantity) || 1 }, () => Number(i.price) || 0)
+    )
+    const urunAdedi = items.reduce((t: number, i: any) => t + (Number(i.quantity) || 0), 0)
+
+    const otomatik = await otomatikKampanyalar(
+      serviceClient,
+      subtotal,
+      urunAdedi,
+      urunFiyatlari
+    )
+
+    let kodIndirimi = 0
+    let uygulananKampanyaId: string | null = null
+    if (discountCode) {
+      const sonuc = await kuponDogrula(serviceClient, String(discountCode), subtotal)
+      if (sonuc.gecerli) {
+        kodIndirimi = sonuc.indirim
+        uygulananKampanyaId = sonuc.kampanya.id
+      } else {
+        // Kod ödeme anında geçersizleştiyse (süre doldu, limit doldu) ödemeyi
+        // sessizce indirimsiz sürdürmek yerine müşteriye söyleriz.
+        return NextResponse.json({ error: `İndirim kodu uygulanamadı: ${sonuc.hata}` }, { status: 400 })
+      }
+    }
+
+    const discountTotal = Math.min(
+      Math.round((otomatik.toplam + kodIndirimi) * 100) / 100,
+      subtotal
+    )
+    const indirimliAraToplam = Math.round((subtotal - discountTotal) * 100) / 100
+    const shippingCost = otomatik.ucretsizKargo || indirimliAraToplam >= 500 ? 0 : 49.9
+    // iyzico'da price = sepet kalemlerinin toplamı, paidPrice = tahsil edilen.
+    const grossTotal = Math.round((subtotal + shippingCost) * 100) / 100
+    const total = Math.round((indirimliAraToplam + shippingCost) * 100) / 100
 
     const productItems = items.map((item: any) => {
       const rawName = item.trendyol_title || item.name || item.title || 'Celik Taki'
@@ -73,7 +112,6 @@ export async function POST(request: Request) {
       price: Number(item.price) || 0,
     }))
 
-    const serviceClient = createServiceClient()
     const { error: pendingOrderError } = await serviceClient.from('orders').insert({
       order_number: orderNumber,
       status: 'pending',
@@ -83,6 +121,11 @@ export async function POST(request: Request) {
       items: orderItems,
       subtotal,
       shipping_cost: shippingCost,
+      // Faz 11: indirim ve uygulanan kampanya siparişe yazılır (eskiden 0/null
+      // kalıyordu); hediye notu da artık kayboluyordu, birlikte kaydedilir.
+      discount_amount: discountTotal,
+      applied_campaign_id: uygulananKampanyaId,
+      gift_note: giftNote || null,
       total,
       iyzico_payment_id: null,
     })
@@ -104,7 +147,8 @@ export async function POST(request: Request) {
       },
       locale: 'tr',
       conversationId,
-      price: total.toFixed(2),
+      // price = basketItems toplamı (brüt), paidPrice = indirim sonrası tahsil.
+      price: grossTotal.toFixed(2),
       paidPrice: total.toFixed(2),
       currency: 'TRY',
       installment: '1',

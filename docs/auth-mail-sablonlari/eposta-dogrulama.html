@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #2A1E1E; background: #FFFFFF;">
+  <div style="text-align: center; padding: 30px 0; border-bottom: 1px solid #E8D8D0;">
+    <h1 style="letter-spacing: 0.3em; font-size: 20px; font-weight: 400; margin: 0;">NB STEELORA</h1>
+    <p style="font-size: 11px; color: #C89080; letter-spacing: 0.2em; margin: 5px 0 0;">FINE JEWELLERY</p>
+  </div>
+
+  <div style="padding: 40px 0;">
+    <h2 style="font-size: 24px; font-weight: 300; margin: 0 0 8px;">Aramıza hoş geldiniz</h2>
+    <p style="color: #7A5048; line-height: 1.8; margin-bottom: 30px;">
+      NB Steelora hesabınızı oluşturdunuz. Siparişlerinizi takip edebilmek ve
+      favorilerinizi saklayabilmek için e-posta adresinizi doğrulayın.
+    </p>
+
+    <p style="text-align: center; margin-bottom: 30px;">
+      <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/hesabim"
+         style="display: inline-block; background: #2A1E1E; color: #FFF8F6; padding: 16px 40px; text-decoration: none; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase;">
+        E-postamı doğrula
+      </a>
+    </p>
+
+    <p style="color: #A88070; font-size: 13px; line-height: 1.8;">
+      Bu hesabı siz oluşturmadıysanız bu e-postayı yok sayabilirsiniz.
+    </p>
+  </div>
+
+  <div style="text-align: center; padding: 30px 0; border-top: 1px solid #E8D8D0; color: #A88070; font-size: 12px;">
+    <p style="margin: 0 0 8px;">Sorularınız için <a href="mailto:info@nbsteelora.com" style="color: #C89080;">info@nbsteelora.com</a></p>
+    <p style="margin: 0;"><a href="https://wa.me/905051984646" style="color: #C89080;">WhatsApp ile yazın</a></p>
+    <p style="margin: 8px 0 0; font-size: 11px;">© 2026 NB Steelora®</p>
+  </div>
+</body>
+</html>

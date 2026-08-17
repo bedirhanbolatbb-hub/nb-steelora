@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { decreaseStock } from '@/lib/trendyol/stockUpdate'
 import { orderConfirmationEmail } from '@/lib/emails/templates'
 import { sendMail } from '@/lib/emails/send'
+import { kullanimArtir } from '@/lib/campaigns/pricing'
 
 function itemsFromIyzicoTransactions(transactions: unknown) {
   if (!Array.isArray(transactions)) return []
@@ -73,13 +74,16 @@ export async function POST(request: Request) {
     const paidTotal = parseFloat(String(result.paidPrice ?? '0')) || 0
     const subtotalFromIyzico = parseFloat(String(result.price ?? '0')) || 0
 
+    // Faz 11: subtotal ARTIK EZİLMEZ. iyzico'nun `price` alanı indirim öncesi
+    // brüt sepet (kargo dahil) olduğu için buraya yazılması ürün ara toplamını
+    // bozuyordu; doğru değer pending kaydında zaten var. total ise gerçekten
+    // tahsil edilen tutarla (paidPrice) güncellenir.
     const { data: updatedRows, error: updateError } = await serviceClient
       .from('orders')
       .update({
         status: 'paid',
         iyzico_payment_id: result.paymentId,
         total: paidTotal,
-        subtotal: subtotalFromIyzico,
         updated_at: new Date().toISOString(),
       })
       .eq('order_number', result.basketId)
@@ -123,7 +127,6 @@ export async function POST(request: Request) {
               status: 'paid',
               iyzico_payment_id: result.paymentId,
               total: paidTotal,
-              subtotal: subtotalFromIyzico,
               updated_at: new Date().toISOString(),
             })
             .eq('order_number', result.basketId)
@@ -142,6 +145,23 @@ export async function POST(request: Request) {
     if (!order) {
       console.error('[callback] order row missing after persist')
       return NextResponse.redirect(`${siteUrl}/odeme/basarisiz`, { status: 302 })
+    }
+
+    // Kupon kullanım sayacı — ödeme başarılıysa bir kez (Faz 11).
+    // Sayaç hiç artmıyordu, bu yüzden max_uses limiti pratikte işlemiyordu.
+    // Tek seferlik olması stok damgasıyla aynı kapıya bağlanır: damga zaten
+    // varsa bu blok da atlanır (callback tekrar çağrılırsa çift saymaz).
+    if (order.applied_campaign_id) {
+      const { data: sayacKapisi } = await serviceClient
+        .from('orders')
+        .select('stock_deducted_at')
+        .eq('id', order.id)
+        .single()
+      if (!sayacKapisi?.stock_deducted_at) {
+        await kullanimArtir(serviceClient, order.applied_campaign_id).catch((e: any) =>
+          console.error('[callback] kupon sayacı artırılamadı:', e?.message)
+        )
+      }
     }
 
     // Stok düş — sadece ödeme başarılı ve sipariş satırı yüklendikten sonra; stock_deducted_at ile tek sefer

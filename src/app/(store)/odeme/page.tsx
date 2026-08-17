@@ -91,9 +91,12 @@ export default function OdemePage() {
 
   const autoDiscountTotal = autoDiscounts.reduce((sum, d) => sum + d.amount, 0)
   const codeDiscountAmount = appliedDiscount?.amount || 0
-  const totalDiscount = autoDiscountTotal + codeDiscountAmount
-  const shipping = autoFreeShipping || subtotal >= 500 ? 0 : 49.9
-  const total = subtotal - totalDiscount + shipping
+  const totalDiscount = Math.min(autoDiscountTotal + codeDiscountAmount, subtotal)
+  // Kargo eşiği indirimli ara toplam üzerinden — sunucudaki hesapla birebir
+  // aynı olmalı, yoksa ekrandaki toplam ile çekilen tutar ayrışır (Faz 11).
+  const discountedSubtotal = subtotal - totalDiscount
+  const shipping = autoFreeShipping || discountedSubtotal >= 500 ? 0 : 49.9
+  const total = discountedSubtotal + shipping
 
   const applyDiscount = async () => {
     if (!discountCode.trim()) return
@@ -202,6 +205,9 @@ export default function OdemePage() {
           },
           userId,
           giftNote: giftNote || null,
+          // Faz 11: kod sunucuya gönderilir ve orada YENİDEN doğrulanır;
+          // tutar istemciden taşınmaz.
+          discountCode: appliedDiscount?.code || null,
         }),
       })
 

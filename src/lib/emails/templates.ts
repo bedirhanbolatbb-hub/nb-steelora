@@ -1,4 +1,5 @@
 import { formatPrice } from '@/lib/utils'
+import { WHATSAPP_URL } from '@/lib/contact'
 
 /**
  * Müşteriye giden üç işlemsel mailin tek kaynağı.
@@ -23,7 +24,7 @@ function shell(title: string, inner: string): string {
   </div>
   <div style="text-align: center; padding: 30px 0; border-top: 1px solid #E8D8D0; color: #A88070; font-size: 12px;">
     <p style="margin: 0 0 8px;">Sorularınız için <a href="mailto:info@nbsteelora.com" style="color: #C89080;">info@nbsteelora.com</a></p>
-    <p style="margin: 0;"><a href="https://wa.me/905536552020" style="color: #C89080;">WhatsApp ile yazın</a></p>
+    <p style="margin: 0;"><a href="${WHATSAPP_URL}" style="color: #C89080;">WhatsApp ile yazın</a></p>
     <p style="margin: 8px 0 0; font-size: 11px;">© 2026 NB Steelora®</p>
   </div>
 </body>

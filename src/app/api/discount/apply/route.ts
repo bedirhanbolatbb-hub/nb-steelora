@@ -1,52 +1,33 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { formatPrice } from '@/lib/utils'
+import { kuponDogrula } from '@/lib/campaigns/pricing'
 
+/**
+ * Müşterinin girdiği kupon kodunu doğrular (Faz 11: hesap tek motordan).
+ * Buradan dönen tutar yalnız GÖSTERİM içindir; ödeme anında kod sunucuda
+ * yeniden doğrulanır (bkz. /api/payment/initialize).
+ */
 export async function POST(request: Request) {
-  const { code, cartTotal } = await request.json()
+  const body = await request.json().catch(() => null)
+  const kod = String(body?.code ?? '')
+  const sepetTutari = Number(body?.cartTotal)
+
+  if (!Number.isFinite(sepetTutari) || sepetTutari < 0) {
+    return NextResponse.json({ error: 'Sepet tutarı okunamadı' }, { status: 400 })
+  }
+
   const supabase = await createClient()
+  const sonuc = await kuponDogrula(supabase, kod, sepetTutari)
 
-  const { data: campaign } = await supabase
-    .from('campaigns')
-    .select('*')
-    .eq('type', 'discount_code')
-    .eq('code', code.toUpperCase())
-    .eq('is_active', true)
-    .single()
-
-  if (!campaign) {
-    return NextResponse.json({ error: 'Geçersiz kod' }, { status: 400 })
-  }
-
-  const now = new Date()
-  if (campaign.starts_at && new Date(campaign.starts_at) > now) {
-    return NextResponse.json({ error: 'Kampanya henüz başlamadı' }, { status: 400 })
-  }
-  if (campaign.ends_at && new Date(campaign.ends_at) < now) {
-    return NextResponse.json({ error: 'Kampanya süresi doldu' }, { status: 400 })
-  }
-  if (cartTotal < campaign.min_cart_amount) {
-    return NextResponse.json(
-      { error: `Minimum ${formatPrice(campaign.min_cart_amount)} sepet tutarı gerekli` },
-      { status: 400 }
-    )
-  }
-  if (campaign.max_uses && campaign.used_count >= campaign.max_uses) {
-    return NextResponse.json({ error: 'Kampanya kullanım limiti doldu' }, { status: 400 })
-  }
-
-  let discountAmount = 0
-  if (campaign.discount_type === 'percent') {
-    discountAmount = (cartTotal * campaign.discount_value) / 100
-  } else {
-    discountAmount = campaign.discount_value
+  if (!sonuc.gecerli) {
+    return NextResponse.json({ error: sonuc.hata }, { status: 400 })
   }
 
   return NextResponse.json({
     discount: {
-      code: campaign.code,
-      amount: Math.min(discountAmount, cartTotal),
-      description: campaign.name,
+      code: sonuc.kampanya.code,
+      amount: sonuc.indirim,
+      description: sonuc.kampanya.name,
     },
   })
 }
