@@ -182,7 +182,29 @@ export class KargonomiProvider implements CarrierProvider {
     return { base64 }
   }
 
+  /**
+   * Gönderiyi iptal eder.
+   *
+   * Kargonomi'de iki ayrı yol var (canlıda doğrulandı — Faz 10B):
+   *  - Henüz onaylanmamış TASLAK: `DELETE /shipments/{id}` (204) — `cancel`
+   *    ucu taslakta "Server Error" veriyor.
+   *  - Onaylanmış gönderi: `POST /shipments/cancel` (iptal talebi).
+   * Durumu önce okuyup doğru yolu seçeriz.
+   */
   async cancelShipment(saglayiciGonderiId: string): Promise<{ durum: KargoDurumu; durumHam: string }> {
+    let taslakMi = false
+    try {
+      const mevcut = await this.fetchShipment(saglayiciGonderiId)
+      taslakMi = ['draft', 'ready'].includes(mevcut.durumHam)
+    } catch {
+      // Durum okunamazsa iptal talebi yoluna düşeriz.
+    }
+
+    if (taslakMi) {
+      await this.istek<any>(`/shipments/${saglayiciGonderiId}`, { method: 'DELETE' })
+      return { durum: 'iptal', durumHam: 'cancelled' }
+    }
+
     const yanit = await this.istek<any>('/shipments/cancel', {
       method: 'POST',
       body: JSON.stringify({ shipment_id: Number(saglayiciGonderiId) }),
