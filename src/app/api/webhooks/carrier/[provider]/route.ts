@@ -13,6 +13,25 @@ import { sendMail } from '@/lib/emails/send'
 export const dynamic = 'force-dynamic'
 
 /**
+ * Erişilebilirlik yoklaması (Faz 10B).
+ *
+ * Kargonomi, webhook kaydı sırasında adresi GET ile yokluyor ve 2xx bekliyor;
+ * yalnız POST export edildiğinde 405 alıp kaydı reddediyordu. Bu uç hiçbir veri
+ * döndürmez, yalnız adresin canlı olduğunu bildirir.
+ */
+export async function GET(_request: Request, { params }: { params: Promise<{ provider: string }> }) {
+  const { provider } = await params
+  const saglayici = getProviderBySlug(provider)
+  if (!saglayici) return NextResponse.json({ error: 'Bilinmeyen sağlayıcı' }, { status: 404 })
+  return NextResponse.json({ ok: true, provider: saglayici.slug, hazir: saglayici.hazir })
+}
+
+export async function HEAD(_request: Request, { params }: { params: Promise<{ provider: string }> }) {
+  const { provider } = await params
+  return new Response(null, { status: getProviderBySlug(provider) ? 200 : 404 })
+}
+
+/**
  * Taşıyıcı webhook'u (sağlayıcıdan bağımsız yol: /api/webhooks/carrier/[provider]).
  *
  * - İmza sağlayıcının kendi şemasıyla doğrulanır; imzasız/yanlış imza 401.
