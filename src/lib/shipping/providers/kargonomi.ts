@@ -124,21 +124,34 @@ export class KargonomiProvider implements CarrierProvider {
     }
   }
 
+  /**
+   * Fiyat karşılaştırması.
+   * Kargonomi yanıtı `{ user_credit, shipping_provider_with_price: [...] }`
+   * biçiminde geliyor (canlıda doğrulandı — Faz 10B); eski `data`/`prices`
+   * varsayımı boş liste üretiyordu.
+   */
   async getRates(saglayiciGonderiId: string): Promise<Teklif[]> {
     const yanit = await this.istek<any>(`/shipment-price-comparison/${saglayiciGonderiId}`)
-    const liste: any[] = yanit?.data ?? yanit?.prices ?? (Array.isArray(yanit) ? yanit : [])
+    const liste: any[] =
+      yanit?.shipping_provider_with_price ??
+      yanit?.data?.shipping_provider_with_price ??
+      yanit?.data ??
+      (Array.isArray(yanit) ? yanit : [])
+
     return liste
       .map((t: any) => {
         const ad = String(t?.name ?? t?.shipping_provider?.name ?? t?.provider_name ?? 'Bilinmeyen')
         return {
           firmaId: String(t?.shipping_provider_id ?? t?.id ?? ''),
           firmaAdi: ad,
-          firmaSlug: slugla(ad),
-          fiyat: Number(t?.price ?? t?.amount ?? 0),
+          // Sağlayıcı kendi slug'ını veriyor; yoksa addan türetiriz.
+          firmaSlug: String(t?.slug || slugla(ad)),
+          fiyat: Math.round(Number(t?.price ?? t?.amount ?? 0) * 100) / 100,
           paraBirimi: String(t?.currency ?? 'TRY'),
         }
       })
-      .filter((t) => t.firmaId)
+      .filter((t) => t.firmaId && t.fiyat > 0)
+      .sort((a, b) => a.fiyat - b.fiyat)
   }
 
   async selectCarrier(saglayiciGonderiId: string, firmaId: string | null): Promise<SecimSonuc> {
@@ -238,7 +251,9 @@ export class KargonomiProvider implements CarrierProvider {
     try {
       const yanit = await this.istek<any>('/user/credit')
       const veri = yanit?.data ?? yanit
-      const tutar = Number(veri?.credit ?? veri?.balance ?? veri?.amount ?? 0)
+      // Bakiye yokken alan null geliyor (canlıda doğrulandı); 0 olarak okunur.
+      const ham = veri?.credit ?? veri?.balance ?? veri?.amount ?? 0
+      const tutar = Number(ham) || 0
       return { tutar, paraBirimi: String(veri?.currency ?? 'TRY') }
     } catch {
       return null
