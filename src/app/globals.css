@@ -378,3 +378,9 @@ body[data-overlay='open'] .whatsapp-fab {
 .size-flash {
   animation: size-flash 900ms ease-in-out 1;
 }
+
+/* Rıza bandı girişi (Faz 12) — yalnız transform/opacity; motion-safe ile sarılı */
+@keyframes nbConsentIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}

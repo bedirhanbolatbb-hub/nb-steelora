@@ -105,6 +105,18 @@ export default async function PanelDashboard() {
   const syncYas =
     syncYasDk == null ? '' : syncYasDk < 60 ? `${syncYasDk} dk önce` : syncYasDk < 2880 ? `${Math.round(syncYasDk / 60)} sa önce` : `${Math.round(syncYasDk / 1440)} gün önce`
 
+  // Bugünün ziyaret ölçümü (Faz 12) — Analiz modülüyle aynı anonim katmandan.
+  const bugunBas = new Date()
+  bugunBas.setHours(0, 0, 0, 0)
+  const { data: bugunOlaylar } = await supabase
+    .from('analytics_events')
+    .select('event, session_id')
+    .gte('occurred_at', bugunBas.toISOString())
+    .limit(20000)
+  const bugunOturum = new Set((bugunOlaylar || []).map((o: any) => o.session_id)).size
+  const bugunSiparis = (bugunOlaylar || []).filter((o: any) => o.event === 'purchase').length
+  const bugunDonusum = bugunOturum ? Math.round((bugunSiparis / bugunOturum) * 1000) / 10 : 0
+
   const metrikler = [
     { ad: 'Bugün', ...bugun },
     { ad: 'Son 7 gün', ...yediGun },
@@ -112,6 +124,7 @@ export default async function PanelDashboard() {
   ]
 
   const dikkat = [
+    { href: '/panel/analiz', etiket: 'Bugün ziyaretçi', deger: bugunOturum, ek: `dönüşüm %${bugunDonusum}` },
     { href: '/panel/yorumlar', etiket: 'Onay bekleyen yorum', deger: onayBekleyenYorum },
     { href: '/panel/siparisler', etiket: 'Bekleyen sipariş', deger: bekleyenSiparis },
     { href: '/panel/urunler', etiket: 'Son 1 adet ürün', deger: sonAdet },
@@ -147,7 +160,7 @@ export default async function PanelDashboard() {
       </PCard>
 
       {/* ── Dikkat isteyenler ── */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {dikkat.map((d) => (
           <Link key={d.href} href={d.href} className="group">
             <PCard className="transition-colors group-hover:border-[var(--p-ink)]">
@@ -163,6 +176,9 @@ export default async function PanelDashboard() {
                   {d.deger}
                 </p>
               </div>
+              {'ek' in d && d.ek && (
+                <p className="mt-0.5 text-[11px] text-[var(--p-muted)]">{d.ek}</p>
+              )}
             </PCard>
           </Link>
         ))}

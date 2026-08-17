@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { isRemoteMedia } from '@/lib/images'
 import Image from 'next/image'
 import { useCart } from '@/hooks/useCart'
@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import Input from '@/components/ui/Input'
 import CheckoutSteps from '@/components/store/CheckoutSteps'
+import { izle } from '@/lib/analytics/client'
 
 export default function OdemePage() {
   const { items, totalPrice, clearCart } = useCart()
@@ -166,6 +167,14 @@ export default function OdemePage() {
     form.expireMonth.length >= 1 &&
     form.expireYear.length === 4 &&
     form.cvc.length >= 3
+
+  // Ödemeye başlama ölçümü — form gönderilmeden önce bir kez (Faz 12).
+  const olcumYapildi = useRef(false)
+  useEffect(() => {
+    if (olcumYapildi.current || items.length === 0) return
+    olcumYapildi.current = true
+    izle('begin_checkout', { value: subtotal, meta: { kalem: items.length } })
+  }, [items.length, subtotal])
 
   const handlePayment = async () => {
     if (!isFormValid) return

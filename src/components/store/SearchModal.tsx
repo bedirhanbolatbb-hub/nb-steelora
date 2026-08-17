@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
+import { izle } from '@/lib/analytics/client'
 
 interface SearchModalProps {
   isOpen: boolean
@@ -47,6 +48,11 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         const data = await res.json()
         setResults(data)
         setLoading(false)
+        // Ölçüm (Faz 12): sorgu ve sonuç sayısı — sonuçsuz aramalar raporlanır.
+        izle('search', {
+          searchQuery: query,
+          meta: { sonuc: Array.isArray(data) ? data.length : 0 },
+        })
       } catch (error: any) {
         // İptal edilen istek yeni bir aramanın başladığı anlamına gelir:
         // bekleme göstergesi açık kalmalı, sonuçlar boşaltılmamalı.

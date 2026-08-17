@@ -3,7 +3,9 @@ import Navbar from '@/components/store/Navbar'
 import Footer from '@/components/store/Footer'
 import FloatingWhatsApp from '@/components/store/FloatingWhatsApp'
 import RevealController from '@/components/motion/RevealController'
+import ConsentBanner from '@/components/store/ConsentBanner'
 import { getLayoutData } from '@/lib/layoutData'
+import { sunucuOlayi } from '@/lib/analytics/server'
 
 export default async function StoreLayout({
   children,
@@ -13,6 +15,10 @@ export default async function StoreLayout({
   // Ortak vitrin verisi (banner + kupon + footer koleksiyon/sosyal) süreç içi
   // önbellekten gelir (Faz 9A) — istek yolunda kişiye özel tek iş auth kalır.
   const veri = await getLayoutData()
+
+  // Sayfa görüntüleme sunucuda ölçülür (Faz 12): engelleyicilerden etkilenmez,
+  // istemciye JS eklemez ve after() sayesinde yanıtı geciktirmez.
+  await sunucuOlayi('page_view')
 
   // Salt görsel karar (hesap ikonunun hedefi): oturumu çerezden okumak yeterli,
   // ağ doğrulaması (getUser) TTFB'ye yüzlerce ms ekliyordu. Yazma yapan her uç
@@ -38,6 +44,7 @@ export default async function StoreLayout({
       <Footer isLoggedIn={isLoggedIn} collections={veri.collections} content={veri.content} />
       <FloatingWhatsApp />
       <RevealController />
+      <ConsentBanner />
     </>
   )
 }

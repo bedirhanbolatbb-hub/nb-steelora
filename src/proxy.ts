@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+/** Ölçüm için istenen yolu sunucu bileşenlerine taşıyan başlık (Faz 12). */
+const YOL_BASLIGI = 'x-nb-path'
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const adminToken = request.cookies.get('admin_token')?.value
@@ -20,11 +23,22 @@ export function proxy(request: NextRequest) {
     if (!authed) {
       return NextResponse.redirect(new URL('/panel/login', request.url))
     }
+    return NextResponse.next()
   }
 
-  return NextResponse.next()
+  // Vitrin: yolu başlığa yaz ki layout page_view'i doğru yolla kaydedebilsin.
+  // (headers() içinde istenen yol Next 16'da doğrudan bulunmuyor.)
+  const basliklar = new Headers(request.headers)
+  basliklar.set(YOL_BASLIGI, pathname)
+  return NextResponse.next({ request: { headers: basliklar } })
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/panel/:path*'],
+  // Vitrin sayfaları ölçüm için dahil; statik dosyalar, görsel optimizasyonu,
+  // API uçları ve panel/admin dışı her şey elenir.
+  matcher: [
+    '/admin/:path*',
+    '/panel/:path*',
+    '/((?!api|_next/static|_next/image|favicon.ico|icon|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|webp|svg|ico|txt|xml|json|pdf)$).*)',
+  ],
 }

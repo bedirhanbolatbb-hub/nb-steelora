@@ -4,6 +4,7 @@ import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST } from '@/lib/shipping'
 import { formatPrice } from '@/lib/utils'
 import { PCard } from '../_components/ui'
 import KopyalanabilirAlan from './KopyalanabilirAlan'
+import KvkkBlogu from './KvkkBlogu'
 
 export const metadata: Metadata = { title: 'Ayarlar' }
 export const dynamic = 'force-dynamic'
@@ -56,6 +57,8 @@ export default async function PanelAyarlarPage() {
           ödeme aynı sabitten okur.
         </p>
       </PCard>
+
+      <KvkkBlogu />
 
       <PCard title="Search Console">
         <p className="mb-2 text-[13px] text-[var(--p-ink-soft)]">

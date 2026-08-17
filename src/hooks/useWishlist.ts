@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { createClient } from '@/lib/supabase/client'
+import { izle } from '@/lib/analytics/client'
 
 interface WishlistStore {
   items: string[]
@@ -20,6 +21,7 @@ export const useWishlist = create<WishlistStore>()(
       items: [],
 
       addItem: async (productId) => {
+        izle('favorite_add', { productId })
         set((state) => ({ items: [...state.items, productId] }))
         try {
           const supabase = createClient()
@@ -37,6 +39,7 @@ export const useWishlist = create<WishlistStore>()(
       },
 
       removeItem: async (productId) => {
+        izle('favorite_remove', { productId })
         set((state) => ({
           items: state.items.filter((id) => id !== productId),
         }))

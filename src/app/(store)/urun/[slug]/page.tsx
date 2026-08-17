@@ -23,6 +23,7 @@ import ReviewList from '@/components/store/ReviewList'
 import RecentlyViewedTracker from '@/components/store/RecentlyViewedTracker'
 import RecentlyViewed from '@/components/store/RecentlyViewed'
 import { WHATSAPP_URL } from '@/lib/contact'
+import { sunucuOlayi } from '@/lib/analytics/server'
 
 // Aciliyet ve rozet mantığı lib/catalog/badge.ts'te: "Son 1 adet" yalnız gerçekten
 // son adette basılır; katalogda stok 1-5 arası ürün çoğunlukta olduğu için eşik
@@ -82,6 +83,9 @@ export default async function UrunDetayPage({
   ])
 
   if (!product) notFound()
+
+  // Ürün görüntüleme sunucuda ölçülür (Faz 12) — engelleyicilerden etkilenmez.
+  await sunucuOlayi('product_view', { productId: product.id, path: `/urun/${product.slug}` })
 
   // products_display view'u custom_price içermeyebilir — direkt products tablosundan al
   const mergedProduct = { ...product, custom_price: priceRow?.custom_price ?? product.custom_price ?? null }

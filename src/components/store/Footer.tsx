@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import type { CollectionCard } from '@/lib/collections'
 import { WHATSAPP_URL } from '@/lib/contact'
+import CerezTercihleriDugmesi from './CerezTercihleriDugmesi'
 
 // Menüyle birebir aynı liste — tek kaynak src/lib/catalog/categories.ts
 const categories = CATEGORIES.map((c) => ({ href: `/kategori/${c.slug}`, label: c.title }))
@@ -12,6 +13,7 @@ const helpLinks = [
   { href: '/iletisim', label: 'İletişim' },
   { href: '/kvkk', label: 'KVKK Aydınlatma' },
   { href: '/gizlilik-politikasi', label: 'Gizlilik Politikası' },
+  { href: '/cerez-politikasi', label: 'Çerez Politikası' },
   { href: '/mesafeli-satis-sozlesmesi', label: 'Mesafeli Satış Sözleşmesi' },
 ]
 
@@ -190,6 +192,9 @@ export default function Footer({
           <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
           <p className="text-[10px] font-body text-line/50 tracking-wider">
             © 2026 NB Steelora®. Tüm hakları saklıdır.
+            {' · '}
+            {/* Rıza her zaman geri alınabilir olmalı (KVKK) — bandı yeniden açar. */}
+            <CerezTercihleriDugmesi />
           </p>
           {/* Sosyal ikonlar site_content'ten beslenir; yalnız DOLU adresler
               basılır (panel → Site Metinleri). */}

@@ -5,6 +5,7 @@ import { decreaseStock } from '@/lib/trendyol/stockUpdate'
 import { orderConfirmationEmail } from '@/lib/emails/templates'
 import { sendMail } from '@/lib/emails/send'
 import { kullanimArtir } from '@/lib/campaigns/pricing'
+import { olayYaz } from '@/lib/analytics/track'
 
 function itemsFromIyzicoTransactions(transactions: unknown) {
   if (!Array.isArray(transactions)) return []
@@ -146,6 +147,18 @@ export async function POST(request: Request) {
       console.error('[callback] order row missing after persist')
       return NextResponse.redirect(`${siteUrl}/odeme/basarisiz`, { status: 302 })
     }
+
+    // Satın alma ölçümü (Faz 12) — order_id üzerinde benzersiz indeks olduğu
+    // için callback tekrar çalışsa bile ikinci satır yazılmaz (çift sayım yok).
+    await olayYaz({
+      event: 'purchase',
+      sessionId: `order:${order.order_number ?? order.id}`,
+      path: '/odeme',
+      device: 'desktop',
+      value: paidTotal,
+      orderId: order.id,
+      meta: { kalem: Array.isArray(order.items) ? order.items.length : 0 },
+    })
 
     // Kupon kullanım sayacı — ödeme başarılıysa bir kez (Faz 11).
     // Sayaç hiç artmıyordu, bu yüzden max_uses limiti pratikte işlemiyordu.

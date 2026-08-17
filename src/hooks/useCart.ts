@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Product } from '@/types'
+import { izle } from '@/lib/analytics/client'
 
 interface CartItem {
   product: Product
@@ -26,6 +27,13 @@ export const useCart = create<CartStore>()(
         const items = get().items
         const existing = items.find(i => i.product.id === product.id)
 
+        // Ölçüm (Faz 12) — ateşle-unut, sepet akışını etkilemez.
+        izle('add_to_cart', {
+          productId: product.id,
+          value: Number(product.display_price) * quantity || null,
+          meta: { quantity },
+        })
+
         if (existing) {
           set({
             items: items.map(i =>
@@ -40,6 +48,7 @@ export const useCart = create<CartStore>()(
       },
 
       removeItem: (productId) => {
+        izle('remove_from_cart', { productId })
         set({ items: get().items.filter(i => i.product.id !== productId) })
       },
 

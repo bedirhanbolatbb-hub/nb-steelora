@@ -4,7 +4,13 @@ export type PanelLink = { href: string; label: string }
 export type PanelGroup = { title: string; links: PanelLink[] }
 
 export const PANEL_GROUPS: PanelGroup[] = [
-  { title: 'Genel', links: [{ href: '/panel', label: 'Genel Bakış' }] },
+  {
+    title: 'Genel',
+    links: [
+      { href: '/panel', label: 'Genel Bakış' },
+      { href: '/panel/analiz', label: 'Analiz' },
+    ],
+  },
   {
     title: 'Satış',
     links: [
