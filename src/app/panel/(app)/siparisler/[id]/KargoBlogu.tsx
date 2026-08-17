@@ -198,7 +198,10 @@ export default function KargoBlogu({
     toast('Takip kodu kopyalandı', 'success')
   }
 
-  const bakiyeUyarisi = bakiye && bakiye.tutar <= 100
+  // Faz 10B: sıfır/negatif bakiyede gönderi onayı (firma seçimi) sağlayıcı
+  // tarafından reddedilir; düşük bakiye ise yalnız uyarıdır.
+  const bakiyeYok = Boolean(bakiye && bakiye.tutar <= 0)
+  const bakiyeUyarisi = Boolean(bakiye && bakiye.tutar <= 100)
 
   /* ── Gönderi yok: oluşturma formu ─────────────────────────────────── */
   if (!gonderi || gonderi.durum === 'iptal') {
@@ -219,8 +222,10 @@ export default function KargoBlogu({
             </p>
           )}
           {bakiyeUyarisi && (
-            <p className="rounded-[4px] border border-[var(--p-warning)]/30 bg-[var(--p-warning-bg)] px-3 py-2 text-[12px] text-[var(--p-warning)]">
-              Sağlayıcı bakiyesi düşük: {bakiye!.tutar} {bakiye!.paraBirimi}. Gönderi oluşturmadan önce yükleme yapın.
+            <p className={`rounded-[4px] border px-3 py-2 text-[12px] ${bakiyeYok ? 'border-[var(--p-danger)]/30 bg-[var(--p-danger-bg)] text-[var(--p-danger)]' : 'border-[var(--p-warning)]/30 bg-[var(--p-warning-bg)] text-[var(--p-warning)]'}`}>
+              {bakiyeYok
+                ? `${saglayiciAdi} bakiyeniz yetersiz (${bakiye!.tutar} ${bakiye!.paraBirimi}) — gönderi onaylanamaz. Taslak oluşturup fiyat teklifi alabilirsiniz; firma seçimi için bakiye yükleyin.`
+                : `Sağlayıcı bakiyesi düşük: ${bakiye!.tutar} ${bakiye!.paraBirimi}. Gönderi oluşturmadan önce yükleme yapın.`}
             </p>
           )}
           {gonderi?.durum === 'iptal' && (
@@ -330,8 +335,10 @@ export default function KargoBlogu({
     >
       <div className="space-y-4 p-4">
         {bakiyeUyarisi && (
-          <p className="rounded-[4px] border border-[var(--p-warning)]/30 bg-[var(--p-warning-bg)] px-3 py-2 text-[12px] text-[var(--p-warning)]">
-            Sağlayıcı bakiyesi düşük: {bakiye!.tutar} {bakiye!.paraBirimi}
+          <p className={`rounded-[4px] border px-3 py-2 text-[12px] ${bakiyeYok ? 'border-[var(--p-danger)]/30 bg-[var(--p-danger-bg)] text-[var(--p-danger)]' : 'border-[var(--p-warning)]/30 bg-[var(--p-warning-bg)] text-[var(--p-warning)]'}`}>
+            {bakiyeYok
+              ? `${saglayiciAdi} bakiyeniz yetersiz (${bakiye!.tutar} ${bakiye!.paraBirimi}) — gönderi onaylanamaz.`
+              : `Sağlayıcı bakiyesi düşük: ${bakiye!.tutar} ${bakiye!.paraBirimi}`}
           </p>
         )}
 
@@ -397,12 +404,17 @@ export default function KargoBlogu({
                   ))}
                 </ul>
                 <div className="flex flex-wrap gap-2">
-                  <PButton onClick={() => firmaSec(seciliFirma)} disabled={!seciliFirma || isleniyor !== null}>
+                  <PButton onClick={() => firmaSec(seciliFirma)} disabled={!seciliFirma || isleniyor !== null || bakiyeYok}>
                     Seçilen firmayla gönder
                   </PButton>
-                  <PButton variant="ghost" onClick={() => firmaSec(null)} disabled={isleniyor !== null}>
+                  <PButton variant="ghost" onClick={() => firmaSec(null)} disabled={isleniyor !== null || bakiyeYok}>
                     Otomatik en ucuz
                   </PButton>
+                  {bakiyeYok && (
+                    <span className="self-center text-[11px] text-[var(--p-danger)]">
+                      Bakiye yüklenmeden firma seçilemez.
+                    </span>
+                  )}
                 </div>
               </>
             )}

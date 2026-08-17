@@ -41,10 +41,24 @@ export async function bolgeleriSenkronla(): Promise<{ il: number; ilce: number }
 
   let ilceSayisi = 0
   for (const il of iller) {
-    const ilceler: Bolge[] = (await saglayici.getCities(il.providerId)).map((c: any) => ({
-      providerId: c.id,
-      ad: c.ad,
-    }))
+    // Kargonomi hız sınırı uyguluyor (81 ardışık ilçe isteği 429 döndürüyor):
+    // istekler arasına küçük bir bekleme koyup 429'da geri çekilerek tekrar
+    // deneriz. Senkron seyrek çalışan bir işlem olduğu için bu maliyet kabul
+    // edilebilir (Faz 10B).
+    let ilceler: Bolge[] = []
+    for (let deneme = 0; deneme < 4; deneme++) {
+      try {
+        ilceler = (await saglayici.getCities(il.providerId)).map((c: any) => ({
+          providerId: c.id,
+          ad: c.ad,
+        }))
+        break
+      } catch (e: any) {
+        if (!/429|Too Many Requests/i.test(String(e?.message)) || deneme === 3) throw e
+        await new Promise((r) => setTimeout(r, 2000 * (deneme + 1)))
+      }
+    }
+    await new Promise((r) => setTimeout(r, 120))
     ilceSayisi += ilceler.length
     for (const ilce of ilceler) {
       satirlar.push({
