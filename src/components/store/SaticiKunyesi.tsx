@@ -25,9 +25,12 @@ export default function SaticiKunyesi({
     if (deger && deger.trim()) satirlar.push({ etiket, deger: deger.trim() })
   }
 
+  // Mesafeli Sözleşmeler Yönetmeliği m.5 ve 6563 sayılı E-Ticaret Kanunu:
+  // unvan, açık adres, telefon, e-posta ve vergi bilgisi ayrı ayrı görünmeli.
   ekle('Unvan', kunye.unvan || (varsayilan ? 'NB Steelora' : ''))
   ekle('Adres', kunye.adres || (varsayilan ? 'Mezitli / Mersin / Türkiye' : ''))
-  ekle('E-posta', kunye.iletisim || (varsayilan ? 'info@nbsteelora.com' : ''))
+  ekle('Telefon', kunye.telefon || (varsayilan ? WHATSAPP_DISPLAY : ''))
+  ekle('E-posta', kunye.eposta || (varsayilan ? 'info@nbsteelora.com' : ''))
   ekle('Vergi dairesi', kunye.vergiDairesi)
   ekle('Vergi no', kunye.vergi)
   ekle('MERSİS', kunye.mersis)

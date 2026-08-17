@@ -30,9 +30,19 @@ export const HAKLAR_HTML = `
 </ol>
 `.trim()
 
-/** Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e göre kanallar. */
-export function basvuruHtml(iletisim: string, kep: string): string {
-  const eposta = iletisim || 'info@nbsteelora.com'
+/**
+ * Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e göre kanallar.
+ *
+ * Alanlar AYRI verilir: e-imza ve kayıtlı e-posta satırlarında yalnız E-POSTA,
+ * yazılı başvuru satırında yalnız AÇIK ADRES basılır. (Önceden birleşik
+ * "iletişim" alanı kullanıldığı için bu satırlarda telefon numarası da
+ * basılıyordu — "0505 … · info@… adresine gönderebilirsiniz".)
+ */
+export function basvuruHtml(eposta_: string, kep: string, adres = ''): string {
+  const eposta = eposta_ || 'info@nbsteelora.com'
+  const adresCumlesi = adres
+    ? `Islak imzalı dilekçenizi şahsen ya da noter aracılığıyla <strong>${adres}</strong> adresine iletebilirsiniz.`
+    : 'Islak imzalı dilekçenizi şahsen ya da noter aracılığıyla adresimize iletebilirsiniz.'
   return `
 <h2>Başvuru Usulü</h2>
 <p>
@@ -42,7 +52,7 @@ imzanız, T.C. kimlik numaranız (yabancılar için uyruğu, pasaport numarası)
 adresiniz, varsa e-posta adresiniz ve telefon numaranız ile talebinizin konusu yer almalıdır.
 </p>
 <ul>
-<li><strong>Yazılı başvuru:</strong> Islak imzalı dilekçenizi şahsen ya da noter aracılığıyla adresimize iletebilirsiniz.</li>
+<li><strong>Yazılı başvuru:</strong> ${adresCumlesi}</li>
 ${kep ? `<li><strong>KEP:</strong> Kayıtlı elektronik posta adresinizden <strong>${kep}</strong> adresine gönderebilirsiniz.</li>` : `<li><strong>KEP:</strong> Kayıtlı elektronik posta adresimiz yayımlandığında bu bölümde duyurulacaktır.</li>`}
 <li><strong>Güvenli elektronik imza / mobil imza:</strong> İmzalı başvurunuzu <strong>${eposta}</strong> adresine gönderebilirsiniz.</li>
 <li><strong>Sistemimizde kayıtlı e-posta:</strong> Daha önce bize bildirdiğiniz ve sistemimizde kayıtlı olan e-posta adresinizden <strong>${eposta}</strong> adresine yazabilirsiniz.</li>

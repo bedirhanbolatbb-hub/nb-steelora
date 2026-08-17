@@ -6,7 +6,12 @@
  * çalışır ve tek farkı kalıcı ziyaretçi kimliğidir.
  */
 
-export const CONSENT_VERSION = '2026-08-1'
+/**
+ * Rıza metni sürümü — çerez politikasındaki sürümle AYNI olmalı
+ * (site_content.cerez_politikasi_surum). Metin esaslı değişirse burası da
+ * artar ve banda yeniden onay sorulur; consent_logs.version bu değeri saklar.
+ */
+export const CONSENT_VERSION = 'v1.0'
 
 /** Rıza tercihi çerezi — birinci taraf, kategori seçimlerini taşır. */
 export const CONSENT_COOKIE = 'nb_consent'

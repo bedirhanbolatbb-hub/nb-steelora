@@ -22,9 +22,15 @@ export const KUNYE_ANAHTARLARI = [
     zorunlu: true,
   },
   {
-    key: 'veri_sorumlusu_iletisim',
-    etiket: 'İletişim',
-    ipucu: 'E-posta ve telefon (ör. info@nbsteelora.com · 0505 198 4646)',
+    key: 'veri_sorumlusu_eposta',
+    etiket: 'E-posta',
+    ipucu: 'Yalnız e-posta adresi (ör. info@nbsteelora.com). Başvuru kanallarında bu kullanılır.',
+    zorunlu: true,
+  },
+  {
+    key: 'veri_sorumlusu_telefon',
+    etiket: 'Telefon',
+    ipucu: 'Yalnız telefon numarası (ör. 0505 198 4646).',
     zorunlu: true,
   },
   {
@@ -59,9 +65,29 @@ export const KUNYE_ANAHTARLARI = [
   },
 ] as const
 
+/** Birleşik iletişim metninden e-posta ayıklar (geriye dönük uyumluluk). */
+function epostaAyikla(metin: string): string {
+  return (metin.match(/[\w.+-]+@[\w.-]+\.\w{2,}/) || [''])[0]
+}
+
+/** Birleşik iletişim metninden telefon ayıklar (geriye dönük uyumluluk). */
+function telefonAyikla(metin: string): string {
+  const temiz = metin.replace(/[\w.+-]+@[\w.-]+\.\w{2,}/g, ' ')
+  return (temiz.match(/(?:\+?90[\s-]?)?0?\s?5\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}/) || [''])[0].trim()
+}
+
 export type Kunye = {
   unvan: string
   adres: string
+  /** Yalnız e-posta — başvuru kanallarında bu basılır. */
+  eposta: string
+  /** Yalnız telefon — iletişim bölümünde basılır, başvuru satırlarında ASLA. */
+  telefon: string
+  /**
+   * Eski birleşik alan (e-posta + telefon bir arada). Geriye dönük okunur ama
+   * hukuki metinlerde KULLANILMAZ: başvuru satırlarında telefonun adres yerine
+   * basılmasına yol açıyordu.
+   */
   iletisim: string
   vergi: string
   kep: string
@@ -90,13 +116,22 @@ export async function kunyeGetir(): Promise<Kunye> {
     unvan: al('veri_sorumlusu_unvan'),
     adres: al('veri_sorumlusu_adres'),
     iletisim: al('veri_sorumlusu_iletisim'),
+    // Ayrı anahtar boşsa eski birleşik alandan ayrıştırılır (geriye dönük).
+    eposta: al('veri_sorumlusu_eposta') || epostaAyikla(al('veri_sorumlusu_iletisim')),
+    telefon: al('veri_sorumlusu_telefon') || telefonAyikla(al('veri_sorumlusu_iletisim')),
     vergi: al('veri_sorumlusu_vergi'),
     kep: al('veri_sorumlusu_kep'),
     vergiDairesi: al('veri_sorumlusu_vergi_dairesi'),
     mersis: al('veri_sorumlusu_mersis'),
     etbis: al('veri_sorumlusu_etbis'),
     eksikler,
-    doluMu: Boolean(al('veri_sorumlusu_unvan') || al('veri_sorumlusu_adres') || al('veri_sorumlusu_iletisim')),
+    doluMu: Boolean(
+      al('veri_sorumlusu_unvan') ||
+        al('veri_sorumlusu_adres') ||
+        al('veri_sorumlusu_eposta') ||
+        al('veri_sorumlusu_telefon') ||
+        al('veri_sorumlusu_iletisim')
+    ),
   }
 }
 
@@ -115,7 +150,8 @@ export function kunyeHtml(k: Kunye): string {
 <div>
 ${satir('Unvan', k.unvan)}
 ${satir('Adres', k.adres)}
-${satir('İletişim', k.iletisim)}
+${satir('E-posta', k.eposta)}
+${satir('Telefon', k.telefon)}
 ${satir('Vergi dairesi / no', [k.vergiDairesi, k.vergi].filter(Boolean).join(' — '))}
 ${satir('MERSİS', k.mersis)}
 ${satir('KEP', k.kep)}

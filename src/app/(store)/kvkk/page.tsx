@@ -74,7 +74,7 @@ tercihi (rıza) kayıtları rızanın geri alınmasından itibaren <strong>10 y�
 Süre sonunda verileriniz silinir, yok edilir veya anonim hâle getirilir.
 </p>`,
     HAKLAR_HTML,
-    basvuruHtml(kunye.iletisim, kunye.kep),
+    basvuruHtml(kunye.eposta, kunye.kep, kunye.adres),
   ].join('\n')
 
   return (

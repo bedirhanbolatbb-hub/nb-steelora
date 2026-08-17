@@ -6,7 +6,7 @@ import Link from 'next/link'
 // ihtiyacı olan iki sabiti ve kendi çözümleyicisini taşır — böylece o modül
 // istemci paketine hiç girmez (Faz 12 cilası).
 const CONSENT_COOKIE = 'nb_consent'
-const CONSENT_VERSION = '2026-08-1'
+const CONSENT_VERSION = 'v1.0'
 
 type ConsentCategories = { zorunlu: true; analitik_gelismis: boolean; pazarlama: boolean }
 const DEFAULT_CONSENT: ConsentCategories = { zorunlu: true, analitik_gelismis: false, pazarlama: false }

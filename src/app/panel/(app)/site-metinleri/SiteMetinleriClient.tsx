@@ -28,15 +28,17 @@ const ETIKETLER: Record<string, { etiket: string; not?: string; genis?: boolean 
   // Hukuki metinler (Faz 12) — KVKK zorunlu unsurları
   veri_sorumlusu_unvan: { etiket: 'Veri sorumlusu — unvan', not: 'ZORUNLU. Ticari unvan ya da ad soyad. Boşsa künye eksik basılır.' },
   veri_sorumlusu_adres: { etiket: 'Veri sorumlusu — adres', not: 'ZORUNLU. Açık adres (mahalle, cadde, no, ilçe/il).', genis: true },
-  veri_sorumlusu_iletisim: { etiket: 'Veri sorumlusu — iletişim', not: 'ZORUNLU. E-posta ve telefon; başvuru kanallarında da kullanılır.' },
+  veri_sorumlusu_eposta: { etiket: 'Veri sorumlusu — e-posta', not: 'ZORUNLU. YALNIZ e-posta adresi; KVKK başvuru kanallarında bu basılır.' },
+  veri_sorumlusu_telefon: { etiket: 'Veri sorumlusu — telefon', not: 'ZORUNLU. YALNIZ telefon; satıcı bilgilerinde ve iletişimde basılır.' },
+  veri_sorumlusu_iletisim: { etiket: 'Veri sorumlusu — iletişim (eski)', not: 'Kullanımdan kalktı. Yukarıdaki e-posta ve telefon alanlarını doldurun.' },
   veri_sorumlusu_vergi: { etiket: 'Vergi no / MERSİS', not: 'Varsa yazın; boşsa sayfada hiç basılmaz.' },
   veri_sorumlusu_kep: { etiket: 'KEP adresi', not: 'Varsa yazın; KVKK başvuru kanalı olarak listelenir.' },
   veri_sorumlusu_vergi_dairesi: { etiket: 'Vergi dairesi', not: 'Ör. İstiklal Vergi Dairesi. Boşsa basılmaz.' },
   veri_sorumlusu_mersis: { etiket: 'MERSİS numarası', not: 'Şirketse 16 hane; şahıs işletmesinde boş bırakılabilir.' },
   veri_sorumlusu_etbis: { etiket: 'ETBİS kayıt/doğrulama', not: 'Kayıt numarası ya da https:// ile doğrulama bağlantısı.' },
   cerez_politikasi: { etiket: 'Çerez Politikası — giriş bölümü', not: 'HTML. Boşsa taslak metin basılır. Zorunlu bölümler (tablo, haklar, yurt dışı) koddan gelir.', genis: true },
-  cerez_politikasi_surum: { etiket: 'Çerez Politikası — sürüm', not: "Rıza kaydındaki sürümle AYNI olmalı (şu an: 2026-08-1). Boşsa koddaki sürüm basılır." },
-  cerez_politikasi_yururluk: { etiket: 'Çerez Politikası — yürürlük tarihi', not: 'Ör. 17 Ağustos 2026. Boşsa satır basılmaz.' },
+  cerez_politikasi_surum: { etiket: 'Çerez Politikası — sürüm', not: "Rıza kaydındaki sürümle AYNI olmalı (şu an: v1.0). Boşsa koddaki sürüm basılır." },
+  cerez_politikasi_yururluk: { etiket: 'Çerez Politikası — yürürlük tarihi', not: 'GG.AA.YYYY biçiminde (ör. 17.08.2026). Boşsa satır hiç basılmaz.' },
 }
 
 const GRUPLAR: { baslik: string; anahtarlar: string[] }[] = [
@@ -51,7 +53,8 @@ const GRUPLAR: { baslik: string; anahtarlar: string[] }[] = [
     anahtarlar: [
       'veri_sorumlusu_unvan',
       'veri_sorumlusu_adres',
-      'veri_sorumlusu_iletisim',
+      'veri_sorumlusu_eposta',
+      'veri_sorumlusu_telefon',
       'veri_sorumlusu_vergi_dairesi',
       'veri_sorumlusu_vergi',
       'veri_sorumlusu_mersis',
@@ -173,7 +176,8 @@ export default function SiteMetinleriClient({
   const ZORUNLU_KUNYE = [
     ['veri_sorumlusu_unvan', 'Unvan'],
     ['veri_sorumlusu_adres', 'Adres'],
-    ['veri_sorumlusu_iletisim', 'İletişim'],
+    ['veri_sorumlusu_eposta', 'E-posta'],
+    ['veri_sorumlusu_telefon', 'Telefon'],
   ] as const
   const eksikKunye = ZORUNLU_KUNYE.filter(([k]) => !(degerler[k] ?? '').trim()).map(([, e]) => e)
 

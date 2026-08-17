@@ -6,7 +6,7 @@ import { useEffect, useState, type ComponentType } from 'react'
 // duruyor ki o modül (ve rıza metinleri) istemci ilk yük paketine hiç girmesin.
 // Sürüm değişirse iki yer birlikte güncellenir.
 const CONSENT_COOKIE = 'nb_consent'
-const CONSENT_VERSION = '2026-08-1'
+const CONSENT_VERSION = 'v1.0'
 
 /**
  * Rıza bandının yükleme kapısı (Faz 12 cilası).

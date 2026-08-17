@@ -50,6 +50,7 @@ export default async function CerezPolitikasiPage() {
   const giris = icerik.cerez_politikasi || GIRIS_TASLAK
   // Sürüm rıza kaydıyla aynı olmalı: panelde boşsa koddaki rıza sürümü basılır.
   const surum = icerik.cerez_politikasi_surum || CONSENT_VERSION
+  // Yürürlük tarihi GG.AA.YYYY biçiminde; boşsa satır hiç basılmaz.
   const yururluk = icerik.cerez_politikasi_yururluk || ''
 
   const bolumler = [
@@ -60,7 +61,7 @@ export default async function CerezPolitikasiPage() {
     SAKLAMA_HTML,
     YURTDISI_HTML,
     HAKLAR_HTML,
-    basvuruHtml(kunye.iletisim, kunye.kep),
+    basvuruHtml(kunye.eposta, kunye.kep, kunye.adres),
     `
 <h2>Tercihlerinizi yönetme</h2>
 <p>
@@ -76,7 +77,8 @@ Kişisel verilerinizin korunmasına ilişkin genel bilgilendirme için
     `
 <hr>
 <p><small>
-<strong>Sürüm:</strong> ${surum}${yururluk ? ` · <strong>Yürürlük tarihi:</strong> ${yururluk}` : ''}<br>
+<strong>Sürüm:</strong> ${surum}<br>
+${yururluk ? `<strong>Yürürlük tarihi:</strong> ${yururluk}<br>` : ''}
 Bu politikanın sürümü, çerez tercihinizi kaydederken tutulan sürüm bilgisiyle aynıdır; böylece
 hangi metin sürümüne onay verdiğiniz izlenebilir. Politika güncellendiğinde tercihiniz yeniden
 sorulur.

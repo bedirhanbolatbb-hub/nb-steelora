@@ -21,6 +21,8 @@ export function kunyeSatirlari(content: Record<string, string>): string[] {
   return [
     content.veri_sorumlusu_unvan,
     content.veri_sorumlusu_adres,
+    content.veri_sorumlusu_telefon,
+    content.veri_sorumlusu_eposta,
     [content.veri_sorumlusu_vergi_dairesi, content.veri_sorumlusu_vergi].filter(Boolean).join(' — '),
     content.veri_sorumlusu_mersis ? `MERSİS: ${content.veri_sorumlusu_mersis}` : '',
   ]

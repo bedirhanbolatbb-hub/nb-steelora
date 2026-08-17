@@ -8,6 +8,18 @@
  * (canlı ölçüm). Sepet ve son görüntülenenler yalnız localStorage'da tutuluyor.
  */
 
+/**
+ * Supabase oturum çerezinin gerçek adı: `sb-<proje-kimliği>-auth-token`.
+ * Kimlik NEXT_PUBLIC_SUPABASE_URL'den türetilir (gizli değildir). Önceden
+ * metinde düz `<proje>` yazıyordu; HTML'e basılırken etiket sanılıp yutuluyor
+ * ve ekranda "sb--auth-token" görünüyordu.
+ */
+function supabaseCerezAdi(): string {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+  const ref = (url.match(/https?:\/\/([^.]+)\./) || [])[1]
+  return ref ? `sb-${ref}-auth-token` : 'sb-&lt;proje-kimliği&gt;-auth-token'
+}
+
 export type CerezSatiri = {
   ad: string
   tur: 'Çerez' | 'localStorage'
@@ -53,7 +65,7 @@ export const CEREZ_ENVANTERI: CerezSatiri[] = [
     kategori: 'Zorunlu',
   },
   {
-    ad: 'sb-<proje>-auth-token',
+    ad: supabaseCerezAdi(),
     tur: 'Çerez',
     taraf: 'Birinci taraf',
     amac: 'Üye girişi yaptığınızda oturumunuzun sürdürülmesi (Supabase kimlik doğrulama)',
