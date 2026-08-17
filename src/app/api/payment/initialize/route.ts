@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { initializeThreeDS, generateConversationId } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
 import { kuponDogrula, otomatikKampanyalar } from '@/lib/campaigns/pricing'
+import { shippingCostFor } from '@/lib/shipping'
 
 function toAscii(str: string): string {
   return str
@@ -70,7 +71,9 @@ export async function POST(request: Request) {
       subtotal
     )
     const indirimliAraToplam = Math.round((subtotal - discountTotal) * 100) / 100
-    const shippingCost = otomatik.ucretsizKargo || indirimliAraToplam >= 500 ? 0 : 49.9
+    // Kargo koşulsuz ücretsiz (lib/shipping tek kaynağı) — kampanya bayrağı da
+    // aynı sonucu verir, hesap tek yerden okunur.
+    const shippingCost = shippingCostFor(indirimliAraToplam)
     // iyzico'da price = sepet kalemlerinin toplamı, paidPrice = tahsil edilen.
     const grossTotal = Math.round((subtotal + shippingCost) * 100) / 100
     const total = Math.round((indirimliAraToplam + shippingCost) * 100) / 100

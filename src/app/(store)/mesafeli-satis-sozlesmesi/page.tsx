@@ -46,8 +46,7 @@ export default function MesafeliSatisSozlesmesiPage() {
       <ul>
         <li>Teslimat süresi: Sipariş onayından itibaren 1-5 iş günü</li>
         <li>Kargoya verme: Onaydan sonra 1-2 iş günü içinde</li>
-        <li>500 TL ve üzeri siparişlerde kargo ücretsizdir</li>
-        <li>500 TL altı siparişlerde kargo ücreti 49,90 TL'dir</li>
+        <li>Tüm siparişlerde kargo ücreti SATICI tarafından karşılanır; ALICI'dan kargo bedeli tahsil edilmez</li>
         <li>Teslimat, ALICI'nın sipariş sırasında belirttiği adrese yapılır</li>
         <li>Kargo takip numarası e-posta ile bildirilir</li>
       </ul>

@@ -7,7 +7,7 @@ import { useSyncExternalStore } from 'react'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
-import { FREE_SHIPPING_THRESHOLD, qualifiesForFreeShipping, shippingCostFor } from '@/lib/shipping'
+import { FREE_SHIPPING_LABEL, SHIPPING_LINE_LABEL, shippingCostFor } from '@/lib/shipping'
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
 
 // Sepet localStorage'da tutuluyor; ilk sunucu çıktısıyla uyumsuzluk olmasın diye
@@ -22,9 +22,6 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
   const shipping = shippingCostFor(subtotal)
   const hasItems = hydrated && items.length > 0
 
-  // Kargo ilerlemesi — çekmecedekiyle aynı tek kaynaktan (shipping.ts)
-  const kalan = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal)
-  const oran = Math.min(1, subtotal / FREE_SHIPPING_THRESHOLD)
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-14 lg:py-20">
@@ -123,32 +120,11 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
               </div>
               <div className="flex justify-between text-[13px] font-body text-ink-soft">
                 <span>Kargo</span>
-                <span>{shipping === 0 ? 'Ücretsiz' : formatPrice(shipping)}</span>
+                <span>{shipping === 0 ? SHIPPING_LINE_LABEL : formatPrice(shipping)}</span>
               </div>
-              {qualifiesForFreeShipping(subtotal) ? (
-                <p className="text-[11px] font-body text-ink">
-                  <span className="text-accent">✓</span> Ücretsiz kargo kazandın
-                </p>
-              ) : (
-                <div>
-                  <p className="text-[11px] font-body text-ink">
-                    Ücretsiz kargoya <span className="price">{formatPrice(kalan)}</span> kaldı
-                  </p>
-                  <div
-                    className="mt-1.5 h-1 bg-line rounded-full overflow-hidden"
-                    role="progressbar"
-                    aria-label="Ücretsiz kargo ilerlemesi"
-                    aria-valuemin={0}
-                    aria-valuemax={FREE_SHIPPING_THRESHOLD}
-                    aria-valuenow={Math.round(subtotal)}
-                  >
-                    <div
-                      className="h-full bg-accent origin-left motion-safe:transition-transform motion-safe:duration-500"
-                      style={{ transform: `scaleX(${oran})` }}
-                    />
-                  </div>
-                </div>
-              )}
+              <p className="text-[11px] font-body text-ink">
+                <span className="text-accent">✓</span> {FREE_SHIPPING_LABEL}
+              </p>
 
               {/* Kupon hatırlatması — yalnız kampanya bu sepete uygulanabiliyorsa */}
               {couponApplies(coupon, subtotal) && (

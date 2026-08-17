@@ -1,5 +1,6 @@
 import { formatPrice } from '@/lib/utils'
 import { WHATSAPP_URL } from '@/lib/contact'
+import { SHIPPING_LINE_LABEL } from '@/lib/shipping'
 
 /**
  * Müşteriye giden üç işlemsel mailin tek kaynağı.
@@ -71,7 +72,7 @@ export function orderConfirmationEmail(order: OrderLike) {
     <div style="padding: 16px 0; border-top: 2px solid #E8D8D0; margin-top: 8px;">
       <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
         <span style="color: #7A5048;">Kargo</span>
-        <span>${shipping === 0 ? 'Ücretsiz' : formatPrice(shipping)}</span>
+        <span>${shipping === 0 ? SHIPPING_LINE_LABEL : formatPrice(shipping)}</span>
       </div>
       <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 600; margin-top: 12px;">
         <span>Toplam</span>

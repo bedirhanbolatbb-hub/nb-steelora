@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { notFound } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
-import { FREE_SHIPPING_LABEL, FREE_SHIPPING_MIN_LABEL } from '@/lib/shipping'
+import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
 import { cleanDescription, hasContent } from '@/lib/catalog/description'
 import { materialCare, materialLabel } from '@/lib/catalog/material'
 import { resolveBadge } from '@/lib/catalog/badge'
@@ -296,8 +296,7 @@ export default async function UrunDetayPage({
                 content: (
                   <div className="space-y-2">
                     <p>
-                      {FREE_SHIPPING_MIN_LABEL} siparişlerde kargo ücretsizdir; altındaki
-                      siparişlerde kargo ücreti sepette gösterilir.
+                      Tüm siparişlerde kargo ücretsizdir; siparişlerde kargo ücreti sepette gösterilir.
                     </p>
                     <p>Siparişler 1-5 iş günü içinde kargoya verilir.</p>
                     <p>

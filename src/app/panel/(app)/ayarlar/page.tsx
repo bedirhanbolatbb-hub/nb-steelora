@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { createServiceClient } from '@/lib/supabase/service'
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST } from '@/lib/shipping'
+import { SHIPPING_COST } from '@/lib/shipping'
 import { formatPrice } from '@/lib/utils'
 import { PCard } from '../_components/ui'
 import KopyalanabilirAlan from './KopyalanabilirAlan'
@@ -25,8 +25,8 @@ export default async function PanelAyarlarPage() {
   ]
 
   const sabitler = [
-    { ad: 'Ücretsiz kargo eşiği', deger: formatPrice(FREE_SHIPPING_THRESHOLD) },
-    { ad: 'Kargo ücreti (eşik altı)', deger: formatPrice(SHIPPING_COST) },
+    { ad: 'Kargo politikası', deger: 'Tüm siparişlerde ücretsiz' },
+    { ad: 'Müşteriden alınan kargo bedeli', deger: formatPrice(SHIPPING_COST) },
     { ad: 'İade süresi', deger: '14 gün (koşulsuz)' },
   ]
 

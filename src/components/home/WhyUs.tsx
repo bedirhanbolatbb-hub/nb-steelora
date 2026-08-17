@@ -7,7 +7,7 @@ import { FREE_SHIPPING_MIN_LABEL } from '@/lib/shipping'
  */
 const MADDELER = [
   { Icon: Gem, baslik: '316L Medikal Çelik', metin: 'Kararmaz, paslanmaz, solmaz.' },
-  { Icon: Truck, baslik: 'Ücretsiz Kargo', metin: `${FREE_SHIPPING_MIN_LABEL} siparişlerde.` },
+  { Icon: Truck, baslik: 'Ücretsiz Kargo', metin: `${FREE_SHIPPING_MIN_LABEL.toLocaleLowerCase('tr-TR')}.` },
   { Icon: RotateCcw, baslik: 'Kolay İade', metin: 'Koşulsuz 14 gün iade hakkı.' },
   { Icon: Gift, baslik: 'Hediye Paketi', metin: 'Her siparişte ücretsiz premium kutu.' },
 ]

@@ -1,22 +1,38 @@
 /**
- * Kargo vaadinin tek kaynağı. Sepet hesabı da vitrindeki metinler de buradan okur;
- * eşik değeri hiçbir bileşende elle yazılmaz.
+ * Kargo vaadinin tek kaynağı.
+ *
+ * KARAR (Ağustos 2026): kargo ücreti KOŞULSUZ ücretsizdir. 500₺ eşiği ve
+ * 49,90₺ kargo bedeli kaldırıldı.
+ *
+ * Gerekçe: kendi sitemizde pazaryeri komisyonu ödemiyoruz; gönderi başına
+ * ~92₺ olan kargo maliyeti bu tasarrufun içinden karşılanıyor. Kargonomi
+ * tarafındaki gerçek maliyet bizde kalır, müşteriye yansımaz.
+ *
+ * Sepet, ödeme, sipariş toplamları ve vitrindeki her metin buradan okur;
+ * hiçbir bileşende eşik ya da ücret elle yazılmaz.
  */
-export const FREE_SHIPPING_THRESHOLD = 500
 
-/** Eşiğin altındaki siparişlerde uygulanan kargo ücreti. */
-export const SHIPPING_COST = 49.9
+/** Kargo her siparişte ücretsiz. */
+export const SHIPPING_COST = 0
 
-/** "500₺ üzeri" — vitrin metinlerinde kullanılan kısa etiket. */
-export const FREE_SHIPPING_MIN_LABEL = `${FREE_SHIPPING_THRESHOLD}₺ üzeri`
+/** Eşik kalktı; koşul kontrolü yapan eski çağrılar için 0 kalır. */
+export const FREE_SHIPPING_THRESHOLD = 0
 
-/** "500₺ üzeri ücretsiz kargo" */
-export const FREE_SHIPPING_LABEL = `${FREE_SHIPPING_MIN_LABEL} ücretsiz kargo`
+/** Kısa etiket — "Tüm siparişlerde" */
+export const FREE_SHIPPING_MIN_LABEL = 'Tüm siparişlerde'
 
-export function qualifiesForFreeShipping(subtotal: number): boolean {
-  return subtotal >= FREE_SHIPPING_THRESHOLD
+/** Tam etiket — "Tüm siparişlerde ücretsiz kargo" */
+export const FREE_SHIPPING_LABEL = 'Tüm siparişlerde ücretsiz kargo'
+
+/** Sipariş özetinde kargo satırında basılan değer. */
+export const SHIPPING_LINE_LABEL = 'Ücretsiz'
+
+/** Artık her sepet ücretsiz kargoya uygun. */
+export function qualifiesForFreeShipping(_subtotal?: number): boolean {
+  return true
 }
 
-export function shippingCostFor(subtotal: number): number {
-  return qualifiesForFreeShipping(subtotal) ? 0 : SHIPPING_COST
+/** Her sepette 0. */
+export function shippingCostFor(_subtotal?: number): number {
+  return SHIPPING_COST
 }

@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
 import Button from '@/components/ui/Button'
-import { FREE_SHIPPING_THRESHOLD, qualifiesForFreeShipping, shippingCostFor } from '@/lib/shipping'
+import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
 
 interface CartDrawerProps {
@@ -20,12 +20,8 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, totalPrice } = useCart()
   const subtotal = totalPrice()
-  const shipping = shippingCostFor(subtotal)
   const hasItems = items.length > 0
 
-  // Kargo ilerlemesi tek kaynaktan: eşik ve ücret shipping.ts'te tanımlı.
-  const freeShippingRemaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal)
-  const freeShippingProgress = Math.min(1, subtotal / FREE_SHIPPING_THRESHOLD)
 
   return (
     <>
@@ -129,39 +125,12 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
               })}
             </div>
 
-            {/* Kargo ilerlemesi — eşik, ücret ve kalan tutar shipping.ts'ten */}
+            {/* Ücretsiz kargo güven rozeti — kargo koşulsuz ücretsiz olduğu için
+                ilerleme çubuğu kaldırıldı (tek satır kaldı). */}
             <div className="px-6 py-3 bg-surface-muted/50">
-              {qualifiesForFreeShipping(subtotal) ? (
-                <p className="text-[11px] font-body text-ink text-center">
-                  <span className="text-accent">✓</span> Ücretsiz kargo kazandın
-                </p>
-              ) : (
-                <>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-[11px] font-body text-ink">
-                      Ücretsiz kargoya{' '}
-                      <span className="price text-ink">{formatPrice(freeShippingRemaining)}</span> kaldı
-                    </p>
-                    <p className="text-[10px] font-body text-muted shrink-0">
-                      Kargo: {formatPrice(shipping)}
-                    </p>
-                  </div>
-                  <div
-                    className="mt-2 h-1 bg-line rounded-full overflow-hidden"
-                    role="progressbar"
-                    aria-label="Ücretsiz kargo ilerlemesi"
-                    aria-valuemin={0}
-                    aria-valuemax={FREE_SHIPPING_THRESHOLD}
-                    aria-valuenow={Math.round(subtotal)}
-                  >
-                    {/* Genişlik değil ölçek anime edilir — yalnız transform. */}
-                    <div
-                      className="h-full bg-accent origin-left motion-safe:transition-transform motion-safe:duration-500"
-                      style={{ transform: `scaleX(${freeShippingProgress})` }}
-                    />
-                  </div>
-                </>
-              )}
+              <p className="text-[11px] font-body text-ink text-center">
+                <span className="text-accent">✓</span> {FREE_SHIPPING_LABEL}
+              </p>
             </div>
 
             {/* Kupon hatırlatması — yalnız kampanya bu sepete uygulanabiliyorsa */}

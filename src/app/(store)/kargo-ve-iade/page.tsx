@@ -8,8 +8,7 @@ export default function KargoVeIadePage() {
       <h2>Kargo Bilgileri</h2>
 
       <ul>
-        <li><strong>500 TL ve üzeri siparişlerde</strong> kargo ücretsizdir</li>
-        <li><strong>500 TL altı siparişlerde</strong> kargo ücreti 49,90 TL'dir</li>
+        <li><strong>Tüm siparişlerde kargo ücretsizdir</strong> — alt sınır yoktur</li>
         <li>Siparişiniz onaylandıktan sonra <strong>1-2 iş günü</strong> içinde kargoya verilir</li>
         <li>Tahmini teslimat süresi: <strong>1-5 iş günü</strong></li>
         <li>Kargo takip numaranız e-posta ile tarafınıza gönderilir</li>

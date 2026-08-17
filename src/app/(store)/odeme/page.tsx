@@ -10,6 +10,7 @@ import { formatPrice } from '@/lib/utils'
 import Input from '@/components/ui/Input'
 import CheckoutSteps from '@/components/store/CheckoutSteps'
 import { izle } from '@/lib/analytics/izle'
+import { SHIPPING_LINE_LABEL, shippingCostFor } from '@/lib/shipping'
 
 export default function OdemePage() {
   const { items, totalPrice, clearCart } = useCart()
@@ -96,7 +97,8 @@ export default function OdemePage() {
   // Kargo eşiği indirimli ara toplam üzerinden — sunucudaki hesapla birebir
   // aynı olmalı, yoksa ekrandaki toplam ile çekilen tutar ayrışır (Faz 11).
   const discountedSubtotal = subtotal - totalDiscount
-  const shipping = autoFreeShipping || discountedSubtotal >= 500 ? 0 : 49.9
+  // Kargo koşulsuz ücretsiz — sunucudaki hesapla birebir aynı tek kaynaktan.
+  const shipping = shippingCostFor(discountedSubtotal)
   const total = discountedSubtotal + shipping
 
   const applyDiscount = async () => {
@@ -562,7 +564,7 @@ export default function OdemePage() {
             <div className="flex items-baseline justify-between gap-4">
               <dt className="text-[12px] font-body text-ink-soft">Kargo</dt>
               <dd className="price text-[13px] text-ink">
-                {shipping === 0 ? 'Ücretsiz' : formatPrice(shipping)}
+                {shipping === 0 ? SHIPPING_LINE_LABEL : formatPrice(shipping)}
               </dd>
             </div>
             <div className="flex items-baseline justify-between gap-4 pt-3 border-t border-line">
