@@ -133,9 +133,9 @@ export default function ProductCardV2({
         </h3>
         <div className="mt-1.5 flex items-baseline justify-center gap-2">
           <span className={`price text-ink ${buyuk ? 'text-[16px]' : 'text-[14px]'}`}>
-            {formatPrice((product as any).custom_price ?? product.display_price)}
+            {formatPrice((product as any).override_price ?? product.display_price)}
           </span>
-          {(product as any).custom_price && (product as any).custom_price < product.display_price && (
+          {(product as any).override_price && (product as any).override_price < product.display_price && (
             <span className="price text-[12px] text-muted line-through font-normal">
               {formatPrice(product.display_price)}
             </span>

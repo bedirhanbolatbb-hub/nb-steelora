@@ -79,7 +79,7 @@ export default async function UrunDetayPage({
 
   const [{ data: product }, { data: priceRow }] = await Promise.all([
     supabase.from('products_display').select('*').eq('slug', slug).single(),
-    service.from('products').select('custom_price').eq('slug', slug).single(),
+    service.from('products').select('override_price').eq('slug', slug).single(),
   ])
 
   if (!product) notFound()
@@ -87,8 +87,11 @@ export default async function UrunDetayPage({
   // Ürün görüntüleme sunucuda ölçülür (Faz 12) — engelleyicilerden etkilenmez.
   await sunucuOlayi('product_view', { productId: product.id, path: `/urun/${product.slug}` })
 
-  // products_display view'u custom_price içermeyebilir — direkt products tablosundan al
-  const mergedProduct = { ...product, custom_price: priceRow?.custom_price ?? product.custom_price ?? null }
+  // products_display view'u override_price içermeyebilir — direkt products
+  // tablosundan al. (Sütun adı 'custom_price' sanılıyordu; gerçek ad
+  // override_price — yanlış ad sorguyu patlatıp özel fiyatı sessizce yok
+  // sayıyordu, panel ürün sayfası da 404 veriyordu.)
+  const mergedProduct = { ...product, override_price: priceRow?.override_price ?? product.override_price ?? null }
 
   const material = materialLabel(product.material_type)
   const stock = Number(product.trendyol_stock) || 0
@@ -118,7 +121,7 @@ export default async function UrunDetayPage({
           title: product.display_title,
           description: seoDescription,
           images: (product.display_images as string[] | null) ?? [],
-          price: mergedProduct.custom_price ?? product.display_price,
+          price: mergedProduct.override_price ?? product.display_price,
           stock,
           barcode: product.trendyol_barcode ?? null,
           category: product.trendyol_category ?? null,
@@ -178,9 +181,9 @@ export default async function UrunDetayPage({
           {/* Fiyat */}
           <div className="flex items-baseline gap-3 mt-6 pt-6 border-t border-line">
             <p className="price text-[28px] text-ink">
-              {formatPrice(mergedProduct.custom_price ?? product.display_price)}
+              {formatPrice(mergedProduct.override_price ?? product.display_price)}
             </p>
-            {mergedProduct.custom_price && mergedProduct.custom_price < product.display_price && (
+            {mergedProduct.override_price && mergedProduct.override_price < product.display_price && (
               <p className="price text-[16px] text-muted line-through font-normal">
                 {formatPrice(product.display_price)}
               </p>
@@ -332,7 +335,7 @@ export default async function UrunDetayPage({
       <StickyBuyBar
         product={mergedProduct}
         title={product.display_title}
-        price={mergedProduct.custom_price ?? product.display_price}
+        price={mergedProduct.override_price ?? product.display_price}
         outOfStock={stock === 0}
         hasSizes={useLabels && variantMembers.length > 1}
       />

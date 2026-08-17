@@ -3,6 +3,7 @@ import { CATEGORIES } from '@/lib/catalog/categories'
 import type { CollectionCard } from '@/lib/collections'
 import { WHATSAPP_URL } from '@/lib/contact'
 import CerezTercihleriDugmesi from './CerezTercihleriDugmesi'
+import { kunyeSatirlari } from '@/lib/layoutData'
 
 // Menüyle birebir aynı liste — tek kaynak src/lib/catalog/categories.ts
 const categories = CATEGORIES.map((c) => ({ href: `/kategori/${c.slug}`, label: c.title }))
@@ -37,6 +38,7 @@ export default function Footer({
   // Sosyal adresler site_content'ten; boş anahtar ikon basmaz.
   content: Record<string, string>
 }) {
+  const kunye = kunyeSatirlari(content)
   const sosyal = [
     {
       label: 'Instagram',
@@ -191,6 +193,30 @@ export default function Footer({
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
           <p className="text-[10px] font-body text-line/50 tracking-wider">
+            {/* Satıcı künyesi — E-Ticaret Kanunu gereği; boş alanlar basılmaz. */}
+            {kunye.length > 0 && (
+              <>
+                {kunye.join(' · ')}
+                <br />
+              </>
+            )}
+            {content.veri_sorumlusu_etbis ? (
+              <>
+                {content.veri_sorumlusu_etbis.startsWith('http') ? (
+                  <a
+                    href={content.veri_sorumlusu_etbis}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:text-accent transition-colors"
+                  >
+                    ETBİS kayıt doğrulama
+                  </a>
+                ) : (
+                  <>ETBİS: {content.veri_sorumlusu_etbis}</>
+                )}
+                {' · '}
+              </>
+            ) : null}
             © 2026 NB Steelora®. Tüm hakları saklıdır.
             {' · '}
             {/* Rıza her zaman geri alınabilir olmalı (KVKK) — bandı yeniden açar. */}

@@ -1,19 +1,18 @@
 import LegalPageLayout from '@/components/store/LegalPageLayout'
+import SaticiKunyesi from '@/components/store/SaticiKunyesi'
+import { kunyeGetir } from '@/lib/legal/veriSorumlusu'
 
 export const metadata = { title: 'Mesafeli Satış Sözleşmesi' }
+export const dynamic = 'force-dynamic'
 
-export default function MesafeliSatisSozlesmesiPage() {
+export default async function MesafeliSatisSozlesmesiPage() {
+  // Satıcı bilgileri tek kaynaktan (panel → Site Metinleri künyesi).
+  const kunye = await kunyeGetir()
   return (
     <LegalPageLayout eyebrow="Hukuk" title="Mesafeli Satış Sözleşmesi">
       <h2>1. Taraflar</h2>
-      <p>
-        <strong>SATICI:</strong><br />
-        Ad Soyad: Nalan Bolat<br />
-        Adres: Mezitli / Mersin / Türkiye<br />
-        Vergi Dairesi: İstiklal Vergi Dairesi<br />
-        E-posta: info@nbsteelora.com<br />
-        Web: https://www.nbsteelora.com
-      </p>
+      <p><strong>SATICI:</strong></p>
+      <SaticiKunyesi kunye={kunye} baslikYok />
       <p>
         <strong>ALICI:</strong><br />
         Sipariş sırasında beyan edilen ad, soyad, adres, e-posta ve telefon bilgileri geçerlidir.

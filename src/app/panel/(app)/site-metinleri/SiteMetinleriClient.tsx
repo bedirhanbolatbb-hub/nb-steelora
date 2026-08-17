@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { PButton, PCard, PInput, PTextarea } from '../_components/ui'
 import { useToast } from '../_components/overlays'
 
@@ -31,6 +31,9 @@ const ETIKETLER: Record<string, { etiket: string; not?: string; genis?: boolean 
   veri_sorumlusu_iletisim: { etiket: 'Veri sorumlusu — iletişim', not: 'ZORUNLU. E-posta ve telefon; başvuru kanallarında da kullanılır.' },
   veri_sorumlusu_vergi: { etiket: 'Vergi no / MERSİS', not: 'Varsa yazın; boşsa sayfada hiç basılmaz.' },
   veri_sorumlusu_kep: { etiket: 'KEP adresi', not: 'Varsa yazın; KVKK başvuru kanalı olarak listelenir.' },
+  veri_sorumlusu_vergi_dairesi: { etiket: 'Vergi dairesi', not: 'Ör. İstiklal Vergi Dairesi. Boşsa basılmaz.' },
+  veri_sorumlusu_mersis: { etiket: 'MERSİS numarası', not: 'Şirketse 16 hane; şahıs işletmesinde boş bırakılabilir.' },
+  veri_sorumlusu_etbis: { etiket: 'ETBİS kayıt/doğrulama', not: 'Kayıt numarası ya da https:// ile doğrulama bağlantısı.' },
   cerez_politikasi: { etiket: 'Çerez Politikası — giriş bölümü', not: 'HTML. Boşsa taslak metin basılır. Zorunlu bölümler (tablo, haklar, yurt dışı) koddan gelir.', genis: true },
   cerez_politikasi_surum: { etiket: 'Çerez Politikası — sürüm', not: "Rıza kaydındaki sürümle AYNI olmalı (şu an: 2026-08-1). Boşsa koddaki sürüm basılır." },
   cerez_politikasi_yururluk: { etiket: 'Çerez Politikası — yürürlük tarihi', not: 'Ör. 17 Ağustos 2026. Boşsa satır basılmaz.' },
@@ -45,7 +48,16 @@ const GRUPLAR: { baslik: string; anahtarlar: string[] }[] = [
   { baslik: 'Sosyal bağlantılar', anahtarlar: ['instagram_url', 'facebook_url', 'x_url'] },
   {
     baslik: 'Hukuki — veri sorumlusu künyesi',
-    anahtarlar: ['veri_sorumlusu_unvan', 'veri_sorumlusu_adres', 'veri_sorumlusu_iletisim', 'veri_sorumlusu_vergi', 'veri_sorumlusu_kep'],
+    anahtarlar: [
+      'veri_sorumlusu_unvan',
+      'veri_sorumlusu_adres',
+      'veri_sorumlusu_iletisim',
+      'veri_sorumlusu_vergi_dairesi',
+      'veri_sorumlusu_vergi',
+      'veri_sorumlusu_mersis',
+      'veri_sorumlusu_kep',
+      'veri_sorumlusu_etbis',
+    ],
   },
   {
     baslik: 'Hukuki — çerez politikası',
@@ -53,6 +65,69 @@ const GRUPLAR: { baslik: string; anahtarlar: string[] }[] = [
   },
   { baslik: 'Diğer', anahtarlar: [] },
 ]
+
+
+/**
+ * Tek bir metin alanı — MODÜL seviyesinde tanımlıdır.
+ *
+ * Daha önce bu bileşen SiteMetinleriClient'ın içinde tanımlıydı: her tuş
+ * vuruşunda üst bileşen yeniden render olunca `Alan` yeni bir fonksiyon
+ * referansı oluyor, React bunu farklı bir bileşen tipi sayıp input'u
+ * unmount/remount ediyordu — yazarken odak kayboluyordu. Dışarı taşındığı
+ * için tip artık sabit; input DOM'da kalır.
+ */
+function Alan({
+  anahtar,
+  deger,
+  orijinalDeger,
+  kaydediliyor,
+  onDegis,
+  onKaydet,
+}: {
+  anahtar: string
+  deger: string
+  orijinalDeger: string
+  kaydediliyor: boolean
+  onDegis: (anahtar: string, deger: string) => void
+  onKaydet: (anahtar: string) => void
+}) {
+  const meta = ETIKETLER[anahtar] ?? { etiket: anahtar }
+  const degisti = deger !== orijinalDeger
+  return (
+    <div>
+      <label
+        htmlFor={`alan-${anahtar}`}
+        className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]"
+      >
+        {meta.etiket} <code className="ml-1 text-[10px] text-[var(--p-muted)]">{anahtar}</code>
+      </label>
+      <div className="flex items-start gap-2">
+        {meta.genis ? (
+          <PTextarea
+            id={`alan-${anahtar}`}
+            rows={2}
+            value={deger}
+            onChange={(e) => onDegis(anahtar, e.target.value)}
+          />
+        ) : (
+          <PInput
+            id={`alan-${anahtar}`}
+            value={deger}
+            onChange={(e) => onDegis(anahtar, e.target.value)}
+          />
+        )}
+        <PButton
+          variant={degisti ? 'primary' : 'ghost'}
+          disabled={!degisti || kaydediliyor}
+          onClick={() => onKaydet(anahtar)}
+        >
+          {kaydediliyor ? '…' : 'Kaydet'}
+        </PButton>
+      </div>
+      {meta.not && <p className="mt-1 text-[11px] text-[var(--p-muted)]">{meta.not}</p>}
+    </div>
+  )
+}
 
 export default function SiteMetinleriClient({
   metinler,
@@ -70,7 +145,12 @@ export default function SiteMetinleriClient({
   const gruplu = new Set(GRUPLAR.flatMap((g) => g.anahtarlar))
   const digerleri = metinler.map((m) => m.key).filter((k) => !gruplu.has(k))
 
-  const kaydet = async (key: string) => {
+  // useCallback: Alan'a giden geri çağrılar her render'da değişmesin.
+  const degistir = useCallback((anahtar: string, deger: string) => {
+    setDegerler((onceki) => ({ ...onceki, [anahtar]: deger }))
+  }, [])
+
+  const kaydet = useCallback(async (key: string) => {
     setKaydedilen(key)
     try {
       const res = await fetch('/api/panel/content', {
@@ -86,41 +166,7 @@ export default function SiteMetinleriClient({
       toast(e.message, 'danger')
     }
     setKaydedilen(null)
-  }
-
-  const Alan = ({ anahtar }: { anahtar: string }) => {
-    const meta = ETIKETLER[anahtar] ?? { etiket: anahtar }
-    const degisti = (degerler[anahtar] ?? '') !== (orijinal[anahtar] ?? '')
-    return (
-      <div>
-        <label className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]">
-          {meta.etiket} <code className="ml-1 text-[10px] text-[var(--p-muted)]">{anahtar}</code>
-        </label>
-        <div className="flex items-start gap-2">
-          {meta.genis ? (
-            <PTextarea
-              rows={2}
-              value={degerler[anahtar] ?? ''}
-              onChange={(e) => setDegerler({ ...degerler, [anahtar]: e.target.value })}
-            />
-          ) : (
-            <PInput
-              value={degerler[anahtar] ?? ''}
-              onChange={(e) => setDegerler({ ...degerler, [anahtar]: e.target.value })}
-            />
-          )}
-          <PButton
-            variant={degisti ? 'primary' : 'ghost'}
-            disabled={!degisti || kaydedilen === anahtar}
-            onClick={() => kaydet(anahtar)}
-          >
-            {kaydedilen === anahtar ? '…' : 'Kaydet'}
-          </PButton>
-        </div>
-        {meta.not && <p className="mt-1 text-[11px] text-[var(--p-muted)]">{meta.not}</p>}
-      </div>
-    )
-  }
+  }, [degerler, router, toast])
 
   // KVKK künyesi eksikse panelde görünür uyarı (Faz 12 hukuki tamamlama):
   // boş alanlar hukuki metinlerde hiç basılmaz, bu yüzden fark edilmeleri gerekir.
@@ -148,7 +194,15 @@ export default function SiteMetinleriClient({
           <PCard key={g.baslik} title={g.baslik}>
             <div className="space-y-4">
               {anahtarlar.map((k) => (
-                <Alan key={k} anahtar={k} />
+                <Alan
+                  key={k}
+                  anahtar={k}
+                  deger={degerler[k] ?? ''}
+                  orijinalDeger={orijinal[k] ?? ''}
+                  kaydediliyor={kaydedilen === k}
+                  onDegis={degistir}
+                  onKaydet={kaydet}
+                />
               ))}
             </div>
           </PCard>

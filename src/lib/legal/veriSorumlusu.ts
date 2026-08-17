@@ -39,6 +39,24 @@ export const KUNYE_ANAHTARLARI = [
     ipucu: 'Kayıtlı Elektronik Posta adresi (başvuru kanalı olarak yazılır); yoksa boş bırakın',
     zorunlu: false,
   },
+  {
+    key: 'veri_sorumlusu_vergi_dairesi',
+    etiket: 'Vergi dairesi',
+    ipucu: 'Ör. İstiklal Vergi Dairesi',
+    zorunlu: false,
+  },
+  {
+    key: 'veri_sorumlusu_mersis',
+    etiket: 'MERSİS numarası',
+    ipucu: 'Şirketse 16 haneli MERSİS numarası; şahıs işletmesinde boş bırakılabilir',
+    zorunlu: false,
+  },
+  {
+    key: 'veri_sorumlusu_etbis',
+    etiket: 'ETBİS kayıt/doğrulama',
+    ipucu: 'ETBİS kayıt numarası ya da doğrulama bağlantısı (https://...)',
+    zorunlu: false,
+  },
 ] as const
 
 export type Kunye = {
@@ -47,6 +65,9 @@ export type Kunye = {
   iletisim: string
   vergi: string
   kep: string
+  vergiDairesi: string
+  mersis: string
+  etbis: string
   /** Doldurulması gereken ama boş kalan zorunlu anahtarlar. */
   eksikler: string[]
   /** Künyede gösterilecek en az bir alan var mı? */
@@ -71,6 +92,9 @@ export async function kunyeGetir(): Promise<Kunye> {
     iletisim: al('veri_sorumlusu_iletisim'),
     vergi: al('veri_sorumlusu_vergi'),
     kep: al('veri_sorumlusu_kep'),
+    vergiDairesi: al('veri_sorumlusu_vergi_dairesi'),
+    mersis: al('veri_sorumlusu_mersis'),
+    etbis: al('veri_sorumlusu_etbis'),
     eksikler,
     doluMu: Boolean(al('veri_sorumlusu_unvan') || al('veri_sorumlusu_adres') || al('veri_sorumlusu_iletisim')),
   }
@@ -81,13 +105,20 @@ export function kunyeHtml(k: Kunye): string {
   if (!k.doluMu) return ''
   const satir = (etiket: string, deger: string) =>
     deger ? `<p style="margin:0"><strong>${etiket}:</strong> ${deger}</p>` : ''
+  const etbisSatiri = k.etbis
+    ? k.etbis.startsWith('http')
+      ? `<p style="margin:0"><strong>ETBİS:</strong> <a href="${k.etbis}" target="_blank" rel="noopener noreferrer">Kayıt doğrulama</a></p>`
+      : satir('ETBİS kayıt no', k.etbis)
+    : ''
   return `
 <h2>Veri Sorumlusu</h2>
 <div>
 ${satir('Unvan', k.unvan)}
 ${satir('Adres', k.adres)}
 ${satir('İletişim', k.iletisim)}
-${satir('Vergi no / MERSİS', k.vergi)}
+${satir('Vergi dairesi / no', [k.vergiDairesi, k.vergi].filter(Boolean).join(' — '))}
+${satir('MERSİS', k.mersis)}
 ${satir('KEP', k.kep)}
+${etbisSatiri}
 </div>`.trim()
 }

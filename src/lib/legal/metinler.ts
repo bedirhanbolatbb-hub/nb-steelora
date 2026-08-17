@@ -5,8 +5,8 @@
  * ve panel uyarısına düşülür.
  *
  * Sunucu bölgeleri altyapıdan DOĞRULANMIŞTIR:
- *   - Vercel: uç sunucular fra1 (Frankfurt/AB), sunucu fonksiyonları iad1 (ABD)
- *     — canlı yanıt başlığı `x-vercel-id: fra1::iad1::…`
+ *   - Vercel: uç VE sunucu fonksiyonları fra1 (Frankfurt/AB) — vercel.json'da
+ *     regions ile sabitlendi; canlı yanıt başlığı `x-vercel-id: fra1::fra1::…`
  *   - Supabase: ap-southeast-1 (Singapur) — proje bilgisinden okundu
  *   - Resend: ABD merkezli altyapı
  *   - Cloudflare: küresel anycast ağ (DNS/CDN)
@@ -85,7 +85,7 @@ aktarılmaktadır:
 <td>Vercel (barındırma)</td>
 <td>Web sitesinin yayınlanması, sayfaların oluşturulması</td>
 <td>Bağlantı verileri (IP, tarayıcı bilgisi), gezinme sırasında iletilen form ve sipariş verileri</td>
-<td>Uç sunucular Frankfurt (Almanya, AB); sunucu fonksiyonları Kuzey Virginia (ABD)</td>
+<td>Uç ve sunucu fonksiyonları: Frankfurt (Almanya, AB)</td>
 </tr>
 <tr>
 <td>Supabase (veritabanı ve dosya depolama)</td>

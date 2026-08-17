@@ -77,7 +77,7 @@ export default function UrunDetayClient({ urun }: { urun: UrunDetay }) {
   const degisenler = useMemo(() => {
     const patch: Record<string, unknown> = {}
     if (form.overrideTitle !== ilk.overrideTitle) patch.override_title = form.overrideTitle
-    if (form.customPrice !== ilk.customPrice) patch.custom_price = form.customPrice.trim() || null
+    if (form.customPrice !== ilk.customPrice) patch.override_price = form.customPrice.trim() || null
     if (form.overrideDescription !== ilk.overrideDescription)
       patch.override_description = form.overrideDescription
     if (JSON.stringify(form.overrideImages) !== JSON.stringify(ilk.overrideImages))

@@ -12,7 +12,7 @@ import { createServiceClient } from '@/lib/supabase/service'
  */
 const WRITABLE = new Set([
   'override_title',
-  'custom_price',
+  'override_price',
   'override_description',
   'override_images',
   'badge',
@@ -64,7 +64,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
     }
     if (key === 'is_featured') value = Boolean(value)
-    if (key === 'custom_price') {
+    if (key === 'override_price') {
       if (value !== null) {
         const n = Number(value)
         if (!isFinite(n) || n <= 0) {

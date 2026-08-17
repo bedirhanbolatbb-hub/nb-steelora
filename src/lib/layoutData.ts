@@ -16,6 +16,18 @@ export type LayoutData = {
   content: Record<string, string>
 }
 
+/** Footer künyesinde basılan alanlar (site_content'ten; boşlar basılmaz). */
+export function kunyeSatirlari(content: Record<string, string>): string[] {
+  return [
+    content.veri_sorumlusu_unvan,
+    content.veri_sorumlusu_adres,
+    [content.veri_sorumlusu_vergi_dairesi, content.veri_sorumlusu_vergi].filter(Boolean).join(' — '),
+    content.veri_sorumlusu_mersis ? `MERSİS: ${content.veri_sorumlusu_mersis}` : '',
+  ]
+    .map((s) => (s || '').trim())
+    .filter(Boolean)
+}
+
 const TTL_MS = 2 * 60_000
 const g = globalThis as unknown as { __nbLayoutCache?: { at: number; veri: LayoutData } }
 

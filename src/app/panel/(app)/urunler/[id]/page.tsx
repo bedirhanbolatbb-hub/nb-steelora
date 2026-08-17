@@ -17,7 +17,7 @@ export default async function PanelUrunDetayPage({
   const { data: p } = await supabase
     .from('products')
     .select(
-      'id, slug, trendyol_title, trendyol_price, trendyol_stock, trendyol_category, trendyol_barcode, trendyol_images, variant_label, last_synced_at, is_active, override_title, custom_price, override_description, override_images, badge, is_featured, material_type, gender, note'
+      'id, slug, trendyol_title, trendyol_price, trendyol_stock, trendyol_category, trendyol_barcode, trendyol_images, variant_label, last_synced_at, is_active, override_title, override_price, override_description, override_images, badge, is_featured, material_type, gender, note'
     )
     .eq('id', id)
     .maybeSingle()
@@ -39,7 +39,7 @@ export default async function PanelUrunDetayPage({
         lastSyncedAt: p.last_synced_at,
         active: Boolean(p.is_active),
         overrideTitle: p.override_title ?? '',
-        customPrice: p.custom_price != null ? String(p.custom_price) : '',
+        customPrice: p.override_price != null ? String(p.override_price) : '',
         overrideDescription: p.override_description ?? '',
         overrideImages: (p.override_images as string[] | null) ?? null,
         badge: p.badge ?? '',

@@ -203,7 +203,10 @@ export default function KurasyonClient({
     setState({ ...state, [key]: next })
   }
 
-  const KaydetSatiri = ({ bolum }: { bolum: string }) =>
+  // Bileşen olarak DEĞİL, düz fonksiyon olarak çağrılır: bileşen fonksiyonunun
+  // içinde tanımlanan bir bileşen her render'da yeni tip sayılır ve alt ağacı
+  // remount eder (form alanlarında odak kaybına yol açan desen).
+  const kaydetSatiri = (bolum: string) =>
     degisti(bolum) ? (
       <div className="mt-3 flex items-center justify-end gap-2 border-t border-[var(--p-line)] pt-3">
         <PButton
@@ -452,7 +455,7 @@ export default function KurasyonClient({
               })}
             </ul>
           )}
-          <KaydetSatiri bolum={c.key} />
+          {kaydetSatiri(c.key)}
         </PCard>
         )
       })}
@@ -500,7 +503,7 @@ export default function KurasyonClient({
                 <PButton variant="ghost" onClick={() => setPickerFor(t.key)} className="w-full">
                   <RefreshCcw size={13} /> {u ? 'Ürün değiştir' : 'Üründen seç'}
                 </PButton>
-                <KaydetSatiri bolum={t.key} />
+                {kaydetSatiri(t.key)}
               </div>
             </PCard>
           )
