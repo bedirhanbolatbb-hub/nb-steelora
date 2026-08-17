@@ -52,6 +52,14 @@ export async function GET(request: Request) {
     },
   }
 
+  // 0) İstenirse tek bir gönderinin ham verileri (ayrıştırma hatası aramak için)
+  const gonderiId = sp.get('shipment')
+  if (gonderiId) {
+    sonuc.shipmentHam = await kargonomiGet(`/shipments/${gonderiId}`)
+    sonuc.fiyatHam = await kargonomiGet(`/shipment-price-comparison/${gonderiId}`)
+    return NextResponse.json(sonuc)
+  }
+
   // 1) Bakiye / yetki
   sonuc.credit = await kargonomiGet('/user/credit')
 
