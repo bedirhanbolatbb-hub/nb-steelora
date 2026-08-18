@@ -7,16 +7,13 @@ import type { Metadata } from 'next'
 import JsonLd from '@/components/seo/JsonLd'
 import { articleJsonLd, breadcrumbJsonLd } from '@/lib/seo'
 
-export const revalidate = 3600
-
-export async function generateStaticParams() {
-  const supabase = createServiceClient()
-  const { data } = await supabase
-    .from('blog_posts')
-    .select('slug')
-    .eq('published', true)
-  return (data || []).map((p) => ({ slug: p.slug }))
-}
+/**
+ * Yazı sayfaları artık istek anında render ediliyor: ölçüm (blog/layout.tsx)
+ * istek başlıklarını okuduğu için sayfa önceden üretilemez. Önceki 1 saatlik
+ * ISR ve generateStaticParams bu yüzden kaldırıldı — aksi hâlde önbellekten
+ * dönen isteklerde blog trafiği ölçüme hiç girmezdi. Sorgu tek satırlık ve
+ * vitrinin geri kalanı da (store) grubunda aynı şekilde dinamik.
+ */
 
 export async function generateMetadata({
   params,
