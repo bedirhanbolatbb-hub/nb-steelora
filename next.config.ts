@@ -7,9 +7,17 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '**.trendyol.com' },
       { protocol: 'https', hostname: '**.ty-cdn.com' },
       // Faz 9A: panelden yüklenen medya (public "media" bucket'ı).
+      // İki proje birden listede: taşıma penceresinde canlı hâlâ eski projede,
+      // yeni proje (Frankfurt) hazır. Eski satır taşıma tamamlanıp geri dönüş
+      // penceresi kapanınca kaldırılabilir (Faz 13B).
       {
         protocol: 'https',
         hostname: 'npvanotrzbqsnxvasmxm.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'halyhtowppivuwpdserp.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
     ],
