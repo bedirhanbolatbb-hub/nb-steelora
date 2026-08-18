@@ -81,10 +81,21 @@ export async function POST(request: Request) {
     )
   }
 
-  // Bilgilendirme maili: hesap silindiği için bu son temas.
+  // Bilgilendirme maili: hesap silindiği için bu son temas. Gönderim kimliği
+  // yanıta da konur — mail akışının gerçekten çalıştığı, log okumadan
+  // doğrulanabilsin (gönderilemezse silme yine de geçerlidir).
+  let mailId: string | null = null
+  let mailHata: string | null = null
   if (eposta) {
     const mail = accountDeletedEmail({ anonimSiparis: sonuc.anonimlestirilenSiparis })
-    await sendMail({ to: eposta, subject: mail.subject, html: mail.html, label: 'account-deleted' })
+    const gonderim = await sendMail({
+      to: eposta,
+      subject: mail.subject,
+      html: mail.html,
+      label: 'account-deleted',
+    })
+    mailId = gonderim.id
+    mailHata = gonderim.error
   }
 
   // Oturumu kapat: auth kaydı silindiği için jetonlar zaten geçersiz, çerezler
@@ -92,5 +103,5 @@ export async function POST(request: Request) {
   await supabase.auth.signOut().catch(() => {})
   cookieStore.delete(VISITOR_COOKIE)
 
-  return NextResponse.json({ ok: true, ozet: sonuc })
+  return NextResponse.json({ ok: true, ozet: sonuc, mail: { id: mailId, hata: mailHata } })
 }
