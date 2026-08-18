@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import Input from '@/components/ui/Input'
 
 /**
@@ -16,7 +16,7 @@ export default function HesapSilme() {
   const [onay, setOnay] = useState('')
   const [hata, setHata] = useState('')
   const [gonderiliyor, setGonderiliyor] = useState(false)
-  const router = useRouter()
+  const supabase = createClient()
 
   const onayGecerli = onay.trim().toLocaleUpperCase('tr-TR') === 'SİL'
 
@@ -36,8 +36,11 @@ export default function HesapSilme() {
         return
       }
       setAdim(2)
-      // Oturum sunucuda kapatıldı; istemci önbelleğini de tazele.
-      router.refresh()
+      // Oturum sunucuda kapatıldı. Burada YALNIZ istemci tarafındaki oturum
+      // durumu temizlenir; router.refresh() çağrılmaz — sunucu bileşeni
+      // tazelenince /hesabim oturumsuz kalıp /giris'e yönlendiriyor ve
+      // kullanıcı teyit ekranını hiç göremiyordu.
+      supabase.auth.signOut({ scope: 'local' }).catch(() => {})
     } catch {
       setHata('Bağlantı kurulamadı. Lütfen tekrar deneyin.')
       setGonderiliyor(false)
