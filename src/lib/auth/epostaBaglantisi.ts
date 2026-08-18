@@ -32,6 +32,16 @@ export async function epostaBaglantisiniIsle(request: Request) {
   // Şifre sıfırlama akışı mı? (hata mesajını doğru seçmek için)
   const sifreAkisi = type === 'recovery' || next.startsWith('/auth/sifremi-sifirla')
 
+  // Supabase bağlantıyı kendi ucunda reddettiyse (süresi dolmuş, daha önce
+  // kullanılmış, iptal edilmiş) siteye ?error=…&error_code=… ile döner. Bu
+  // durumda oturum denemesine hiç girmeden doğru ekranı gösteririz.
+  const hataKodu = searchParams.get('error_code') ?? searchParams.get('error')
+  if (hataKodu) {
+    console.error('[auth] bağlantı reddedildi:', hataKodu)
+    const durum = sifreAkisi ? 'sifre-baglanti-gecersiz' : 'kayit-baglanti-gecersiz'
+    return NextResponse.redirect(`${origin}/auth/hata?durum=${durum}`)
+  }
+
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
