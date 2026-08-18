@@ -148,3 +148,60 @@ export function reviewInviteEmail(order: OrderLike, products: ReviewInviteProduc
     ),
   }
 }
+
+/**
+ * Hesap silme teyidi (Faz 14). Kullanıcıya neyin silindiğini ve neyin yasal
+ * zorunlulukla anonim olarak kaldığını açıkça söyler — KVKK m.11 kapsamındaki
+ * "işlemin sonucundan haberdar edilme" beklentisini karşılar.
+ */
+export function accountDeletedEmail(params: { anonimSiparis: number }) {
+  const siparisSatiri =
+    params.anonimSiparis > 0
+      ? `<li style="margin-bottom: 6px;"><strong>${params.anonimSiparis} sipariş kaydı</strong> — kişisel bilgiler çıkarılarak anonim biçimde saklandı</li>`
+      : `<li style="margin-bottom: 6px;">Saklanması gereken sipariş kaydınız bulunmuyordu</li>`
+
+  return {
+    subject: 'Hesabınız silindi — NB Steelora',
+    html: shell(
+      'Hesabınız silindi',
+      `<p style="color: #7A5048; line-height: 1.8; margin-bottom: 24px;">
+        Talebiniz üzerine NB Steelora hesabınız silindi. Bu e-postayı, işlemin tamamlandığını
+        bilmeniz için gönderiyoruz.
+      </p>
+
+      <div style="background: #FFF8F6; border: 1px solid #E8D8D0; padding: 20px; margin-bottom: 24px;">
+        <p style="margin: 0 0 10px; font-size: 12px; color: #C89080; letter-spacing: 0.1em; text-transform: uppercase;">Silinenler</p>
+        <ul style="margin: 0; padding-left: 18px; color: #7A5048; line-height: 1.8; font-size: 14px;">
+          <li style="margin-bottom: 6px;">Ad, e-posta, telefon ve giriş bilgileriniz</li>
+          <li style="margin-bottom: 6px;">Kayıtlı adresleriniz ve fatura bilgileriniz</li>
+          <li style="margin-bottom: 6px;">Favorileriniz ve çerez tercihi kaydınız</li>
+          <li style="margin-bottom: 6px;">Yorumlarınızdaki yazar bilgisi (yorum metni anonim olarak kalır)</li>
+        </ul>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1px solid #E8D8D0; padding: 20px; margin-bottom: 24px;">
+        <p style="margin: 0 0 10px; font-size: 12px; color: #C89080; letter-spacing: 0.1em; text-transform: uppercase;">Yasal zorunlulukla kalanlar</p>
+        <ul style="margin: 0; padding-left: 18px; color: #7A5048; line-height: 1.8; font-size: 14px;">
+          ${siparisSatiri}
+        </ul>
+        <p style="margin: 12px 0 0; color: #A88070; font-size: 13px; line-height: 1.7;">
+          Vergi Usul Kanunu ve Türk Ticaret Kanunu, satış kayıtlarının 10 yıl saklanmasını
+          zorunlu kılar. Bu kayıtlarda sipariş numarası, ürünler, tutarlar ve tarih durur;
+          adınız, e-postanız, telefonunuz ve adresiniz çıkarılmıştır — kayıt size geri
+          bağlanamaz.
+        </p>
+      </div>
+
+      <p style="color: #A88070; font-size: 13px; line-height: 1.8;">
+        Bu işlemi siz yapmadıysanız lütfen hemen bizimle iletişime geçin.
+        Dilediğiniz zaman yeniden üye olabilirsiniz.
+      </p>
+
+      <p style="text-align: center; margin: 32px 0 0;">
+        <a href="${SITE}" style="display: inline-block; background: #2A1E1E; color: #FFF8F6; padding: 16px 40px; text-decoration: none; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase;">
+          Mağazaya dön
+        </a>
+      </p>`
+    ),
+  }
+}

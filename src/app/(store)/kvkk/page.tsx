@@ -1,6 +1,7 @@
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import { kunyeGetir, kunyeHtml } from '@/lib/legal/veriSorumlusu'
 import { HAKLAR_HTML, YURTDISI_HTML, basvuruHtml } from '@/lib/legal/metinler'
+import { hesapSilmeMetniGetir } from '@/lib/legal/hesapSilmeMetni'
 
 export const metadata = { title: 'KVKK Aydınlatma Metni' }
 export const dynamic = 'force-dynamic'
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic'
  * ölçüm paragrafı. Metin taslaktır; avukat onayı ayrı yürüyor.
  */
 export default async function KvkkPage() {
-  const kunye = await kunyeGetir()
+  const [kunye, hesapSilmeBlok] = await Promise.all([kunyeGetir(), hesapSilmeMetniGetir()])
 
   // Künye panelden doldurulmadıysa mevcut asgari bilgiyle basılır — sayfa
   // hiçbir koşulda "veri sorumlusu" başlığı olmadan yayına çıkmaz.
@@ -74,6 +75,7 @@ tercihi (rıza) kayıtları rızanın geri alınmasından itibaren <strong>10 y�
 Süre sonunda verileriniz silinir, yok edilir veya anonim hâle getirilir.
 </p>`,
     HAKLAR_HTML,
+    hesapSilmeBlok,
     basvuruHtml(kunye.eposta, kunye.kep, kunye.adres),
   ].join('\n')
 

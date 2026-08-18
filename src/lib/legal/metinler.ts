@@ -165,6 +165,34 @@ eklenmesi hâlinde bu çerezler yalnızca <strong>açık rızanızla</strong> ç
 </p>
 `.trim()
 
+/**
+ * Hesabın silinmesi (KVKK m.7) — Faz 14.
+ *
+ * Panelden `hesap_silme_metni` anahtarıyla ezilebilir; boşsa bu varsayılan
+ * basılır. Silme ile anonimleştirme ayrımı burada açıkça yazılır, çünkü
+ * kullanıcı "her şey silinecek" beklentisiyle talepte bulunuyor.
+ */
+export const HESAP_SILME_HTML = `
+<h2>Hesabınızı Silme</h2>
+<p>
+Üyeliğiniz varsa hesabınızı <a href="/hesabim">Hesabım</a> sayfasındaki <strong>"Hesabımı sil"</strong>
+bölümünden kendiniz silebilirsiniz; ayrıca başvuru yapmanıza gerek yoktur. Silme işleminde adınız,
+e-posta adresiniz, telefonunuz, kayıtlı adresleriniz, fatura bilgileriniz, favorileriniz, çerez
+tercihi kaydınız ve yorumlarınızdaki yazar bilgisi kaldırılır.
+</p>
+<p>
+<strong>Sipariş kayıtları silinmez, anonimleştirilerek saklanır:</strong> Vergi Usul Kanunu ve Türk
+Ticaret Kanunu bu kayıtların <strong>10 yıl</strong> tutulmasını zorunlu kılar (KVKK m.7/3, kanunda
+öngörülen hâllerde silme yerine anonim hâle getirme). Anonimleştirilen kayıtta sipariş numarası,
+ürünler, tutarlar ve tarih kalır; ad, e-posta, telefon ve adres çıkarılır — kayıt kişiye geri
+bağlanamaz.
+</p>
+<p>
+Teslim edilmemiş siparişiniz ya da sonuçlanmamış bir iade/iptal talebiniz varsa, kargo takibi ve
+iade hakkınız korunabilsin diye silme işlemi süreç tamamlanana kadar yapılmaz.
+</p>
+`.trim()
+
 /** Saklama süreleri — rıza kayıtları için somut süre. */
 export const SAKLAMA_HTML = `
 <h2>Saklama Süreleri</h2>
@@ -179,5 +207,8 @@ zamanaşımı süresi esas alınarak belirlenmiştir.</li>
 uyarınca 10 yıl.</li>
 <li><strong>Üyelik kayıtları:</strong> Üyeliğiniz sürdüğü sürece; üyelik sonlandırıldığında
 yasal saklama yükümlülüğü bulunanlar dışındakiler silinir.</li>
+<li><strong>Hesabını silen kullanıcıların sipariş kayıtları:</strong> Vergi Usul Kanunu ve Türk
+Ticaret Kanunu uyarınca <strong>10 yıl</strong>; kişisel alanları çıkarılmış (anonimleştirilmiş)
+biçimde tutulur.</li>
 </ul>
 `.trim()

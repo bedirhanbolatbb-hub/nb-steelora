@@ -10,6 +10,7 @@ import {
   basvuruHtml,
 } from '@/lib/legal/metinler'
 import { CONSENT_VERSION } from '@/lib/analytics/consent'
+import { hesapSilmeMetniGetir } from '@/lib/legal/hesapSilmeMetni'
 
 export const metadata = { title: 'Çerez Politikası' }
 export const dynamic = 'force-dynamic'
@@ -45,7 +46,7 @@ export default async function CerezPolitikasiPage() {
     .in('key', ['cerez_politikasi', 'cerez_politikasi_surum', 'cerez_politikasi_yururluk'])
 
   const icerik = Object.fromEntries((data || []).map((r: any) => [r.key, (r.value || '').trim()]))
-  const kunye = await kunyeGetir()
+  const [kunye, hesapSilmeBlok] = await Promise.all([kunyeGetir(), hesapSilmeMetniGetir()])
 
   const giris = icerik.cerez_politikasi || GIRIS_TASLAK
   // Sürüm rıza kaydıyla aynı olmalı: panelde boşsa koddaki rıza sürümü basılır.
@@ -61,6 +62,7 @@ export default async function CerezPolitikasiPage() {
     SAKLAMA_HTML,
     YURTDISI_HTML,
     HAKLAR_HTML,
+    hesapSilmeBlok,
     basvuruHtml(kunye.eposta, kunye.kep, kunye.adres),
     `
 <h2>Tercihlerinizi yönetme</h2>

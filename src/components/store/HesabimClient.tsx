@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/utils'
 import { useWishlist } from '@/hooks/useWishlist'
 import ProductGrid from '@/components/store/ProductGrid'
 import Input from '@/components/ui/Input'
+import HesapSilme from '@/components/store/HesapSilme'
 
 interface HesabimClientProps {
   user: { id: string; email?: string; user_metadata?: any }
@@ -306,7 +307,8 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
 
       {/* ── Profil ── */}
       {tab === 'profil' && (
-        <div className="max-w-md space-y-4">
+        <div className="space-y-4">
+          <div className="max-w-md space-y-4">
           <div>
             <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-1">E-posta</label>
             <p className="text-[14px] font-body text-ink">{user.email}</p>
@@ -326,6 +328,12 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
             <button onClick={signOut} className="text-[12px] font-body text-muted hover:text-red-500 transition-colors">
               Çıkış Yap
             </button>
+          </div>
+          </div>
+
+          {/* KVKK m.7: silme hakkı hesabın kendi ekranından kullanılabilir. */}
+          <div className="max-w-2xl pt-8">
+            <HesapSilme />
           </div>
         </div>
       )}
