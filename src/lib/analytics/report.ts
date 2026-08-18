@@ -10,21 +10,69 @@ import { createServiceClient } from '@/lib/supabase/service'
 
 export type Donem = { baslangic: Date; bitis: Date; etiket: string }
 
-const ISTANBUL = 'Europe/Istanbul'
+export const ISTANBUL = 'Europe/Istanbul'
 
-/** Verilen günün İstanbul saatiyle 00:00'ı (UTC Date olarak). */
+/**
+ * Dönem sınırları İstanbul takvimine göre kurulur (Faz 17).
+ *
+ * Önceki sürümde "bugün/dün/son7" doğru çalışıyordu ama ay ve yıl sınırları
+ * (`setDate(1)`, `setMonth(0,1)`) SUNUCUNUN yerel takviminde hesaplanıyordu;
+ * Vercel UTC çalıştığı için ayın ilk günü TR'de 02:00'a, yılın ilk günü 2 Ocak
+ * 00:00'a kayıyordu. Özel aralıkta da "2026-08-18" metni UTC gece yarısı
+ * sayılıp TR 03:00'a düşüyordu — akşam saatlerindeki kayıtlar yanlış güne
+ * giriyordu. Artık tüm sınırlar tek bir yerden, İstanbul saatiyle üretiliyor.
+ */
+
+/** Verilen anın İstanbul UTC farkı (ms). Yaz saati uygulanırsa da doğru kalır. */
+function istanbulOfsetMs(d: Date): number {
+  const parca = new Intl.DateTimeFormat('en-US', {
+    timeZone: ISTANBUL,
+    timeZoneName: 'longOffset',
+  })
+    .formatToParts(d)
+    .find((p) => p.type === 'timeZoneName')?.value // "GMT+03:00"
+  const eslesme = /GMT([+-])(\d{2}):(\d{2})/.exec(parca ?? '')
+  if (!eslesme) return 3 * 3600000
+  const isaret = eslesme[1] === '-' ? -1 : 1
+  return isaret * (Number(eslesme[2]) * 3600000 + Number(eslesme[3]) * 60000)
+}
+
+/** Verilen anın İstanbul takvimindeki yıl/ay/gün değerleri. */
+function istanbulTakvim(d: Date): { yil: number; ay: number; gun: number } {
+  const p = new Intl.DateTimeFormat('en-CA', {
+    timeZone: ISTANBUL,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(d)
+  const al = (t: string) => Number(p.find((x) => x.type === t)?.value)
+  return { yil: al('year'), ay: al('month'), gun: al('day') }
+}
+
+/** İstanbul takvimindeki bir günün 00:00'ı — UTC Date olarak. */
+function istanbulGunBasi(yil: number, ay: number, gun: number): Date {
+  const kaba = new Date(Date.UTC(yil, ay - 1, gun, 0, 0, 0, 0))
+  // Ofset, hedef anın kendisine göre hesaplanır (yaz saati sınırında da doğru).
+  return new Date(kaba.getTime() - istanbulOfsetMs(kaba))
+}
+
+/** Verilen anın İstanbul gününün 00:00'ı. */
 function gunBasi(d: Date): Date {
-  const s = d.toLocaleString('en-US', { timeZone: ISTANBUL })
-  const yerel = new Date(s)
-  yerel.setHours(0, 0, 0, 0)
-  // Yerel/UTC farkını geri ekle
-  const fark = new Date(d.toLocaleString('en-US', { timeZone: 'UTC' })).getTime() - new Date(s).getTime()
-  return new Date(yerel.getTime() + fark)
+  const t = istanbulTakvim(d)
+  return istanbulGunBasi(t.yil, t.ay, t.gun)
+}
+
+/** "YYYY-MM-DD" metnini İstanbul gün başına çevirir (özel aralık girdisi). */
+function metindenGunBasi(metin: string): Date | null {
+  const e = /^(\d{4})-(\d{2})-(\d{2})$/.exec(metin.trim())
+  if (!e) return null
+  return istanbulGunBasi(Number(e[1]), Number(e[2]), Number(e[3]))
 }
 
 export function donemCoz(anahtar: string, ozelBas?: string, ozelBit?: string): Donem {
   const simdi = new Date()
   const bugun = gunBasi(simdi)
+  const t = istanbulTakvim(simdi)
   const gun = 86400000
 
   switch (anahtar) {
@@ -34,26 +82,24 @@ export function donemCoz(anahtar: string, ozelBas?: string, ozelBit?: string): D
       return { baslangic: new Date(bugun.getTime() - 6 * gun), bitis: simdi, etiket: 'Son 7 gün' }
     case 'son30':
       return { baslangic: new Date(bugun.getTime() - 29 * gun), bitis: simdi, etiket: 'Son 30 gün' }
-    case 'buay': {
-      const b = new Date(bugun)
-      b.setDate(1)
-      return { baslangic: b, bitis: simdi, etiket: 'Bu ay' }
-    }
+    case 'buay':
+      return { baslangic: istanbulGunBasi(t.yil, t.ay, 1), bitis: simdi, etiket: 'Bu ay' }
     case 'gecenay': {
-      const b = new Date(bugun)
-      b.setDate(1)
-      const son = new Date(b)
-      b.setMonth(b.getMonth() - 1)
-      return { baslangic: b, bitis: son, etiket: 'Geçen ay' }
+      const oncekiAy = t.ay === 1 ? 12 : t.ay - 1
+      const oncekiYil = t.ay === 1 ? t.yil - 1 : t.yil
+      return {
+        baslangic: istanbulGunBasi(oncekiYil, oncekiAy, 1),
+        bitis: istanbulGunBasi(t.yil, t.ay, 1),
+        etiket: 'Geçen ay',
+      }
     }
-    case 'buyil': {
-      const b = new Date(bugun)
-      b.setMonth(0, 1)
-      return { baslangic: b, bitis: simdi, etiket: 'Bu yıl' }
-    }
+    case 'buyil':
+      return { baslangic: istanbulGunBasi(t.yil, 1, 1), bitis: simdi, etiket: 'Bu yıl' }
     case 'ozel': {
-      const b = ozelBas ? new Date(ozelBas) : new Date(bugun.getTime() - 6 * gun)
-      const s = ozelBit ? new Date(new Date(ozelBit).getTime() + gun) : simdi
+      const b = (ozelBas && metindenGunBasi(ozelBas)) || new Date(bugun.getTime() - 6 * gun)
+      const bitGun = ozelBit && metindenGunBasi(ozelBit)
+      // Bitiş günü aralığa DAHİL: ertesi günün 00:00'ına kadar.
+      const s = bitGun ? new Date(bitGun.getTime() + gun) : simdi
       return { baslangic: b, bitis: s, etiket: 'Özel aralık' }
     }
     default:

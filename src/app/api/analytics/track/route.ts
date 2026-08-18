@@ -39,6 +39,8 @@ export async function POST(request: Request) {
     ua,
     request.headers.get('accept-language')
   )
+  // Tuz yoksa kimlik yok: olayı yazmıyoruz (uyarı session modülünde loglandı).
+  if (!sessionId) return NextResponse.json({ ok: true, skipped: 'salt' })
 
   await olayYaz({
     event,

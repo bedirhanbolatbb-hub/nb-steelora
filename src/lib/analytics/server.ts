@@ -20,6 +20,8 @@ export async function sunucuOlayi(
     if (botMu(ua)) return
 
     const sessionId = oturumKimligi(istekIp(h), ua, h.get('accept-language'))
+    // Tuz yoksa kimlik üretilemez; şişmiş sayı yazmaktansa ölçümü atlarız.
+    if (!sessionId) return
     const { visitorId } = istektenKimlik(h.get('cookie'))
     // Yolu proxy başlığa yazar (src/proxy.ts).
     const path = ek?.path ?? h.get('x-nb-path') ?? null

@@ -19,21 +19,40 @@ import { cihazTipi } from './track'
  * türetiliyor; sır karmanın içinde kalır, dışarı hiçbir biçimde verilmez.
  */
 
+/** Uyarı bir kez basılır; her istekte log şişirmenin anlamı yok. */
+const uyariDurumu = globalThis as unknown as { __nbTuzUyarisi?: boolean }
+
 /**
- * Günlük tuz — süreçten bağımsız, tüm sunucu örneklerinde aynı.
+ * Günlük tuz — yalnız ANALYTICS_SALT'tan üretilir.
  *
- * ANALYTICS_SALT tanımlıysa o kullanılır (tercih edilen). Tanımlı değilse
- * zaten var olan bir sunucu sırrı taban alınır; değer doğrudan kullanılmaz,
- * sha256'dan geçirilir. Rastgele tuza ASLA düşülmez — kusurun kaynağı oydu.
+ * Faz 15'te rastgele tuz kaldırılıp "yoksa başka bir sunucu sırrına düş"
+ * çözümü konmuştu; çalışıyor ama örtük bir sözleşme. Faz 17'de tuz ZORUNLU
+ * hâle getirildi: değişken yoksa kimlik üretilmez, ölçüm sessizce atlanır ve
+ * tek satır uyarı düşülür. Böylece "tuz sandığımız yerden gelmiyor" durumu
+ * sessizce şişmiş sayıya değil, görünür bir boşluğa dönüşür.
+ *
+ * Gün sınırı İstanbul takvimine göre: kimlik TR gecesinde değişir, gün ortası
+ * kaymaz.
  */
-function gunlukTuz(): string {
-  const bugun = new Date().toISOString().slice(0, 10)
-  const taban =
-    process.env.ANALYTICS_SALT ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.ADMIN_SECRET_TOKEN ||
-    'nb-steelora-analitik'
-  return createHash('sha256').update(`${taban}|${bugun}`).digest('hex')
+function gunlukTuz(): string | null {
+  const taban = process.env.ANALYTICS_SALT
+  if (!taban || taban.trim().length < 24) {
+    if (!uyariDurumu.__nbTuzUyarisi) {
+      uyariDurumu.__nbTuzUyarisi = true
+      console.warn(
+        '[analitik] ANALYTICS_SALT tanımlı değil (ya da 24 karakterden kısa) — ' +
+          'oturum kimliği üretilemediği için ölçüm atlanıyor.'
+      )
+    }
+    return null
+  }
+  const bugun = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Istanbul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
+  return createHash('sha256').update(`${taban.trim()}|${bugun}`).digest('hex')
 }
 
 /**
@@ -86,13 +105,16 @@ export function dilOzeti(acceptLanguage: string | null | undefined): string {
   return ilk ? ilk.slice(0, 8) : 'yok'
 }
 
+/** Tuz yoksa `null` döner — çağıran ölçümü atlar. */
 export function oturumKimligi(
   ip: string | null | undefined,
   userAgent: string | null | undefined,
   acceptLanguage?: string | null
-): string {
+): string | null {
+  const tuz = gunlukTuz()
+  if (!tuz) return null
   return createHash('sha256')
-    .update(`${gunlukTuz()}|${ip || 'yok'}|${uaOzeti(userAgent)}|${dilOzeti(acceptLanguage)}`)
+    .update(`${tuz}|${ip || 'yok'}|${uaOzeti(userAgent)}|${dilOzeti(acceptLanguage)}`)
     .digest('hex')
     .slice(0, 32)
 }
