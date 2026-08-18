@@ -133,7 +133,7 @@ export default function StickyBuyBar({
 
   return (
     <div
-      className="sticky-buy sm:hidden fixed bottom-0 inset-x-0 z-40 bg-bg/95 backdrop-blur-sm border-t border-line"
+      className="sticky-buy sm:hidden fixed bottom-[var(--nb-consent-h,0px)] inset-x-0 z-40 bg-bg/95 backdrop-blur-sm border-t border-line"
       data-show={show ? 'true' : 'false'}
       aria-hidden={!show}
     >

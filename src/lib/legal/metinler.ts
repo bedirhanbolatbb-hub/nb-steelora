@@ -7,7 +7,7 @@
  * Sunucu bölgeleri altyapıdan DOĞRULANMIŞTIR:
  *   - Vercel: uç VE sunucu fonksiyonları fra1 (Frankfurt/AB) — vercel.json'da
  *     regions ile sabitlendi; canlı yanıt başlığı `x-vercel-id: fra1::fra1::…`
- *   - Supabase: ap-southeast-1 (Singapur) — proje bilgisinden okundu
+ *   - Supabase: eu-central-1 (Frankfurt) — proje bilgisinden okundu
  *   - Resend: ABD merkezli altyapı
  *   - Cloudflare: küresel anycast ağ (DNS/CDN)
  *   - iyzico: Türkiye (yurt içi)
@@ -101,7 +101,7 @@ aktarılmaktadır:
 <td>Supabase (veritabanı ve dosya depolama)</td>
 <td>Üyelik, sipariş, ürün, yorum ve görsel kayıtlarının saklanması</td>
 <td>Kimlik, iletişim, sipariş, teslimat adresi, üyelik ve site içi ölçüm kayıtları</td>
-<td>Singapur (ap-southeast-1)</td>
+<td>Frankfurt, Almanya (eu-central-1)</td>
 </tr>
 <tr>
 <td>Resend (e-posta gönderimi)</td>

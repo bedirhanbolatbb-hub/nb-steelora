@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 // Rıza modülü (lib/analytics/consent) sunucu tarafında kalır; band yalnız
 // ihtiyacı olan iki sabiti ve kendi çözümleyicisini taşır — böylece o modül
@@ -87,6 +87,7 @@ export default function ConsentBanner() {
   const [ayarlar, setAyarlar] = useState(false)
   const [secim, setSecim] = useState<ConsentCategories>(DEFAULT_CONSENT)
   const [gonderiliyor, setGonderiliyor] = useState(false)
+  const bantRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     // Daha önce karar verilmişse (footer'dan yeniden açılış) mevcut seçimler
@@ -113,6 +114,34 @@ export default function ConsentBanner() {
     return () => window.removeEventListener('nb:consent-ac', yenidenAc)
   }, [])
 
+  // Bant sayfanın altına yapışık; görünürken gövdeye kendi yüksekliği kadar
+  // boşluk eklenir ki son ürün kartlarının/footer'ın üstünü örtmesin. Ölçülen
+  // yükseklik ayrıca `--nb-consent-h` değişkenine yazılır: WhatsApp düğmesi ve
+  // mobil satın-al çubuğu (position: fixed oldukları için gövde boşluğundan
+  // etkilenmezler) kendilerini bu kadar yukarı iter. Bant kapanınca ikisi de
+  // geri alınır.
+  useEffect(() => {
+    if (!acik) {
+      document.documentElement.style.removeProperty('--nb-consent-h')
+      return
+    }
+    const uygula = () => {
+      const h = bantRef.current?.offsetHeight ?? 0
+      document.body.style.paddingBottom = h ? `${h}px` : ''
+      document.documentElement.style.setProperty('--nb-consent-h', `${h}px`)
+    }
+    uygula()
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(uygula) : null
+    if (ro && bantRef.current) ro.observe(bantRef.current)
+    window.addEventListener('resize', uygula)
+    return () => {
+      ro?.disconnect()
+      window.removeEventListener('resize', uygula)
+      document.body.style.paddingBottom = ''
+      document.documentElement.style.removeProperty('--nb-consent-h')
+    }
+  }, [acik, ayarlar])
+
   const kaydet = async (kategoriler: ConsentCategories, kaynak: string) => {
     setGonderiliyor(true)
     try {
@@ -131,22 +160,33 @@ export default function ConsentBanner() {
 
   if (!acik) return null
 
+  // Kompakt bant (Faz 13C): masaüstünde tek satır, mobilde en fazla iki satır.
+  // Reddet ve Kabul et AYNI ölçüde ve aynı kontrast ailesinde — KVKK karanlık
+  // desen yasağı gereği reddetmek kabul etmek kadar kolay görünmeli.
   const dugme =
-    'min-h-[44px] flex-1 px-5 py-3 text-[11px] uppercase tracking-[0.16em] transition-colors disabled:opacity-50'
+    'min-h-[36px] shrink-0 px-4 py-2 text-[11px] uppercase tracking-[0.14em] transition-colors disabled:opacity-50'
+  // Ayarlar görünümündeki geniş düğmeler (alt alta sığsın diye esner).
+  const genisDugme = `${dugme} flex-1`
 
   return (
     <div
+      ref={bantRef}
       role="dialog"
       aria-label="Çerez tercihleri"
       className="fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-bg motion-safe:animate-[nbConsentIn_.28s_ease-out]"
     >
-      <div className="mx-auto max-w-[1400px] px-4 py-5 sm:px-6 lg:px-8">
+      <div
+        className={
+          ayarlar
+            ? 'mx-auto max-w-[1400px] px-4 py-5 sm:px-6 lg:px-8'
+            : 'mx-auto max-w-[1400px] px-4 py-2.5 sm:px-6 lg:px-8'
+        }
+      >
         {!ayarlar ? (
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <p className="max-w-[70ch] text-[13px] leading-relaxed text-ink-soft">
-              Siteyi geliştirmek için ziyaret sayımı yapıyoruz. Temel sayım tamamen anonimdir
-              (çerezsiz, IP saklanmadan). Tekrar gelen ziyaretçileri tanıyabilmemiz içinse
-              tarayıcınıza kalıcı bir kimlik yazmamız gerekir — bunun için onayınızı istiyoruz.{' '}
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <p className="text-[13px] leading-snug text-ink-soft">
+              Sitemizi geliştirmek için anonim ziyaret istatistikleri tutuyoruz. Dilerseniz tekrar
+              gelen ziyaretçi analizine de izin verebilirsiniz.{' '}
               <Link href="/cerez-politikasi" className="text-accent underline underline-offset-4">
                 Çerez Politikası
               </Link>
@@ -155,8 +195,7 @@ export default function ConsentBanner() {
                 KVKK Aydınlatma Metni
               </Link>
             </p>
-            <div className="flex w-full shrink-0 gap-2 lg:w-auto">
-              {/* Aynı ağırlık: iki düğme de aynı boyut ve kontrast ailesinde. */}
+            <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 disabled={gonderiliyor}
@@ -179,7 +218,7 @@ export default function ConsentBanner() {
                 type="button"
                 disabled={gonderiliyor}
                 onClick={() => setAyarlar(true)}
-                className="min-h-[44px] px-4 text-[11px] uppercase tracking-[0.16em] text-muted underline underline-offset-4 transition-colors hover:text-ink"
+                className="shrink-0 px-2 py-2 text-[11px] text-muted underline underline-offset-4 transition-colors hover:text-ink"
               >
                 Ayarlar
               </button>
@@ -239,7 +278,7 @@ export default function ConsentBanner() {
                 type="button"
                 disabled={gonderiliyor}
                 onClick={() => kaydet({ ...DEFAULT_CONSENT, analitik_gelismis: false }, 'ayarlar')}
-                className={`${dugme} border border-ink text-ink hover:bg-surface-muted`}
+                className={`${genisDugme} border border-ink text-ink hover:bg-surface-muted`}
               >
                 Tümünü reddet
               </button>
@@ -247,7 +286,7 @@ export default function ConsentBanner() {
                 type="button"
                 disabled={gonderiliyor}
                 onClick={() => kaydet(secim, 'ayarlar')}
-                className={`${dugme} border border-ink bg-ink text-bg hover:bg-ink/90`}
+                className={`${genisDugme} border border-ink bg-ink text-bg hover:bg-ink/90`}
               >
                 Seçimimi kaydet
               </button>
