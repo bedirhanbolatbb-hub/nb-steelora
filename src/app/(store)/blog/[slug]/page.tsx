@@ -6,6 +6,8 @@ import { createServiceClient } from '@/lib/supabase/service'
 import type { Metadata } from 'next'
 import JsonLd from '@/components/seo/JsonLd'
 import { articleJsonLd, breadcrumbJsonLd } from '@/lib/seo'
+import ProductGrid from '@/components/store/ProductGrid'
+import { yaziKategorisi, railUrunleri } from '@/lib/blog/kategori'
 
 /**
  * Yazı sayfaları artık istek anında render ediliyor: ölçüm (blog/layout.tsx)
@@ -58,6 +60,12 @@ export default async function BlogPostPage({
     .neq('slug', slug)
     .order('published_at', { ascending: false })
     .limit(3)
+
+  // Arama trafiğini ürüne çeviren bağ: yazının konusuna en yakın kategoriden
+  // üç ürün. Eşleşme çıkmazsa çok satanlarla doldurulur (bkz. lib/blog/kategori).
+  const konu = yaziKategorisi(`${post.title} ${post.excerpt ?? ''} ${post.content ?? ''}`)
+  const railUrunler = await railUrunleri(konu?.kategori ?? null, 3)
+  const kesfetYolu = konu ? `/urunler?kategori=${encodeURIComponent(konu.kategori)}` : '/urunler'
 
   return (
     <>
@@ -141,19 +149,42 @@ export default async function BlogPostPage({
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
 
-          {/* Yazı sonu — vitrine dönüş */}
+          {/* Yazı sonu — vitrine dönüş (yazının konusuna göre süzülmüş) */}
           <div className="mt-12 pt-8 border-t border-line text-center">
             <p className="text-[12px] font-body text-ink-soft mb-4">
               Okuduklarını takıya dönüştür.
             </p>
             <Link
-              href="/urunler"
+              href={kesfetYolu}
               className="inline-flex items-center justify-center bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
             >
-              Koleksiyonu Keşfet
+              {konu ? `${konu.etiket} Koleksiyonunu Keşfet` : 'Koleksiyonu Keşfet'}
             </Link>
           </div>
         </div>
+
+        {/* Ürün rail'i — mevcut kart bileşeniyle, vitrindekiyle aynı dil */}
+        {railUrunler.length > 0 && (
+          <section className="border-t border-line py-14">
+            <div className="max-w-7xl mx-auto px-4 lg:px-8">
+              <div className="mb-8 flex flex-wrap items-end justify-between gap-3" data-reveal>
+                <div>
+                  <p className="eyebrow">Bu yazıdan ilham</p>
+                  <h2 className="font-heading text-[28px] lg:text-[32px] font-medium text-ink mt-2">
+                    {konu ? `${konu.etiket} Önerileri` : 'Çok Satanlar'}
+                  </h2>
+                </div>
+                <Link
+                  href={kesfetYolu}
+                  className="text-[11px] uppercase tracking-[0.15em] font-body text-accent hover:text-accent-deep transition-colors"
+                >
+                  Tümünü gör
+                </Link>
+              </div>
+              <ProductGrid products={railUrunler} columns={3} />
+            </div>
+          </section>
+        )}
 
         {/* Related posts */}
         {related && related.length > 0 && (

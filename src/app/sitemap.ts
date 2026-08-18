@@ -43,6 +43,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Gruplama yalnız listede tek kart gösteriyor; her üyenin kendi sayfası
   // ayrı URL olarak burada kalır (kapak olmayan üyeler de indekslenebilsin).
   let productPages: MetadataRoute.Sitemap = []
+  // Blog yazıları haritada hiç yoktu; yalnız /blog listesi vardı. Yazıların
+  // kendi adresleri arama trafiğinin giriş kapısı, ayrı ayrı bildiriliyor.
+  let blogPages: MetadataRoute.Sitemap = []
 
   try {
     const supabase = await createClient()
@@ -63,5 +66,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Ürünler alınamazsa statik + kategori haritası yine yayınlanır.
   }
 
-  return [...staticPages, ...categoryPages, ...collectionPages, ...productPages]
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('blog_posts')
+      .select('slug, updated_at, published_at')
+      .eq('published', true)
+      .limit(500)
+
+    blogPages = (data || [])
+      .filter((p: any) => p.slug)
+      .map((p: any) => ({
+        url: `${baseUrl}/blog/${p.slug}`,
+        lastModified: p.updated_at || p.published_at ? new Date(p.updated_at || p.published_at) : now,
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      }))
+  } catch {
+    // Yazılar alınamazsa harita yine yayınlanır.
+  }
+
+  return [...staticPages, ...categoryPages, ...collectionPages, ...blogPages, ...productPages]
 }
