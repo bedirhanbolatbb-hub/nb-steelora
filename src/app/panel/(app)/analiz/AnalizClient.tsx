@@ -27,8 +27,14 @@ function sure(saniye: number): string {
   return `${dk} dk ${saniye % 60} sn`
 }
 
-/** Önceki döneme göre değişim rozeti. */
-function Degisim({ simdi, onceki }: { simdi: number; onceki: number }) {
+/**
+ * Önceki döneme göre değişim rozeti.
+ *
+ * Önceki dönemde HİÇ ölçüm yoksa (ör. ölçümün başladığı günden öncesi) "yeni"
+ * ya da "%0" demek yanıltıcı olur — o dönem için veri yoktur, sıfır değildir.
+ */
+function Degisim({ simdi, onceki, veriVar = true }: { simdi: number; onceki: number; veriVar?: boolean }) {
+  if (!veriVar) return <span className="text-[11px] text-[var(--p-muted)]">veri yok</span>
   if (onceki === 0 && simdi === 0) return <span className="text-[11px] text-[var(--p-muted)]">—</span>
   if (onceki === 0) return <PBadge tone="success">yeni</PBadge>
   const fark = ((simdi - onceki) / onceki) * 100
@@ -46,12 +52,14 @@ function Kart({
   deger,
   simdi,
   onceki,
+  oncekiVeriVar = true,
   not,
 }: {
   baslik: string
   deger: string
   simdi?: number
   onceki?: number
+  oncekiVeriVar?: boolean
   not?: string
 }) {
   return (
@@ -59,7 +67,9 @@ function Kart({
       <p className="text-[11px] uppercase tracking-[0.08em] text-[var(--p-muted)]">{baslik}</p>
       <p className="mt-1 text-[20px] font-medium tabular-nums text-[var(--p-ink)]">{deger}</p>
       <div className="mt-0.5 flex items-center gap-1.5">
-        {simdi !== undefined && onceki !== undefined && <Degisim simdi={simdi} onceki={onceki} />}
+        {simdi !== undefined && onceki !== undefined && (
+          <Degisim simdi={simdi} onceki={onceki} veriVar={oncekiVeriVar} />
+        )}
         {not && <span className="text-[10px] text-[var(--p-muted)]">{not}</span>}
       </div>
     </div>
@@ -146,10 +156,13 @@ export default function AnalizClient({
   rapor,
   secili,
   adlar,
+  olcumNotu,
 }: {
   rapor: Rapor
   secili: string
   adlar: Record<string, { ad: string; slug: string }>
+  /** Panelden düzenlenebilir tek satırlık ölçüm notu; boşsa hiç basılmaz. */
+  olcumNotu?: string
 }) {
   const router = useRouter()
   const sp = useSearchParams()
@@ -204,6 +217,15 @@ export default function AnalizClient({
 
   return (
     <div className="space-y-4">
+      {/* Ölçüm geçmişi notu — site_content'teki analiz_notu ile düzenlenir,
+          boşaltılınca satır tamamen kalkar. */}
+      {olcumNotu && (
+        <p className="flex items-start gap-1.5 rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface-muted,var(--p-surface))] px-3 py-2 text-[12px] text-[var(--p-ink-soft)]">
+          <Info size={13} className="mt-0.5 shrink-0 text-[var(--p-muted)]" />
+          <span>{olcumNotu}</span>
+        </p>
+      )}
+
       {/* Rıza şeffaflığı */}
       <p className="flex items-start gap-1.5 rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface)] px-3 py-2 text-[12px] text-[var(--p-ink-soft)]">
         <Info size={13} className="mt-0.5 shrink-0 text-[var(--p-muted)]" />
@@ -252,18 +274,18 @@ export default function AnalizClient({
 
       {/* Kartlar */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kart baslik="Tekil ziyaretçi" deger={sayi(m.ziyaretci)} simdi={m.ziyaretci} onceki={o.ziyaretci} />
-        <Kart baslik="Oturum" deger={sayi(m.oturum)} simdi={m.oturum} onceki={o.oturum} />
-        <Kart baslik="Sayfa görüntüleme" deger={sayi(m.sayfaGoruntuleme)} simdi={m.sayfaGoruntuleme} onceki={o.sayfaGoruntuleme} />
-        <Kart baslik="Ort. oturum süresi" deger={sure(m.ortOturumSaniye)} simdi={m.ortOturumSaniye} onceki={o.ortOturumSaniye} />
-        <Kart baslik="Sepete ekleme" deger={sayi(m.sepeteEkleme)} simdi={m.sepeteEkleme} onceki={o.sepeteEkleme} />
-        <Kart baslik="Favorileme" deger={sayi(m.favori)} simdi={m.favori} onceki={o.favori} />
-        <Kart baslik="Üyelik" deger={sayi(m.uyelik)} simdi={m.uyelik} onceki={o.uyelik} />
-        <Kart baslik="Sipariş" deger={sayi(m.siparis)} simdi={m.siparis} onceki={o.siparis} />
-        <Kart baslik="Ciro" deger={formatPrice(m.ciro)} simdi={m.ciro} onceki={o.ciro} />
-        <Kart baslik="Dönüşüm oranı" deger={yuzde(m.donusumOrani)} simdi={m.donusumOrani} onceki={o.donusumOrani} not="sipariş / oturum" />
-        <Kart baslik="Sepete ekleme oranı" deger={yuzde(m.sepeteEklemeOrani)} simdi={m.sepeteEklemeOrani} onceki={o.sepeteEklemeOrani} not="sepet / ürün görünt." />
-        <Kart baslik="Sepetten ödemeye" deger={yuzde(m.sepettenOdemeOrani)} simdi={m.sepettenOdemeOrani} onceki={o.sepettenOdemeOrani} not="ödeme / sepet" />
+        <Kart baslik="Tekil ziyaretçi" deger={sayi(m.ziyaretci)} simdi={m.ziyaretci} onceki={o.ziyaretci} oncekiVeriVar={rapor.oncekiVeriVar} />
+        <Kart baslik="Oturum" deger={sayi(m.oturum)} simdi={m.oturum} onceki={o.oturum} oncekiVeriVar={rapor.oncekiVeriVar} />
+        <Kart baslik="Sayfa görüntüleme" deger={sayi(m.sayfaGoruntuleme)} simdi={m.sayfaGoruntuleme} onceki={o.sayfaGoruntuleme} oncekiVeriVar={rapor.oncekiVeriVar} />
+        <Kart baslik="Ort. oturum süresi" deger={sure(m.ortOturumSaniye)} simdi={m.ortOturumSaniye} onceki={o.ortOturumSaniye} oncekiVeriVar={rapor.oncekiVeriVar} />
+        <Kart baslik="Sepete ekleme" deger={sayi(m.sepeteEkleme)} simdi={m.sepeteEkleme} onceki={o.sepeteEkleme} oncekiVeriVar={rapor.oncekiVeriVar} />
+        <Kart baslik="Favorileme" deger={sayi(m.favori)} simdi={m.favori} onceki={o.favori} oncekiVeriVar={rapor.oncekiVeriVar} />
+        <Kart baslik="Üyelik" deger={sayi(m.uyelik)} simdi={m.uyelik} onceki={o.uyelik} oncekiVeriVar={rapor.oncekiVeriVar} />
+        <Kart baslik="Sipariş" deger={sayi(m.siparis)} simdi={m.siparis} onceki={o.siparis} oncekiVeriVar={rapor.oncekiVeriVar} />
+        <Kart baslik="Ciro" deger={formatPrice(m.ciro)} simdi={m.ciro} onceki={o.ciro} oncekiVeriVar={rapor.oncekiVeriVar} />
+        <Kart baslik="Dönüşüm oranı" deger={yuzde(m.donusumOrani)} simdi={m.donusumOrani} onceki={o.donusumOrani} oncekiVeriVar={rapor.oncekiVeriVar} not="sipariş / oturum" />
+        <Kart baslik="Sepete ekleme oranı" deger={yuzde(m.sepeteEklemeOrani)} simdi={m.sepeteEklemeOrani} onceki={o.sepeteEklemeOrani} oncekiVeriVar={rapor.oncekiVeriVar} not="sepet / ürün görünt." />
+        <Kart baslik="Sepetten ödemeye" deger={yuzde(m.sepettenOdemeOrani)} simdi={m.sepettenOdemeOrani} onceki={o.sepettenOdemeOrani} oncekiVeriVar={rapor.oncekiVeriVar} not="ödeme / sepet" />
       </div>
 
       <PCard title={`Ziyaretçi ve ciro — ${rapor.donem.etiket}`}>

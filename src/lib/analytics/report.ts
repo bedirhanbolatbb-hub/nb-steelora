@@ -185,6 +185,8 @@ export type Rapor = {
   donem: { etiket: string; baslangic: string; bitis: string }
   metrikler: Metrikler
   onceki: Metrikler
+  /** Önceki dönemde hiç ölçüm yoksa karşılaştırma "0'a göre artış" değil, "veri yok"tur. */
+  oncekiVeriVar: boolean
   huni: { ad: string; adet: number; oran: number }[]
   urunler: UrunSatiri[]
   firsatlar: UrunSatiri[]
@@ -287,6 +289,7 @@ export async function raporUret(d: Donem): Promise<Rapor> {
     donem: { etiket: d.etiket, baslangic: d.baslangic.toISOString(), bitis: d.bitis.toISOString() },
     metrikler,
     onceki,
+    oncekiVeriVar: oncekiOlaylar.length > 0,
     huni,
     urunler,
     firsatlar,

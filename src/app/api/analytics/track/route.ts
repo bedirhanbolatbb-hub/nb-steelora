@@ -34,7 +34,11 @@ export async function POST(request: Request) {
   }
 
   const { visitorId } = istektenKimlik(request.headers.get('cookie'))
-  const sessionId = oturumKimligi(istekIp(request.headers), ua)
+  const sessionId = oturumKimligi(
+    istekIp(request.headers),
+    ua,
+    request.headers.get('accept-language')
+  )
 
   await olayYaz({
     event,

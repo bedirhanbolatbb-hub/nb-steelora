@@ -19,7 +19,7 @@ export async function sunucuOlayi(
     const ua = h.get('user-agent')
     if (botMu(ua)) return
 
-    const sessionId = oturumKimligi(istekIp(h), ua)
+    const sessionId = oturumKimligi(istekIp(h), ua, h.get('accept-language'))
     const { visitorId } = istektenKimlik(h.get('cookie'))
     // Yolu proxy başlığa yazar (src/proxy.ts).
     const path = ek?.path ?? h.get('x-nb-path') ?? null

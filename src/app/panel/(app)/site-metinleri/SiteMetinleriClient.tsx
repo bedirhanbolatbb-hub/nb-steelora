@@ -39,6 +39,7 @@ const ETIKETLER: Record<string, { etiket: string; not?: string; genis?: boolean 
   cerez_politikasi: { etiket: 'Çerez Politikası — giriş bölümü', not: 'HTML. Boşsa taslak metin basılır. Zorunlu bölümler (tablo, haklar, yurt dışı) koddan gelir.', genis: true },
   cerez_politikasi_surum: { etiket: 'Çerez Politikası — sürüm', not: "Rıza kaydındaki sürümle AYNI olmalı (şu an: v1.0). Boşsa koddaki sürüm basılır." },
   cerez_politikasi_yururluk: { etiket: 'Çerez Politikası — yürürlük tarihi', not: 'GG.AA.YYYY biçiminde (ör. 17.08.2026). Boşsa satır hiç basılmaz.' },
+  analiz_notu: { etiket: 'Analiz sayfası notu', not: 'Analiz sayfasının üstünde tek satır olarak basılır. Boşaltırsanız satır tamamen kalkar.', genis: true },
   hesap_silme_metni: { etiket: 'Hesap silme bölümü', not: 'HTML. KVKK ve Çerez Politikası sayfalarında basılır. Boşsa koddaki varsayılan metin görünür.', genis: true },
 }
 
@@ -71,6 +72,7 @@ const GRUPLAR: { baslik: string; anahtarlar: string[] }[] = [
     baslik: 'Hukuki — hesap silme',
     anahtarlar: ['hesap_silme_metni'],
   },
+  { baslik: 'Panel — analiz', anahtarlar: ['analiz_notu'] },
   { baslik: 'Diğer', anahtarlar: [] },
 ]
 

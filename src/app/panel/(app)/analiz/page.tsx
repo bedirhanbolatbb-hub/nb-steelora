@@ -15,6 +15,16 @@ export default async function PanelAnalizPage({
   const donem = donemCoz(sp.donem || 'son7', sp.bas, sp.bit)
   const rapor = await raporUret(donem)
 
+  // Ölçüm geçmişi notu: veri taşındığı için eski dönemler boş görünüyor;
+  // metin panelden değiştirilebilir, gerek kalmayınca boşaltılıp kaldırılır.
+  const notSupabase = createServiceClient()
+  const { data: notSatiri } = await notSupabase
+    .from('site_content')
+    .select('value')
+    .eq('key', 'analiz_notu')
+    .maybeSingle()
+  const olcumNotu = (notSatiri?.value ?? '').trim()
+
   // Ürün kimliklerini okunur ada çevir (rapor katmanı yalnız kimlikle çalışır).
   const idler = [...new Set([...rapor.urunler, ...rapor.firsatlar, ...rapor.favoriler].map((u) => u.productId))]
   let adlar: Record<string, { ad: string; slug: string }> = {}
@@ -29,5 +39,12 @@ export default async function PanelAnalizPage({
     )
   }
 
-  return <AnalizClient rapor={rapor} secili={sp.donem || 'son7'} adlar={adlar} />
+  return (
+    <AnalizClient
+      rapor={rapor}
+      secili={sp.donem || 'son7'}
+      adlar={adlar}
+      olcumNotu={olcumNotu}
+    />
+  )
 }
