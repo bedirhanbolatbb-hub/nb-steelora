@@ -12,7 +12,7 @@ import type { Product } from '@/types'
 
 /** Vitrindeki `?kategori=` süzgeci `trendyol_category`'de ILIKE arar; anahtarlar ona göre. */
 const ANAHTARLAR: { kategori: string; etiket: string; kelimeler: RegExp }[] = [
-  { kategori: 'kolye', etiket: 'Kolye', kelimeler: /kolye|zincir|madalyon|ucu?\b/gi },
+  { kategori: 'kolye', etiket: 'Kolye', kelimeler: /kolye|zincir|madalyon/gi },
   { kategori: 'küpe', etiket: 'Küpe', kelimeler: /küpe|halka küpe|çivi küpe/gi },
   { kategori: 'bileklik', etiket: 'Bileklik', kelimeler: /bileklik|bilezik|charm/gi },
   { kategori: 'yüzük', etiket: 'Yüzük', kelimeler: /yüzük|alyans/gi },
