@@ -19,7 +19,7 @@ export default function SifremiUnuttumPage() {
     // şifre ekranına aktarılır. Doğrudan /auth/sifremi-sifirla'ya gitmek
     // oturumsuz bir sayfa açıyordu ve şifre güncelleme hata veriyordu (Faz 11).
     await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/auth/sifremi-sifirla`,
+      redirectTo: `${window.location.origin}/auth/confirm?next=/auth/sifremi-sifirla`,
     })
 
     setSent(true)
@@ -28,21 +28,36 @@ export default function SifremiUnuttumPage() {
 
   if (sent) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center px-4">
-        <div className="max-w-md w-full text-center">
-          <div className="text-4xl mb-6">✉️</div>
-          <h1 className="font-heading text-[28px] font-light text-ink mb-4">
-            E-posta Gönderildi
+      <div className="flex min-h-[60vh] items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md text-center">
+          <div className="mb-6 text-4xl">✉️</div>
+          <h1 className="mb-4 font-heading text-[28px] font-light text-ink">
+            E-postanı kontrol et
           </h1>
-          <p className="text-[13px] font-body text-ink-soft mb-6">
-            Şifre sıfırlama linki <strong>{email}</strong> adresine gönderildi.
+          {/*
+            Adresin kayıtlı olup olmadığı SÖYLENMEZ: "böyle bir üyelik yok"
+            demek, sitedeki e-postaları tek tek sınayan hesap sayımı saldırısına
+            ve üçüncü kişiye müşteri bilgisi ifşasına (KVKK) kapı açar.
+          */}
+          <p className="mb-8 font-body text-[13px] leading-relaxed text-ink-soft">
+            Bu e-posta ile kayıtlı bir hesap varsa şifre sıfırlama bağlantısını gönderdik. Birkaç
+            dakika içinde ulaşmazsa spam klasörünü kontrol edin ya da bu adresle kayıtlı
+            olmayabilirsiniz.
           </p>
-          <Link
-            href="/giris"
-            className="text-accent hover:text-accent-deep text-[12px] font-body transition-colors"
-          >
-            Giriş sayfasına dön
-          </Link>
+          <p className="mb-3 font-body text-[13px] text-ink-soft">
+            Hesabın yok mu?{' '}
+            <Link href="/kayit" className="text-accent transition-colors hover:text-accent-deep">
+              Üye ol
+            </Link>
+          </p>
+          <p className="font-body text-[13px]">
+            <Link
+              href="/giris"
+              className="text-accent transition-colors hover:text-accent-deep"
+            >
+              Giriş sayfasına dön
+            </Link>
+          </p>
         </div>
       </div>
     )

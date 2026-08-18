@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Input from '@/components/ui/Input'
+import DogrulamaTekrarGonder from '@/components/store/DogrulamaTekrarGonder'
 
 export default function KayitPage() {
   const [form, setForm] = useState({
@@ -37,7 +38,7 @@ export default function KayitPage() {
       password: form.password,
       options: {
         data: { full_name: form.fullName },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/confirm`,
       },
     })
 
@@ -57,22 +58,30 @@ export default function KayitPage() {
 
   if (success) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center px-4">
-        <div className="max-w-md w-full text-center">
-          <div className="text-4xl mb-6">✉️</div>
-          <h1 className="font-heading text-[28px] font-light text-ink mb-4">
-            E-postanızı Doğrulayın
+      <div className="flex min-h-[60vh] items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md text-center">
+          <div className="mb-6 text-4xl">✉️</div>
+          <h1 className="mb-4 font-heading text-[28px] font-light text-ink">
+            E-postanı kontrol et
           </h1>
-          <p className="text-[13px] font-body text-ink-soft mb-6">
-            <strong>{form.email}</strong> adresine doğrulama linki gönderdik.
-            Lütfen e-postanızı kontrol edin.
+          <p className="mb-2 font-body text-[13px] leading-relaxed text-ink-soft">
+            <strong className="text-ink">{form.email}</strong> adresine doğrulama bağlantısı
+            gönderdik. Bağlantıya tıkladığında hesabın açılır.
           </p>
-          <Link
-            href="/giris"
-            className="text-accent hover:text-accent-deep text-[12px] font-body transition-colors"
-          >
-            Giriş sayfasına dön
-          </Link>
+          <p className="mb-8 font-body text-[12px] leading-relaxed text-muted">
+            Birkaç dakika içinde ulaşmazsa spam/gereksiz klasörünü kontrol et.
+          </p>
+
+          <DogrulamaTekrarGonder eposta={form.email} />
+
+          <p className="mt-8 font-body text-[13px]">
+            <Link
+              href="/giris"
+              className="text-accent transition-colors hover:text-accent-deep"
+            >
+              Giriş sayfasına dön
+            </Link>
+          </p>
         </div>
       </div>
     )

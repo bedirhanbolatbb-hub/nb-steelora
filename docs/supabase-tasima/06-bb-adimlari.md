@@ -156,6 +156,13 @@ WHERE section = 'hero_slides' AND payload::text LIKE '%npvanotrzbqsnxvasmxm%';
 | Reset Password | `Şifre Sıfırlama — NB Steelora` | [`auth-sablon-sifre-sifirlama.html`](./auth-sablon-sifre-sifirlama.html) |
 | Confirm signup | `E-posta Adresinizi Doğrulayın — NB Steelora` | [`auth-sablon-eposta-dogrulama.html`](./auth-sablon-eposta-dogrulama.html) |
 
+> ⚠️ **Şablondaki bağlantı `{{ .ConfirmationURL }}` OLMAMALI.** O değişken PKCE
+> bağlantısı üretir; bağlantı, kaydı başlatan tarayıcıdan farklı bir cihazda
+> açıldığında "PKCE code verifier not found in storage" hatası verir (kullanıcı
+> hata ekranı görür). Bu dosyalardaki `{{ .TokenHash }}` biçimi cihazdan
+> bağımsız çalışır:
+> `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/hesabim`
+
 ✅ Kontrol: ayarlar kaydedildi (test maili Adım 9'da).
 
 ---
