@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import { getCollectionCards } from '@/lib/collections'
 
@@ -67,7 +68,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   try {
-    const supabase = await createClient()
+    // blog_posts'ta anon SELECT politikası yok (yalnız service_role okur);
+    // anon istemciyle sorgu boş dönüyor ve yazılar haritaya hiç girmiyordu.
+    const supabase = createServiceClient()
     const { data } = await supabase
       .from('blog_posts')
       .select('slug, updated_at, published_at')
