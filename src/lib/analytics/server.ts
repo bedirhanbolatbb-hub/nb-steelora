@@ -19,6 +19,15 @@ export async function sunucuOlayi(
     const ua = h.get('user-agent')
     if (botMu(ua)) return
 
+    // Next, listede görünen bağlantıların sayfalarını arka planda önceden
+    // ister (Next-Router-Prefetch: 1). Bu istekler de sunucu bileşenini
+    // çalıştırdığı için ziyaret gibi sayılıyordu: canlı veride tek oturumda
+    // 6 dakikada 68 ürün sayfası göründü (54 product_view). Kullanıcının
+    // görmediği sayfa ziyaret değildir — prefetch ölçülmez. Gerçek istemci
+    // gezinmesi de RSC isteğidir ama prefetch başlığını taşımaz, o yüzden
+    // yalnız bu başlığa bakılır.
+    if (h.get('next-router-prefetch') === '1') return
+
     const sessionId = oturumKimligi(istekIp(h), ua, h.get('accept-language'))
     // Tuz yoksa kimlik üretilemez; şişmiş sayı yazmaktansa ölçümü atlarız.
     if (!sessionId) return
