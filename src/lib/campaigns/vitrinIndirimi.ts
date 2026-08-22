@@ -3,6 +3,8 @@ import { kampanyalariYukle } from './yukle'
 import { kartFiyatiGosterilsinMi, kosulRozeti } from './hesap'
 
 export type VitrinIndirimi = {
+  /** Kampanya kimliği — besleme, geçerlilik tarihini bununla okur. */
+  id: string
   ad: string
   /** Yalnız koşulsuz kampanyada dolu: kartta indirimli fiyat bununla hesaplanır. */
   oran: number | null
@@ -38,6 +40,7 @@ export async function vitrinIndirimiGetir(): Promise<VitrinIndirimi | null> {
 
     if (kosulsuz) {
       return {
+        id: kosulsuz.id,
         ad: kosulsuz.ad,
         oran: Number(kosulsuz.deger) || null,
         rozet: null,
@@ -47,7 +50,7 @@ export async function vitrinIndirimiGetir(): Promise<VitrinIndirimi | null> {
 
     for (const k of otomatikler) {
       const rozet = kosulRozeti(k)
-      if (rozet) return { ad: k.ad, oran: null, rozet, fiyatGoster: false }
+      if (rozet) return { id: k.id, ad: k.ad, oran: null, rozet, fiyatGoster: false }
     }
     return null
   } catch {
