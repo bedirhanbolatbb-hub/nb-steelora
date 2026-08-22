@@ -341,3 +341,63 @@ export function adminNewReviewEmail(params: { urun: string; puan: number; govde:
     ),
   }
 }
+
+/**
+ * İkinci sipariş kuponu (Faz 17) — teslimat sonrası kişiye özel, tek
+ * kullanımlık kod. Değerlendirme davetinden AYRI gönderilir: kupon içeren
+ * ileti ticari nitelik taşır ve kendi abonelik satırını gerektirir.
+ */
+export function secondOrderCouponEmail(params: {
+  orderNumber: string
+  kod: string
+  oran: number
+  sonKullanim: Date
+}) {
+  const tarih = params.sonKullanim.toLocaleDateString('tr-TR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Europe/Istanbul',
+  })
+
+  return {
+    subject: `Bir sonraki seçiminiz için %${params.oran} — NB Steelora`,
+    html: shell(
+      'Size özel bir teşekkür',
+      `<p style="color:#7A5048;line-height:1.8;margin:0 0 20px;">
+        ${params.orderNumber} numaralı siparişiniz elinize ulaştı. Umarız seçtiğiniz parça
+        sizi memnun etmiştir. Bize ikinci kez güvenmenizi çok isteriz — bu yüzden yalnızca
+        size ait, tek kullanımlık bir indirim kodu ayırdık.
+      </p>
+
+      <div style="background:#2A1E1E;padding:24px;text-align:center;margin-bottom:24px;">
+        <p style="margin:0 0 8px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#C89080;">
+          Kişiye özel indirim kodunuz
+        </p>
+        <p style="margin:0;font-size:24px;letter-spacing:.18em;color:#FFF8F6;font-weight:600;">
+          ${params.kod}
+        </p>
+        <p style="margin:8px 0 0;font-size:18px;color:#FFF8F6;">%${params.oran}</p>
+      </div>
+
+      <p style="color:#7A5048;line-height:1.8;margin:0 0 8px;">
+        Kodu ödeme adımındaki <strong>"İndirim Kodu"</strong> alanına yazmanız yeterli.
+      </p>
+      <ul style="color:#A88070;font-size:13px;line-height:1.8;padding-left:18px;margin:0 0 24px;">
+        <li>Yalnızca bu e-postanın gönderildiği adrese tanımlıdır.</li>
+        <li>Bir kez kullanılabilir.</li>
+        <li><strong>${tarih}</strong> tarihine kadar geçerlidir.</li>
+        <li>
+          Diğer kampanyalarla birleştirilemez. Sepetinizde daha yüksek bir indirim varsa o
+          uygulanır — kodunuz harcanmadan sizde kalır.
+        </li>
+      </ul>
+
+      <p style="text-align:center;margin:0;">
+        <a href="${SITE}/urunler" style="display:inline-block;background:#2A1E1E;color:#FFF8F6;padding:16px 40px;text-decoration:none;font-size:12px;letter-spacing:.15em;text-transform:uppercase;">
+          Koleksiyonu keşfet
+        </a>
+      </p>`
+    ),
+  }
+}

@@ -231,6 +231,37 @@ export async function POST(request: Request) {
       console.warn('[callback] stock: order.items missing or empty; cannot decrease stock', order.id)
     }
 
+    // Kişisel kupon: ödeme ONAYLANDI, kupon şimdi harcanır (Faz 17).
+    // Rezervasyon yerine bu sıra seçildi: ödeme yarıda kalan müşteri kuponunu
+    // kaybetmez, çünkü kupon yalnız buraya ulaşan siparişte tüketilir.
+    try {
+      const kuponId = (order as any)?.metadata?.kisisel_kupon_id
+      if (kuponId) {
+        const { data: kupon } = await serviceClient
+          .from('campaign_coupons')
+          .select('id, used_count, max_uses')
+          .eq('id', kuponId)
+          .maybeSingle()
+        if (kupon && (kupon.used_count ?? 0) < (kupon.max_uses ?? 1)) {
+          await serviceClient
+            .from('campaign_coupons')
+            .update({
+              used_count: (kupon.used_count ?? 0) + 1,
+              redeemed_at: new Date().toISOString(),
+              redeemed_order_id: order.id,
+              is_active: (kupon.used_count ?? 0) + 1 < (kupon.max_uses ?? 1),
+            })
+            .eq('id', kupon.id)
+            // Yarış koruması: iki eşzamanlı callback'ten yalnız biri sayacı
+            // artırabilsin diye mevcut değer koşulu.
+            .eq('used_count', kupon.used_count ?? 0)
+          console.log('[callback] kişisel kupon harcandı:', kupon.id)
+        }
+      }
+    } catch (kuponHata: any) {
+      console.error('[callback] kupon harcanamadı:', kuponHata?.message)
+    }
+
     // Trendyol stok kuyruğu (Faz 16B): yazım kuyruğa alınır, hemen işlenmeye
     // çalışılır. Her hata yutulur — Trendyol'daki bir gecikme ödemeyi bozmaz.
     try {

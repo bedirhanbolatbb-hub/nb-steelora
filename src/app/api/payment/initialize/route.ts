@@ -74,9 +74,10 @@ export async function POST(request: Request) {
       userId: userId || null,
       eposta: buyer?.email || null,
     })
-    const { ozet, kodHatasi } = await sepetOzetiHesapla(serviceClient, {
+    const { ozet, kodHatasi, kisiselKuponId } = await sepetOzetiHesapla(serviceClient, {
       items,
       kod: discountCode ? String(discountCode) : null,
+      musteriEpostasi: buyer?.email || null,
       musteri,
     })
     if (discountCode && kodHatasi) {
@@ -147,6 +148,10 @@ export async function POST(request: Request) {
       discount_amount: discountTotal,
       applied_campaign_id: uygulananKampanyaId,
       gift_note: giftNote || null,
+      // Kişisel kupon kullanıldıysa hangi kupon olduğu metadata'da taşınır;
+      // ödeme onaylanınca callback bunu harcar (kupon yalnız gerçekten
+      // uygulandığında tüketilir).
+      ...(kisiselKuponId ? { metadata: { kisisel_kupon_id: kisiselKuponId } } : {}),
       total,
       iyzico_payment_id: null,
     })

@@ -6,6 +6,7 @@ import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { reviewInviteEmail, shippingNotificationEmail } from '@/lib/emails/templates'
 import { sendMail } from '@/lib/emails/send'
 import { musteriMailiGonder } from '@/lib/emails/musteriMaili'
+import { ikinciSiparisKuponuVer } from '@/lib/kuponlar/ikinciSiparis'
 
 export async function PATCH(
   request: Request,
@@ -83,7 +84,7 @@ export async function PATCH(
     .from('orders')
     .update(updateData)
     .eq('id', id)
-    .select('order_number, guest_email, items, review_invite_sent_at')
+    .select('order_number, guest_email, items, review_invite_sent_at, user_id, total')
     .single()
 
   if (error) {
@@ -149,6 +150,21 @@ export async function PATCH(
         .from('orders')
         .update({ review_invite_sent_at: new Date().toISOString() })
         .eq('id', id)
+    }
+
+    // İkinci sipariş kuponu: kişiye özel, tek kullanımlık kod ayrı mailde
+    // gider (Faz 17). Hata hâlinde teslim akışı etkilenmez.
+    try {
+      const kupon = await ikinciSiparisKuponuVer(serviceClient, {
+        id: String(id),
+        order_number: order.order_number,
+        guest_email: order.guest_email,
+        user_id: order.user_id ?? null,
+        total: order.total ?? null,
+      })
+      console.log('[admin-orders] ikinci sipariş kuponu:', JSON.stringify(kupon))
+    } catch (kuponHata: any) {
+      console.error('[admin-orders] kupon üretilemedi:', kuponHata?.message)
     }
   }
 

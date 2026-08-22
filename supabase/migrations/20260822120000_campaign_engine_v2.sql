@@ -90,6 +90,17 @@ UPDATE public.campaigns
    AND metadata->>'pay_quantity' ~ '^[0-9]+$'
    AND (metadata->>'buy_quantity')::integer > (metadata->>'pay_quantity')::integer;
 
+
+-- =====================================================================
+-- 1b) orders.metadata — kişisel kupon izi
+--
+-- Ödeme başlatılırken hangi kişisel kuponun uygulandığı siparişte taşınır;
+-- ödeme ONAYLANINCA callback bu kuponu harcar. Ödeme yarıda kalırsa kupon
+-- tüketilmez.
+-- =====================================================================
+ALTER TABLE public.orders
+  ADD COLUMN IF NOT EXISTS metadata jsonb NOT NULL DEFAULT '{}'::jsonb;
+
 -- =====================================================================
 -- 2) CHECK güncellemeleri
 -- =====================================================================
