@@ -6,6 +6,7 @@ import { formatPrice } from '@/lib/utils'
 import { ORDER_STATUS, PBadge, PCard, type BadgeTone } from './_components/ui'
 import DataTable from './_components/DataTable'
 import Sparkline from './_components/Sparkline'
+import { basarisizSayisi } from '@/lib/trendyol/stokKuyrugu'
 
 // Gösterge paneli her ziyarette taze veri okur.
 export const dynamic = 'force-dynamic'
@@ -90,6 +91,8 @@ export default async function PanelDashboard() {
   ])
 
   const hazirlanacak = hazirlanacakRes.count ?? 0
+  // Trendyol'a yazılamayan stok kalemleri (Faz 16B).
+  const stokYazilamayan = await basarisizSayisi()
   const kargoyaVerilecek = kargoyaRes.count ?? 0
   const acikTalep = talepRes.count ?? 0
 
@@ -150,6 +153,7 @@ export default async function PanelDashboard() {
     { href: '/panel/siparisler?durum=preparing', etiket: 'Kargoya verilecek sipariş', deger: kargoyaVerilecek },
     { href: '/panel/siparisler#talepler', etiket: 'Bekleyen iptal/iade talebi', deger: acikTalep },
     { href: '/panel/yorumlar', etiket: 'Onay bekleyen yorum', deger: onayBekleyenYorum },
+    { href: '/panel/stok-senkron', etiket: "Trendyol'a yazılamayan stok", deger: stokYazilamayan },
   ]
 
   const dikkat = [

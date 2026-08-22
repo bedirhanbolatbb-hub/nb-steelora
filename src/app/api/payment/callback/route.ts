@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { completeThreeDS } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
 import { decreaseStock } from '@/lib/trendyol/stockUpdate'
+import { kuyrugaEkle, kuyrugaIsle } from '@/lib/trendyol/stokKuyrugu'
 import { orderConfirmationEmail, adminNewOrderEmail } from '@/lib/emails/templates'
 import { bildirimAdresi } from '@/lib/emails/bildirim'
 import { musteriMailiGonder } from '@/lib/emails/musteriMaili'
@@ -228,6 +229,24 @@ export async function POST(request: Request) {
       }
     } else {
       console.warn('[callback] stock: order.items missing or empty; cannot decrease stock', order.id)
+    }
+
+    // Trendyol stok kuyruğu (Faz 16B): yazım kuyruğa alınır, hemen işlenmeye
+    // çalışılır. Her hata yutulur — Trendyol'daki bir gecikme ödemeyi bozmaz.
+    try {
+      const kalemler = Array.isArray(order?.items) ? (order.items as any[]) : []
+      await kuyrugaEkle({
+        orderId: order.id,
+        items: kalemler.map((k) => ({
+          productId: k?.productId ?? k?.product_id ?? null,
+          quantity: Number(k?.quantity) || 1,
+        })),
+        yon: 'satis',
+      })
+      const kuyrukSonuc = await kuyrugaIsle()
+      console.log('[callback] stok kuyruğu:', JSON.stringify(kuyrukSonuc))
+    } catch (kuyrukHata: any) {
+      console.error('[callback] stok kuyruğu hatası (ödeme etkilenmedi):', kuyrukHata?.message)
     }
 
     // Sipariş onay e-postası gönder (şablon: lib/emails/templates.ts)

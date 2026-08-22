@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { refundFullPayment } from '@/lib/iyzico/client'
 import { increaseStock } from '@/lib/trendyol/stockUpdate'
+import { kuyrugaEkle, kuyrugaIsle } from '@/lib/trendyol/stokKuyrugu'
 
 function lineProductId(item: any): string | null {
   const id = item?.productId ?? item?.product_id
@@ -111,6 +112,21 @@ export async function executeAdminOrderRefund(
       .from('orders')
       .update({ stock_restored_at: new Date().toISOString(), updated_at: new Date().toISOString() })
       .eq('id', orderId)
+
+    // Trendyol'a ters kayıt: aynı kuyruktan, delta pozitif (Faz 16B).
+    try {
+      await kuyrugaEkle({
+        orderId,
+        items: items.map((k) => ({
+          productId: lineProductId(k),
+          quantity: Math.max(1, Number(k?.quantity) || 1),
+        })),
+        yon: 'iade',
+      })
+      await kuyrugaIsle()
+    } catch (kuyrukHata: any) {
+      console.error('[admin-order-refund] stok kuyruğu hatası (iade etkilenmedi):', kuyrukHata?.message)
+    }
   }
 
   console.log('[admin-order-refund] success', { orderId, iadeEdildi })

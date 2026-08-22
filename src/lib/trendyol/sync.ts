@@ -1,4 +1,5 @@
 import { fetchApprovedProducts, fetchStockAndPriceMap } from './client'
+import { sonYazilanBarkodlar } from './stokKuyrugu'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 function getServiceClient() {
@@ -143,8 +144,13 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
   // dış referanslar olduğu gibi korunuyor.
   const { data: existingRows } = await supabase
     .from('products')
-    .select('id, trendyol_barcode, gender, slug, trendyol_id')
+    // trendyol_price/stock de okunur: taze yazılmış barkodlarda mevcut değer
+    // korunacak (Faz 16B).
+    .select('id, trendyol_barcode, gender, slug, trendyol_id, trendyol_price, trendyol_stock')
     .in('trendyol_barcode', rows.map((r) => r.barcode))
+
+  // Son 15 dakikada Trendyol'a yazdığımız barkodlar — bu koşuda ezilmezler.
+  const tazeYazilan = await sonYazilanBarkodlar(15)
 
   const existingByBarcode = new Map(
     (existingRows || []).map((r: any) => [r.trendyol_barcode, r])
@@ -178,8 +184,11 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
       trendyol_barcode: row.barcode,
       trendyol_title: row.title,
       trendyol_description: row.description,
-      trendyol_price: inventory.salePrice,
-      trendyol_stock: inventory.quantity,
+      // Son 15 dakikada Trendyol'a stok yazdıysak, o barkodun stok/fiyatı bu
+      // koşuda güncellenmez: yazımımız henüz yansımamış olabilir ve senkron
+      // eski değeri geri yazardı (Faz 16B).
+      trendyol_price: tazeYazilan.has(row.barcode) && existing ? existing.trendyol_price : inventory.salePrice,
+      trendyol_stock: tazeYazilan.has(row.barcode) && existing ? existing.trendyol_stock : inventory.quantity,
       trendyol_images: row.images,
       trendyol_category: row.category,
       variant_label: row.variantLabel,

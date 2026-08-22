@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { refundFullPayment } from '@/lib/iyzico/client'
 import { increaseStock } from '@/lib/trendyol/stockUpdate'
+import { kuyrugaEkle, kuyrugaIsle } from '@/lib/trendyol/stokKuyrugu'
 import { validateOrderStatusTransition } from '@/lib/orders/statusTransitions'
 
 function lineProductId(item: any): string | null {
@@ -126,6 +127,21 @@ export async function executeAdminOrderCancellation(
     }
     updateData.stock_restored_at = new Date().toISOString()
     console.log('[admin-order-cancel] stock restore complete', { orderId, restoredLines })
+
+    // Trendyol'a ters kayıt: aynı kuyruktan, delta pozitif (Faz 16B).
+    try {
+      await kuyrugaEkle({
+        orderId,
+        items: items.map((k) => ({
+          productId: lineProductId(k),
+          quantity: Math.max(1, Number(k?.quantity) || 1),
+        })),
+        yon: 'iade',
+      })
+      await kuyrugaIsle()
+    } catch (kuyrukHata: any) {
+      console.error('[admin-order-cancel] stok kuyruğu hatası (iptal etkilenmedi):', kuyrukHata?.message)
+    }
   } else {
     console.log('[admin-order-cancel] stock restore skip', {
       orderId,
