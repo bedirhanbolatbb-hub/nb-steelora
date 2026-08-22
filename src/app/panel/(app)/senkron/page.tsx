@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createServiceClient } from '@/lib/supabase/service'
+import { getGroupKey } from '@/lib/catalog/variants'
 import SenkronClient, { type KosuSatiri } from './SenkronClient'
 
 export const metadata: Metadata = { title: 'Senkron' }
@@ -33,5 +34,42 @@ export default async function PanelSenkronPage() {
     .select('id', { count: 'exact', head: true })
     .eq('is_active', true)
 
-  return <SenkronClient kosular={kosular} aktifUrun={aktif ?? 0} />
+  const { count: pasif } = await supabase
+    .from('products')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_active', false)
+
+  // "Trendyol'da 426 ürün var, bizde 432" farkının kaynağı (Faz 18 ölçümü):
+  // Trendyol paneli bir ürünü TEK kart (content) sayar, biz her barkodu ayrı
+  // satır tutarız. Beden varyantlı iki yüzük ailesi 8 satır ama 2 karttır;
+  // 432 − 8 + 2 = 426. Eksik ürün YOK. Sayı elle yazılmıyor, veriden türüyor.
+  const { data: varyantlar } = await supabase
+    .from('products')
+    .select('id, trendyol_title, override_title, trendyol_price, override_price, trendyol_category, gender, variant_label')
+    .eq('is_active', true)
+    .not('variant_label', 'is', null)
+
+  const varyantSatiri = (varyantlar ?? []).length
+  const varyantGrubu = new Set(
+    (varyantlar ?? []).map((v: any) =>
+      getGroupKey({
+        id: v.id,
+        display_title: v.override_title ?? v.trendyol_title,
+        display_price: v.override_price ?? v.trendyol_price,
+        trendyol_category: v.trendyol_category,
+        gender: v.gender,
+      })
+    )
+  ).size
+
+  return (
+    <SenkronClient
+      kosular={kosular}
+      aktifUrun={aktif ?? 0}
+      pasifUrun={pasif ?? 0}
+      trendyolKarti={(aktif ?? 0) - varyantSatiri + varyantGrubu}
+      varyantSatiri={varyantSatiri}
+      varyantGrubu={varyantGrubu}
+    />
+  )
 }

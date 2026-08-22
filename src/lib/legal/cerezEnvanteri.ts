@@ -6,6 +6,22 @@
  *
  * Doğrulama notu: rıza kararı verilmeden önce sitede HİÇBİR çerez yazılmıyor
  * (canlı ölçüm). Sepet ve son görüntülenenler yalnız localStorage'da tutuluyor.
+ *
+ * SON DOĞRULAMA — 22 Ağustos 2026 (Faz 18), canlıda gerçek tarayıcıyla:
+ *   ana sayfa ilk yükleme 189 istek → üçüncü taraf host 0, yazılan çerez 0,
+ *   localStorage anahtarı 0; window.gtag / fbq / ttq / dataLayer hepsi
+ *   undefined. "Reddet" sonrası tek çerez nb_consent, "Kabul et" sonrası
+ *   nb_consent + nb_vid — ikisi de birinci taraf. Yani rıza bandındaki
+ *   "hiçbir reklam pikseli ya da izleyici bulunmuyor" cümlesi DOĞRU.
+ *
+ * TUZAK: Vercel ortamında NEXT_PUBLIC_GA4_ID ve NEXT_PUBLIC_META_PIXEL_ID
+ * değerleri hâlâ tanımlı ama kodda hiçbir yerde okunmuyor. Bu değişkenleri
+ * bir bileşene bağlamak TEK BAŞINA yeterli değildir; piksel eklenecekse aynı
+ * anda (1) buradaki envantere satır girilmeli, (2) ConsentBanner'daki
+ * "Pazarlama" kategorisinin `pasif` bayrağı kaldırılıp onay kutusu
+ * açılmalı, (3) piksel yalnız pazarlama rızası verildikten SONRA
+ * yüklenmelidir. Aksi halde bant metni yanlışa döner ve rızasız çerez
+ * yazılır (KVKK m.5).
  */
 
 /**

@@ -27,9 +27,17 @@ const DURUM: Record<string, { label: string; tone: BadgeTone }> = {
 export default function SenkronClient({
   kosular,
   aktifUrun,
+  pasifUrun,
+  trendyolKarti,
+  varyantSatiri,
+  varyantGrubu,
 }: {
   kosular: KosuSatiri[]
   aktifUrun: number
+  pasifUrun: number
+  trendyolKarti: number
+  varyantSatiri: number
+  varyantGrubu: number
 }) {
   const router = useRouter()
   const { push: toast } = useToast()
@@ -68,7 +76,7 @@ export default function SenkronClient({
           <div>
             <p className="text-[13px] font-medium text-[var(--p-ink)]">Trendyol senkronu</p>
             <p className="text-[12px] text-[var(--p-muted)]">
-              Aktif ürün: {aktifUrun} · otomatik koşu her gün 09:00 (cron)
+              Aktif ürün: {aktifUrun} · pasif: {pasifUrun} · otomatik koşu her gün 09:00 (cron)
             </p>
           </div>
           <PButton className="ml-auto" onClick={tetikle} disabled={kosuyor}>
@@ -76,6 +84,15 @@ export default function SenkronClient({
             {kosuyor ? 'Senkronize ediliyor… (~20 sn)' : 'Şimdi senkronize et'}
           </PButton>
         </div>
+        {varyantSatiri > varyantGrubu && (
+          <p className="mt-3 rounded-[4px] border border-[var(--p-line)] px-3 py-2 text-[12px] leading-relaxed text-[var(--p-muted)]">
+            Trendyol panelinde <strong>{trendyolKarti}</strong> ürün görünür, bizde{' '}
+            <strong>{aktifUrun}</strong> satır var — <strong>eksik ürün yok</strong>. Trendyol
+            beden varyantlarını tek kart sayıyor; bizde her barkod ayrı satır. Şu an{' '}
+            {varyantSatiri} varyant satırı {varyantGrubu} karta denk geliyor ({aktifUrun} −{' '}
+            {varyantSatiri} + {varyantGrubu} = {trendyolKarti}).
+          </p>
+        )}
         {sonSonuc && (
           <p className="mt-3 rounded-[4px] bg-[var(--p-success-bg)] px-3 py-2 text-[12px] text-[var(--p-success)]">
             {sonSonuc}
