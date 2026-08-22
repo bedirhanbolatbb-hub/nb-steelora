@@ -148,7 +148,11 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
               <div className="px-6 py-2.5 border-t border-line">
                 <p className="text-[11px] font-body text-ink-soft">
                   <span className="text-accent">✦</span> {coupon!.label}
-                  <span className="text-muted"> — ödeme adımında uygulanır</span>
+                  <span className="text-muted">
+                    {indirim
+                      ? ' — kampanya daha avantajlı, o uygulanıyor'
+                      : ' — ödeme adımında uygulanır'}
+                  </span>
                 </p>
               </div>
             )}

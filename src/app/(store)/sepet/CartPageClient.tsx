@@ -136,11 +136,16 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                 <span className="text-accent">✓</span> {FREE_SHIPPING_LABEL}
               </p>
 
-              {/* Kupon hatırlatması — yalnız kampanya bu sepete uygulanabiliyorsa */}
+              {/* Kupon hatırlatması — otomatik kampanya daha avantajlıysa
+                  "uygulanır" demek yanıltıcı olur: indirimler toplanmıyor. */}
               {couponApplies(coupon, subtotal) && (
                 <p className="text-[11px] font-body text-ink-soft pt-1">
                   <span className="text-accent">✦</span> {coupon.label}
-                  <span className="text-muted"> — ödeme adımında uygulanır</span>
+                  <span className="text-muted">
+                    {indirimTutari > 0
+                      ? ' — yukarıdaki kampanya daha avantajlı, o uygulanıyor'
+                      : ' — ödeme adımında uygulanır'}
+                  </span>
                 </p>
               )}
               {indirim && (
