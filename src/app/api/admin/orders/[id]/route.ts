@@ -114,6 +114,9 @@ export async function PATCH(
   // Teslim edildi → değerlendirme daveti. Sipariş başına yalnız bir kez:
   // review_invite_sent_at doluysa tekrar gönderilmez. Mail hatası durum
   // geçişini engellemez (kargo bildirimiyle aynı desen).
+  // Teslimatta üretilen kuponun sonucu yanıtta da döner: gönderim gerçekten
+  // yapıldı mı, yapılmadıysa hangi kural engelledi (Faz 17).
+  let kuponSonucu: unknown = null
   if (body.status === 'delivered' && order?.guest_email && !order.review_invite_sent_at) {
     const items = Array.isArray(order.items) ? (order.items as any[]) : []
     const productIds = items.map((i) => i?.productId).filter(Boolean)
@@ -155,18 +158,18 @@ export async function PATCH(
     // İkinci sipariş kuponu: kişiye özel, tek kullanımlık kod ayrı mailde
     // gider (Faz 17). Hata hâlinde teslim akışı etkilenmez.
     try {
-      const kupon = await ikinciSiparisKuponuVer(serviceClient, {
+      kuponSonucu = await ikinciSiparisKuponuVer(serviceClient, {
         id: String(id),
         order_number: order.order_number,
         guest_email: order.guest_email,
         user_id: order.user_id ?? null,
         total: order.total ?? null,
       })
-      console.log('[admin-orders] ikinci sipariş kuponu:', JSON.stringify(kupon))
+      console.log('[admin-orders] ikinci sipariş kuponu:', JSON.stringify(kuponSonucu))
     } catch (kuponHata: any) {
       console.error('[admin-orders] kupon üretilemedi:', kuponHata?.message)
     }
   }
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, kupon: kuponSonucu })
 }
