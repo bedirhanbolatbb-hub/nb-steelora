@@ -181,6 +181,7 @@ export async function PATCH(
 
   // Müşteriye bilgilendirme: iptal/iade akışında hiç mail gitmiyordu, müşteri
   // parasının iade edildiğini yalnız ekranda görüyordu (Faz 15).
+  let mailSonucu: unknown = null
   try {
     const { data: order } = await service
       .from('orders')
@@ -191,7 +192,7 @@ export async function PATCH(
       const { subject, html } = orderCancelledEmail(order as any, iadeSonucu?.iadeEdildi)
       // Alıcı ve sipariş numarası güvenlik ağından geçer: boş alıcı, yönetici
       // adresi ve test siparişleri müşteri maili üretmez.
-      await musteriMailiGonder({
+      mailSonucu = await musteriMailiGonder({
         eposta: order.guest_email,
         orderNumber: order.order_number,
         subject,
@@ -204,5 +205,7 @@ export async function PATCH(
     console.error('[admin-order-requests] bilgilendirme maili gönderilemedi', mailErr)
   }
 
-  return NextResponse.json({ success: true, iade: iadeSonucu })
+  // Mail sonucu yanıtta da döner: gönderim gerçekten yapıldı mı, yapılmadıysa
+  // hangi kural engelledi — panelden ve testten log okumadan görülebilsin.
+  return NextResponse.json({ success: true, iade: iadeSonucu, mail: mailSonucu })
 }
