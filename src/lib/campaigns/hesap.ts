@@ -316,7 +316,11 @@ export function sepetHesabi(params: {
   let indirimToplami = kurus(uygulananlar.reduce((t, a) => t + a.tutar, 0))
   let tavanUygulandi = false
 
-  if (indirimToplami > tavanTutari) {
+  // TAVAN yalnız BİRDEN FAZLA kampanya birleştiğinde uygulanır. Tek kampanya
+  // mağazanın bilinçli kararıdır: "2 al 1 öde" tanımlayan bir kampanyayı %35'e
+  // kırpmak, ilan edilen kampanyayı sessizce küçültmek olurdu. Tavan, üst üste
+  // binen indirimlerin marjı götürmesine karşı bir sınırdır.
+  if (uygulananlar.length > 1 && indirimToplami > tavanTutari) {
     tavanUygulandi = true
     // Kırpma, kampanyalara tutarlarıyla orantılı dağıtılır; böylece sepette
     // görünen satırların toplamı gösterilen indirimle birebir tutar.
