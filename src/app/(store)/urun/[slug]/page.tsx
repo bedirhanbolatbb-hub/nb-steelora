@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { notFound } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
+import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
 import { cleanDescription, hasContent } from '@/lib/catalog/description'
 import { materialCare, materialLabel } from '@/lib/catalog/material'
@@ -95,6 +96,12 @@ export default async function UrunDetayPage({
 
   const material = materialLabel(product.material_type)
   const stock = Number(product.trendyol_stock) || 0
+  // Vitrin kampanyası (kart ile aynı kaynak).
+  const vitrinIndirimi = await vitrinIndirimiGetir()
+  const listeFiyati = Number(mergedProduct.override_price ?? product.display_price) || 0
+  const kampanyaliFiyat = vitrinIndirimi
+    ? Math.round(listeFiyati * (1 - vitrinIndirimi.oran / 100) * 100) / 100
+    : null
   const badge = resolveBadge(product)
 
   // Grup üyeleri bir kez çekilir: etiketliyse satın alma kolonunda çip,
@@ -178,14 +185,35 @@ export default async function UrunDetayPage({
             <ProductVariants members={variantMembers} currentId={product.id} variant="chips" />
           )}
 
-          {/* Fiyat */}
-          <div className="flex items-baseline gap-3 mt-6 pt-6 border-t border-line">
-            <p className="price text-[28px] text-ink">
-              {formatPrice(mergedProduct.override_price ?? product.display_price)}
-            </p>
-            {mergedProduct.override_price && mergedProduct.override_price < product.display_price && (
-              <p className="price text-[16px] text-muted line-through font-normal">
-                {formatPrice(product.display_price)}
+          {/* Fiyat — aktif kampanya varsa indirimli tutar önde, liste fiyatı
+              üstü çizili ve oran rozetiyle (Faz 15). */}
+          <div className="mt-6 border-t border-line pt-6">
+            <div className="flex flex-wrap items-baseline gap-3">
+              {kampanyaliFiyat != null ? (
+                <>
+                  <p className="price text-[28px] text-accent-deep">{formatPrice(kampanyaliFiyat)}</p>
+                  <p className="price text-[16px] font-normal text-muted line-through">
+                    {formatPrice(listeFiyati)}
+                  </p>
+                  <span className="rounded-[3px] bg-accent/10 px-2 py-1 font-body text-[12px] font-medium text-accent-deep">
+                    %{vitrinIndirimi!.oran} indirim
+                  </span>
+                </>
+              ) : (
+                <>
+                  <p className="price text-[28px] text-ink">{formatPrice(listeFiyati)}</p>
+                  {mergedProduct.override_price &&
+                    mergedProduct.override_price < product.display_price && (
+                      <p className="price text-[16px] text-muted line-through font-normal">
+                        {formatPrice(product.display_price)}
+                      </p>
+                    )}
+                </>
+              )}
+            </div>
+            {kampanyaliFiyat != null && (
+              <p className="mt-1 font-body text-[12px] text-accent-deep">
+                {vitrinIndirimi!.ad} — sepette {formatPrice(listeFiyati - kampanyaliFiyat)} kazanıyorsunuz
               </p>
             )}
           </div>
