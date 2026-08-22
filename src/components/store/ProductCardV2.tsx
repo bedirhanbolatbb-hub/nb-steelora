@@ -52,9 +52,13 @@ export default function ProductCardV2({
   // gösterilir; tutar yine sepette tek motordan hesaplanır (Faz 15).
   const kampanya = useVitrinIndirimi()
   const listeFiyati = Number((product as any).override_price ?? product.display_price) || 0
-  const kampanyaliFiyat = kampanya
-    ? Math.round(listeFiyati * (1 - kampanya.oran / 100) * 100) / 100
-    : null
+  // Koşullu kampanyada (min sepet, kategori kapsamı, X al Y öde…) kartta
+  // indirimli fiyat GÖSTERİLMEZ: müşteri tek ürün alırken o fiyata ulaşamaz.
+  // Yerine koşulu anlatan küçük bir rozet basılır (Faz 17).
+  const kampanyaliFiyat =
+    kampanya?.fiyatGoster && kampanya.oran
+      ? Math.round(listeFiyati * (1 - kampanya.oran / 100) * 100) / 100
+      : null
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -166,6 +170,9 @@ export default function ProductCardV2({
             </>
           )}
         </div>
+        {kampanya?.rozet && (
+          <p className="mt-1 text-center font-body text-[10px] text-accent-deep">{kampanya.rozet}</p>
+        )}
       </div>
     </Link>
   )

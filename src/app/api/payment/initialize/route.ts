@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { initializeThreeDS, generateConversationId } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
-import { kuponDogrula, otomatikKampanyalar, enIyiIndirim } from '@/lib/campaigns/pricing'
+import { sepetOzetiHesapla, musteriDurumu } from '@/lib/campaigns/sepetOzeti'
 import { sepetiDogrula } from '@/lib/campaigns/sepetDogrula'
 import { shippingCostFor } from '@/lib/shipping'
 
@@ -67,34 +67,25 @@ export async function POST(request: Request) {
     // ── İndirim: ödeme anında SUNUCUDA yeniden doğrulanır (Faz 11) ──────────
     // İstemciden yalnız kodun kendisi gelir; tutar burada hesaplanır, böylece
     // ekranda görünen indirim ile karttan çekilen tutar birbirini tutar.
-    const urunFiyatlari: number[] = dogrulanmis.kalemler.flatMap((k) =>
-      Array.from({ length: k.adet }, () => k.fiyat)
-    )
-    const urunAdedi = dogrulanmis.kalemler.reduce((t, k) => t + k.adet, 0)
-
-    const otomatik = await otomatikKampanyalar(
-      serviceClient,
-      subtotal,
-      urunAdedi,
-      urunFiyatlari
-    )
-
-    let kodAdayi: { id: string; name: string; amount: number } | null = null
-    if (discountCode) {
-      const sonuc = await kuponDogrula(serviceClient, String(discountCode), subtotal)
-      if (sonuc.gecerli) {
-        kodAdayi = { id: sonuc.kampanya.id, name: sonuc.kampanya.name, amount: sonuc.indirim }
-      } else {
-        // Kod ödeme anında geçersizleştiyse (süre doldu, limit doldu) ödemeyi
-        // sessizce indirimsiz sürdürmek yerine müşteriye söyleriz.
-        return NextResponse.json({ error: `İndirim kodu uygulanamadı: ${sonuc.hata}` }, { status: 400 })
-      }
+    // ── İndirim: sepet/ödeme ekranıyla AYNI motordan (Faz 17) ─────────────
+    // Kampanya seçimi, kapsam, tavan ve toplam tek yerde hesaplanır; ekranda
+    // görünen tutar ile karttan çekilen tutar yapısal olarak ayrışamaz.
+    const musteri = await musteriDurumu(serviceClient, {
+      userId: userId || null,
+      eposta: buyer?.email || null,
+    })
+    const { ozet, kodHatasi } = await sepetOzetiHesapla(serviceClient, {
+      items,
+      kod: discountCode ? String(discountCode) : null,
+      musteri,
+    })
+    if (discountCode && kodHatasi) {
+      // Kod ödeme anında geçersizleştiyse sessizce indirimsiz sürdürmeyiz.
+      return NextResponse.json({ error: `İndirim kodu uygulanamadı: ${kodHatasi}` }, { status: 400 })
     }
 
-    // TEK KAMPANYA: otomatik ve kupon toplanmaz, müşteri lehine olan uygulanır.
-    const secilen = enIyiIndirim(otomatik.indirimler, kodAdayi)
-    const uygulananKampanyaId = secilen.kampanyaId
-    const discountTotal = Math.min(Math.round(secilen.tutar * 100) / 100, subtotal)
+    const uygulananKampanyaId = ozet.uygulananlar[0]?.kampanyaId ?? null
+    const discountTotal = Math.min(ozet.indirimToplami, subtotal)
     const indirimliAraToplam = Math.round((subtotal - discountTotal) * 100) / 100
     // Kargo koşulsuz ücretsiz (lib/shipping tek kaynağı) — kampanya bayrağı da
     // aynı sonucu verir, hesap tek yerden okunur.

@@ -22,14 +22,10 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
   const { items, removeItem, updateQuantity, totalPrice } = useCart()
   const subtotal = totalPrice()
   // İndirim artık ödeme adımını beklemeden burada görünüyor (Faz 15).
-  const { indirim } = useOtomatikIndirim(
-    subtotal,
-    items.reduce((t, i) => t + (Number(i.quantity) || 1), 0),
-    items.flatMap((i) =>
-      Array.from({ length: Number(i.quantity) || 1 }, () => Number(i.product.display_price) || 0)
-    )
+  const { ozet, indirim } = useOtomatikIndirim(
+    items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 }))
   )
-  const indirimliToplam = Math.max(0, subtotal - (indirim?.amount ?? 0))
+  const indirimliToplam = Math.max(0, subtotal - ozet.indirimToplami)
   const hasItems = items.length > 0
 
 
@@ -174,9 +170,9 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                 {indirim && (
                   <>
                     <div className="flex items-center justify-between">
-                      <span className="text-[12px] font-body text-ink-soft">{indirim.name}</span>
+                      <span className="text-[12px] font-body text-ink-soft">{indirim.ad}</span>
                       <span className="text-[13px] font-body text-accent">
-                        −{formatPrice(indirim.amount)}
+                        −{formatPrice(indirim.tutar)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between border-t border-line pt-1.5">
@@ -188,7 +184,10 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                       </span>
                     </div>
                     <p className="text-[11px] font-body text-accent-deep">
-                      {formatPrice(indirim.amount)} kazandınız
+                      {formatPrice(ozet.indirimToplami)} kazandınız
+                      {ozet.tavanUygulandi && (
+                        <span className="text-muted"> · indirim tavanı uygulandı</span>
+                      )}
                     </p>
                   </>
                 )}

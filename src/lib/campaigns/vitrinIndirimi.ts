@@ -1,6 +1,16 @@
 import { createServiceClient } from '@/lib/supabase/service'
+import { kampanyalariYukle } from './yukle'
+import { kartFiyatiGosterilsinMi, kosulRozeti } from './hesap'
 
-export type VitrinIndirimi = { ad: string; oran: number }
+export type VitrinIndirimi = {
+  ad: string
+  /** Yalnız koşulsuz kampanyada dolu: kartta indirimli fiyat bununla hesaplanır. */
+  oran: number | null
+  /** Koşullu kampanyada kartta yalnız bu rozet basılır ("500₺ üzeri %30"). */
+  rozet: string | null
+  /** Kartta üstü çizili fiyat + indirimli fiyat gösterilecek mi? */
+  fiyatGoster: boolean
+}
 
 /**
  * Vitrinde gösterilecek otomatik sepet indirimi (Faz 15).
@@ -17,26 +27,29 @@ export type VitrinIndirimi = { ad: string; oran: number }
 export async function vitrinIndirimiGetir(): Promise<VitrinIndirimi | null> {
   try {
     const supabase = createServiceClient()
-    const now = new Date().toISOString()
-    const { data } = await supabase
-      .from('campaigns')
-      .select('name, discount_type, discount_value, min_cart_amount, max_uses, used_count')
-      .eq('is_active', true)
-      .eq('type', 'cart_discount')
-      .lte('starts_at', now)
-      .or(`ends_at.is.null,ends_at.gte.${now}`)
+    const { otomatikler } = await kampanyalariYukle(supabase)
+    if (otomatikler.length === 0) return null
 
-    let enIyi: VitrinIndirimi | null = null
-    for (const k of data ?? []) {
-      // Şemada yüzde tipi 'percent' olarak yazılıyor.
-      if (k.discount_type !== 'percent') continue
-      if (Number(k.min_cart_amount ?? 0) > 0) continue
-      if (k.max_uses != null && (k.used_count ?? 0) >= k.max_uses) continue
-      const oran = Number(k.discount_value)
-      if (!Number.isFinite(oran) || oran <= 0 || oran >= 100) continue
-      if (!enIyi || oran > enIyi.oran) enIyi = { ad: k.name, oran }
+    // Koşulsuz kampanyalar öncelikli: kartta gerçek fiyat gösterilebilen tek
+    // grup onlar. Yoksa koşullu kampanyalardan biri rozet olarak basılır.
+    const kosulsuz = otomatikler
+      .filter((k) => kartFiyatiGosterilsinMi(k))
+      .sort((a, b) => (Number(b.deger) || 0) - (Number(a.deger) || 0))[0]
+
+    if (kosulsuz) {
+      return {
+        ad: kosulsuz.ad,
+        oran: Number(kosulsuz.deger) || null,
+        rozet: null,
+        fiyatGoster: true,
+      }
     }
-    return enIyi
+
+    for (const k of otomatikler) {
+      const rozet = kosulRozeti(k)
+      if (rozet) return { ad: k.ad, oran: null, rozet, fiyatGoster: false }
+    }
+    return null
   } catch {
     return null
   }

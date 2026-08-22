@@ -1,25 +1,45 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { otomatikKampanyalar } from '@/lib/campaigns/pricing'
+import { createServiceClient } from '@/lib/supabase/service'
+import { sepetOzetiHesapla, musteriDurumu } from '@/lib/campaigns/sepetOzeti'
+
+export const dynamic = 'force-dynamic'
 
 /**
- * Kod gerektirmeyen kampanyalar (Faz 11: hesap tek motordan).
- * Tarih/limit penceresi ve eksik metadata kontrolü pricing.ts'te — süresi
- * dolmuş kampanya buradan asla indirim üretmez.
+ * Sepet özetinin tek ucu (Faz 17'de yeniden yazıldı).
+ *
+ * Eskiden istemci sepet tutarını ve fiyat listesini kendisi gönderiyor, kampanya
+ * seçimini de kendi kodunda tekrarlıyordu; ödeme ekranı `quantity` bilgisini hiç
+ * taşımadığı için X al Y öde gibi kampanyalarda ekran ile tahsilat ayrışıyordu.
+ * Artık istemciden yalnız "hangi üründen kaç adet" ve varsa kupon kodu gelir;
+ * fiyat, kampanya seçimi, tavan ve toplam sunucuda hesaplanır.
  */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
-  const sepetTutari = Number(body?.cartTotal) || 0
-  const urunSayisi = Number(body?.itemCount) || 0
-  const urunFiyatlari: number[] = Array.isArray(body?.itemPrices)
-    ? body.itemPrices.map((p: unknown) => Number(p) || 0)
-    : []
+  const items = Array.isArray(body?.items) ? body.items : []
+  const kod = typeof body?.kod === 'string' ? body.kod : null
 
-  const supabase = await createClient()
-  const sonuc = await otomatikKampanyalar(supabase, sepetTutari, urunSayisi, urunFiyatlari)
+  if (items.length === 0) {
+    return NextResponse.json({
+      ozet: {
+        araToplam: 0,
+        uygulananlar: [],
+        indirimToplami: 0,
+        tavanUygulandi: false,
+        tavanTutari: 0,
+        ucretsizKargo: false,
+        yaklasanlar: [],
+        toplam: 0,
+      },
+      kodHatasi: null,
+    })
+  }
 
-  return NextResponse.json({
-    discounts: sonuc.indirimler,
-    freeShipping: sonuc.ucretsizKargo,
+  const supabase = createServiceClient()
+  const musteri = await musteriDurumu(supabase, {
+    userId: typeof body?.userId === 'string' ? body.userId : null,
+    eposta: typeof body?.eposta === 'string' ? body.eposta : null,
   })
+
+  const { ozet, kodHatasi } = await sepetOzetiHesapla(supabase, { items, kod, musteri })
+  return NextResponse.json({ ozet, kodHatasi })
 }

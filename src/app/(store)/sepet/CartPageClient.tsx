@@ -22,14 +22,10 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
   const subtotal = totalPrice()
   const shipping = shippingCostFor(subtotal)
   // Kampanya indirimi ödeme adımını beklemeden burada da görünür (Faz 15).
-  const { indirim } = useOtomatikIndirim(
-    subtotal,
-    items.reduce((t, i) => t + (Number(i.quantity) || 1), 0),
-    items.flatMap((i) =>
-      Array.from({ length: Number(i.quantity) || 1 }, () => Number(i.product.display_price) || 0)
-    )
+  const { ozet, indirim } = useOtomatikIndirim(
+    items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 }))
   )
-  const indirimTutari = indirim?.amount ?? 0
+  const indirimTutari = ozet.indirimToplami
   const hasItems = hydrated && items.length > 0
 
 
@@ -150,9 +146,17 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
               )}
               {indirim && (
                 <div className="flex justify-between text-[13px] font-body text-accent">
-                  <span>{indirim.name}</span>
+                  <span>{indirim.ad}</span>
                   <span>−{formatPrice(indirimTutari)}</span>
                 </div>
+              )}
+              {ozet.yaklasanlar.length > 0 && (
+                <p className="text-[11px] font-body text-accent-deep">
+                  {formatPrice(ozet.yaklasanlar[0].kalanTutar)} daha ekleyin,{' '}
+                  {ozet.yaklasanlar[0].oran
+                    ? `%${Math.round(ozet.yaklasanlar[0].oran)} kazanın`
+                    : `${ozet.yaklasanlar[0].ad} kampanyasından yararlanın`}
+                </p>
               )}
               <div className="flex justify-between text-[15px] font-body text-ink font-medium pt-3 border-t border-line">
                 <span>Toplam</span>
@@ -161,6 +165,9 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
               {indirim && (
                 <p className="text-[11px] font-body text-accent-deep">
                   {formatPrice(indirimTutari)} kazandınız
+                  {ozet.tavanUygulandi && (
+                    <span className="text-muted"> · indirim tavanı uygulandı</span>
+                  )}
                 </p>
               )}
 

@@ -99,9 +99,10 @@ export default async function UrunDetayPage({
   // Vitrin kampanyası (kart ile aynı kaynak).
   const vitrinIndirimi = await vitrinIndirimiGetir()
   const listeFiyati = Number(mergedProduct.override_price ?? product.display_price) || 0
-  const kampanyaliFiyat = vitrinIndirimi
-    ? Math.round(listeFiyati * (1 - vitrinIndirimi.oran / 100) * 100) / 100
-    : null
+  const kampanyaliFiyat =
+    vitrinIndirimi?.fiyatGoster && vitrinIndirimi.oran
+      ? Math.round(listeFiyati * (1 - vitrinIndirimi.oran / 100) * 100) / 100
+      : null
   const badge = resolveBadge(product)
 
   // Grup üyeleri bir kez çekilir: etiketliyse satın alma kolonunda çip,
@@ -214,6 +215,12 @@ export default async function UrunDetayPage({
             {kampanyaliFiyat != null && (
               <p className="mt-1 font-body text-[12px] text-accent-deep">
                 {vitrinIndirimi!.ad} — sepette {formatPrice(listeFiyati - kampanyaliFiyat)} kazanıyorsunuz
+              </p>
+            )}
+            {/* Koşullu kampanya: indirimli fiyat yerine koşul rozeti (Faz 17). */}
+            {kampanyaliFiyat == null && vitrinIndirimi?.rozet && (
+              <p className="mt-1 font-body text-[12px] text-accent-deep">
+                {vitrinIndirimi.ad} — {vitrinIndirimi.rozet}
               </p>
             )}
           </div>

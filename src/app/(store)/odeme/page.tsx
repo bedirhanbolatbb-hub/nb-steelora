@@ -11,6 +11,7 @@ import Input from '@/components/ui/Input'
 import CheckoutSteps from '@/components/store/CheckoutSteps'
 import { izle } from '@/lib/analytics/izle'
 import { SHIPPING_LINE_LABEL, shippingCostFor } from '@/lib/shipping'
+import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
 
 export default function OdemePage() {
   const { items, totalPrice, clearCart } = useCart()
@@ -52,8 +53,6 @@ export default function OdemePage() {
   const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; amount: number; description: string } | null>(null)
   const [discountError, setDiscountError] = useState('')
   const [discountLoading, setDiscountLoading] = useState(false)
-  const [autoDiscounts, setAutoDiscounts] = useState<{ id: string; name: string; type: string; amount: number }[]>([])
-  const [autoFreeShipping, setAutoFreeShipping] = useState(false)
 
   const [form, setForm] = useState({
     firstName: '',
@@ -75,43 +74,19 @@ export default function OdemePage() {
   const subtotal = totalPrice()
 
   // Auto-apply campaigns
-  useEffect(() => {
-    if (items.length === 0) { setAutoDiscounts([]); setAutoFreeShipping(false); return }
-    const itemPrices = items.map((i) => i.product.display_price)
-    fetch('/api/discount/auto-apply', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cartTotal: subtotal, itemCount: items.length, itemPrices }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        setAutoDiscounts(data.discounts || [])
-        setAutoFreeShipping(data.freeShipping || false)
-      })
-      .catch(() => {})
-  }, [subtotal, items.length])
-
-  // TEK KAMPANYA KURALI (Faz 15 kapanışı): otomatik kampanya ile kupon
-  // TOPLANMAZ — müşteri lehine olan tek indirim uygulanır. Sunucudaki hesapla
-  // (payment/initialize → enIyiIndirim) birebir aynı olmalı, yoksa ekrandaki
-  // tutar ile çekilen tutar ayrışır.
-  const otomatikAday = autoDiscounts.reduce<{ name: string; amount: number } | null>(
-    (kazanan, d) => (!kazanan || d.amount > kazanan.amount ? { name: d.name, amount: d.amount } : kazanan),
-    null
+  // Sepet özeti SUNUCUDAN gelir (Faz 17): indirim seçimi, tavan ve toplam
+  // ödeme başlatma ucuyla birebir aynı fonksiyondan hesaplanır. İstemci burada
+  // hiçbir tutar üretmez — Faz 15'te bulunan "ekranda başka, tahsilatta başka"
+  // kusurunun kaynağı buydu.
+  const { ozet, indirim: secilenIndirim, kodHatasi: sunucuKodHatasi } = useOtomatikIndirim(
+    items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 })),
+    appliedDiscount?.code ?? null
   )
-  const kodAday = appliedDiscount
-    ? { name: appliedDiscount.description || `İndirim (${appliedDiscount.code})`, amount: appliedDiscount.amount }
-    : null
-  const secilenIndirim =
-    otomatikAday && kodAday
-      ? otomatikAday.amount >= kodAday.amount
-        ? otomatikAday
-        : kodAday
-      : (otomatikAday ?? kodAday)
-  const totalDiscount = Math.min(secilenIndirim?.amount ?? 0, subtotal)
+  const totalDiscount = ozet.indirimToplami
+
   // Kargo eşiği indirimli ara toplam üzerinden — sunucudaki hesapla birebir
   // aynı olmalı, yoksa ekrandaki toplam ile çekilen tutar ayrışır (Faz 11).
-  const discountedSubtotal = subtotal - totalDiscount
+  const discountedSubtotal = Math.max(0, subtotal - totalDiscount)
   // Kargo koşulsuz ücretsiz — sunucudaki hesapla birebir aynı tek kaynaktan.
   const shipping = shippingCostFor(discountedSubtotal)
   const total = discountedSubtotal + shipping
@@ -631,25 +606,28 @@ export default function OdemePage() {
               <dt className="text-[12px] font-body text-ink-soft">Ara Toplam</dt>
               <dd className="price text-[13px] text-ink">{formatPrice(subtotal)}</dd>
             </div>
-            {secilenIndirim && (
-              <>
-                <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-[12px] font-body text-green-700 min-w-0 truncate">
-                    {secilenIndirim.name}
-                  </dt>
-                  <dd className="price text-[13px] text-green-700 shrink-0">
-                    -{formatPrice(secilenIndirim.amount)}
-                  </dd>
-                </div>
-                <p className="text-[11px] font-body text-green-700">
-                  {formatPrice(secilenIndirim.amount)} kazandınız
-                  {otomatikAday && kodAday && (
-                    <span className="text-muted">
-                      {' '}· en avantajlı kampanya uygulandı, indirimler toplanmaz
-                    </span>
-                  )}
-                </p>
-              </>
+            {ozet.uygulananlar.map((u) => (
+              <div key={u.kampanyaId} className="flex items-baseline justify-between gap-4">
+                <dt className="text-[12px] font-body text-green-700 min-w-0 truncate">{u.ad}</dt>
+                <dd className="price text-[13px] text-green-700 shrink-0">-{formatPrice(u.tutar)}</dd>
+              </div>
+            ))}
+            {totalDiscount > 0 && (
+              <p className="text-[11px] font-body text-green-700">
+                {formatPrice(totalDiscount)} kazandınız
+                {ozet.tavanUygulandi && <span className="text-muted"> · indirim tavanı uygulandı</span>}
+                {appliedDiscount && ozet.uygulananlar.every((u) => u.ad !== appliedDiscount.description) && (
+                  <span className="text-muted"> · en avantajlı kampanya uygulandı, indirimler toplanmaz</span>
+                )}
+              </p>
+            )}
+            {ozet.yaklasanlar.length > 0 && (
+              <p className="text-[11px] font-body text-accent-deep">
+                {formatPrice(ozet.yaklasanlar[0].kalanTutar)} daha ekleyin,{' '}
+                {ozet.yaklasanlar[0].oran
+                  ? `%${Math.round(ozet.yaklasanlar[0].oran)} kazanın`
+                  : `${ozet.yaklasanlar[0].ad} kampanyasından yararlanın`}
+              </p>
             )}
             <div className="flex items-baseline justify-between gap-4">
               <dt className="text-[12px] font-body text-ink-soft">Kargo</dt>

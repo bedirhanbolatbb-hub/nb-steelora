@@ -2,36 +2,49 @@
 
 import { useEffect, useState } from 'react'
 
-export type OtomatikIndirim = {
-  id: string
-  name: string
-  type: string
-  amount: number
+export type SepetOzeti = {
+  araToplam: number
+  uygulananlar: { kampanyaId: string; ad: string; tutar: number }[]
+  indirimToplami: number
+  tavanUygulandi: boolean
+  tavanTutari: number
+  ucretsizKargo: boolean
+  yaklasanlar: { kampanyaId: string; ad: string; kalanTutar: number; oran: number | null }[]
+  toplam: number
+}
+
+const BOS: SepetOzeti = {
+  araToplam: 0,
+  uygulananlar: [],
+  indirimToplami: 0,
+  tavanUygulandi: false,
+  tavanTutari: 0,
+  ucretsizKargo: false,
+  yaklasanlar: [],
+  toplam: 0,
 }
 
 /**
- * Kod gerektirmeyen kampanyaların sepet karşılığı (Faz 15).
+ * Sepet özetini SUNUCUDAN alır (Faz 17'de yeniden yazıldı).
  *
- * Bu hesap yalnız ödeme adımında yapılıyordu; müşteri sepette indirimi hiç
- * görmüyor, tutarın neden düştüğünü ancak son ekranda anlıyordu. Artık sepet
- * çekmecesi ve /sepet de aynı ucu kullanıyor — hesap tek kaynaktan
- * (lib/campaigns/pricing) gelmeye devam ediyor, istemci hiçbir tutar
- * uydurmuyor.
+ * Önceden istemci sepet tutarını ve fiyat listesini kendisi gönderiyordu;
+ * ödeme ekranı `quantity` bilgisini taşımadığı için X al Y öde gibi
+ * kampanyalarda ekran ile tahsilat ayrışabiliyordu. Artık yalnız "hangi
+ * üründen kaç adet" gönderilir, indirim/tavan/toplam sunucuda hesaplanır —
+ * ödeme başlatma ucuyla birebir aynı fonksiyondan.
  */
 export function useOtomatikIndirim(
-  sepetTutari: number,
-  urunSayisi: number,
-  urunFiyatlari: number[]
+  kalemler: { productId: string; adet: number }[],
+  kod?: string | null
 ) {
-  const [indirim, setIndirim] = useState<OtomatikIndirim | null>(null)
-  const [ucretsizKargo, setUcretsizKargo] = useState(false)
-
-  const fiyatAnahtari = urunFiyatlari.join(',')
+  const [ozet, setOzet] = useState<SepetOzeti>(BOS)
+  const [kodHatasi, setKodHatasi] = useState<string | null>(null)
+  const anahtar = kalemler.map((k) => `${k.productId}x${k.adet}`).join('|') + `|${kod ?? ''}`
 
   useEffect(() => {
-    if (sepetTutari <= 0) {
-      setIndirim(null)
-      setUcretsizKargo(false)
+    if (kalemler.length === 0) {
+      setOzet(BOS)
+      setKodHatasi(null)
       return
     }
     let iptal = false
@@ -40,29 +53,28 @@ export function useOtomatikIndirim(
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          cartTotal: sepetTutari,
-          itemCount: urunSayisi,
-          itemPrices: fiyatAnahtari ? fiyatAnahtari.split(',').map(Number) : [],
+          items: kalemler.map((k) => ({ productId: k.productId, quantity: k.adet })),
+          kod: kod ?? null,
         }),
       })
         .then((r) => r.json())
         .then((d) => {
           if (iptal) return
-          // Sunucu en yüksek tek kampanyayı döndürür (indirimler toplanmaz).
-          const ilk = Array.isArray(d?.discounts) && d.discounts.length > 0 ? d.discounts[0] : null
-          setIndirim(ilk && Number(ilk.amount) > 0 ? ilk : null)
-          setUcretsizKargo(Boolean(d?.freeShipping))
+          setOzet(d?.ozet ?? BOS)
+          setKodHatasi(d?.kodHatasi ?? null)
         })
         .catch(() => {
-          if (!iptal) setIndirim(null)
+          if (!iptal) setOzet(BOS)
         })
-    }, 200)
+    }, 180)
 
     return () => {
       iptal = true
       clearTimeout(zamanlayici)
     }
-  }, [sepetTutari, urunSayisi, fiyatAnahtari])
+    // anahtar, kalemlerin ve kodun içeriğini temsil eder.
+  }, [anahtar])
 
-  return { indirim, ucretsizKargo }
+  const indirim = ozet.uygulananlar[0] ?? null
+  return { ozet, indirim, kodHatasi }
 }
