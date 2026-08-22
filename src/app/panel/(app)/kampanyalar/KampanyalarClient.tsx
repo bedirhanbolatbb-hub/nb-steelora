@@ -23,6 +23,19 @@ export type KampanyaSatiri = {
   endsAt: string | null
   isActive: boolean
   metadata: any
+  // Faz 17 — kapsamlı/koşullu alanlar
+  scope: string
+  hedefler: string[]
+  kademeler: { minTutar: number; oran: number }[]
+  minItemCount: number | null
+  perUserLimit: number | null
+  combinable: boolean
+  membersOnly: boolean
+  firstOrderOnly: boolean
+  buyQuantity: number | null
+  payQuantity: number | null
+  priority: number
+  performans: { siparis: number; indirim: number; ciro: number }
 }
 
 const TIP_ETIKET: Record<string, string> = {
@@ -31,7 +44,20 @@ const TIP_ETIKET: Record<string, string> = {
   free_shipping: 'Ücretsiz kargo',
   buy_x_get_y: 'X al Y öde',
   banner: 'Duyuru bandı',
+  item_discount: 'Kapsamlı indirim',
+  tiered_discount: 'Kademeli indirim',
+  buy_x_get_y_scoped: 'X al Y öde (kapsamlı)',
 }
+
+const KAPSAM_ETIKET: Record<string, string> = {
+  cart: 'Tüm sepet',
+  category: 'Kategori',
+  collection: 'Koleksiyon',
+  product: 'Ürün',
+}
+
+/** Kapsam seçimi gerektiren tipler. */
+const KAPSAMLI_TIPLER = ['item_discount', 'buy_x_get_y_scoped']
 
 type Form = {
   name: string
@@ -45,6 +71,16 @@ type Form = {
   starts_at: string
   ends_at: string
   is_active: boolean
+  scope: string
+  targets: string[]
+  tiers: { minTutar: string; oran: string }[]
+  min_item_count: string
+  per_user_limit: string
+  combinable: boolean
+  members_only: boolean
+  first_order_only: boolean
+  buy_quantity: string
+  pay_quantity: string
 }
 
 const BOS_FORM: Form = {
@@ -59,6 +95,16 @@ const BOS_FORM: Form = {
   starts_at: '',
   ends_at: '',
   is_active: true,
+  scope: 'cart',
+  targets: [],
+  tiers: [],
+  min_item_count: '',
+  per_user_limit: '',
+  combinable: false,
+  members_only: false,
+  first_order_only: false,
+  buy_quantity: '',
+  pay_quantity: '',
 }
 
 const dtLocal = (t: string | null) => {
@@ -71,7 +117,17 @@ const dtLocal = (t: string | null) => {
 }
 const dtIso = (v: string) => (v ? new Date(`${v}:00+03:00`).toISOString() : '')
 
-export default function KampanyalarClient({ satirlar }: { satirlar: KampanyaSatiri[] }) {
+export default function KampanyalarClient({
+  satirlar,
+  v2Hazir,
+  kategoriler,
+  koleksiyonlar,
+}: {
+  satirlar: KampanyaSatiri[]
+  v2Hazir: boolean
+  kategoriler: { slug: string; title: string }[]
+  koleksiyonlar: { id: string; slug: string; ad: string }[]
+}) {
   const router = useRouter()
   const { push: toast } = useToast()
 
@@ -79,6 +135,74 @@ export default function KampanyalarClient({ satirlar }: { satirlar: KampanyaSati
   const [form, setForm] = useState<Form>(BOS_FORM)
   const [silinecek, setSilinecek] = useState<KampanyaSatiri | null>(null)
   const [isleniyor, setIsleniyor] = useState(false)
+  const [onizleme, setOnizleme] = useState<any>(null)
+  const [onizleniyor, setOnizleniyor] = useState(false)
+
+  /**
+   * Canlı önizleme: taslak kampanyayı vitrindeki motorla örnek sepete uygular.
+   * Panelde görünen sayı ile müşterinin göreceği sayı aynı fonksiyondan gelir.
+   */
+  const onizle = async () => {
+    setOnizleniyor(true)
+    try {
+      const tip =
+        form.type === 'tiered_discount'
+          ? 'kademeli'
+          : form.type === 'buy_x_get_y' || form.type === 'buy_x_get_y_scoped'
+            ? 'x_al_y_ode'
+            : form.type === 'free_shipping'
+              ? 'ucretsiz_kargo'
+              : form.scope !== 'cart'
+                ? form.discount_type === 'fixed'
+                  ? 'kapsam_sabit'
+                  : 'kapsam_yuzde'
+                : form.discount_type === 'fixed'
+                  ? 'sepet_sabit'
+                  : 'sepet_yuzde'
+
+      const kapsam =
+        form.scope === 'category'
+          ? 'kategori'
+          : form.scope === 'collection'
+            ? 'koleksiyon'
+            : form.scope === 'product'
+              ? 'urun'
+              : 'sepet'
+
+      const res = await fetch('/api/panel/kampanya-onizleme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kampanya: {
+            id: 'taslak',
+            ad: form.name || 'Taslak kampanya',
+            tip,
+            kapsam,
+            hedefler: form.targets,
+            deger: form.discount_value ? Number(form.discount_value) : null,
+            minSepet: Number(form.min_cart_amount || 0),
+            minAdet: Number(form.min_item_count || 0),
+            alAdet: form.buy_quantity ? Number(form.buy_quantity) : null,
+            odeAdet: form.pay_quantity ? Number(form.pay_quantity) : null,
+            kademeler: form.tiers
+              .map((t) => ({ minTutar: Number(t.minTutar), oran: Number(t.oran) }))
+              .filter((t) => Number.isFinite(t.minTutar) && t.oran > 0),
+            birlesebilir: form.combinable,
+            oncelik: 100,
+            ilkAlisverisMi: form.first_order_only,
+            sadeceUyelere: form.members_only,
+            koduVar: form.type === 'discount_code',
+          },
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Önizleme başarısız')
+      setOnizleme(data)
+    } catch (e: any) {
+      toast(e.message, 'danger')
+    }
+    setOnizleniyor(false)
+  }
 
   const ac = (c: KampanyaSatiri | null) => {
     if (!c) {
@@ -98,6 +222,16 @@ export default function KampanyalarClient({ satirlar }: { satirlar: KampanyaSati
       starts_at: dtLocal(c.startsAt),
       ends_at: dtLocal(c.endsAt),
       is_active: c.isActive,
+      scope: c.scope ?? 'cart',
+      targets: c.hedefler ?? [],
+      tiers: (c.kademeler ?? []).map((t) => ({ minTutar: String(t.minTutar), oran: String(t.oran) })),
+      min_item_count: c.minItemCount != null ? String(c.minItemCount) : '',
+      per_user_limit: c.perUserLimit != null ? String(c.perUserLimit) : '',
+      combinable: Boolean(c.combinable),
+      members_only: Boolean(c.membersOnly),
+      first_order_only: Boolean(c.firstOrderOnly),
+      buy_quantity: c.buyQuantity != null ? String(c.buyQuantity) : '',
+      pay_quantity: c.payQuantity != null ? String(c.payQuantity) : '',
     })
     setDuzenlenen(c.id)
   }
@@ -109,6 +243,9 @@ export default function KampanyalarClient({ satirlar }: { satirlar: KampanyaSati
         ...form,
         starts_at: dtIso(form.starts_at) || undefined,
         ends_at: dtIso(form.ends_at) || null,
+        tiers: form.tiers
+          .map((t) => ({ minTutar: Number(t.minTutar), oran: Number(t.oran) }))
+          .filter((t) => Number.isFinite(t.minTutar) && t.oran > 0),
       }
       const url = duzenlenen === 'yeni' ? '/api/panel/campaigns' : `/api/panel/campaigns/${duzenlenen}`
       const res = await fetch(url, {
@@ -188,8 +325,26 @@ export default function KampanyalarClient({ satirlar }: { satirlar: KampanyaSati
                 {c.discountType === 'percent' ? `%${c.discountValue}` : formatPrice(c.discountValue)}
               </span>
             )}
+            {c.scope && c.scope !== 'cart' && (
+              <PBadge tone="neutral">
+                {KAPSAM_ETIKET[c.scope]}
+                {c.hedefler.length > 0 ? ` (${c.hedefler.length})` : ''}
+              </PBadge>
+            )}
             {c.minCart > 0 && (
               <span className="text-[12px] text-[var(--p-muted)]">min {formatPrice(c.minCart)}</span>
+            )}
+            {c.minItemCount ? (
+              <span className="text-[12px] text-[var(--p-muted)]">min {c.minItemCount} ürün</span>
+            ) : null}
+            {c.firstOrderOnly && <PBadge tone="neutral">ilk alışveriş</PBadge>}
+            {c.membersOnly && <PBadge tone="neutral">üyelere</PBadge>}
+            {c.combinable && <PBadge tone="accent">birleşebilir</PBadge>}
+            {c.performans.siparis > 0 && (
+              <span className="text-[12px] text-[var(--p-success)]">
+                {c.performans.siparis} sipariş · {formatPrice(c.performans.indirim)} indirim ·{' '}
+                {formatPrice(c.performans.ciro)} ciro
+              </span>
             )}
             <span className="text-[12px] text-[var(--p-muted)]">{tarihAraligi(c)}</span>
             {c.maxUses != null && (
@@ -244,6 +399,180 @@ export default function KampanyalarClient({ satirlar }: { satirlar: KampanyaSati
             <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Ad</label>
             <PInput value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
           </div>
+
+          {/* Kapsam — kapsamlı tiplerde hedef seçici açılır (Faz 17). */}
+          {(KAPSAMLI_TIPLER.includes(form.type) || form.scope !== 'cart') && (
+            <div className="rounded-[4px] border border-[var(--p-line)] p-3">
+              <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Kapsam</label>
+              <PSelect
+                value={form.scope}
+                onChange={(e) => setForm({ ...form, scope: e.target.value, targets: [] })}
+              >
+                {Object.entries(KAPSAM_ETIKET).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </PSelect>
+
+              {form.scope === 'category' && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {kategoriler.map((k) => {
+                    const secili = form.targets.includes(k.slug)
+                    return (
+                      <button
+                        key={k.slug}
+                        type="button"
+                        onClick={() =>
+                          setForm({
+                            ...form,
+                            targets: secili
+                              ? form.targets.filter((t) => t !== k.slug)
+                              : [...form.targets, k.slug],
+                          })
+                        }
+                        className={`rounded-[4px] border px-2 py-1 text-[12px] transition-colors ${
+                          secili
+                            ? 'border-[var(--p-ink)] bg-[var(--p-ink)] text-[var(--p-surface)]'
+                            : 'border-[var(--p-line)] text-[var(--p-ink-soft)]'
+                        }`}
+                      >
+                        {k.title}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+
+              {form.scope === 'collection' && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {koleksiyonlar.map((k) => {
+                    const secili = form.targets.includes(k.id)
+                    return (
+                      <button
+                        key={k.id}
+                        type="button"
+                        onClick={() =>
+                          setForm({
+                            ...form,
+                            targets: secili
+                              ? form.targets.filter((t) => t !== k.id)
+                              : [...form.targets, k.id],
+                          })
+                        }
+                        className={`rounded-[4px] border px-2 py-1 text-[12px] transition-colors ${
+                          secili
+                            ? 'border-[var(--p-ink)] bg-[var(--p-ink)] text-[var(--p-surface)]'
+                            : 'border-[var(--p-line)] text-[var(--p-ink-soft)]'
+                        }`}
+                      >
+                        {k.ad}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+
+              {form.scope === 'product' && (
+                <div className="mt-2">
+                  <PInput
+                    placeholder="Ürün kimlikleri ya da barkodlar, virgülle"
+                    value={form.targets.join(', ')}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        targets: e.target.value.split(',').map((t) => t.trim()).filter(Boolean),
+                      })
+                    }
+                  />
+                  <p className="mt-1 text-[11px] text-[var(--p-muted)]">
+                    Ürünler ekranındaki barkodu (ör. NBK199) yapıştırabilirsiniz.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* X al Y öde */}
+          {(form.type === 'buy_x_get_y' || form.type === 'buy_x_get_y_scoped') && (
+            <div className="grid grid-cols-2 gap-3 rounded-[4px] border border-[var(--p-line)] p-3">
+              <div>
+                <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Al (adet)</label>
+                <PInput
+                  inputMode="numeric"
+                  value={form.buy_quantity}
+                  onChange={(e) => setForm({ ...form, buy_quantity: e.target.value })}
+                  placeholder="3"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Öde (adet)</label>
+                <PInput
+                  inputMode="numeric"
+                  value={form.pay_quantity}
+                  onChange={(e) => setForm({ ...form, pay_quantity: e.target.value })}
+                  placeholder="2"
+                />
+              </div>
+              <p className="col-span-2 text-[11px] text-[var(--p-muted)]">
+                Kapsamdaki en ucuz ürünler bedava sayılır.
+              </p>
+            </div>
+          )}
+
+          {/* Kademeli eşikler */}
+          {form.type === 'tiered_discount' && (
+            <div className="rounded-[4px] border border-[var(--p-line)] p-3">
+              <label className="mb-2 block text-[12px] text-[var(--p-muted)]">
+                Eşikler — sepete uyan en yüksek eşik uygulanır
+              </label>
+              <div className="space-y-2">
+                {form.tiers.map((t, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <PInput
+                      inputMode="decimal"
+                      value={t.minTutar}
+                      onChange={(e) => {
+                        const yeni = [...form.tiers]
+                        yeni[i] = { ...yeni[i], minTutar: e.target.value }
+                        setForm({ ...form, tiers: yeni })
+                      }}
+                      placeholder="500"
+                    />
+                    <span className="text-[12px] text-[var(--p-muted)]">₺ üzeri</span>
+                    <PInput
+                      inputMode="decimal"
+                      value={t.oran}
+                      onChange={(e) => {
+                        const yeni = [...form.tiers]
+                        yeni[i] = { ...yeni[i], oran: e.target.value }
+                        setForm({ ...form, tiers: yeni })
+                      }}
+                      placeholder="10"
+                    />
+                    <span className="text-[12px] text-[var(--p-muted)]">%</span>
+                    <PButton
+                      variant="ghost"
+                      onClick={() => setForm({ ...form, tiers: form.tiers.filter((_, j) => j !== i) })}
+                    >
+                      Sil
+                    </PButton>
+                  </div>
+                ))}
+                <PButton
+                  variant="ghost"
+                  onClick={() => setForm({ ...form, tiers: [...form.tiers, { minTutar: '', oran: '' }] })}
+                >
+                  <Plus size={13} /> Eşik ekle
+                </PButton>
+              </div>
+            </div>
+          )}
+          {!v2Hazir && (
+            <p className="rounded-[4px] border border-[var(--p-danger)] bg-[#FDECEC] p-2.5 text-[12px]">
+              Kapsam ve kademe tabloları henüz kurulmadı
+              (<code>docs/kampanya-motoru/01-kampanya-motoru-v2.sql</code>). Kategori/koleksiyon/ürün
+              kapsamı ve kademeli indirim kaydedilemez; diğer alanlar çalışır.
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Tip</label>
@@ -287,6 +616,24 @@ export default function KampanyalarClient({ satirlar }: { satirlar: KampanyaSati
                 inputMode="decimal"
                 value={form.min_cart_amount}
                 onChange={(e) => setForm({ ...form, min_cart_amount: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Min. ürün adedi</label>
+              <PInput
+                inputMode="numeric"
+                value={form.min_item_count}
+                onChange={(e) => setForm({ ...form, min_item_count: e.target.value })}
+                placeholder="boş = koşul yok"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Kişi başı kullanım</label>
+              <PInput
+                inputMode="numeric"
+                value={form.per_user_limit}
+                onChange={(e) => setForm({ ...form, per_user_limit: e.target.value })}
+                placeholder="boş = sınırsız"
               />
             </div>
             <div>

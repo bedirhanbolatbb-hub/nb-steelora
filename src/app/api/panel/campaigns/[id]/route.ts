@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 import { validateCampaign } from '@/lib/panel/campaignValidation'
+import { hedefVeKademeYaz } from '@/lib/panel/kampanyaYaz'
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdminRequest())) {
@@ -10,7 +11,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const { id } = await params
   const body = await request.json().catch(() => null)
-  const { row, error } = validateCampaign(body)
+  const { row, hedefler, kademeler, error } = validateCampaign(body)
   if (error || !row) return NextResponse.json({ error }, { status: 400 })
 
   const supabase = createServiceClient()
@@ -34,7 +35,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   if (dbErr) return NextResponse.json({ error: dbErr.message }, { status: 500 })
   if (!data) return NextResponse.json({ error: 'Kampanya bulunamadı' }, { status: 404 })
-  return NextResponse.json({ ok: true })
+
+  const { v2Hazir } = await hedefVeKademeYaz(
+    supabase,
+    id,
+    String(row.scope ?? 'cart'),
+    hedefler ?? [],
+    kademeler ?? []
+  )
+  return NextResponse.json({ ok: true, v2Hazir })
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
