@@ -40,6 +40,13 @@ export async function POST(request: Request) {
     eposta: typeof body?.eposta === 'string' ? body.eposta : null,
   })
 
-  const { ozet, kodHatasi } = await sepetOzetiHesapla(supabase, { items, kod, musteri })
+  const { ozet, kodHatasi } = await sepetOzetiHesapla(supabase, {
+    items,
+    kod,
+    // Kişiye özel kuponun sahiplik kontrolü için: kupon yalnız kendi
+    // adresinde çalışır.
+    musteriEpostasi: typeof body?.eposta === 'string' ? body.eposta : null,
+    musteri,
+  })
   return NextResponse.json({ ozet, kodHatasi })
 }

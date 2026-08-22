@@ -35,11 +35,14 @@ const BOS: SepetOzeti = {
  */
 export function useOtomatikIndirim(
   kalemler: { productId: string; adet: number }[],
-  kod?: string | null
+  kod?: string | null,
+  /** Kişiye özel kuponların sahiplik kontrolü için. */
+  eposta?: string | null
 ) {
   const [ozet, setOzet] = useState<SepetOzeti>(BOS)
   const [kodHatasi, setKodHatasi] = useState<string | null>(null)
-  const anahtar = kalemler.map((k) => `${k.productId}x${k.adet}`).join('|') + `|${kod ?? ''}`
+  const anahtar =
+    kalemler.map((k) => `${k.productId}x${k.adet}`).join('|') + `|${kod ?? ''}|${eposta ?? ''}`
 
   useEffect(() => {
     if (kalemler.length === 0) {
@@ -55,6 +58,7 @@ export function useOtomatikIndirim(
         body: JSON.stringify({
           items: kalemler.map((k) => ({ productId: k.productId, quantity: k.adet })),
           kod: kod ?? null,
+          eposta: eposta ?? null,
         }),
       })
         .then((r) => r.json())

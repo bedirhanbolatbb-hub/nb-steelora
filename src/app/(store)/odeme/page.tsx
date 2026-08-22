@@ -80,7 +80,8 @@ export default function OdemePage() {
   // kusurunun kaynağı buydu.
   const { ozet, indirim: secilenIndirim, kodHatasi: sunucuKodHatasi } = useOtomatikIndirim(
     items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 })),
-    appliedDiscount?.code ?? null
+    appliedDiscount?.code ?? null,
+    form.email || null
   )
   const totalDiscount = ozet.indirimToplami
 
