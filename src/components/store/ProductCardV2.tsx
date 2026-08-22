@@ -9,6 +9,7 @@ import ProductImage from './ProductImage'
 import { IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
 import { useCart } from '@/hooks/useCart'
 import type { Product } from '@/types'
+import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 
 /**
  * Ürün kartı v2 (Faz 8B, "Sessiz Atölye").
@@ -47,6 +48,13 @@ export default function ProductCardV2({
   const [added, setAdded] = useState(false)
   const outOfStock = product.trendyol_stock === 0
   const badge = resolveBadge(product as any)
+  // Aktif otomatik kampanya varsa kartta üstü çizili fiyat + oran rozeti
+  // gösterilir; tutar yine sepette tek motordan hesaplanır (Faz 15).
+  const kampanya = useVitrinIndirimi()
+  const listeFiyati = Number((product as any).override_price ?? product.display_price) || 0
+  const kampanyaliFiyat = kampanya
+    ? Math.round(listeFiyati * (1 - kampanya.oran / 100) * 100) / 100
+    : null
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -131,14 +139,31 @@ export default function ProductCardV2({
         >
           {product.display_title}
         </h3>
-        <div className="mt-1.5 flex items-baseline justify-center gap-2">
-          <span className={`price text-ink ${buyuk ? 'text-[16px]' : 'text-[14px]'}`}>
-            {formatPrice((product as any).override_price ?? product.display_price)}
-          </span>
-          {(product as any).override_price && (product as any).override_price < product.display_price && (
-            <span className="price text-[12px] text-muted line-through font-normal">
-              {formatPrice(product.display_price)}
-            </span>
+        <div className="mt-1.5 flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1">
+          {kampanyaliFiyat != null ? (
+            <>
+              <span className={`price text-accent-deep ${buyuk ? 'text-[16px]' : 'text-[14px]'}`}>
+                {formatPrice(kampanyaliFiyat)}
+              </span>
+              <span className="price text-[12px] font-normal text-muted line-through">
+                {formatPrice(listeFiyati)}
+              </span>
+              <span className="rounded-[3px] bg-accent/10 px-1.5 py-0.5 font-body text-[10px] font-medium text-accent-deep">
+                %{kampanya!.oran}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className={`price text-ink ${buyuk ? 'text-[16px]' : 'text-[14px]'}`}>
+                {formatPrice(listeFiyati)}
+              </span>
+              {(product as any).override_price &&
+                (product as any).override_price < product.display_price && (
+                  <span className="price text-[12px] text-muted line-through font-normal">
+                    {formatPrice(product.display_price)}
+                  </span>
+                )}
+            </>
           )}
         </div>
       </div>

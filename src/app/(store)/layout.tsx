@@ -6,6 +6,8 @@ import RevealController from '@/components/motion/RevealController'
 import ConsentGate from '@/components/store/ConsentGate'
 import { getLayoutData } from '@/lib/layoutData'
 import { sunucuOlayi } from '@/lib/analytics/server'
+import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
+import { KampanyaSaglayici } from '@/components/store/KampanyaContext'
 
 export default async function StoreLayout({
   children,
@@ -14,7 +16,7 @@ export default async function StoreLayout({
 }) {
   // Ortak vitrin verisi (banner + kupon + footer koleksiyon/sosyal) süreç içi
   // önbellekten gelir (Faz 9A) — istek yolunda kişiye özel tek iş auth kalır.
-  const veri = await getLayoutData()
+  const [veri, vitrinIndirimi] = await Promise.all([getLayoutData(), vitrinIndirimiGetir()])
 
   // Sayfa görüntüleme sunucuda ölçülür (Faz 12): engelleyicilerden etkilenmez,
   // istemciye JS eklemez ve after() sayesinde yanıtı geciktirmez.
@@ -40,7 +42,9 @@ export default async function StoreLayout({
         isLoggedIn={isLoggedIn}
         coupon={veri.coupon}
       />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        <KampanyaSaglayici indirim={vitrinIndirimi}>{children}</KampanyaSaglayici>
+      </main>
       <Footer isLoggedIn={isLoggedIn} collections={veri.collections} content={veri.content} />
       <FloatingWhatsApp />
       <RevealController />
