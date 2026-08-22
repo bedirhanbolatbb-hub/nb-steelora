@@ -7,6 +7,8 @@ import { gonderiGetir, olaylariGetir } from '@/lib/shipping/shipments'
 import { bolgeEslestir, bolgeleriSenkronla, illeriGetir } from '@/lib/shipping/geo'
 import SiparisDetayClient from './SiparisDetayClient'
 import type { PanelGonderi } from './KargoBlogu'
+import { musteriMailiEngeli } from '@/lib/emails/musteriMaili'
+import { bildirimAdresi } from '@/lib/emails/bildirim'
 
 export const metadata: Metadata = { title: 'Sipariş detayı' }
 export const dynamic = 'force-dynamic'
@@ -20,6 +22,7 @@ export default async function PanelSiparisDetayPage({
   const supabase = createServiceClient()
 
   const { data: o } = await supabase.from('orders').select('*').eq('id', id).maybeSingle()
+  const yoneticiAdresi = await bildirimAdresi()
   if (!o) notFound()
 
   // Kalemlerdeki ürünlerin güncel görsel/slug bilgisi (görüntüleme için).
@@ -131,6 +134,8 @@ export default async function PanelSiparisDetayPage({
         durum: o.status ?? 'pending',
         secilebilirDurumlar: getAdminSelectableOrderStatuses(o.status),
         email: o.guest_email ?? null,
+        // Müşteri maili gidebilir mi? Panelde kırmızı uyarı için (Faz 15 sonrası).
+        mailEngeli: musteriMailiEngeli(o.guest_email, o.order_number, yoneticiAdresi)?.sebep ?? null,
         items: itemler
           .filter((i) => (i?.productId ?? i?.product_id) !== 'KARGO')
           .map((i: any) => {

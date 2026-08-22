@@ -35,6 +35,8 @@ export type SiparisDetay = {
     zip_code?: string
   } | null
   hediyeNotu: string | null
+  /** Müşteri maili engellendiyse sebebi (Faz 15 sonrası güvenlik ağı). */
+  mailEngeli?: 'alici-yok' | 'yonetici-adresi' | 'test-siparisi' | 'hata' | null
   iyzicoId: string | null
   takipNo: string | null
   createdAt: string
@@ -138,6 +140,24 @@ export default function SiparisDetayClient({
           <PBadge tone={durumRozet.tone}>{durumRozet.label}</PBadge>
         </span>
       </div>
+
+      {/* Müşteri maili uyarısı: bu siparişte bilgilendirme mailleri gitmez. */}
+      {siparis.mailEngeli && (
+        <div className="rounded-[6px] border border-[var(--p-danger)] bg-[#FDECEC] p-4">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--p-danger)]">
+            ⚠ Müşteri maili gönderilmiyor
+          </p>
+          <p className="text-[13px] leading-relaxed text-[var(--p-ink)]">
+            {siparis.mailEngeli === 'alici-yok'
+              ? 'Bu siparişte geçerli bir müşteri e-postası yok; sipariş/kargo/iptal bildirimleri gönderilemez.'
+              : siparis.mailEngeli === 'yonetici-adresi'
+                ? 'Müşteri e-postası mağaza bildirim adresiyle aynı. Müşteri maili yöneticiye düşmesin diye gönderim engellendi.'
+                : siparis.mailEngeli === 'test-siparisi'
+                  ? 'Sipariş numarası test verisi olarak işaretli (NBS-TEST…); müşteri maili gönderilmez.'
+                  : 'Son gönderim başarısız oldu; sunucu kayıtlarını kontrol edin.'}
+          </p>
+        </div>
+      )}
 
       {/* Sipariş/hediye notu — sayfanın altında gözden kaçıyordu (Faz 15).
           Not yoksa kutu hiç basılmaz. */}

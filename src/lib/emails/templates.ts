@@ -227,7 +227,19 @@ function satirlarHtml(items: any[] | null | undefined): string {
  * İptal akışında hiç mail gitmiyordu; müşteri parasının iade edildiğini
  * yalnız ekranda görüyordu.
  */
-export function orderCancelledEmail(order: OrderLike & { total?: number | null }, iadeEdildi: boolean) {
+export function orderCancelledEmail(
+  order: OrderLike & {
+    total?: number | null
+    payment_refunded_at?: string | null
+    iyzico_payment_id?: string | null
+  },
+  iadeEdildiParam?: boolean
+) {
+  // Tahsilat/iade durumu SİPARİŞ KAYDINDAN türetilir; çağıranın gönderdiği
+  // bayrak yalnız aynı istekte yapılan iadeyi eklemek için kullanılır. Böylece
+  // "tahsilat yapılmadı" metni, parası çekilmiş bir siparişte asla çıkmaz.
+  const iadeEdildi = Boolean(order.payment_refunded_at) || Boolean(iadeEdildiParam)
+  const tahsilatVardi = Boolean(order.iyzico_payment_id) || iadeEdildi
   return {
     subject: `Siparişiniz İptal Edildi — ${order.order_number}`,
     html: shell(
@@ -239,7 +251,10 @@ export function orderCancelledEmail(order: OrderLike & { total?: number | null }
           iadeEdildi
             ? `Ödemeniz (<strong>${formatPrice(Number(order.total) || 0)}</strong>) bankanıza iade edildi.
                Kartınıza yansıması bankanıza göre <strong>1–7 iş günü</strong> sürebilir.`
-            : 'Tahsilat yapılmadığı için iade işlemi gerekmedi.'
+            : tahsilatVardi
+              ? `Ödemenizin (<strong>${formatPrice(Number(order.total) || 0)}</strong>) iadesi işleme alındı;
+                 sonucu ayrıca bildireceğiz.`
+              : 'Tahsilat yapılmadığı için iade işlemi gerekmedi.'
         }
       </p>
       <p style="color:#A88070;font-size:13px;line-height:1.8;">

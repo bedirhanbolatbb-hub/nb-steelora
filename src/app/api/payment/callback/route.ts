@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { decreaseStock } from '@/lib/trendyol/stockUpdate'
 import { orderConfirmationEmail, adminNewOrderEmail } from '@/lib/emails/templates'
 import { bildirimAdresi } from '@/lib/emails/bildirim'
+import { musteriMailiGonder } from '@/lib/emails/musteriMaili'
 import { sendMail } from '@/lib/emails/send'
 import { kullanimArtir } from '@/lib/campaigns/pricing'
 import { olayYaz } from '@/lib/analytics/track'
@@ -230,9 +231,15 @@ export async function POST(request: Request) {
     }
 
     // Sipariş onay e-postası gönder (şablon: lib/emails/templates.ts)
-    if (order?.guest_email) {
+    if (order) {
       const { subject, html } = orderConfirmationEmail(order as any)
-      await sendMail({ to: order.guest_email, subject, html, label: 'Order confirmation' })
+      await musteriMailiGonder({
+        eposta: order.guest_email,
+        orderNumber: order.order_number,
+        subject,
+        html,
+        label: 'Order confirmation',
+      })
     }
 
     // Mağaza sahibine anında bildirim (Faz 15): sipariş geldiğini panele

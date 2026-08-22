@@ -5,6 +5,7 @@ import { executeAdminOrderCancellation } from '@/lib/admin/executeOrderCancellat
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { reviewInviteEmail, shippingNotificationEmail } from '@/lib/emails/templates'
 import { sendMail } from '@/lib/emails/send'
+import { musteriMailiGonder } from '@/lib/emails/musteriMaili'
 
 export async function PATCH(
   request: Request,
@@ -100,7 +101,13 @@ export async function PATCH(
 
   if (body.status === 'shipped' && body.tracking_number && order?.guest_email) {
     const { subject, html } = shippingNotificationEmail(order as any, String(body.tracking_number))
-    await sendMail({ to: order.guest_email, subject, html, label: 'Shipping notification' })
+    await musteriMailiGonder({
+      eposta: order.guest_email,
+      orderNumber: order.order_number,
+      subject,
+      html,
+      label: 'Shipping notification',
+    })
   }
 
   // Teslim edildi → değerlendirme daveti. Sipariş başına yalnız bir kez:
@@ -128,10 +135,16 @@ export async function PATCH(
       }))
     )
 
-    const sent = await sendMail({ to: order.guest_email, subject, html, label: 'Review invite' })
+    const sent = await musteriMailiGonder({
+      eposta: order.guest_email,
+      orderNumber: order.order_number,
+      subject,
+      html,
+      label: 'Review invite',
+    })
 
     // Yalnız gerçekten gönderildiyse damgala — hatada tekrar denenebilir kalır.
-    if (sent.id) {
+    if (sent.gonderildi && sent.id) {
       await serviceClient
         .from('orders')
         .update({ review_invite_sent_at: new Date().toISOString() })
