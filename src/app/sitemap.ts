@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import { getCollectionCards } from '@/lib/collections'
+import { groupProducts } from '@/lib/catalog/variants'
 
 const baseUrl = 'https://www.nbsteelora.com'
 
@@ -41,8 +42,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  // Gruplama yalnız listede tek kart gösteriyor; her üyenin kendi sayfası
-  // ayrı URL olarak burada kalır (kapak olmayan üyeler de indekslenebilsin).
+  // Haritaya yalnız grup KAPAKLARI girer (Faz 18).
+  //
+  // Kardeş varyantların başlığı, açıklaması ve fiyatı birebir aynı; Search
+  // Console 46 sayfayı bu yüzden "kopya" diye eledi. Artık kardeşlerin
+  // canonical'ı kapağı gösteriyor — canonical'ı başkasına bakan sayfayı
+  // haritada bildirmek "alternatif sayfa, uygun kurallı etiketle" uyarısı
+  // üretirdi. Kardeş sayfalar erişilebilir ve iç bağlantılarla ulaşılabilir
+  // kalır; yalnız indekslenmesini istediğimiz adres bildirilir.
   let productPages: MetadataRoute.Sitemap = []
   // Blog yazıları haritada hiç yoktu; yalnız /blog listesi vardı. Yazıların
   // kendi adresleri arama trafiğinin giriş kapısı, ayrı ayrı bildiriliyor.
@@ -52,17 +59,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = await createClient()
     const { data } = await supabase
       .from('products_display')
-      .select('slug, updated_at')
+      .select(
+        'id, slug, updated_at, display_title, display_price, trendyol_category, gender, trendyol_stock, created_at'
+      )
       .limit(2000)
 
-    productPages = (data || [])
-      .filter((p: any) => p.slug)
-      .map((p: any) => ({
-        url: `${baseUrl}/urun/${p.slug}`,
-        lastModified: p.updated_at ? new Date(p.updated_at) : now,
-        changeFrequency: 'weekly' as const,
-        priority: 0.7,
-      }))
+    const kapaklar = groupProducts((data || []).filter((p: any) => p.slug) as any[]).map(
+      (g) => g.cover as any
+    )
+
+    productPages = kapaklar.map((p: any) => ({
+      url: `${baseUrl}/urun/${p.slug}`,
+      lastModified: p.updated_at ? new Date(p.updated_at) : now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }))
   } catch {
     // Ürünler alınamazsa statik + kategori haritası yine yayınlanır.
   }

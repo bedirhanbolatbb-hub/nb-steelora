@@ -92,7 +92,10 @@ export type ProductSeoInput = {
   title: string
   description: string
   images: string[]
+  /** Müşterinin GERÇEKTEN ödediği fiyat (kampanya uygulanmış hâli). */
   price: number
+  /** Kampanya öncesi liste fiyatı — yalnız indirim varsa doldurulur. */
+  listPrice?: number | null
   stock: number
   barcode: string | null
   category: string | null
@@ -108,23 +111,52 @@ export function productJsonLd(p: ProductSeoInput) {
   const gecerlilik = new Date()
   gecerlilik.setFullYear(gecerlilik.getFullYear() + 1)
 
+  // Vitrin kampanyası açıkken sayfada indirimli fiyat yazıyor. Yapısal veri
+  // liste fiyatını basarsa arama motoru ile sayfa çelişir; Merchant Center bunu
+  // "fiyat uyuşmazlığı" diye reddeder. Bu yüzden `price` ÖDENEN fiyattır ve
+  // liste fiyatı ayrıca `priceSpecification` ile bildirilir (Faz 18).
+  const offer: Record<string, unknown> = {
+    '@type': 'Offer',
+    url,
+    priceCurrency: 'TRY',
+    price: Number(p.price).toFixed(2),
+    priceValidUntil: gecerlilik.toISOString().slice(0, 10),
+    availability:
+      p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    itemCondition: 'https://schema.org/NewCondition',
+    seller: { '@type': 'Organization', name: ORG_NAME },
+    // Kargo vaadi tek kaynaktan: her siparişte ücretsiz.
+    shippingDetails: {
+      '@type': 'OfferShippingDetails',
+      shippingRate: { '@type': 'MonetaryAmount', value: '0.00', currency: 'TRY' },
+      shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'TR' },
+    },
+    hasMerchantReturnPolicy: {
+      '@type': 'MerchantReturnPolicy',
+      applicableCountry: 'TR',
+      returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+      merchantReturnDays: 14,
+      returnMethod: 'https://schema.org/ReturnByMail',
+      returnFees: 'https://schema.org/FreeReturn',
+    },
+  }
+
+  if (p.listPrice && Number(p.listPrice) > Number(p.price)) {
+    offer.priceSpecification = {
+      '@type': 'UnitPriceSpecification',
+      priceType: 'https://schema.org/ListPrice',
+      priceCurrency: 'TRY',
+      price: Number(p.listPrice).toFixed(2),
+    }
+  }
+
   const data: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: p.title,
     url,
     brand: { '@type': 'Brand', name: ORG_NAME },
-    offers: {
-      '@type': 'Offer',
-      url,
-      priceCurrency: 'TRY',
-      price: Number(p.price).toFixed(2),
-      priceValidUntil: gecerlilik.toISOString().slice(0, 10),
-      availability:
-        p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      itemCondition: 'https://schema.org/NewCondition',
-      seller: { '@type': 'Organization', name: ORG_NAME },
-    },
+    offers: offer,
   }
 
   if (p.description) data.description = truncate(p.description)

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Gift, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
@@ -13,7 +13,8 @@ import { materialCare, materialLabel } from '@/lib/catalog/material'
 import { resolveBadge } from '@/lib/catalog/badge'
 import ProductImageGallery from '@/components/store/ProductImageGallery'
 import ProductVariants from '@/components/store/ProductVariants'
-import { getVariantGroup } from '@/lib/catalog/variantGroup'
+import { getGroupCanonicalSlug, getVariantGroup } from '@/lib/catalog/variantGroup'
+import { halefSlugBul } from '@/lib/catalog/halefUrun'
 import ProductAccordion from '@/components/store/ProductAccordion'
 import AddToCartButton from '@/components/store/AddToCartButton'
 import StickyBuyBar, { BUY_BLOCK_ID } from '@/components/store/StickyBuyBar'
@@ -46,11 +47,17 @@ export async function generateMetadata({
   const supabase = await createClient()
   const { data } = await supabase
     .from('products_display')
-    .select('trendyol_title, display_title, display_images, trendyol_category, display_price')
+    .select(
+      'slug, trendyol_title, display_title, display_images, trendyol_category, display_price, gender, trendyol_stock, created_at'
+    )
     .eq('slug', slug)
     .maybeSingle()
 
   if (!data) return {}
+
+  // Kardeş varyantlar aynı başlığı, aynı açıklamayı ve aynı fiyatı taşıyor;
+  // canonical grubun kapağını gösterir (Faz 18). Sayfalar erişilebilir kalır.
+  const canonicalSlug = await getGroupCanonicalSlug(data)
 
   const seoTitle = data.trendyol_title || data.display_title
   const description = `${seoTitle} — ${data.trendyol_category ?? 'NB Steelora'}. ${formatPrice(
@@ -60,7 +67,7 @@ export async function generateMetadata({
   return {
     title: seoTitle,
     description,
-    alternates: { canonical: `/urun/${slug}` },
+    alternates: { canonical: `/urun/${canonicalSlug}` },
     openGraph: {
       title: seoTitle,
       description,
@@ -83,7 +90,13 @@ export default async function UrunDetayPage({
     service.from('products').select('override_price').eq('slug', slug).single(),
   ])
 
-  if (!product) notFound()
+  if (!product) {
+    // Ürün pasife alınmışsa birebir karşılığı var mı? Varsa eski adres
+    // kalıcı olarak (308) oraya taşınır — yoksa 404'te kalır (Faz 18).
+    const halef = await halefSlugBul(slug)
+    if (halef && halef !== slug) permanentRedirect(`/urun/${halef}`)
+    notFound()
+  }
 
   // Ürün görüntüleme sunucuda ölçülür (Faz 12) — engelleyicilerden etkilenmez.
   await sunucuOlayi('product_view', { productId: product.id, path: `/urun/${product.slug}` })
@@ -109,6 +122,10 @@ export default async function UrunDetayPage({
   // değilse galerinin altında küçük resim şeridi olarak basılır.
   const { members: variantMembers, useLabels } = await getVariantGroup(product)
 
+  // Yapısal verinin adresi de canonical'ı izler; aksi halde sayfa "beni
+  // indeksleme, kapağı indeksle" derken JSON-LD kendini işaret ederdi.
+  const canonicalSlug = await getGroupCanonicalSlug(product)
+
   // Elle yazılmış açıklama varsa ham hâli gösterilir; pazaryeri metni temizlenir.
   const hasOverrideDescription = Boolean(product.override_description)
   const cleaned = hasOverrideDescription
@@ -125,11 +142,15 @@ export default async function UrunDetayPage({
     <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8 lg:py-12">
       <JsonLd
         data={productJsonLd({
-          slug,
+          slug: canonicalSlug,
           title: product.display_title,
           description: seoDescription,
           images: (product.display_images as string[] | null) ?? [],
-          price: mergedProduct.override_price ?? product.display_price,
+          // Ekranda 314,93 yazarken yapısal veride 449,90 duruyordu; Merchant
+          // Center'ın "fiyat uyuşmazlığı" ret sebebi tam olarak budur.
+          // Basılan fiyat müşterinin GERÇEKTEN ödediği fiyattır.
+          price: kampanyaliFiyat ?? listeFiyati,
+          listPrice: kampanyaliFiyat ? listeFiyati : null,
           stock,
           barcode: product.trendyol_barcode ?? null,
           category: product.trendyol_category ?? null,

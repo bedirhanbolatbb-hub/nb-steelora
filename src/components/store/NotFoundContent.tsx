@@ -1,8 +1,15 @@
 import Link from 'next/link'
 import { WHATSAPP_URL } from '@/lib/contact'
+import { CATEGORIES } from '@/lib/catalog/categories'
 
 /**
  * Markalı 404 içeriği. Hem kök not-found hem de mağaza içi not-found bunu kullanır.
+ *
+ * Faz 18: katalogda 88 pasif ürün var ve hepsinin eski adresi burada bitiyor.
+ * Birebir karşılığı olan 4 tanesi kalıcı yönlendirmeyle kurtarıldı; kalanı
+ * gerçekten kalktığı için 404 kalıyor. Ziyaretçiyi çıkmaz bir sayfada
+ * bırakmamak adına kategori kapıları eklendi — kalkmış ürünlerin dağılımı da
+ * (25 bileklik, 21 kolye, 12 küpe …) tam olarak bu kapılara denk düşüyor.
  */
 export default function NotFoundContent() {
   return (
@@ -15,6 +22,18 @@ export default function NotFoundContent() {
         Bu sayfa kaldırılmış ya da adres yanlış yazılmış olabilir. Koleksiyonun tamamı
         birkaç adım ötede.
       </p>
+
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+        {CATEGORIES.filter((k) => !k.gender).map((k) => (
+          <Link
+            key={k.slug}
+            href={`/kategori/${k.slug}`}
+            className="inline-flex items-center border border-line text-ink-soft text-[11px] uppercase tracking-[0.12em] font-body px-4 py-2 rounded-[4px] hover:border-ink hover:text-ink transition-colors"
+          >
+            {k.title}
+          </Link>
+        ))}
+      </div>
 
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
         <Link
