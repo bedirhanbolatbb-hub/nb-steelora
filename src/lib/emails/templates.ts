@@ -205,3 +205,124 @@ export function accountDeletedEmail(params: { anonimSiparis: number }) {
     ),
   }
 }
+
+/** Panel bağlantısı — bildirim maillerinde tek tıkla ilgili ekrana gitmek için. */
+const PANEL = `${SITE}/panel`
+
+function satirlarHtml(items: any[] | null | undefined): string {
+  const liste = Array.isArray(items) ? items : []
+  if (liste.length === 0) return '<li>—</li>'
+  return liste
+    .map(
+      (i) =>
+        `<li style="margin-bottom:4px;">${i?.quantity ?? 1} × ${i?.name ?? 'Ürün'} — ${formatPrice(
+          Number(i?.price) || 0
+        )}</li>`
+    )
+    .join('')
+}
+
+/**
+ * Müşteriye: siparişiniz iptal edildi / iadeniz işlendi (Faz 15).
+ * İptal akışında hiç mail gitmiyordu; müşteri parasının iade edildiğini
+ * yalnız ekranda görüyordu.
+ */
+export function orderCancelledEmail(order: OrderLike & { total?: number | null }, iadeEdildi: boolean) {
+  return {
+    subject: `Siparişiniz İptal Edildi — ${order.order_number}`,
+    html: shell(
+      'Siparişiniz iptal edildi',
+      `${orderNumberBox(order.order_number)}
+      <p style="color:#7A5048;line-height:1.8;margin-bottom:20px;">
+        ${order.order_number} numaralı siparişiniz iptal edildi.
+        ${
+          iadeEdildi
+            ? `Ödemeniz (<strong>${formatPrice(Number(order.total) || 0)}</strong>) bankanıza iade edildi.
+               Kartınıza yansıması bankanıza göre <strong>1–7 iş günü</strong> sürebilir.`
+            : 'Tahsilat yapılmadığı için iade işlemi gerekmedi.'
+        }
+      </p>
+      <p style="color:#A88070;font-size:13px;line-height:1.8;">
+        Sorunuz olursa bu e-postayı yanıtlayabilir ya da
+        <a href="mailto:info@nbsteelora.com" style="color:#C89080;">info@nbsteelora.com</a>
+        adresine yazabilirsiniz.
+      </p>`
+    ),
+  }
+}
+
+/** Yöneticiye: yeni sipariş (Faz 15). */
+export function adminNewOrderEmail(order: any) {
+  const adres = order?.shipping_address ?? {}
+  const musteri = adres.fullName || adres.full_name || order?.guest_email || 'Müşteri'
+  return {
+    subject: `🛒 Yeni sipariş — ${order.order_number} · ${formatPrice(Number(order.total) || 0)}`,
+    html: shell(
+      'Yeni sipariş',
+      `${orderNumberBox(order.order_number)}
+      <p style="color:#7A5048;line-height:1.8;margin:0 0 12px;">
+        <strong>${musteri}</strong> · ${order?.guest_email ?? '—'}<br>
+        Tutar: <strong>${formatPrice(Number(order.total) || 0)}</strong>
+        ${Number(order?.discount_amount) > 0 ? ` (indirim ${formatPrice(Number(order.discount_amount))})` : ''}
+      </p>
+      <ul style="color:#7A5048;line-height:1.7;font-size:14px;padding-left:18px;margin:0 0 16px;">
+        ${satirlarHtml(order?.items)}
+      </ul>
+      ${
+        order?.gift_note
+          ? `<div style="background:#FFF8E6;border:1px solid #E8D8A0;padding:14px;margin-bottom:16px;">
+               <p style="margin:0 0 4px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#A88070;">Sipariş notu</p>
+               <p style="margin:0;color:#2A1E1E;">${order.gift_note}</p>
+             </div>`
+          : ''
+      }
+      <p style="text-align:center;margin:24px 0 0;">
+        <a href="${PANEL}/siparisler" style="display:inline-block;background:#2A1E1E;color:#FFF8F6;padding:14px 32px;text-decoration:none;font-size:12px;letter-spacing:.15em;text-transform:uppercase;">Panelde aç</a>
+      </p>`
+    ),
+  }
+}
+
+/** Yöneticiye: iptal/iade talebi (Faz 15). */
+export function adminOrderRequestEmail(order: any, tur: 'cancel' | 'return', mesaj?: string | null) {
+  const baslik = tur === 'cancel' ? 'İptal talebi' : 'İade talebi'
+  return {
+    subject: `⚠️ ${baslik} — ${order.order_number}`,
+    html: shell(
+      baslik,
+      `${orderNumberBox(order.order_number)}
+      <p style="color:#7A5048;line-height:1.8;margin:0 0 12px;">
+        Müşteri <strong>${baslik.toLowerCase()}</strong> oluşturdu.
+        Tutar: <strong>${formatPrice(Number(order.total) || 0)}</strong>
+      </p>
+      ${mesaj ? `<p style="color:#7A5048;line-height:1.8;margin:0 0 12px;">Müşteri mesajı: ${mesaj}</p>` : ''}
+      <p style="color:#A88070;font-size:13px;line-height:1.7;">
+        Onayladığınızda ödeme iyzico üzerinden iade edilir ve stok geri eklenir.
+      </p>
+      <p style="text-align:center;margin:24px 0 0;">
+        <a href="${PANEL}/siparisler" style="display:inline-block;background:#2A1E1E;color:#FFF8F6;padding:14px 32px;text-decoration:none;font-size:12px;letter-spacing:.15em;text-transform:uppercase;">Talebi incele</a>
+      </p>`
+    ),
+  }
+}
+
+/** Yöneticiye: yeni yorum (Faz 15). */
+export function adminNewReviewEmail(params: { urun: string; puan: number; govde: string; yazar?: string | null }) {
+  return {
+    subject: `⭐ Yeni yorum (${params.puan}/5) — ${params.urun}`,
+    html: shell(
+      'Yeni ürün yorumu',
+      `<p style="color:#7A5048;line-height:1.8;margin:0 0 12px;">
+        <strong>${params.urun}</strong> · ${params.puan}/5
+        ${params.yazar ? ` · ${params.yazar}` : ''}
+      </p>
+      <div style="background:#FFF8F6;border:1px solid #E8D8D0;padding:16px;margin-bottom:16px;">
+        <p style="margin:0;color:#2A1E1E;line-height:1.7;">${params.govde}</p>
+      </div>
+      <p style="color:#A88070;font-size:13px;">Yorum onaylanana kadar sitede görünmez.</p>
+      <p style="text-align:center;margin:24px 0 0;">
+        <a href="${PANEL}/yorumlar" style="display:inline-block;background:#2A1E1E;color:#FFF8F6;padding:14px 32px;text-decoration:none;font-size:12px;letter-spacing:.15em;text-transform:uppercase;">Yorumları aç</a>
+      </p>`
+    ),
+  }
+}

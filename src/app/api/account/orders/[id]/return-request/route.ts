@@ -6,6 +6,9 @@ import {
   hasPendingOrderRequest,
   parseOptionalReason,
 } from '@/lib/account/orderRequestsApi'
+import { sendMail } from '@/lib/emails/send'
+import { adminOrderRequestEmail } from '@/lib/emails/templates'
+import { bildirimAdresi } from '@/lib/emails/bildirim'
 
 export async function POST(
   request: Request,
@@ -77,6 +80,22 @@ export async function POST(
       )
     }
     return NextResponse.json({ error: 'Talep kaydedilemedi.' }, { status: 500 })
+  }
+
+  // Mağaza sahibine anında bildirim (Faz 15).
+  try {
+    const { data: order } = await service
+      .from('orders')
+      .select('order_number, total')
+      .eq('id', orderId)
+      .maybeSingle()
+    if (order) {
+      const alici = await bildirimAdresi()
+      const bildirim = adminOrderRequestEmail(order, 'return', parsed.reason)
+      await sendMail({ to: alici, ...bildirim, label: 'Admin return request' })
+    }
+  } catch (bildirimHata) {
+    console.error('[return-request] yönetici bildirimi gönderilemedi:', bildirimHata)
   }
 
   return NextResponse.json({ request: row }, { status: 201 })

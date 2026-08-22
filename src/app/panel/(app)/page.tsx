@@ -45,7 +45,17 @@ export default async function PanelDashboard() {
   const bugunBasi = istanbulDayStart(now)
   const otuzGunOnce = bugunBasi - 29 * GUN_MS
 
-  const [ordersRes, sonBesRes, yorumRes, stokRes, stokListRes, syncRes] = await Promise.all([
+  const [
+    ordersRes,
+    sonBesRes,
+    yorumRes,
+    stokRes,
+    stokListRes,
+    syncRes,
+    hazirlanacakRes,
+    kargoyaRes,
+    talepRes,
+  ] = await Promise.all([
     supabase
       .from('orders')
       .select('id, order_number, total, status, created_at, guest_email, shipping_address')
@@ -73,7 +83,15 @@ export default async function PanelDashboard() {
       .order('synced_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    // Yapılacaklar bloğu (Faz 15): ödemesi alınmış / kargo bekleyen / açık talep
+    supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
+    supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'preparing'),
+    supabase.from('order_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
   ])
+
+  const hazirlanacak = hazirlanacakRes.count ?? 0
+  const kargoyaVerilecek = kargoyaRes.count ?? 0
+  const acikTalep = talepRes.count ?? 0
 
   const orders = (ordersRes.data || []) as OrderRow[]
   const sonBes = (sonBesRes.data || []) as OrderRow[]
@@ -123,6 +141,17 @@ export default async function PanelDashboard() {
     { ad: 'Son 30 gün', ...otuzGun },
   ]
 
+  /**
+   * Yapılacaklar: rakam 0 ise satır sakin (yeşil) görünür, 0'dan büyükse
+   * dikkat çeker. Her satır ilgili filtrelenmiş listeye gider.
+   */
+  const yapilacaklar = [
+    { href: '/panel/siparisler?durum=paid', etiket: 'Ödemesi alınmış — hazırlanacak', deger: hazirlanacak },
+    { href: '/panel/siparisler?durum=preparing', etiket: 'Kargoya verilecek sipariş', deger: kargoyaVerilecek },
+    { href: '/panel/siparisler#talepler', etiket: 'Bekleyen iptal/iade talebi', deger: acikTalep },
+    { href: '/panel/yorumlar', etiket: 'Onay bekleyen yorum', deger: onayBekleyenYorum },
+  ]
+
   const dikkat = [
     { href: '/panel/analiz', etiket: 'Bugün ziyaretçi', deger: bugunOturum, ek: `dönüşüm %${bugunDonusum}` },
     { href: '/panel/yorumlar', etiket: 'Onay bekleyen yorum', deger: onayBekleyenYorum },
@@ -132,6 +161,36 @@ export default async function PanelDashboard() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
+      {/* ── Yapılacaklar ── */}
+      <PCard title="Yapılacaklar">
+        <ul className="divide-y divide-[var(--p-line)]">
+          {yapilacaklar.map((y) => {
+            const bos = y.deger === 0
+            return (
+              <li key={y.etiket}>
+                <Link
+                  href={y.href}
+                  className="flex min-h-[44px] items-center justify-between gap-3 py-2.5 transition-colors hover:text-[var(--p-ink)]"
+                >
+                  <span className={`text-[13px] ${bos ? 'text-[var(--p-muted)]' : 'font-medium text-[var(--p-ink)]'}`}>
+                    {y.etiket}
+                  </span>
+                  <span
+                    className={`min-w-[2.25rem] rounded-[4px] px-2 py-0.5 text-center text-[13px] font-semibold tabular-nums ${
+                      bos
+                        ? 'bg-[var(--p-success-soft,#EAF6EE)] text-[var(--p-success)]'
+                        : 'bg-[var(--p-danger-soft,#FDECEC)] text-[var(--p-danger)]'
+                    }`}
+                  >
+                    {y.deger}
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      </PCard>
+
       {/* ── Metrik kartları ── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {metrikler.map((m) => (

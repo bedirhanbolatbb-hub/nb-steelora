@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { executeAdminOrderCancellation } from '@/lib/admin/executeOrderCancellation'
+import { executeAdminOrderRefund } from '@/lib/admin/executeOrderRefund'
+import { sendMail } from '@/lib/emails/send'
+import { orderCancelledEmail } from '@/lib/emails/templates'
 import { isLikelyUuid } from '@/lib/admin/isUuid'
 
 export async function PATCH(
@@ -120,7 +123,29 @@ export async function PATCH(
     // ONLY after successful cancellation: mark request approved (below).
   }
 
-  // Return approval does NOT trigger refund yet — no payment, stock, or order status change; only the order_requests row is updated next.
+  // İADE onayı artık gerçekten para iade ediyor (Faz 15). Önceden yalnız talep
+  // satırı "approved" işaretleniyor, iyzico'ya hiç istek gitmiyordu.
+  let iadeSonucu: { iadeEdildi: boolean; tutar: number } | null = null
+  if (row.request_type === 'return') {
+    const refundResult = await executeAdminOrderRefund(service, row.order_id)
+    if (!refundResult.ok) {
+      console.error('[admin-order-requests] return approve: iade başarısız', {
+        requestId,
+        orderId: row.order_id,
+        error: refundResult.error,
+      })
+      return NextResponse.json(
+        {
+          success: false,
+          error: refundResult.error,
+          ...(refundResult.code ? { code: refundResult.code } : {}),
+        },
+        { status: refundResult.status }
+      )
+    }
+    iadeSonucu = { iadeEdildi: refundResult.iadeEdildi, tutar: refundResult.tutar }
+  }
+
   const { data: approvedRows, error: upErr } = await service
     .from('order_requests')
     .update({ status: 'approved', updated_at: new Date().toISOString() })
@@ -154,5 +179,30 @@ export async function PATCH(
     )
   }
 
-  return NextResponse.json({ success: true })
+  // Müşteriye bilgilendirme: iptal/iade akışında hiç mail gitmiyordu, müşteri
+  // parasının iade edildiğini yalnız ekranda görüyordu (Faz 15).
+  try {
+    const { data: order } = await service
+      .from('orders')
+      .select('order_number, guest_email, total, payment_refunded_at')
+      .eq('id', row.order_id)
+      .maybeSingle()
+    if (order?.guest_email) {
+      const { subject, html } = orderCancelledEmail(
+        order as any,
+        Boolean(order.payment_refunded_at || iadeSonucu?.iadeEdildi)
+      )
+      await sendMail({
+        to: order.guest_email,
+        subject,
+        html,
+        label: row.request_type === 'return' ? 'Return approved' : 'Cancel approved',
+      })
+    }
+  } catch (mailErr) {
+    // Mail gönderilemezse işlem geçerli kalır; yalnız loglanır.
+    console.error('[admin-order-requests] bilgilendirme maili gönderilemedi', mailErr)
+  }
+
+  return NextResponse.json({ success: true, iade: iadeSonucu })
 }

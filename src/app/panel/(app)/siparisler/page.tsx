@@ -16,7 +16,7 @@ export default async function PanelSiparislerPage({
   let query = supabase
     .from('orders')
     .select(
-      'id, order_number, guest_email, total, status, created_at, tracking_number, shipping_address, iyzico_payment_id'
+      'id, order_number, guest_email, total, status, created_at, tracking_number, shipping_address, iyzico_payment_id, gift_note'
     )
     .order('created_at', { ascending: false })
     .limit(200)
@@ -39,6 +39,7 @@ export default async function PanelSiparislerPage({
     durum: o.status ?? 'pending',
     tarih: o.created_at,
     takipVar: Boolean(o.tracking_number),
+    notVar: Boolean((o.gift_note ?? '').trim()),
   }))
 
   // Müşteri talepleri (iptal/iade) — salt okunur liste.

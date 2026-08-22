@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { sendMail } from '@/lib/emails/send'
+import { adminNewReviewEmail } from '@/lib/emails/templates'
+import { bildirimAdresi } from '@/lib/emails/bildirim'
 
 /**
  * Yorum kaydı. Herkes yazabilir ama hiçbir yorum doğrudan yayınlanmaz:
@@ -72,7 +75,8 @@ export async function POST(request: Request) {
     // Ürün gerçekten var mı?
     const { data: product } = await supabase
       .from('products')
-      .select('id')
+      // Ad, yönetici bildirim mailinde kullanılıyor (Faz 15).
+      .select('id, override_title, trendyol_title')
       .eq('id', productId)
       .maybeSingle()
 
@@ -105,6 +109,21 @@ export async function POST(request: Request) {
     if (error) {
       console.error('Review insert error:', error.message)
       return NextResponse.json({ error: 'Değerlendirme kaydedilemedi' }, { status: 500 })
+    }
+
+    // Yeni yorum bildirimi: onay bekleyen yorumu görmek için panele bakmak
+    // gerekiyordu (Faz 15).
+    try {
+      const alici = await bildirimAdresi()
+      const bildirim = adminNewReviewEmail({
+        urun: product?.override_title || product?.trendyol_title || 'Ürün',
+        puan: rating,
+        govde: String(text).slice(0, 400),
+        yazar: name,
+      })
+      await sendMail({ to: alici, ...bildirim, label: 'Admin new review' })
+    } catch (bildirimHata) {
+      console.error('[reviews] yönetici bildirimi gönderilemedi:', bildirimHata)
     }
 
     return NextResponse.json({ success: true, verified: isVerifiedPurchase })

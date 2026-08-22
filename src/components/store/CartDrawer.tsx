@@ -10,6 +10,7 @@ import { useCart } from '@/hooks/useCart'
 import Button from '@/components/ui/Button'
 import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
+import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
 
 interface CartDrawerProps {
   isOpen: boolean
@@ -20,6 +21,15 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, totalPrice } = useCart()
   const subtotal = totalPrice()
+  // İndirim artık ödeme adımını beklemeden burada görünüyor (Faz 15).
+  const { indirim } = useOtomatikIndirim(
+    subtotal,
+    items.reduce((t, i) => t + (Number(i.quantity) || 1), 0),
+    items.flatMap((i) =>
+      Array.from({ length: Number(i.quantity) || 1 }, () => Number(i.product.display_price) || 0)
+    )
+  )
+  const indirimliToplam = Math.max(0, subtotal - (indirim?.amount ?? 0))
   const hasItems = items.length > 0
 
 
@@ -145,13 +155,39 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
 
             {/* Alt kısım */}
             <div className="px-6 py-5 border-t border-line">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[12px] font-body text-ink-soft uppercase tracking-wider">
-                  Ara Toplam
-                </span>
-                <span className="text-[16px] font-body text-accent font-medium">
-                  {formatPrice(subtotal)}
-                </span>
+              <div className="mb-4 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-body text-ink-soft uppercase tracking-wider">
+                    Ara Toplam
+                  </span>
+                  <span
+                    className={`text-[14px] font-body ${indirim ? 'text-muted line-through' : 'text-accent font-medium text-[16px]'}`}
+                  >
+                    {formatPrice(subtotal)}
+                  </span>
+                </div>
+
+                {indirim && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px] font-body text-ink-soft">{indirim.name}</span>
+                      <span className="text-[13px] font-body text-accent">
+                        −{formatPrice(indirim.amount)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-line pt-1.5">
+                      <span className="text-[12px] font-body uppercase tracking-wider text-ink">
+                        Toplam
+                      </span>
+                      <span className="text-[16px] font-body font-medium text-accent">
+                        {formatPrice(indirimliToplam)}
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-body text-accent-deep">
+                      {formatPrice(indirim.amount)} kazandınız
+                    </p>
+                  </>
+                )}
               </div>
               <Link
                 href="/odeme"

@@ -149,12 +149,41 @@ export default function OdemePage() {
     updateField('expireYear', digits)
   }
 
+  /**
+   * Kart yılı iki haneli girildiğinde (29) dört haneye tamamlanır (2029).
+   * Önceden "29" yazan müşterinin düğmesi sessizce pasif kalıyordu — neyin
+   * eksik olduğunu gösteren hiçbir uyarı yoktu (Faz 15).
+   */
+  const yiliTamamla = () => {
+    const d = form.expireYear.replace(/\D/g, '')
+    if (d.length === 2) updateField('expireYear', String(2000 + Number(d)))
+  }
+
+  const rawCardNumber = form.cardNumber.replace(/\s/g, '')
+  const rawCardNumberLen = rawCardNumber.length
+
+  /** Alan bazlı hata metinleri — boş alanlar için değil, YANLIŞ değerler için. */
+  const alanHatalari: Record<string, string | null> = {
+    cardNumber:
+      rawCardNumberLen > 0 && rawCardNumberLen < 16 ? 'Kart numarası 16 haneli olmalı' : null,
+    expireMonth:
+      form.expireMonth.length > 0 && (Number(form.expireMonth) < 1 || Number(form.expireMonth) > 12)
+        ? 'Ay 01–12 arasında olmalı'
+        : null,
+    expireYear:
+      form.expireYear.length > 0 && form.expireYear.length !== 4 && form.expireYear.length !== 2
+        ? 'Yıl 4 haneli olmalı — örn. 2029'
+        : form.expireYear.length === 4 && Number(form.expireYear) < new Date().getFullYear()
+          ? 'Kartın süresi dolmuş görünüyor'
+          : null,
+    cvc: form.cvc.length > 0 && form.cvc.length < 3 ? 'CVV en az 3 haneli olmalı' : null,
+  }
+
   const handleCvcChange = (value: string) => {
     const digits = value.replace(/\D/g, '').substring(0, 4)
     updateField('cvc', digits)
   }
 
-  const rawCardNumber = form.cardNumber.replace(/\s/g, '')
 
   const isFormValid =
     form.firstName &&
@@ -169,6 +198,22 @@ export default function OdemePage() {
     form.expireMonth.length >= 1 &&
     form.expireYear.length === 4 &&
     form.cvc.length >= 3
+
+  /** Düğme pasifken hangi alanların eksik olduğu tek satırda yazılır. */
+  const eksikAlanlar = [
+    !form.firstName && 'ad',
+    !form.lastName && 'soyad',
+    !form.email && 'e-posta',
+    !form.phone && 'telefon',
+    !form.city && 'il',
+    !form.district && 'ilçe',
+    !form.address && 'adres',
+    !form.cardHolderName && 'kart üzerindeki isim',
+    rawCardNumber.length !== 16 && 'kart numarası',
+    !(form.expireMonth.length >= 1) && 'son kullanma ayı',
+    form.expireYear.length !== 4 && 'son kullanma yılı',
+    form.cvc.length < 3 && 'CVV',
+  ].filter(Boolean) as string[]
 
   // Ödemeye başlama ölçümü — form gönderilmeden önce bir kez (Faz 12).
   const olcumYapildi = useRef(false)
@@ -382,34 +427,53 @@ export default function OdemePage() {
                   inputMode="numeric"
                   maxLength={19}
                 />
+                {alanHatalari.cardNumber && (
+                  <p className="mt-1 text-[11px] font-body text-red-600">{alanHatalari.cardNumber}</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3 sm:col-span-1">
+                <div>
+                  <Input
+                    placeholder="Ay (MM) *"
+                    value={form.expireMonth}
+                    onChange={(e) => handleExpireMonthChange(e.target.value)}
+                    autoComplete="cc-exp-month"
+                    inputMode="numeric"
+                    maxLength={2}
+                  />
+                  {alanHatalari.expireMonth && (
+                    <p className="mt-1 text-[11px] font-body text-red-600">{alanHatalari.expireMonth}</p>
+                  )}
+                </div>
+                <div>
+                  <Input
+                    placeholder="Yıl (YY veya YYYY) *"
+                    value={form.expireYear}
+                    onChange={(e) => handleExpireYearChange(e.target.value)}
+                    onBlur={yiliTamamla}
+                    autoComplete="cc-exp-year"
+                    inputMode="numeric"
+                    maxLength={4}
+                  />
+                  {alanHatalari.expireYear && (
+                    <p className="mt-1 text-[11px] font-body text-red-600">{alanHatalari.expireYear}</p>
+                  )}
+                </div>
+              </div>
+              <div>
                 <Input
-                  placeholder="Ay (MM) *"
-                  value={form.expireMonth}
-                  onChange={(e) => handleExpireMonthChange(e.target.value)}
-                  autoComplete="cc-exp-month"
-                  inputMode="numeric"
-                  maxLength={2}
-                />
-                <Input
-                  placeholder="Yıl (YYYY) *"
-                  value={form.expireYear}
-                  onChange={(e) => handleExpireYearChange(e.target.value)}
-                  autoComplete="cc-exp-year"
+                  placeholder="CVV *"
+                  value={form.cvc}
+                  onChange={(e) => handleCvcChange(e.target.value)}
+                  autoComplete="cc-csc"
                   inputMode="numeric"
                   maxLength={4}
+                  type="password"
                 />
+                {alanHatalari.cvc && (
+                  <p className="mt-1 text-[11px] font-body text-red-600">{alanHatalari.cvc}</p>
+                )}
               </div>
-              <Input
-                placeholder="CVV *"
-                value={form.cvc}
-                onChange={(e) => handleCvcChange(e.target.value)}
-                autoComplete="cc-csc"
-                inputMode="numeric"
-                maxLength={4}
-                type="password"
-              />
             </div>
           </section>
 
@@ -479,6 +543,13 @@ export default function OdemePage() {
           )}
 
           <div>
+            {/* Düğme pasifken sessiz kalmıyor: neyin eksik olduğu tek satırda
+                yazılıyor (Faz 15 — BB yılı 2 haneli yazınca hiçbir uyarı yoktu). */}
+            {!isFormValid && eksikAlanlar.length > 0 && (
+              <p className="mb-2 text-center text-[12px] font-body text-red-600">
+                Eksik alanlar: {eksikAlanlar.join(', ')}
+              </p>
+            )}
             <button
               onClick={handlePayment}
               disabled={loading || !isFormValid}

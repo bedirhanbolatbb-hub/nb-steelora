@@ -139,6 +139,17 @@ export default function SiparisDetayClient({
         </span>
       </div>
 
+      {/* Sipariş/hediye notu — sayfanın altında gözden kaçıyordu (Faz 15).
+          Not yoksa kutu hiç basılmaz. */}
+      {siparis.hediyeNotu && (
+        <div className="rounded-[6px] border border-[#E8C97A] bg-[#FFF8E6] p-4">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8A6D1F]">
+            🎁 Sipariş notu
+          </p>
+          <p className="text-[14px] leading-relaxed text-[#2A1E1E]">{siparis.hediyeNotu}</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="space-y-4">
           {/* Kalemler */}
@@ -186,11 +197,6 @@ export default function SiparisDetayClient({
                   .join(', ') || '—'}
               </p>
               <p className="text-[var(--p-muted)]">{siparis.adres?.phone ?? ''} · {siparis.email ?? ''}</p>
-              {siparis.hediyeNotu && (
-                <p className="rounded-[4px] bg-[#f5efe2] px-3 py-2 text-[12px] text-[var(--p-accent-deep)]">
-                  🎁 Hediye notu: {siparis.hediyeNotu}
-                </p>
-              )}
               {siparis.iyzicoId && (
                 <p className="text-[11px] text-[var(--p-muted)]">iyzico ödeme kimliği: {siparis.iyzicoId}</p>
               )}

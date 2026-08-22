@@ -168,8 +168,19 @@ export async function otomatikKampanyalar(
     }
   }
 
-  const toplam = Math.round(indirimler.reduce((t, d) => t + d.amount, 0) * 100) / 100
-  return { indirimler, ucretsizKargo, toplam: Math.min(toplam, sepetTutari) }
+  /**
+   * Faz 15 — KURAL: birden fazla kampanya uygunsa MÜŞTERİ LEHİNE olan tek
+   * kampanya uygulanır, indirimler TOPLANMAZ. Önceden hepsi toplanıyordu;
+   * müşteri sepette "%30" görüp ödemede başka bir tutarla karşılaşabiliyor,
+   * hangi kampanyanın geçerli olduğunu anlayamıyordu.
+   */
+  const enIyi = indirimler.reduce<OtomatikSonuc['indirimler'][number] | null>(
+    (kazanan, aday) => (!kazanan || aday.amount > kazanan.amount ? aday : kazanan),
+    null
+  )
+  const secilen = enIyi ? [enIyi] : []
+  const toplam = enIyi ? Math.round(enIyi.amount * 100) / 100 : 0
+  return { indirimler: secilen, ucretsizKargo, toplam: Math.min(toplam, sepetTutari) }
 }
 
 /** Kampanya kullanıldığında sayacı artırır (ödeme başarıyla tamamlandığında). */

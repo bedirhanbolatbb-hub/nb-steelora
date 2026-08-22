@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
 import { FREE_SHIPPING_LABEL, SHIPPING_LINE_LABEL, shippingCostFor } from '@/lib/shipping'
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
+import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
 
 // Sepet localStorage'da tutuluyor; ilk sunucu çıktısıyla uyumsuzluk olmasın diye
 // içerik yalnızca hidrasyondan sonra basılır.
@@ -20,6 +21,15 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
 
   const subtotal = totalPrice()
   const shipping = shippingCostFor(subtotal)
+  // Kampanya indirimi ödeme adımını beklemeden burada da görünür (Faz 15).
+  const { indirim } = useOtomatikIndirim(
+    subtotal,
+    items.reduce((t, i) => t + (Number(i.quantity) || 1), 0),
+    items.flatMap((i) =>
+      Array.from({ length: Number(i.quantity) || 1 }, () => Number(i.product.display_price) || 0)
+    )
+  )
+  const indirimTutari = indirim?.amount ?? 0
   const hasItems = hydrated && items.length > 0
 
 
@@ -133,10 +143,21 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                   <span className="text-muted"> — ödeme adımında uygulanır</span>
                 </p>
               )}
+              {indirim && (
+                <div className="flex justify-between text-[13px] font-body text-accent">
+                  <span>{indirim.name}</span>
+                  <span>−{formatPrice(indirimTutari)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-[15px] font-body text-ink font-medium pt-3 border-t border-line">
                 <span>Toplam</span>
-                <span>{formatPrice(subtotal + shipping)}</span>
+                <span>{formatPrice(Math.max(0, subtotal - indirimTutari) + shipping)}</span>
               </div>
+              {indirim && (
+                <p className="text-[11px] font-body text-accent-deep">
+                  {formatPrice(indirimTutari)} kazandınız
+                </p>
+              )}
 
               <Link
                 href="/odeme"

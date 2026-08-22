@@ -18,6 +18,8 @@ export type SiparisSatiri = {
   durum: string
   tarih: string
   takipVar: boolean
+  /** Sipariş notu olan satırlar listede işaretlenir (Faz 15). */
+  notVar?: boolean
 }
 
 export type TalepSatiri = {
@@ -158,7 +160,10 @@ export default function SiparislerClient({
                       onClick={() => router.push(`/panel/siparisler/${s.id}`)}
                       className="cursor-pointer border-b border-[var(--p-line)]/60 last:border-0 hover:bg-[var(--p-bg)]/60"
                     >
-                      <td className="px-3 py-2.5 font-medium">{s.no}</td>
+                      <td className="px-3 py-2.5 font-medium">
+                        {s.no}
+                        {s.notVar && <span title="Sipariş notu var" className="ml-1.5">🎁</span>}
+                      </td>
                       <td className="px-3 py-2.5 text-[var(--p-ink-soft)]">{s.musteri}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums">{formatPrice(s.tutar)}</td>
                       <td className="px-3 py-2.5"><PBadge tone={d.tone}>{d.label}</PBadge></td>
@@ -187,7 +192,10 @@ export default function SiparislerClient({
                   className="block rounded-[6px] border border-[var(--p-line)] bg-[var(--p-surface)] p-3"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-[13px] font-medium">{s.no}</p>
+                    <p className="text-[13px] font-medium">
+                      {s.no}
+                      {s.notVar && <span title="Sipariş notu var" className="ml-1.5">🎁</span>}
+                    </p>
                     <PBadge tone={d.tone}>{d.label}</PBadge>
                   </div>
                   <p className="mt-1 truncate text-[12px] text-[var(--p-ink-soft)]">{s.musteri}</p>

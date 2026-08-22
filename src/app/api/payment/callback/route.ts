@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { completeThreeDS } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
 import { decreaseStock } from '@/lib/trendyol/stockUpdate'
-import { orderConfirmationEmail } from '@/lib/emails/templates'
+import { orderConfirmationEmail, adminNewOrderEmail } from '@/lib/emails/templates'
+import { bildirimAdresi } from '@/lib/emails/bildirim'
 import { sendMail } from '@/lib/emails/send'
 import { kullanimArtir } from '@/lib/campaigns/pricing'
 import { olayYaz } from '@/lib/analytics/track'
@@ -232,6 +233,16 @@ export async function POST(request: Request) {
     if (order?.guest_email) {
       const { subject, html } = orderConfirmationEmail(order as any)
       await sendMail({ to: order.guest_email, subject, html, label: 'Order confirmation' })
+    }
+
+    // Mağaza sahibine anında bildirim (Faz 15): sipariş geldiğini panele
+    // bakmadan öğrenmenin başka yolu yoktu.
+    try {
+      const alici = await bildirimAdresi()
+      const bildirim = adminNewOrderEmail(order)
+      await sendMail({ to: alici, ...bildirim, label: 'Admin new order' })
+    } catch (bildirimHata) {
+      console.error('[callback] yönetici bildirimi gönderilemedi:', bildirimHata)
     }
 
     return NextResponse.redirect(
