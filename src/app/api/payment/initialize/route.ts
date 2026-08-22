@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { initializeThreeDS, generateConversationId } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
-import { kuponDogrula, otomatikKampanyalar } from '@/lib/campaigns/pricing'
+import { kuponDogrula, otomatikKampanyalar, enIyiIndirim } from '@/lib/campaigns/pricing'
 import { shippingCostFor } from '@/lib/shipping'
 
 function toAscii(str: string): string {
@@ -52,13 +52,11 @@ export async function POST(request: Request) {
       urunFiyatlari
     )
 
-    let kodIndirimi = 0
-    let uygulananKampanyaId: string | null = null
+    let kodAdayi: { id: string; name: string; amount: number } | null = null
     if (discountCode) {
       const sonuc = await kuponDogrula(serviceClient, String(discountCode), subtotal)
       if (sonuc.gecerli) {
-        kodIndirimi = sonuc.indirim
-        uygulananKampanyaId = sonuc.kampanya.id
+        kodAdayi = { id: sonuc.kampanya.id, name: sonuc.kampanya.name, amount: sonuc.indirim }
       } else {
         // Kod ödeme anında geçersizleştiyse (süre doldu, limit doldu) ödemeyi
         // sessizce indirimsiz sürdürmek yerine müşteriye söyleriz.
@@ -66,10 +64,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const discountTotal = Math.min(
-      Math.round((otomatik.toplam + kodIndirimi) * 100) / 100,
-      subtotal
-    )
+    // TEK KAMPANYA: otomatik ve kupon toplanmaz, müşteri lehine olan uygulanır.
+    const secilen = enIyiIndirim(otomatik.indirimler, kodAdayi)
+    const uygulananKampanyaId = secilen.kampanyaId
+    const discountTotal = Math.min(Math.round(secilen.tutar * 100) / 100, subtotal)
     const indirimliAraToplam = Math.round((subtotal - discountTotal) * 100) / 100
     // Kargo koşulsuz ücretsiz (lib/shipping tek kaynağı) — kampanya bayrağı da
     // aynı sonucu verir, hesap tek yerden okunur.

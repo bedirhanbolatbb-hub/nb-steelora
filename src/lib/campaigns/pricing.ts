@@ -196,3 +196,37 @@ export async function kullanimArtir(supabase: SupabaseClient, kampanyaId: string
     .update({ used_count: (data.used_count ?? 0) + 1 })
     .eq('id', kampanyaId)
 }
+
+
+export type SecilenIndirim = {
+  kampanyaId: string | null
+  ad: string
+  tutar: number
+  kaynak: 'otomatik' | 'kod' | 'yok'
+}
+
+/**
+ * Faz 15 kapanışı — TEK KAMPANYA KURALI.
+ *
+ * Otomatik kampanya ile kupon kodu birbirine EKLENMEZ: müşteri lehine olan
+ * (en yüksek tutarlı) tek indirim uygulanır. Önceden ikisi toplanıyordu;
+ * %30 otomatik + %10 kupon aynı sepette %40 indirim üretiyordu — hem ekranda
+ * hem tahsilatta. Kural burada tek yerde kurulur, ödeme başlatma ucu ve ödeme
+ * ekranı aynı sonucu okur.
+ */
+export function enIyiIndirim(
+  otomatikler: { id: string; name: string; amount: number }[],
+  kod: { id: string; name: string; amount: number } | null
+): SecilenIndirim {
+  const adaylar: SecilenIndirim[] = []
+  for (const o of otomatikler) {
+    if (Number(o.amount) > 0) {
+      adaylar.push({ kampanyaId: o.id, ad: o.name, tutar: Number(o.amount), kaynak: 'otomatik' })
+    }
+  }
+  if (kod && Number(kod.amount) > 0) {
+    adaylar.push({ kampanyaId: kod.id, ad: kod.name, tutar: Number(kod.amount), kaynak: 'kod' })
+  }
+  if (adaylar.length === 0) return { kampanyaId: null, ad: '', tutar: 0, kaynak: 'yok' }
+  return adaylar.reduce((kazanan, aday) => (aday.tutar > kazanan.tutar ? aday : kazanan))
+}

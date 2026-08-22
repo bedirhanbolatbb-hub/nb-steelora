@@ -91,9 +91,24 @@ export default function OdemePage() {
       .catch(() => {})
   }, [subtotal, items.length])
 
-  const autoDiscountTotal = autoDiscounts.reduce((sum, d) => sum + d.amount, 0)
-  const codeDiscountAmount = appliedDiscount?.amount || 0
-  const totalDiscount = Math.min(autoDiscountTotal + codeDiscountAmount, subtotal)
+  // TEK KAMPANYA KURALI (Faz 15 kapanışı): otomatik kampanya ile kupon
+  // TOPLANMAZ — müşteri lehine olan tek indirim uygulanır. Sunucudaki hesapla
+  // (payment/initialize → enIyiIndirim) birebir aynı olmalı, yoksa ekrandaki
+  // tutar ile çekilen tutar ayrışır.
+  const otomatikAday = autoDiscounts.reduce<{ name: string; amount: number } | null>(
+    (kazanan, d) => (!kazanan || d.amount > kazanan.amount ? { name: d.name, amount: d.amount } : kazanan),
+    null
+  )
+  const kodAday = appliedDiscount
+    ? { name: appliedDiscount.description || `İndirim (${appliedDiscount.code})`, amount: appliedDiscount.amount }
+    : null
+  const secilenIndirim =
+    otomatikAday && kodAday
+      ? otomatikAday.amount >= kodAday.amount
+        ? otomatikAday
+        : kodAday
+      : (otomatikAday ?? kodAday)
+  const totalDiscount = Math.min(secilenIndirim?.amount ?? 0, subtotal)
   // Kargo eşiği indirimli ara toplam üzerinden — sunucudaki hesapla birebir
   // aynı olmalı, yoksa ekrandaki toplam ile çekilen tutar ayrışır (Faz 11).
   const discountedSubtotal = subtotal - totalDiscount
@@ -616,21 +631,25 @@ export default function OdemePage() {
               <dt className="text-[12px] font-body text-ink-soft">Ara Toplam</dt>
               <dd className="price text-[13px] text-ink">{formatPrice(subtotal)}</dd>
             </div>
-            {autoDiscounts.map((d) => (
-              <div key={d.id} className="flex items-baseline justify-between gap-4">
-                <dt className="text-[12px] font-body text-green-700 min-w-0 truncate">{d.name}</dt>
-                <dd className="price text-[13px] text-green-700 shrink-0">-{formatPrice(d.amount)}</dd>
-              </div>
-            ))}
-            {appliedDiscount && (
-              <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-[12px] font-body text-green-700 min-w-0 truncate">
-                  İndirim ({appliedDiscount.code})
-                </dt>
-                <dd className="price text-[13px] text-green-700 shrink-0">
-                  -{formatPrice(appliedDiscount.amount)}
-                </dd>
-              </div>
+            {secilenIndirim && (
+              <>
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-[12px] font-body text-green-700 min-w-0 truncate">
+                    {secilenIndirim.name}
+                  </dt>
+                  <dd className="price text-[13px] text-green-700 shrink-0">
+                    -{formatPrice(secilenIndirim.amount)}
+                  </dd>
+                </div>
+                <p className="text-[11px] font-body text-green-700">
+                  {formatPrice(secilenIndirim.amount)} kazandınız
+                  {otomatikAday && kodAday && (
+                    <span className="text-muted">
+                      {' '}· en avantajlı kampanya uygulandı, indirimler toplanmaz
+                    </span>
+                  )}
+                </p>
+              </>
             )}
             <div className="flex items-baseline justify-between gap-4">
               <dt className="text-[12px] font-body text-ink-soft">Kargo</dt>
