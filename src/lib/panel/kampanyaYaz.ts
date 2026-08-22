@@ -40,7 +40,7 @@ export async function hedefVeKademeYaz(
     const { error } = await supabase.from('campaign_tiers').insert(
       kademeler.map((k) => ({
         campaign_id: kampanyaId,
-        min_cart_amount: k.min_cart_amount,
+        min_amount: k.min_cart_amount,
         discount_type: 'percent',
         discount_value: k.discount_value,
       }))

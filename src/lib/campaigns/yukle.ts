@@ -118,7 +118,7 @@ export async function kampanyalariYukle(
       .in('campaign_id', kimlikler),
     supabase
       .from('campaign_tiers')
-      .select('campaign_id, min_cart_amount, discount_type, discount_value')
+      .select('campaign_id, min_amount, min_quantity, discount_type, discount_value')
       .in('campaign_id', kimlikler),
   ])
 
@@ -154,7 +154,7 @@ export async function kampanyalariYukle(
     // Kademelerde yalnız yüzde desteklenir; sabit tutarlı kademe sepet
     // toplamına göre anlam kaymasına yol açıyordu.
     if ((t.discount_type ?? 'percent') === 'percent') {
-      liste.push({ minTutar: Number(t.min_cart_amount) || 0, oran: Number(t.discount_value) || 0 })
+      liste.push({ minTutar: Number(t.min_amount) || 0, oran: Number(t.discount_value) || 0 })
     }
     kademeHaritasi.set(t.campaign_id, liste)
   }

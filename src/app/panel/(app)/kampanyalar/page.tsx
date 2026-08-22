@@ -12,7 +12,7 @@ export default async function PanelKampanyalarPage() {
   const [kampanyaRes, hedefRes, kademeRes, koleksiyonRes, siparisRes] = await Promise.all([
     supabase.from('campaigns').select('*').order('created_at', { ascending: false }),
     supabase.from('campaign_targets').select('campaign_id, target_type, category_value, collection_id, product_id'),
-    supabase.from('campaign_tiers').select('campaign_id, min_cart_amount, discount_value'),
+    supabase.from('campaign_tiers').select('campaign_id, min_amount, discount_value'),
     supabase.from('collections').select('id, slug, name').eq('is_active', true).order('sort_order'),
     // Kampanya performansı: hangi kampanya kaç siparişte kullanıldı, ne kadar
     // indirim üretti, ne kadar ciro getirdi (iptaller hariç).
@@ -35,7 +35,7 @@ export default async function PanelKampanyalarPage() {
   const kademeHaritasi = new Map<string, { minTutar: number; oran: number }[]>()
   for (const t of kademeRes.data ?? []) {
     const liste = kademeHaritasi.get(t.campaign_id) ?? []
-    liste.push({ minTutar: Number(t.min_cart_amount) || 0, oran: Number(t.discount_value) || 0 })
+    liste.push({ minTutar: Number(t.min_amount) || 0, oran: Number(t.discount_value) || 0 })
     kademeHaritasi.set(
       t.campaign_id,
       liste.sort((a, b) => a.minTutar - b.minTutar)
