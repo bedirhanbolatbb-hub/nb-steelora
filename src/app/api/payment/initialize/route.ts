@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { initializeThreeDS, generateConversationId } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
 import { kuponDogrula, otomatikKampanyalar, enIyiIndirim } from '@/lib/campaigns/pricing'
+import { sepetiDogrula } from '@/lib/campaigns/sepetDogrula'
 import { shippingCostFor } from '@/lib/shipping'
 
 function toAscii(str: string): string {
@@ -31,19 +32,45 @@ export async function POST(request: Request) {
     const orderNumber = `NBS-${Date.now()}`
     const conversationId = generateConversationId()
 
-    const subtotal = items.reduce(
-      (sum: number, item: any) => sum + item.price * item.quantity,
-      0
-    )
+    // ── Sepet SUNUCUDA doğrulanır (Faz 17) ────────────────────────────────
+    // Ara toplam istemciden gelen fiyatla hesaplanıyordu; istekte fiyatı
+    // düşürüp ürünü ucuza almak mümkündü. Artık istemciden yalnız "hangi
+    // üründen kaç adet" kabul edilir, fiyat/kategori/koleksiyon DB'den okunur.
+    const serviceClient = createServiceClient()
+    const dogrulanmis = await sepetiDogrula(serviceClient, items)
+
+    if (dogrulanmis.kalemler.length === 0) {
+      return NextResponse.json({ error: 'Sepetinizdeki ürünler bulunamadı' }, { status: 400 })
+    }
+    if (dogrulanmis.gecersizler.length > 0) {
+      console.warn('[initialize] sepette bulunamayan ürün:', dogrulanmis.gecersizler)
+      return NextResponse.json(
+        { error: 'Sepetinizdeki bazı ürünler artık satışta değil. Sepeti yenileyin.' },
+        { status: 400 }
+      )
+    }
+    if (dogrulanmis.fiyatFarklari.length > 0) {
+      // Fiyat değişmiş olabilir (senkron) ya da istek kurcalanmış olabilir;
+      // iki durumda da müşteriye güncel tutarı göstermeden ödeme başlatmayız.
+      console.warn('[initialize] fiyat farkı:', JSON.stringify(dogrulanmis.fiyatFarklari))
+      return NextResponse.json(
+        {
+          error: 'Sepetinizdeki fiyatlar güncellendi. Lütfen sepeti yenileyip tekrar deneyin.',
+          code: 'FIYAT_DEGISTI',
+        },
+        { status: 409 }
+      )
+    }
+
+    const subtotal = dogrulanmis.araToplam
 
     // ── İndirim: ödeme anında SUNUCUDA yeniden doğrulanır (Faz 11) ──────────
     // İstemciden yalnız kodun kendisi gelir; tutar burada hesaplanır, böylece
     // ekranda görünen indirim ile karttan çekilen tutar birbirini tutar.
-    const serviceClient = createServiceClient()
-    const urunFiyatlari: number[] = items.flatMap((i: any) =>
-      Array.from({ length: Number(i.quantity) || 1 }, () => Number(i.price) || 0)
+    const urunFiyatlari: number[] = dogrulanmis.kalemler.flatMap((k) =>
+      Array.from({ length: k.adet }, () => k.fiyat)
     )
-    const urunAdedi = items.reduce((t: number, i: any) => t + (Number(i.quantity) || 0), 0)
+    const urunAdedi = dogrulanmis.kalemler.reduce((t, k) => t + k.adet, 0)
 
     const otomatik = await otomatikKampanyalar(
       serviceClient,
@@ -106,11 +133,13 @@ export async function POST(request: Request) {
       address: String(shippingAddress?.address ?? ''),
       zip_code: String(shippingAddress?.zipCode ?? safeZip),
     }
-    const orderItems = items.map((item: any) => ({
-      productId: String(item.productId ?? ''),
-      name: String(item.name ?? item.title ?? item.trendyol_title ?? 'Ürün'),
-      quantity: Number(item.quantity) || 0,
-      price: Number(item.price) || 0,
+    // Siparişe yazılan fiyatlar da doğrulanmış (DB) fiyatlardır.
+    const orderItems = dogrulanmis.kalemler.map((k) => ({
+      productId: k.productId,
+      name: k.ad ?? 'Ürün',
+      quantity: k.adet,
+      price: k.fiyat,
+      category: k.kategori ?? null,
     }))
 
     const { error: pendingOrderError } = await serviceClient.from('orders').insert({
