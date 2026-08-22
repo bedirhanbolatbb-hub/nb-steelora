@@ -654,6 +654,66 @@ export default function KampanyalarClient({
               <PInput type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} />
             </div>
           </div>
+
+          {/* Koşul anahtarları (Faz 17) */}
+          <div className="flex flex-wrap items-center gap-3 rounded-[4px] border border-[var(--p-line)] p-3 text-[12px]">
+            <label className="flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                checked={form.first_order_only}
+                onChange={(e) => setForm({ ...form, first_order_only: e.target.checked })}
+              />
+              Yalnız ilk alışverişte
+            </label>
+            <label className="flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                checked={form.members_only}
+                onChange={(e) => setForm({ ...form, members_only: e.target.checked })}
+              />
+              Yalnız üyelere
+            </label>
+            <label className="flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                checked={form.combinable}
+                onChange={(e) => setForm({ ...form, combinable: e.target.checked })}
+              />
+              Diğer kampanyalarla birleşebilir
+            </label>
+            <span className="text-[var(--p-muted)]">Birleşenlerin toplamı sepetin %35'ini aşamaz.</span>
+          </div>
+
+          {/* Canlı önizleme — kaydetmeden etkisini gör */}
+          <div className="rounded-[4px] border border-[var(--p-line)] p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[12px] text-[var(--p-muted)]">Canlı önizleme</span>
+              <PButton variant="ghost" onClick={onizle} disabled={onizleniyor}>
+                {onizleniyor ? 'Hesaplanıyor…' : 'Örnek sepette dene'}
+              </PButton>
+            </div>
+            {onizleme && (
+              <div className="mt-2 space-y-1 text-[12px]">
+                <p className="text-[var(--p-muted)]">
+                  {onizleme.ornekSepet.map((k: any) => `${k.adet} × ${k.ad}`).join(' + ') || 'örnek sepet'}
+                </p>
+                <p>
+                  Ara toplam <strong>{formatPrice(onizleme.ozet.araToplam)}</strong> → indirim{' '}
+                  <strong className="text-[var(--p-success)]">{formatPrice(onizleme.ozet.indirimToplami)}</strong> →
+                  toplam <strong>{formatPrice(onizleme.ozet.toplam)}</strong>
+                </p>
+                {onizleme.ozet.indirimToplami === 0 && (
+                  <p className="text-[var(--p-danger)]">
+                    Bu sepette indirim üretmiyor — koşulları kontrol edin.
+                  </p>
+                )}
+                {onizleme.ozet.tavanUygulandi && (
+                  <p className="text-[var(--p-muted)]">%35 indirim tavanı uygulandı.</p>
+                )}
+              </div>
+            )}
+          </div>
+
           {form.type === 'banner' && (
             <div>
               <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Band metni</label>
