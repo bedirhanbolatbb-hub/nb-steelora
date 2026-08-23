@@ -45,6 +45,7 @@ export const PANEL_GROUPS: PanelGroup[] = [
     links: [
       { href: '/panel/senkron', label: 'Senkron' },
       { href: '/panel/stok-senkron', label: 'Stok senkronu' },
+      { href: '/panel/yedekler', label: 'Yedekler' },
       { href: '/panel/ayarlar', label: 'Ayarlar' },
     ],
   },

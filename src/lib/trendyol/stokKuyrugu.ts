@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service'
+import { kritikUyari } from '@/lib/izleme/uyari'
 import { fetchStockAndPriceMap, updateTrendyolStock } from './client'
 import { stokYazimModu, yazimAcik } from './stokYazimBayragi'
 
@@ -234,9 +235,12 @@ async function ertele(
   satirlar: KuyrukSatiri[],
   hata: string
 ): Promise<void> {
+  const kalicilar: string[] = []
+
   for (const satir of satirlar) {
     const deneme = (satir.attempts ?? 0) + 1
     const bitti = deneme >= AZAMI_DENEME
+    if (bitti) kalicilar.push(satir.barcode)
     const beklemeDk = BEKLEME_DK[Math.min(deneme, BEKLEME_DK.length) - 1]
     await supabase
       .from('stock_sync_queue')
@@ -248,6 +252,18 @@ async function ertele(
         processed_at: bitti ? new Date().toISOString() : null,
       })
       .eq('id', satir.id)
+  }
+
+  // Kalıcı başarısızlık = Trendyol'daki stok artık bizimkiyle uyuşmuyor;
+  // aşırı satış riski doğar. Eskiden yalnız panel göstergesine düşüyordu,
+  // yani ancak panele bakan öğreniyordu.
+  if (kalicilar.length > 0) {
+    await kritikUyari({
+      tip: 'stok_yazimi',
+      baslik: 'Trendyol stok yazımı kalıcı olarak başarısız',
+      mesaj: hata,
+      detay: { barkodlar: kalicilar.join(', '), deneme_siniri: AZAMI_DENEME },
+    })
   }
 }
 

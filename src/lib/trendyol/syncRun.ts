@@ -1,5 +1,6 @@
 import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js'
 import { syncTrendyolPage } from './sync'
+import { kritikUyari } from '@/lib/izleme/uyari'
 
 /**
  * Sync koşusu — TEK istekte tamamlanır.
@@ -225,4 +226,13 @@ export async function failRun(supabase: SupabaseClient, runId: string, message: 
       finished_at: new Date().toISOString(),
     })
     .eq('run_id', runId)
+
+  // Sync çökmesi sessiz kalmamalı: katalog bayatlar, stok yanlış görünür.
+  // Eskiden yalnız sync_log satırı 'failed' oluyordu, console'a bile yazmıyordu.
+  await kritikUyari({
+    tip: 'sync_basarisiz',
+    baslik: 'Trendyol senkronu başarısız',
+    mesaj: message,
+    detay: { run_id: runId },
+  })
 }

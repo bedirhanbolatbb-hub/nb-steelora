@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { kritikUyari } from '@/lib/izleme/uyari'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getProviderBySlug } from '@/lib/shipping/providers'
 import {
