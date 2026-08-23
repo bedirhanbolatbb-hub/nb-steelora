@@ -11,6 +11,7 @@ import {
 import { adimKaydet, paraIadesineHazirMi, sonGonderimGunu } from '@/lib/iade/akis'
 import { GERI_GONDERME_GUN, GERI_ODEME_GUN } from '@/lib/legal/sozlesme'
 import { getSiteContent } from '@/lib/supabase/content'
+import { firmaBul } from '@/lib/shipping/firmalar'
 import { kunyeGetir } from '@/lib/legal/veriSorumlusu'
 import { kritikUyari } from '@/lib/izleme/uyari'
 import { musteriMailiGonder } from '@/lib/emails/musteriMaili'
@@ -244,9 +245,26 @@ export async function PATCH(
   // gönderiyor; para "Ürün teslim alındı" işaretlendikten sonra, ayrı bir
   // eylemle iade ediliyor.
   if (row.request_type === 'return') {
-    const icerik = await getSiteContent()
+    // Firma çözüm sırası (Faz 20 düzeltmesi): panelden seçilen > siparişin
+    // GİDİŞ gönderisinde kullanılan firma > site_content'teki isteğe bağlı
+    // varsayılan. BB tek firmayla çalışmıyor — her gönderide Kargonomi o an
+    // en uygun firmayı seçiyor, bu yüzden tek bir varsayılan tutmak yanlıştı.
+    const [icerik, { data: gidis }] = await Promise.all([
+      getSiteContent(),
+      service
+        .from('shipments')
+        .select('carrier_name, carrier_slug')
+        .eq('order_id', row.order_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ])
+
+    const gidisFirmasi = firmaBul(gidis?.carrier_slug ?? gidis?.carrier_name)?.ad ?? ''
     const kargoFirmasi =
-      (body.kargoFirmasi ?? '').trim() || (icerik.iade_kargo_firmasi ?? '').trim()
+      (body.kargoFirmasi ?? '').trim() ||
+      gidisFirmasi ||
+      (icerik.iade_kargo_firmasi ?? '').trim()
     const iadeKodu = (body.iadeKodu ?? '').trim() || (icerik.iade_kargo_kodu ?? '').trim()
 
     if (!kargoFirmasi || !iadeKodu) {
@@ -254,8 +272,8 @@ export async function PATCH(
         {
           success: false,
           error:
-            'İade kargo firması ve iade kodu gerekli. Kargonomi panelinden kod üretip buraya girin ' +
-            '(varsayılanlar Site Metinleri → "İade ve iletişim" alanlarından gelir).',
+            'İade kargo firması ve iade kodu gerekli. Kargonomi panelinden ilgili firmayla ' +
+            'iade oluşturup kodu buraya girin.',
           code: 'IADE_KODU_GEREKLI',
         },
         { status: 400 }

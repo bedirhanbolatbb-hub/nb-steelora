@@ -3,6 +3,7 @@ import { WHATSAPP_URL } from '@/lib/contact'
 import { SHIPPING_LINE_LABEL } from '@/lib/shipping'
 import { CAYMA_SURESI_GUN } from '@/lib/legal/sozlesme'
 import { ORG_EMAIL } from '@/lib/seo'
+import { subeIfadesi } from '@/lib/shipping/firmalar'
 
 /**
  * Müşteriye giden üç işlemsel mailin tek kaynağı.
@@ -658,7 +659,7 @@ export function iadeTalimatiEmail(params: {
           <li>Ürünü, varsa kutusu ve koruyucu ambalajıyla birlikte paketleyin.</li>
           <li>Takının çizilmemesi için yumuşak bir bezle sarın; kutuyu boşluk kalmayacak şekilde doldurun.</li>
           <li>Paketin üzerine <strong>${params.iadeKodu}</strong> kodunu, adınızı ve telefonunuzu yazın.</li>
-          <li>En yakın <strong>${params.kargoFirmasi}</strong> şubesine bırakın ve kodu şubede belirtin.</li>
+          <li>En yakın <strong>${subeIfadesi(params.kargoFirmasi)}</strong> bırakın ve kodu görevliye belirtin.</li>
         </ol>
         <p style="margin:12px 0 0;color:#A88070;font-size:12px;">
           <strong>Ücret ödemeyin.</strong> İade kargo bedeli bize aittir; şubede sizden ücret istenirse

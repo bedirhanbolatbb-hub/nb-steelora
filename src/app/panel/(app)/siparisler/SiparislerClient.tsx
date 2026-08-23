@@ -34,6 +34,8 @@ export type TalepSatiri = {
   email: string | null
   tutar: number
   kargoFirmasi: string | null
+  /** Gidiş gönderisinde kullanılan firma — iade için önerilir. */
+  gidisFirmasi: string | null
   iadeKodu: string | null
   kodGonderimi: string | null
   iz: IadeIzi
@@ -59,12 +61,14 @@ export default function SiparislerClient({
   yarimKalan,
   params,
   iadeVarsayilanlari,
+  kargoFirmalari,
 }: {
   satirlar: SiparisSatiri[]
   talepler: TalepSatiri[]
   yarimKalan: SiparisSatiri[]
   params: { durum: string; q: string; tab: string }
   iadeVarsayilanlari: { firma: string; kod: string }
+  kargoFirmalari: string[]
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -83,7 +87,9 @@ export default function SiparislerClient({
   const [iadeHatalari, setIadeHatalari] = useState<Record<string, string>>({})
 
   const talepAc = (talep: TalepSatiri, action: 'approve' | 'reject' | 'received' | 'refund') => {
-    setKargoFirmasi(talep.kargoFirmasi || iadeVarsayilanlari.firma)
+    // Sıra: daha önce kaydedilmiş > siparişin GİDİŞ firması > isteğe bağlı
+    // varsayılan > boş. Gidiş gönderisi yoksa alan boş gelir, BB elle seçer.
+    setKargoFirmasi(talep.kargoFirmasi || talep.gidisFirmasi || iadeVarsayilanlari.firma)
     setIadeKodu(talep.iadeKodu || iadeVarsayilanlari.kod)
     setTalepIslem({ talep, action })
   }
@@ -404,12 +410,22 @@ export default function SiparislerClient({
         {talepIslem?.action === 'approve' && talepIslem.talep.tip === 'return' && (
           <div className="mt-4 space-y-3">
             <div>
-              <label className="mb-1 block text-[12px] text-[var(--p-ink-soft)]">Kargo firması</label>
-              <PInput
-                value={kargoFirmasi}
-                onChange={(e) => setKargoFirmasi(e.target.value)}
-                placeholder="ör. Yurtiçi Kargo"
-              />
+              <label className="mb-1 block text-[12px] text-[var(--p-ink-soft)]">
+                Kargo firması
+                {talepIslem.talep.gidisFirmasi && !talepIslem.talep.kargoFirmasi && (
+                  <span className="ml-2 text-[var(--p-muted)]">
+                    (gidiş gönderisi: {talepIslem.talep.gidisFirmasi})
+                  </span>
+                )}
+              </label>
+              <PSelect value={kargoFirmasi} onChange={(e) => setKargoFirmasi(e.target.value)}>
+                <option value="">Seçin…</option>
+                {kargoFirmalari.map((f) => (
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
+                ))}
+              </PSelect>
             </div>
             <div>
               <label className="mb-1 block text-[12px] text-[var(--p-ink-soft)]">İade kodu</label>
@@ -420,9 +436,10 @@ export default function SiparislerClient({
               />
             </div>
             <p className="text-[11px] leading-relaxed text-[var(--p-muted)]">
-              Kargonomi API&apos;sinde iade gönderisi ucu yok; kodu Kargonomi panelinden
-              &quot;iade oluştur&quot; ile üretip buraya yapıştırın. Varsayılanlar Site
-              Metinleri → &quot;İade ve iletişim&quot; alanlarından gelir.
+              Firma, siparişin gidiş gönderisinde kullanılan taşıyıcıdan önerilir; gerekirse
+              değiştirin. Kargonomi API&apos;sinde iade gönderisi ucu yok — kodu Kargonomi
+              panelinden ilgili firmayla &quot;iade oluştur&quot; ile üretip buraya
+              yapıştırın. Her firmanın kod biçimi farklıdır.
             </p>
           </div>
         )}

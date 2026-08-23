@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getSiteContent } from '@/lib/supabase/content'
 import { iziOku } from '@/lib/iade/akis'
+import { firmaBul, KARGO_FIRMALARI } from '@/lib/shipping/firmalar'
 import SiparislerClient, { type SiparisSatiri, type TalepSatiri } from './SiparislerClient'
 
 export const metadata: Metadata = { title: 'Siparişler' }
@@ -55,6 +56,23 @@ export default async function PanelSiparislerPage({
     .order('created_at', { ascending: false })
     .limit(100)
 
+  // Gidiş gönderisinde hangi firma kullanıldı? İade kodu diyaloğu bunu
+  // önceden seçili getirir — BB tek firmayla çalışmıyor.
+  const talepSiparisIds = [...new Set((requests || []).map((r: any) => r.order_id).filter(Boolean))]
+  const gidisFirmalari = new Map<string, string>()
+  if (talepSiparisIds.length > 0) {
+    const { data: gonderiler } = await supabase
+      .from('shipments')
+      .select('order_id, carrier_name, carrier_slug, created_at')
+      .in('order_id', talepSiparisIds)
+      .order('created_at', { ascending: false })
+    for (const g of gonderiler ?? []) {
+      if (gidisFirmalari.has(g.order_id)) continue // en yenisi kazanır
+      const firma = firmaBul(g.carrier_slug ?? g.carrier_name)
+      if (firma) gidisFirmalari.set(g.order_id, firma.ad)
+    }
+  }
+
   const talepler: TalepSatiri[] = (requests || []).map((r: any) => ({
     id: r.id,
     tip: r.request_type,
@@ -66,6 +84,7 @@ export default async function PanelSiparislerPage({
     email: r.orders?.guest_email ?? null,
     tutar: Number(r.orders?.total || 0),
     kargoFirmasi: r.cargo_company ?? null,
+    gidisFirmasi: gidisFirmalari.get(r.order_id) ?? null,
     iadeKodu: r.cargo_tracking_code ?? null,
     kodGonderimi: r.cargo_info_sent_at ?? null,
     // Adım adım iz: zaman damgaları ve müşteriye giden mail kimlikleri
@@ -91,6 +110,7 @@ export default async function PanelSiparislerPage({
         firma: (icerik.iade_kargo_firmasi ?? '').trim(),
         kod: (icerik.iade_kargo_kodu ?? '').trim(),
       }}
+      kargoFirmalari={KARGO_FIRMALARI.map((f) => f.ad)}
     />
   )
 }

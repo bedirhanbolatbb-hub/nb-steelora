@@ -10,6 +10,18 @@ import { useToast } from '../_components/overlays'
  * (etiket yerine anahtar adı basılır) — panel veri kaybettirmez.
  */
 const ETIKETLER: Record<string, { etiket: string; not?: string; genis?: boolean }> = {
+  iade_kargo_firmasi: {
+    etiket: 'İade kargo firması (isteğe bağlı)',
+    not: 'Boş bırakın — her iadede firma, siparişin gidiş gönderisinden önerilir ve panelden seçilir. Yalnız her iadede aynı firmayı kullanıyorsanız doldurun.',
+  },
+  iade_kargo_kodu: {
+    etiket: 'İade kargo kodu (isteğe bağlı)',
+    not: 'Boş bırakın — kod firmaya göre değişir, her iade için Kargonomi panelinden üretilip onay ekranına girilir.',
+  },
+  yanit_suresi_taahhudu: {
+    etiket: 'Yanıt süresi taahhüdü',
+    not: 'ör. "1 iş günü". Boşken kargo/iade sayfasında bu cümle hiç basılmaz.',
+  },
   marquee_text: { etiket: 'Kayan şerit (marquee)', not: 'Vitrinde birkaç dakikada güncellenir.', genis: true },
   promo_bar_text: { etiket: 'Promo çubuğu metni', not: 'Vitrinde birkaç dakikada güncellenir.' },
   promo_bar_emoji: { etiket: 'Promo çubuğu emojisi' },
