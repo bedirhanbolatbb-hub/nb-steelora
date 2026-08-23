@@ -7,6 +7,7 @@ import { useCart } from '@/hooks/useCart'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
+import { SOZLESME_SURUMU, SOZLESME_YOLLARI } from '@/lib/legal/sozlesme'
 import Input from '@/components/ui/Input'
 import CheckoutSteps from '@/components/store/CheckoutSteps'
 import { izle } from '@/lib/analytics/izle'
@@ -70,6 +71,13 @@ export default function OdemePage() {
     cvc: '',
   })
   const [giftNote, setGiftNote] = useState('')
+  /**
+   * Mesafeli satış onayı (Faz 19). Mesafeli Sözleşmeler Yönetmeliği m.5/m.6:
+   * tüketici sipariş vermeden ÖNCE ön bilgilendirmeyi okuduğunu ve sözleşmeyi
+   * kabul ettiğini açıkça beyan etmeli. İşaretlenmeden ödeme başlatılamaz;
+   * sunucu da ayrıca doğrular, istemciye güvenilmez.
+   */
+  const [sozlesmeOnay, setSozlesmeOnay] = useState(false)
 
   const subtotal = totalPrice()
 
@@ -188,7 +196,8 @@ export default function OdemePage() {
     rawCardNumber.length === 16 &&
     form.expireMonth.length >= 1 &&
     form.expireYear.length === 4 &&
-    form.cvc.length >= 3
+    form.cvc.length >= 3 &&
+    sozlesmeOnay
 
   /** Düğme pasifken hangi alanların eksik olduğu tek satırda yazılır. */
   const eksikAlanlar = [
@@ -204,6 +213,7 @@ export default function OdemePage() {
     !(form.expireMonth.length >= 1) && 'son kullanma ayı',
     form.expireYear.length !== 4 && 'son kullanma yılı',
     form.cvc.length < 3 && 'CVV',
+    !sozlesmeOnay && 'sözleşme onayı',
   ].filter(Boolean) as string[]
 
   // Ödemeye başlama ölçümü — form gönderilmeden önce bir kez (Faz 12).
@@ -255,6 +265,10 @@ export default function OdemePage() {
           // Faz 11: kod sunucuya gönderilir ve orada YENİDEN doğrulanır;
           // tutar istemciden taşınmaz.
           discountCode: appliedDiscount?.code || null,
+          // Mesafeli satış onayı — sunucu bunu ZORUNLU tutar ve siparişe
+          // sürüm + zaman damgasıyla yazar (Faz 19).
+          sozlesmeOnay: true,
+          sozlesmeSurumu: SOZLESME_SURUMU,
         }),
       })
 
@@ -309,7 +323,9 @@ export default function OdemePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 lg:px-8 py-12">
+    /* pb: mobilde ödeme bloğu ekranın altına SABİTLENİYOR; sayfanın son
+       satırlarının bloğun arkasında kalmaması için alt boşluk bırakılır. */
+    <div className="max-w-6xl mx-auto px-4 lg:px-8 py-12 pb-[200px] sm:pb-12">
       <p className="eyebrow">Sipariş</p>
       <h1 className="font-heading text-[32px] lg:text-[38px] font-semibold text-ink mt-2 mb-8">
         Ödeme
@@ -350,44 +366,56 @@ export default function OdemePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               placeholder="Ad *"
+              autoComplete="given-name"
               value={form.firstName}
               onChange={(e) => updateField('firstName', e.target.value)}
             />
             <Input
               placeholder="Soyad *"
+              autoComplete="family-name"
               value={form.lastName}
               onChange={(e) => updateField('lastName', e.target.value)}
             />
             <Input
               placeholder="E-posta *"
               type="email"
+              inputMode="email"
+              autoComplete="email"
               value={form.email}
               onChange={(e) => updateField('email', e.target.value)}
             />
             <Input
               placeholder="Telefon *"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
               value={form.phone}
               onChange={(e) => updateField('phone', e.target.value)}
             />
             <Input
               placeholder="İl *"
+              autoComplete="address-level1"
               value={form.city}
               onChange={(e) => updateField('city', e.target.value)}
             />
             <Input
               placeholder="İlçe *"
+              autoComplete="address-level2"
               value={form.district}
               onChange={(e) => updateField('district', e.target.value)}
             />
             <div className="sm:col-span-2">
               <Input
                 placeholder="Açık Adres *"
+                autoComplete="street-address"
                 value={form.address}
                 onChange={(e) => updateField('address', e.target.value)}
               />
             </div>
             <Input
               placeholder="Posta Kodu"
+              inputMode="numeric"
+              autoComplete="postal-code"
               value={form.zipCode}
               onChange={(e) => updateField('zipCode', e.target.value)}
             />
@@ -479,7 +507,9 @@ export default function OdemePage() {
               onChange={(e) => setGiftNote(e.target.value)}
               rows={3}
               maxLength={300}
-              className="w-full border border-line bg-white px-4 py-3 text-sm font-body text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors resize-none"
+              /* text-base: iOS, 16px'ten küçük alanlara dokunulduğunda sayfayı
+                 yakınlaştırıyor; masaüstünde tasarım ölçüsü korunuyor. */
+              className="w-full border border-line bg-white px-4 py-3 text-base sm:text-sm font-body text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors resize-none"
             />
             <p className="text-[10px] font-body text-muted mt-1 text-right">{giftNote.length}/300</p>
           </section>
@@ -533,7 +563,48 @@ export default function OdemePage() {
             </div>
           )}
 
-          <div>
+          {/* Ödeme bloğu mobilde YAPIŞKAN (Faz 19).
+              Ölçüm: 3632px'lik sayfada düğme yalnız dar bir bantta görünüyordu;
+              klavye açıkken ulaşmak için 269px daha kaydırmak gerekiyordu ve
+              "eksik alanlar" uyarısı 1787px aşağıda, ekran dışında kalıyordu.
+              Blok artık ekranın altına yapışıyor: uyarı da düğme de her an
+              görünür. Çerez bandı açıkken onun üstüne oturur (--nb-consent-h),
+              ürün sayfasındaki StickyBuyBar ile aynı desen. */}
+          <div className="fixed inset-x-0 bottom-[var(--nb-consent-h,0px)] z-40 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur-sm sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
+            {/* Mesafeli satış onayı — yasal zorunluluk (Faz 19).
+                Etiketin tamamı tıklanabilir: 20px kutu tek başına dokunma
+                hedefi olarak küçük kalırdı. */}
+            <label className="mb-3 flex cursor-pointer items-start gap-2.5">
+              <input
+                type="checkbox"
+                checked={sozlesmeOnay}
+                onChange={(e) => setSozlesmeOnay(e.target.checked)}
+                className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-ink"
+              />
+              <span className="font-body text-[12px] leading-relaxed text-ink-soft">
+                <a
+                  href={SOZLESME_YOLLARI.onBilgilendirme}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-deep underline underline-offset-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Ön bilgilendirme formunu
+                </a>{' '}
+                ve{' '}
+                <a
+                  href={SOZLESME_YOLLARI.mesafeliSatis}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-deep underline underline-offset-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  mesafeli satış sözleşmesini
+                </a>{' '}
+                okudum, onaylıyorum.
+              </span>
+            </label>
+
             {/* Düğme pasifken sessiz kalmıyor: neyin eksik olduğu tek satırda
                 yazılıyor (Faz 15 — BB yılı 2 haneli yazınca hiçbir uyarı yoktu). */}
             {!isFormValid && eksikAlanlar.length > 0 && (
@@ -548,7 +619,9 @@ export default function OdemePage() {
             >
               {loading ? 'İşleniyor...' : `${formatPrice(total)} Öde`}
             </button>
+          </div>
 
+          <div>
             {/* Güven satırı — tek satır, yeni iddia yok; logolar footer'daki set */}
             <div className="mt-3 flex items-center justify-center gap-2 sm:gap-3">
               <span className="text-[10px] sm:text-[11px] font-body text-muted whitespace-nowrap">

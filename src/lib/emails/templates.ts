@@ -1,6 +1,8 @@
 import { formatPrice } from '@/lib/utils'
 import { WHATSAPP_URL } from '@/lib/contact'
 import { SHIPPING_LINE_LABEL } from '@/lib/shipping'
+import { CAYMA_SURESI_GUN } from '@/lib/legal/sozlesme'
+import { ORG_EMAIL } from '@/lib/seo'
 
 /**
  * Müşteriye giden üç işlemsel mailin tek kaynağı.
@@ -45,6 +47,8 @@ export type OrderLike = {
   total?: number | null
   shipping_cost?: number | null
   shipping_address?: { full_name?: string; address?: string; city?: string } | null
+  /** Sözleşme onayı damgası burada taşınır (Faz 19). */
+  metadata?: { sozlesme_onayi?: { surum?: string; onaylandiginda?: string } | null } | null
 }
 
 export function orderConfirmationEmail(order: OrderLike) {
@@ -90,9 +94,63 @@ export function orderConfirmationEmail(order: OrderLike) {
       </p>
     </div>`
         : ''
-    }`
+    }
+    ${onBilgilendirmeOzeti(order)}`
     ),
   }
+}
+
+/**
+ * Ön bilgilendirme özeti — sipariş onay e-postasına eklenir (Faz 19).
+ *
+ * Mesafeli Sözleşmeler Yönetmeliği, ön bilgilendirmenin tüketiciye KALICI VERİ
+ * SAKLAYICISI ile verilmesini istiyor: sitede bir sayfanın durması yetmez,
+ * müşterinin elinde kalan bir kopya gerekir. Sipariş onay e-postası bu işlevi
+ * görüyor. Onay damgası (sürüm + zaman) da burada yazılı ki müşteri neyi
+ * onayladığını sonradan da görebilsin.
+ */
+function onBilgilendirmeOzeti(order: OrderLike): string {
+  const onay = order.metadata?.sozlesme_onayi ?? null
+  const onayRow = onay?.onaylandiginda
+    ? `<p style="margin:10px 0 0;font-size:12px;color:#A88070;">
+         Ön bilgilendirme formu ve mesafeli satış sözleşmesi
+         ${new Date(onay.onaylandiginda).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul', dateStyle: 'medium', timeStyle: 'short' })}
+         tarihinde onaylandı (sürüm ${onay.surum ?? '-'}).
+       </p>`
+    : ''
+
+  return `<div style="margin-top: 30px; padding: 20px; background: #FFF8F6; border: 1px solid #E8D8D0;">
+      <h3 style="font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A5048; margin: 0 0 12px;">Ön Bilgilendirme Özeti</h3>
+      <p style="margin: 0 0 10px; font-size: 13px; line-height: 1.8; color: #2A1E1E;">
+        <strong>Cayma hakkı:</strong> Ürünü teslim aldığınız tarihten itibaren
+        ${CAYMA_SURESI_GUN} gün içinde gerekçe göstermeden cayabilirsiniz. Cayma
+        bildirimini Hesabım → Siparişlerim ekranından ya da ${ORG_EMAIL} adresine
+        e-posta ile iletebilirsiniz. İade kargo bedeli tarafımıza aittir.
+      </p>
+      <p style="margin: 0 0 10px; font-size: 13px; line-height: 1.8; color: #2A1E1E;">
+        <strong>Geri ödeme:</strong> Cayma bildiriminiz ulaştıktan sonra en geç 14 gün
+        içinde, ödemeyi yaptığınız yöntemle ve masrafsız olarak iade edilir.
+      </p>
+      <p style="margin: 0 0 10px; font-size: 13px; line-height: 1.8; color: #2A1E1E;">
+        <strong>İstisna:</strong> Kişiye özel hazırlanan ürünler ile hijyen gereği
+        ambalajı açıldıktan sonra iadesi uygun olmayan ürünlerde (küpe, piercing)
+        cayma hakkı, ambalaj açılmamış olmak kaydıyla geçerlidir.
+      </p>
+      <p style="margin: 0 0 10px; font-size: 13px; line-height: 1.8; color: #2A1E1E;">
+        <strong>Teslimat:</strong> Yasal azami süre 30 gündür. Kargo ücretsizdir.
+        <strong>Fiyatlar</strong> KDV dahildir.
+      </p>
+      <p style="margin: 0; font-size: 13px; line-height: 1.8; color: #2A1E1E;">
+        <strong>Uyuşmazlık:</strong> Şikâyetlerinizi Tüketici Hakem Heyetine veya
+        Tüketici Mahkemesine iletebilirsiniz.
+      </p>
+      <p style="margin: 12px 0 0;">
+        <a href="${SITE}/on-bilgilendirme-formu" style="color:#7A5048;font-size:12px;">Ön bilgilendirme formunun tamamı</a>
+        &nbsp;·&nbsp;
+        <a href="${SITE}/mesafeli-satis-sozlesmesi" style="color:#7A5048;font-size:12px;">Mesafeli satış sözleşmesi</a>
+      </p>
+      ${onayRow}
+    </div>`
 }
 
 export function shippingNotificationEmail(order: OrderLike, trackingNumber: string) {
@@ -397,6 +455,116 @@ export function secondOrderCouponEmail(params: {
         <a href="${SITE}/urunler" style="display:inline-block;background:#2A1E1E;color:#FFF8F6;padding:16px 40px;text-decoration:none;font-size:12px;letter-spacing:.15em;text-transform:uppercase;">
           Koleksiyonu keşfet
         </a>
+      </p>`
+    ),
+  }
+}
+
+/**
+ * Yöneticiye: kritik hata uyarısı (Faz 19).
+ * Aynı uyarı için saatte bir gönderilir; bastırılan tekrar sayısı yazılır.
+ */
+export function kritikUyariEmail(params: {
+  baslik: string
+  mesaj: string
+  tip: string
+  bastirilan: number
+  ilkGorulme: string | null
+  detay: Record<string, unknown> | null
+}) {
+  const tr = (d: string) =>
+    new Date(d).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul', dateStyle: 'medium', timeStyle: 'short' })
+
+  const detaySatirlari = params.detay
+    ? Object.entries(params.detay)
+        .map(
+          ([k, v]) =>
+            `<tr><td style="padding:4px 12px 4px 0;color:#A88070;font-size:12px;">${k}</td>
+             <td style="padding:4px 0;color:#2A1E1E;font-size:12px;font-family:monospace;">${String(v).slice(0, 300)}</td></tr>`
+        )
+        .join('')
+    : ''
+
+  return {
+    subject: `🚨 ${params.baslik} — NB Steelora`,
+    html: shell(
+      params.baslik,
+      `<div style="background:#FEF2F2;border:1px solid #FECACA;padding:16px;margin-bottom:16px;">
+        <p style="margin:0;color:#991B1B;font-size:13px;line-height:1.7;font-family:monospace;">${params.mesaj.slice(0, 800)}</p>
+      </div>
+      ${
+        params.bastirilan > 0
+          ? `<p style="color:#7A5048;font-size:13px;margin:0 0 12px;">
+               Bu hata son bir saatte <strong>${params.bastirilan} kez daha</strong> tekrarlandı
+               ${params.ilkGorulme ? `(ilk görülme ${tr(params.ilkGorulme)})` : ''}.
+             </p>`
+          : ''
+      }
+      ${detaySatirlari ? `<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">${detaySatirlari}</table>` : ''}
+      <p style="color:#A88070;font-size:12px;line-height:1.7;">
+        Uyarı tipi: <code>${params.tip}</code>. Aynı hata için saatte en fazla bir uyarı
+        gönderilir. Sağlık durumunu <a href="${SITE}/api/health" style="color:#7A5048;">/api/health</a>
+        adresinden de görebilirsiniz.
+      </p>
+      <p style="text-align:center;margin:24px 0 0;">
+        <a href="${PANEL}" style="display:inline-block;background:#2A1E1E;color:#FFF8F6;padding:14px 32px;text-decoration:none;font-size:12px;letter-spacing:.15em;text-transform:uppercase;">Paneli aç</a>
+      </p>`
+    ),
+  }
+}
+
+/** Yöneticiye: günlük sağlık raporu (Faz 19). */
+export function saglikRaporuEmail(params: {
+  gun: string
+  ziyaretci: number
+  oturum: number
+  sayfaGoruntuleme: number
+  sepeteEkleme: number
+  odemeBaslatma: number
+  siparis: number
+  ciro: number
+  syncDurum: string
+  syncYasiSaat: number | null
+  stokKuyrugu: { bekleyen: number; basarisiz: number }
+  uyarilar: string[]
+}) {
+  const satir = (ad: string, deger: string | number) =>
+    `<tr>
+      <td style="padding:8px 0;border-bottom:1px solid #F0E4DE;color:#7A5048;font-size:13px;">${ad}</td>
+      <td style="padding:8px 0;border-bottom:1px solid #F0E4DE;color:#2A1E1E;font-size:13px;text-align:right;font-weight:600;">${deger}</td>
+    </tr>`
+
+  const sorunVar = params.uyarilar.length > 0
+
+  return {
+    subject: `${sorunVar ? '⚠️' : '✅'} Günlük rapor · ${params.gun} — NB Steelora`,
+    html: shell(
+      `Günlük Rapor · ${params.gun}`,
+      `${
+        sorunVar
+          ? `<div style="background:#FEF2F2;border:1px solid #FECACA;padding:16px;margin-bottom:20px;">
+               <p style="margin:0 0 8px;color:#991B1B;font-size:13px;font-weight:600;">Dikkat gerektiren ${params.uyarilar.length} konu:</p>
+               <ul style="margin:0;padding-left:18px;color:#991B1B;font-size:13px;line-height:1.8;">
+                 ${params.uyarilar.map((u) => `<li>${u}</li>`).join('')}
+               </ul>
+             </div>`
+          : `<div style="background:#F0FDF4;border:1px solid #BBF7D0;padding:14px;margin-bottom:20px;">
+               <p style="margin:0;color:#166534;font-size:13px;">Her şey yolunda — dikkat gerektiren bir durum yok.</p>
+             </div>`
+      }
+      <table style="width:100%;border-collapse:collapse;">
+        ${satir('Ziyaretçi', params.ziyaretci)}
+        ${satir('Oturum', params.oturum)}
+        ${satir('Sayfa görüntüleme', params.sayfaGoruntuleme)}
+        ${satir('Sepete ekleme', params.sepeteEkleme)}
+        ${satir('Ödeme başlatma', params.odemeBaslatma)}
+        ${satir('Sipariş', params.siparis)}
+        ${satir('Ciro', formatPrice(params.ciro))}
+        ${satir('Senkron', `${params.syncDurum}${params.syncYasiSaat != null ? ` · ${params.syncYasiSaat} sa önce` : ''}`)}
+        ${satir('Stok kuyruğu', `${params.stokKuyrugu.bekleyen} bekleyen · ${params.stokKuyrugu.basarisiz} başarısız`)}
+      </table>
+      <p style="text-align:center;margin:28px 0 0;">
+        <a href="${PANEL}/analiz" style="display:inline-block;background:#2A1E1E;color:#FFF8F6;padding:14px 32px;text-decoration:none;font-size:12px;letter-spacing:.15em;text-transform:uppercase;">Analizi aç</a>
       </p>`
     ),
   }

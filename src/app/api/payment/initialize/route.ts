@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { initializeThreeDS, generateConversationId } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
+import { sozlesmeOnayiDamgasi } from '@/lib/legal/sozlesme'
+import { kritikUyari } from '@/lib/izleme/uyari'
 import { sepetOzetiHesapla, musteriDurumu } from '@/lib/campaigns/sepetOzeti'
 import { sepetiDogrula } from '@/lib/campaigns/sepetDogrula'
 import { shippingCostFor } from '@/lib/shipping'
@@ -18,7 +20,21 @@ function toAscii(str: string): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { items, buyer, shippingAddress, paymentCard, userId, discountCode, giftNote } = body
+    const { items, buyer, shippingAddress, paymentCard, userId, discountCode, giftNote, sozlesmeOnay } =
+      body
+
+    // ── Mesafeli satış onayı ZORUNLU (Faz 19) ─────────────────────────────
+    // Mesafeli Sözleşmeler Yönetmeliği m.5/m.6: tüketicinin ön bilgilendirmeyi
+    // okuduğunu ve sözleşmeyi kabul ettiğini sipariş ÖNCESİNDE beyan etmesi
+    // gerekir; ispat yükü satıcıdadır. İstemcideki onay kutusu tek başına
+    // yeterli değil — kutu atlanarak da istek atılabilir, bu yüzden burada da
+    // doğrulanıyor ve onay siparişe damgalanıyor.
+    if (sozlesmeOnay !== true) {
+      return NextResponse.json(
+        { error: 'Ön bilgilendirme formunu ve mesafeli satış sözleşmesini onaylamanız gerekiyor.' },
+        { status: 400 }
+      )
+    }
 
     const safeName = (buyer?.firstName || buyer?.full_name || '').trim().split(/\s+/)
     const firstName = toAscii(String(buyer?.firstName || safeName[0] || 'Musteri')).substring(0, 30)
@@ -151,7 +167,13 @@ export async function POST(request: Request) {
       // Kişisel kupon kullanıldıysa hangi kupon olduğu metadata'da taşınır;
       // ödeme onaylanınca callback bunu harcar (kupon yalnız gerçekten
       // uygulandığında tüketilir).
-      ...(kisiselKuponId ? { metadata: { kisisel_kupon_id: kisiselKuponId } } : {}),
+      // metadata KOŞULSUZ yazılır: eskiden yalnız kişisel kupon varken
+      // ekleniyordu, o yüzden kuponsuz siparişlerde sözleşme onayı da
+      // kaybolurdu.
+      metadata: {
+        ...(kisiselKuponId ? { kisisel_kupon_id: kisiselKuponId } : {}),
+        sozlesme_onayi: sozlesmeOnayiDamgasi(),
+      },
       total,
       iyzico_payment_id: null,
     })
@@ -232,6 +254,18 @@ export async function POST(request: Request) {
         
   } catch (error: any) {
     console.error('Payment init error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    // Ödeme başlatma çökmesi sessiz kalmamalı: müşteri ödeyemiyor demektir.
+    await kritikUyari({
+      tip: 'odeme_baslatma',
+      baslik: 'Ödeme başlatılamıyor',
+      mesaj: error?.message ?? 'bilinmeyen hata',
+      detay: { uc: '/api/payment/initialize' },
+    })
+    // Ham hata metni istemciye SIZDIRILMAZ: Postgres mesajları tablo ve sütun
+    // adlarını açık ediyordu. Ayrıntı log'a ve uyarı mailine gidiyor.
+    return NextResponse.json(
+      { error: 'Ödeme başlatılamadı. Lütfen birkaç dakika sonra tekrar deneyin.' },
+      { status: 500 }
+    )
   }
 }
