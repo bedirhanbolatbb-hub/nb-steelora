@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import { izle } from '@/lib/analytics/izle'
 
 type Status = 'idle' | 'loading' | 'done' | 'error'
 
@@ -37,6 +38,8 @@ export default function Newsletter() {
 
       if (res.ok && data.success) {
         setStatus('done')
+        // Zaten kayıtlı adres yeni abonelik değildir — sayılmaz.
+        if (!data.alreadySubscribed) izle('newsletter_signup')
         // Kupon mesajı sunucudan gelir; kampanya durumuna göre dolu ya da
         // boş olur (Faz 19) — istemci karar vermez, yalnız basar.
         const temel = data.alreadySubscribed

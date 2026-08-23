@@ -55,6 +55,8 @@ export default function UrunlerClient({
   sayfa,
   sayfaBoyu,
   kategoriler,
+  aktifSayi,
+  pasifSayi,
   params,
 }: {
   satirlar: UrunSatiri[]
@@ -62,6 +64,8 @@ export default function UrunlerClient({
   sayfa: number
   sayfaBoyu: number
   kategoriler: string[]
+  aktifSayi: number
+  pasifSayi: number
   params: Params
 }) {
   const router = useRouter()
@@ -186,7 +190,7 @@ export default function UrunlerClient({
   const toplamSayfa = Math.max(1, Math.ceil(toplam / sayfaBoyu))
 
   const filtreler = (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
       <PSelect value={params.kategori} onChange={(e) => guncelle({ kategori: e.target.value })} aria-label="Kategori">
         <option value="">Kategori: tümü</option>
         {kategoriler.map((k) => (
@@ -198,11 +202,6 @@ export default function UrunlerClient({
         <option value="women">Kadın</option>
         <option value="men">Erkek</option>
         <option value="bos">Boş</option>
-      </PSelect>
-      <PSelect value={params.durum} onChange={(e) => guncelle({ durum: e.target.value })} aria-label="Durum">
-        <option value="">Durum: tümü</option>
-        <option value="aktif">Aktif</option>
-        <option value="pasif">Pasif</option>
       </PSelect>
       <PSelect value={params.stok} onChange={(e) => guncelle({ stok: e.target.value })} aria-label="Stok">
         <option value="">Stok: tümü</option>
@@ -218,8 +217,50 @@ export default function UrunlerClient({
     </div>
   )
 
+  /**
+   * Aktif / Pasif / Tümü sekmeleri (Faz 23-C).
+   *
+   * Sayaçlar aynı anda uygulanan diğer filtrelere göre hesaplanır — kategori
+   * seçiliyken sekmede o kategorinin aktif/pasif sayısı görünür.
+   */
+  const sekmeler: { deger: string; ad: string; sayi: number }[] = [
+    { deger: 'aktif', ad: 'Aktif', sayi: aktifSayi },
+    { deger: 'pasif', ad: 'Pasif', sayi: pasifSayi },
+    { deger: 'tumu', ad: 'Tümü', sayi: aktifSayi + pasifSayi },
+  ]
+
   return (
     <div className="mx-auto max-w-6xl space-y-3">
+      <div className="flex flex-wrap items-center gap-1 border-b border-[var(--p-line)]">
+        {sekmeler.map((s) => (
+          <button
+            key={s.deger}
+            type="button"
+            onClick={() => guncelle({ durum: s.deger === 'aktif' ? '' : s.deger })}
+            aria-current={params.durum === s.deger ? 'page' : undefined}
+            className={cn(
+              '-mb-px border-b-2 px-3 py-2 text-[13px] transition-colors',
+              params.durum === s.deger
+                ? 'border-[var(--p-ink)] font-medium text-[var(--p-ink)]'
+                : 'border-transparent text-[var(--p-muted)] hover:text-[var(--p-ink)]'
+            )}
+          >
+            {s.ad}
+            <span className="ml-1.5 text-[11px] tabular-nums opacity-60">{s.sayi}</span>
+          </button>
+        ))}
+      </div>
+
+      {params.durum === 'pasif' && (
+        <p className="rounded-md bg-[var(--p-surface)] border border-[var(--p-line)] px-3 py-2 text-[12px] leading-relaxed text-[var(--p-muted)]">
+          Pasif ürünler <strong className="font-medium text-[var(--p-ink)]">vitrinde görünmez</strong>;
+          arama, kategori ve besleme dışındadırlar. Bir ürün, son senkronda
+          Trendyol&apos;dan gelmediğinde (kaldırıldı ya da satışa kapandı) otomatik
+          olarak buraya düşer. Adresi 404 verir — birebir karşılığı varsa yönlendirme
+          tanımlanmıştır.
+        </p>
+      )}
+
       {/* Arama + sıralama + mobil filtre girişi */}
       <div className="flex flex-wrap items-center gap-2">
         <PInput

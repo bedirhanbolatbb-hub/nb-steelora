@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Input from '@/components/ui/Input'
 import DogrulamaTekrarGonder from '@/components/store/DogrulamaTekrarGonder'
+import { izle } from '@/lib/analytics/izle'
 
 export default function KayitPage() {
   const [form, setForm] = useState({
@@ -52,6 +53,9 @@ export default function KayitPage() {
       return
     }
 
+    // Ölçüm, doğrulama e-postası GÖNDERİLDİĞİ anda yazılır; hesabın
+    // onaylanması ayrı bir adım (bkz. /auth/confirm).
+    izle('signup')
     setSuccess(true)
     setLoading(false)
   }

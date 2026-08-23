@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Input from '@/components/ui/Input'
+import { izle } from '@/lib/analytics/izle'
 
 export default function GirisPage() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -29,6 +30,7 @@ export default function GirisPage() {
       return
     }
 
+    izle('login')
     router.push('/hesabim')
     router.refresh()
   }

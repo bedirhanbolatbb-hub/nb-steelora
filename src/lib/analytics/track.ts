@@ -22,7 +22,31 @@ export type AnalyticsEvent =
   | 'begin_checkout'
   | 'purchase'
   | 'signup'
+  | 'login'
   | 'newsletter_signup'
+
+/**
+ * İSTEMCİDEN gönderilebilen olaylar — TEK KAYNAK.
+ *
+ * Bu liste eskiden üç yerde ayrı ayrı yazılıydı (izle.ts, client.ts ve track
+ * ucundaki IZINLI). Faz 23'te 'signup' olayının hiç yazılmadığı görüldü:
+ * tip evreninde vardı ama ne ince kapıda ne de sunucu kapısında yer alıyordu,
+ * yani eklense bile ilk kapıdan geri dönerdi. Sapma tekrarlamasın diye tip de
+ * kapı da artık buradan türüyor.
+ */
+export const ISTEMCI_OLAYLARI = [
+  'add_to_cart',
+  'remove_from_cart',
+  'favorite_add',
+  'favorite_remove',
+  'search',
+  'begin_checkout',
+  'newsletter_signup',
+  'signup',
+  'login',
+] as const satisfies readonly AnalyticsEvent[]
+
+export type IstemciOlayi = (typeof ISTEMCI_OLAYLARI)[number]
 
 export type OlayGirdi = {
   event: AnalyticsEvent

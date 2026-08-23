@@ -153,37 +153,92 @@ async function olaylariCek(d: Donem): Promise<HamOlay[]> {
 }
 
 export type Metrikler = {
+  /**
+   * GÜNLÜK TEKİL ZİYARETÇİ. Çerezsiz Katman A'da kimlik günlük tuzla
+   * hesaplanır: aynı kişinin sabahki ve akşamki ziyareti AYNI kimliğe düşer.
+   * Bu yüzden metriğin adı "oturum" değil — bir günde kaç FARKLI kişi
+   * geldiğini sayar, kaç kez geldiğini değil.
+   */
   ziyaretci: number
-  oturum: number
   sayfaGoruntuleme: number
-  ortOturumSaniye: number
+  /**
+   * Aynı gün içinde ilk ve son hareket arası (saniye), 30 dakikayla
+   * KIRPILMIŞ. Kimlik günlük olduğu için kırpma olmadan "145 dakika" gibi
+   * anlamsız değerler çıkıyordu; sabah bakıp akşam dönen kişinin arası
+   * ziyaret süresi değildir.
+   */
+  ortAktiflikSaniye: number
   urunGoruntuleme: number
   sepeteEkleme: number
   favori: number
   uyelik: number
   odemeBaslama: number
+  /** İptal/iade edilmemiş sipariş adedi. */
   siparis: number
+  /** İptal/iade edilmiş sipariş adedi — ayrı gösterilir. */
+  iptalIade: number
+  /** Tahsil edilen toplam (iptal/iade dahil). */
+  brutCiro: number
+  /** İptal ve iadeler düşülmüş ciro — panelde asıl gösterilen. */
   ciro: number
   donusumOrani: number
   sepeteEklemeOrani: number
   sepettenOdemeOrani: number
 }
 
-function metrikHesapla(olaylar: HamOlay[]): Metrikler {
-  const oturumlar = new Set<string>()
+/** Ziyaret süresi kırpma sınırı — bkz. ortAktiflikSaniye. */
+const AKTIFLIK_TAVANI_SN = 30 * 60
+
+/**
+ * @param iptalEdilenSiparisler İptal/iade edilmiş sipariş kimlikleri. Ciro ve
+ *   sipariş sayısı bunları saymaz — panel iptal edilmiş tek siparişi ciro diye
+ *   gösteriyordu (₺664,86), oysa parası iade edilmişti.
+ */
+/**
+ * Purchase olaylarına bağlı siparişlerden İPTAL ya da İADE edilmiş olanların
+ * kimlikleri. Ölçüm olayı satın alma anında yazılır; siparişin sonradan iptal
+ * edilmesi olayı geri almaz, bu yüzden durum sipariş tablosundan okunur.
+ */
+async function iptalEdilenSiparisKimlikleri(olaylar: HamOlay[]): Promise<Set<string>> {
+  const kimlikler = [...new Set(olaylar.filter((o) => o.event === 'purchase' && o.order_id).map((o) => o.order_id as string))]
+  if (kimlikler.length === 0) return new Set()
+  try {
+    const supabase = createServiceClient()
+    const { data } = await supabase
+      .from('orders')
+      .select('id, status, payment_refunded_at')
+      .in('id', kimlikler)
+    return new Set(
+      (data ?? [])
+        .filter((o: any) => o.status === 'cancelled' || o.status === 'refunded' || o.payment_refunded_at)
+        .map((o: any) => o.id as string)
+    )
+  } catch {
+    // Durum okunamazsa ciro OLDUĞU GİBİ kalır; sessizce sıfırlamak daha kötü.
+    return new Set()
+  }
+}
+
+function metrikHesapla(olaylar: HamOlay[], iptalEdilenSiparisler: Set<string> = new Set()): Metrikler {
   const ziyaretciler = new Set<string>()
-  const oturumZamanlari = new Map<string, { ilk: number; son: number }>()
-  let sayfa = 0, urun = 0, sepet = 0, favori = 0, uyelik = 0, odeme = 0, siparis = 0, ciro = 0
+  const aktiflik = new Map<string, { ilk: number; son: number }>()
+  let sayfa = 0, urun = 0, sepet = 0, favori = 0, uyelik = 0, odeme = 0
+  let siparis = 0, iptalIade = 0, ciro = 0, brutCiro = 0
 
   for (const o of olaylar) {
-    oturumlar.add(o.session_id)
-    // Ziyaretçi: Katman B kimliği varsa o, yoksa oturum (Katman A'da oturum = ziyaretçi)
-    ziyaretciler.add(o.visitor_id || o.session_id)
+    // TEK KİMLİK UZAYI. Eskiden `visitor_id || session_id` iki ayrı uzayı bir
+    // kümede topluyordu: aynı kişinin rıza öncesi (visitor_id yok) ve rıza
+    // sonrası (visitor_id var) olayları İKİ ziyaretçi sayılıyor, bu yüzden
+    // "tekil ziyaretçi > oturum" gibi imkânsız bir sonuç çıkıyordu
+    // (canlı veride 355 > 350; 9 oturumda her iki tür olay birden vardı).
+    // Artık herkes session_id ile sayılır — Katman A'da kimlik zaten günlük
+    // tekil kişidir; visitor_id yalnız üye kırılımı için kullanılır.
+    ziyaretciler.add(o.session_id)
 
     const t = new Date(o.occurred_at).getTime()
-    const mevcut = oturumZamanlari.get(o.session_id)
-    if (!mevcut) oturumZamanlari.set(o.session_id, { ilk: t, son: t })
-    else oturumZamanlari.set(o.session_id, { ilk: Math.min(mevcut.ilk, t), son: Math.max(mevcut.son, t) })
+    const mevcut = aktiflik.get(o.session_id)
+    if (!mevcut) aktiflik.set(o.session_id, { ilk: t, son: t })
+    else aktiflik.set(o.session_id, { ilk: Math.min(mevcut.ilk, t), son: Math.max(mevcut.son, t) })
 
     switch (o.event) {
       case 'page_view': sayfa++; break
@@ -192,27 +247,41 @@ function metrikHesapla(olaylar: HamOlay[]): Metrikler {
       case 'favorite_add': favori++; break
       case 'signup': uyelik++; break
       case 'begin_checkout': odeme++; break
-      case 'purchase': siparis++; ciro += Number(o.value) || 0; break
+      case 'purchase': {
+        const tutar = Number(o.value) || 0
+        brutCiro += tutar
+        if (o.order_id && iptalEdilenSiparisler.has(o.order_id)) {
+          iptalIade++
+        } else {
+          siparis++
+          ciro += tutar
+        }
+        break
+      }
     }
   }
 
-  const sureler = [...oturumZamanlari.values()].map((s) => (s.son - s.ilk) / 1000).filter((s) => s > 0)
+  const sureler = [...aktiflik.values()]
+    .map((s) => Math.min((s.son - s.ilk) / 1000, AKTIFLIK_TAVANI_SN))
+    .filter((s) => s > 0)
   const ortSure = sureler.length ? sureler.reduce((a, b) => a + b, 0) / sureler.length : 0
 
-  const oturumSayisi = oturumlar.size
+  const ziyaretciSayisi = ziyaretciler.size
   return {
-    ziyaretci: ziyaretciler.size,
-    oturum: oturumSayisi,
+    ziyaretci: ziyaretciSayisi,
     sayfaGoruntuleme: sayfa,
-    ortOturumSaniye: Math.round(ortSure),
+    ortAktiflikSaniye: Math.round(ortSure),
     urunGoruntuleme: urun,
     sepeteEkleme: sepet,
     favori,
     uyelik,
     odemeBaslama: odeme,
     siparis,
+    iptalIade,
+    brutCiro: Math.round(brutCiro * 100) / 100,
     ciro: Math.round(ciro * 100) / 100,
-    donusumOrani: oturumSayisi ? Math.round((siparis / oturumSayisi) * 10000) / 100 : 0,
+    // Dönüşüm de iptal edilmiş siparişi saymaz.
+    donusumOrani: ziyaretciSayisi ? Math.round((siparis / ziyaretciSayisi) * 10000) / 100 : 0,
     sepeteEklemeOrani: urun ? Math.round((sepet / urun) * 10000) / 100 : 0,
     sepettenOdemeOrani: sepet ? Math.round((odeme / sepet) * 10000) / 100 : 0,
   }
@@ -252,8 +321,11 @@ export async function raporUret(d: Donem): Promise<Rapor> {
     olaylariCek(oncekiDonem(d)),
   ])
 
-  const metrikler = metrikHesapla(olaylar)
-  const onceki = metrikHesapla(oncekiOlaylar)
+  // İptal/iade edilmiş siparişler ciroyu ve dönüşümü şişirmesin (Faz 23).
+  // Panel iptal edilmiş tek siparişi ₺664,86 ciro diye gösteriyordu.
+  const iptalEdilenler = await iptalEdilenSiparisKimlikleri([...olaylar, ...oncekiOlaylar])
+  const metrikler = metrikHesapla(olaylar, iptalEdilenler)
+  const onceki = metrikHesapla(oncekiOlaylar, iptalEdilenler)
 
   // Ürün kırılımı
   const urunHarita = new Map<string, UrunSatiri>()

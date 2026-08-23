@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { olayYaz, istektenKimlik, botMu, cihazTipi, type AnalyticsEvent } from '@/lib/analytics/track'
+import { olayYaz, istektenKimlik, botMu, cihazTipi, ISTEMCI_OLAYLARI, type AnalyticsEvent } from '@/lib/analytics/track'
 import { oturumKimligi, istekIp } from '@/lib/analytics/session'
 
 export const dynamic = 'force-dynamic'
@@ -11,16 +11,10 @@ export const dynamic = 'force-dynamic'
  * böylece istemci kendi kimliğini uyduramaz.
  */
 
-const IZINLI: AnalyticsEvent[] = [
-  'add_to_cart',
-  'remove_from_cart',
-  'favorite_add',
-  'favorite_remove',
-  'search',
-  'begin_checkout',
-  'newsletter_signup',
-  'product_view',
-]
+// İstemci olayları tek kaynaktan gelir (bkz. track.ts ISTEMCI_OLAYLARI).
+// 'product_view' ayrıca burada: sunucu da yazabiliyor ama ürün sayfasındaki
+// istemci ölçümü de kabul edilir.
+const IZINLI: readonly AnalyticsEvent[] = [...ISTEMCI_OLAYLARI, 'product_view']
 
 export async function POST(request: Request) {
   const ua = request.headers.get('user-agent')

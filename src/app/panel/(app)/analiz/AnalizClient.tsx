@@ -180,8 +180,7 @@ export default function AnalizClient({
   const csvIndir = () => {
     const satirlar = [
       ['Metrik', 'Değer', 'Önceki dönem'],
-      ['Tekil ziyaretçi', rapor.metrikler.ziyaretci, rapor.onceki.ziyaretci],
-      ['Oturum', rapor.metrikler.oturum, rapor.onceki.oturum],
+      ['Günlük tekil ziyaretçi', rapor.metrikler.ziyaretci, rapor.onceki.ziyaretci],
       ['Sayfa görüntüleme', rapor.metrikler.sayfaGoruntuleme, rapor.onceki.sayfaGoruntuleme],
       ['Ürün görüntüleme', rapor.metrikler.urunGoruntuleme, rapor.onceki.urunGoruntuleme],
       ['Sepete ekleme', rapor.metrikler.sepeteEkleme, rapor.onceki.sepeteEkleme],
@@ -272,18 +271,29 @@ export default function AnalizClient({
         </div>
       )}
 
+      {/* Faz 23: sayıların ne demek olduğu kartların üstünde tek satır.
+          Çerezsiz ölçümde "oturum" diye bir şey yok; ziyaretçi GÜNLÜK tekildir. */}
+      <p className="text-[12px] leading-relaxed text-[var(--p-muted)]">
+        Ziyaretçi sayımı çerezsizdir:{' '}
+        <strong className="font-medium text-[var(--p-ink)]">aynı ziyaretçi aynı gün</strong> kaç kez
+        gelirse gelsin bir kez sayılır, ertesi gün yeniden sayılır. Bu yüzden haftalık toplam,
+        günlük sayıların toplamı değildir. Ciro ve dönüşümden iptal/iade edilen siparişler
+        düşülür.
+      </p>
+
       {/* Kartlar */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kart baslik="Tekil ziyaretçi" deger={sayi(m.ziyaretci)} simdi={m.ziyaretci} onceki={o.ziyaretci} oncekiVeriVar={rapor.oncekiVeriVar} />
-        <Kart baslik="Oturum" deger={sayi(m.oturum)} simdi={m.oturum} onceki={o.oturum} oncekiVeriVar={rapor.oncekiVeriVar} />
+        <Kart baslik="Günlük tekil ziyaretçi" deger={sayi(m.ziyaretci)} simdi={m.ziyaretci} onceki={o.ziyaretci} oncekiVeriVar={rapor.oncekiVeriVar} not="aynı gün tekrar gelen tek sayılır" />
         <Kart baslik="Sayfa görüntüleme" deger={sayi(m.sayfaGoruntuleme)} simdi={m.sayfaGoruntuleme} onceki={o.sayfaGoruntuleme} oncekiVeriVar={rapor.oncekiVeriVar} />
-        <Kart baslik="Ort. oturum süresi" deger={sure(m.ortOturumSaniye)} simdi={m.ortOturumSaniye} onceki={o.ortOturumSaniye} oncekiVeriVar={rapor.oncekiVeriVar} />
+        <Kart baslik="Ort. aktiflik" deger={sure(m.ortAktiflikSaniye)} simdi={m.ortAktiflikSaniye} onceki={o.ortAktiflikSaniye} oncekiVeriVar={rapor.oncekiVeriVar} not="ilk–son hareket arası, 30 dk ile sınırlı" />
         <Kart baslik="Sepete ekleme" deger={sayi(m.sepeteEkleme)} simdi={m.sepeteEkleme} onceki={o.sepeteEkleme} oncekiVeriVar={rapor.oncekiVeriVar} />
         <Kart baslik="Favorileme" deger={sayi(m.favori)} simdi={m.favori} onceki={o.favori} oncekiVeriVar={rapor.oncekiVeriVar} />
         <Kart baslik="Üyelik" deger={sayi(m.uyelik)} simdi={m.uyelik} onceki={o.uyelik} oncekiVeriVar={rapor.oncekiVeriVar} />
         <Kart baslik="Sipariş" deger={sayi(m.siparis)} simdi={m.siparis} onceki={o.siparis} oncekiVeriVar={rapor.oncekiVeriVar} />
-        <Kart baslik="Ciro" deger={formatPrice(m.ciro)} simdi={m.ciro} onceki={o.ciro} oncekiVeriVar={rapor.oncekiVeriVar} />
-        <Kart baslik="Dönüşüm oranı" deger={yuzde(m.donusumOrani)} simdi={m.donusumOrani} onceki={o.donusumOrani} oncekiVeriVar={rapor.oncekiVeriVar} not="sipariş / oturum" />
+        <Kart baslik="Net ciro" deger={formatPrice(m.ciro)} simdi={m.ciro} onceki={o.ciro} oncekiVeriVar={rapor.oncekiVeriVar} not="iptal ve iadeler düşülmüş" />
+        <Kart baslik="Brüt ciro" deger={formatPrice(m.brutCiro)} simdi={m.brutCiro} onceki={o.brutCiro} oncekiVeriVar={rapor.oncekiVeriVar} not="iptal/iade dahil tahsilat" />
+        <Kart baslik="İptal / iade" deger={sayi(m.iptalIade)} simdi={m.iptalIade} onceki={o.iptalIade} oncekiVeriVar={rapor.oncekiVeriVar} not="ciroya ve dönüşüme sayılmaz" />
+        <Kart baslik="Dönüşüm oranı" deger={yuzde(m.donusumOrani)} simdi={m.donusumOrani} onceki={o.donusumOrani} oncekiVeriVar={rapor.oncekiVeriVar} not="sipariş / günlük tekil ziyaretçi" />
         <Kart baslik="Sepete ekleme oranı" deger={yuzde(m.sepeteEklemeOrani)} simdi={m.sepeteEklemeOrani} onceki={o.sepeteEklemeOrani} oncekiVeriVar={rapor.oncekiVeriVar} not="sepet / ürün görünt." />
         <Kart baslik="Sepetten ödemeye" deger={yuzde(m.sepettenOdemeOrani)} simdi={m.sepettenOdemeOrani} onceki={o.sepettenOdemeOrani} oncekiVeriVar={rapor.oncekiVeriVar} not="ödeme / sepet" />
       </div>

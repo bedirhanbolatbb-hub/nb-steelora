@@ -6,14 +6,8 @@
  * gerçekten olduğunda indirilir. Ölçüm noktaları aynen korunur.
  */
 
-type Olay =
-  | 'add_to_cart'
-  | 'remove_from_cart'
-  | 'favorite_add'
-  | 'favorite_remove'
-  | 'search'
-  | 'begin_checkout'
-  | 'newsletter_signup'
+// Tek kaynak: lib/analytics/track.ts → ISTEMCI_OLAYLARI
+import type { IstemciOlayi as Olay } from './track'
 
 type Yuk = {
   productId?: string | null

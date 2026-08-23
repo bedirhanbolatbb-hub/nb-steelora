@@ -15,30 +15,49 @@ export default async function PanelUrunlerPage({
   const sp = await searchParams
   const supabase = createServiceClient()
 
-  let query = supabase
-    .from('products')
-    .select(
-      'id, slug, override_title, trendyol_title, trendyol_barcode, trendyol_category, override_price, trendyol_price, trendyol_stock, is_active, badge, is_featured, gender, override_images, trendyol_images, updated_at',
-      { count: 'exact' }
-    )
-
   const q = (sp.q || '').trim()
-  if (q.length >= 2) {
-    const like = `%${q.replace(/[%_]/g, '')}%`
-    query = query.or(
-      `override_title.ilike.${like},trendyol_title.ilike.${like},trendyol_barcode.ilike.${like}`
-    )
+
+  /**
+   * Durum DIŞINDAKİ tüm filtreler (Faz 23-C).
+   *
+   * İki yerde kullanılır: listenin kendisi ve sekme sayaçları. Sayaç aynı
+   * filtre kümesiyle hesaplanmazsa "Kolye" seçiliyken sekmede 432 yazar ama
+   * listede 130 satır çıkar — sayaç yalan söyler.
+   */
+  const filtrele = <T,>(qb: T): T => {
+    let x = qb as any
+    if (q.length >= 2) {
+      const like = `%${q.replace(/[%_]/g, '')}%`
+      x = x.or(
+        `override_title.ilike.${like},trendyol_title.ilike.${like},trendyol_barcode.ilike.${like}`
+      )
+    }
+    if (sp.kategori) x = x.eq('trendyol_category', sp.kategori)
+    if (sp.gender === 'women' || sp.gender === 'men') x = x.eq('gender', sp.gender)
+    else if (sp.gender === 'bos') x = x.is('gender', null)
+    if (sp.stok === '1') x = x.eq('trendyol_stock', 1)
+    else if (sp.stok === 'tukenen') x = x.eq('trendyol_stock', 0)
+    if (sp.isaret === 'rozetli') x = x.not('badge', 'is', null)
+    else if (sp.isaret === 'one-cikan') x = x.eq('is_featured', true)
+    else if (sp.isaret === 'override') x = x.not('override_title', 'is', null)
+    return x as T
   }
-  if (sp.kategori) query = query.eq('trendyol_category', sp.kategori)
-  if (sp.gender === 'women' || sp.gender === 'men') query = query.eq('gender', sp.gender)
-  else if (sp.gender === 'bos') query = query.is('gender', null)
-  if (sp.durum === 'aktif') query = query.eq('is_active', true)
-  else if (sp.durum === 'pasif') query = query.eq('is_active', false)
-  if (sp.stok === '1') query = query.eq('trendyol_stock', 1)
-  else if (sp.stok === 'tukenen') query = query.eq('trendyol_stock', 0)
-  if (sp.isaret === 'rozetli') query = query.not('badge', 'is', null)
-  else if (sp.isaret === 'one-cikan') query = query.eq('is_featured', true)
-  else if (sp.isaret === 'override') query = query.not('override_title', 'is', null)
+
+  // Varsayılan sekme AKTİF: panelde günlük iş aktif katalogda geçer, 88 pasif
+  // satır aramayı ve toplu işlemleri kirletiyordu. "Tümü" artık açık bir
+  // seçim (durum=tumu).
+  const durum = sp.durum === 'pasif' || sp.durum === 'tumu' ? sp.durum : 'aktif'
+
+  let query = filtrele(
+    supabase
+      .from('products')
+      .select(
+        'id, slug, override_title, trendyol_title, trendyol_barcode, trendyol_category, override_price, trendyol_price, trendyol_stock, is_active, badge, is_featured, gender, override_images, trendyol_images, updated_at',
+        { count: 'exact' }
+      )
+  )
+  if (durum === 'aktif') query = query.eq('is_active', true)
+  else if (durum === 'pasif') query = query.eq('is_active', false)
 
   // Sıralama: ad için override_title (boşlar sona) + trendyol_title ikincil;
   // fiyat sync fiyatına göredir (override_price nadir, kolon coalesce basar).
@@ -60,7 +79,17 @@ export default async function PanelUrunlerPage({
 
   const sayfa = Math.max(1, parseInt(sp.sayfa || '1'))
   const from = (sayfa - 1) * SAYFA_BOYU
-  const { data, count } = await query.range(from, from + SAYFA_BOYU - 1)
+  const sayac = (aktif: boolean) =>
+    filtrele(supabase.from('products').select('id', { count: 'exact', head: true })).eq(
+      'is_active',
+      aktif
+    )
+
+  const [{ data, count }, { count: aktifSayi }, { count: pasifSayi }] = await Promise.all([
+    query.range(from, from + SAYFA_BOYU - 1),
+    sayac(true),
+    sayac(false),
+  ])
 
   const satirlar: UrunSatiri[] = (data || []).map((p: any) => ({
     id: p.id,
@@ -97,11 +126,13 @@ export default async function PanelUrunlerPage({
       sayfa={sayfa}
       sayfaBoyu={SAYFA_BOYU}
       kategoriler={kategoriler as string[]}
+      aktifSayi={aktifSayi ?? 0}
+      pasifSayi={pasifSayi ?? 0}
       params={{
         q,
         kategori: sp.kategori || '',
         gender: sp.gender || '',
-        durum: sp.durum || '',
+        durum,
         stok: sp.stok || '',
         isaret: sp.isaret || '',
         sira: sp.sira || '',
