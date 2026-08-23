@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { adminIstegiMi, cronIstegiMi } from '@/lib/admin/requireAdmin'
 import { gzipSync } from 'zlib'
 import { createServiceClient } from '@/lib/supabase/service'
 
@@ -28,17 +29,6 @@ const BUCKET = 'backups'
 const SAKLANAN_HAFTA = 8
 const SAYFA = 1000
 
-function isCronRequest(request: Request): boolean {
-  const secret = process.env.CRON_SECRET
-  return Boolean(secret) && request.headers.get('authorization') === `Bearer ${secret}`
-}
-
-function isAdminRequest(request: Request): boolean {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const adminToken = cookieHeader.match(/admin_token=([^;]+)/)?.[1]
-  const secret = process.env.ADMIN_SECRET_TOKEN
-  return Boolean(secret) && adminToken === secret
-}
 
 /** PostgREST OpenAPI kökünden tablo adları (RPC'ler ve view'lar hariç). */
 async function tablolariKesfet(): Promise<string[]> {
@@ -152,7 +142,7 @@ async function yedekAl() {
 }
 
 export async function GET(request: Request) {
-  if (!isCronRequest(request) && !isAdminRequest(request)) {
+  if (!cronIstegiMi(request) && !(await adminIstegiMi(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {

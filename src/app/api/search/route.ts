@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { filtreIcinTemizle } from '@/lib/guvenlik/girdi'
 import { createClient } from '@/lib/supabase/server'
 import { groupProducts } from '@/lib/catalog/variants'
 
@@ -23,8 +24,12 @@ export async function GET(request: Request) {
     .select(
       'id, slug, display_title, display_price, display_images, trendyol_category, trendyol_stock, gender, created_at, variant_label'
     )
+    // Faz 27: `q` doğrudan PostgREST filtre İFADESİNE gömülüyordu. Virgül
+    // koşulları ayırır, parantez gruplar, `%` ve `_` joker karakteridir —
+    // yani arama kutusuna yazılan bir metin filtrenin YAPISINI
+    // değiştirebiliyordu. Artık bu karakterler ayıklanıyor.
     .or(
-      `display_title.ilike.%${q}%,trendyol_title.ilike.%${q}%,trendyol_category.ilike.%${q}%`
+      `display_title.ilike.%${filtreIcinTemizle(q)}%,trendyol_title.ilike.%${filtreIcinTemizle(q)}%,trendyol_category.ilike.%${filtreIcinTemizle(q)}%`
     )
     .limit(RESULT_LIMIT * 8)
 

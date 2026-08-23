@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server'
+import { metinAlani } from '@/lib/guvenlik/girdi'
+import { createClient as createServerClient } from '@/lib/supabase/server'
+import { cokFazlaIstek, hizSiniri, istekKimligi } from '@/lib/guvenlik/hizSiniri'
+import { redirectImzala } from '@/lib/iyzico/redirectImza'
 import { initializeThreeDS, generateConversationId } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
 import { sozlesmeOnayiDamgasi } from '@/lib/legal/sozlesme'
@@ -18,6 +22,10 @@ function toAscii(str: string): string {
 }
 
 export async function POST(request: Request) {
+  // Faz 27: kalıcı hız sınırı (bkz. lib/guvenlik/hizSiniri.ts).
+  const _sinir = await hizSiniri(`odeme:${istekKimligi(request)}`, 10, 3600)
+  if (!_sinir.gecer) return cokFazlaIstek(_sinir.bekleSaniye)
+
   try {
     const body = await request.json()
     const { items, buyer, shippingAddress, paymentCard, userId, discountCode, giftNote, sozlesmeOnay } =
@@ -86,14 +94,25 @@ export async function POST(request: Request) {
     // ── İndirim: sepet/ödeme ekranıyla AYNI motordan (Faz 17) ─────────────
     // Kampanya seçimi, kapsam, tavan ve toplam tek yerde hesaplanır; ekranda
     // görünen tutar ile karttan çekilen tutar yapısal olarak ayrışamaz.
+    // ── Faz 27 · kimlik SUNUCUDAN çözülür ───────────────────────────────
+    // `userId` ve `buyer.email` istek gövdesinden geliyordu ve hiç
+    // doğrulanmıyordu. İki sonucu vardı: (1) başka bir kullanıcının UUID'sini
+    // bilen biri siparişi o hesaba iliştirebilir, sipariş kurbanın "Hesabım"
+    // listesinde görünürdü; (2) `musteriDurumu` üyeliği yalnız
+    // `Boolean(userId)` ile ölçtüğü için gövdeye rastgele bir kimlik yazan
+    // misafir, "yalnız üyelere" ve "ilk alışveriş" kampanyalarını alabiliyordu.
+    const { data: oturum } = await (await createServerClient()).auth.getUser()
+    const gercekUserId = oturum?.user?.id ?? null
+    const gercekEposta = oturum?.user?.email ?? (typeof buyer?.email === 'string' ? buyer.email : null)
+
     const musteri = await musteriDurumu(serviceClient, {
-      userId: userId || null,
-      eposta: buyer?.email || null,
+      userId: gercekUserId,
+      eposta: gercekEposta,
     })
     const { ozet, kodHatasi, kisiselKuponId } = await sepetOzetiHesapla(serviceClient, {
       items,
       kod: discountCode ? String(discountCode) : null,
-      musteriEpostasi: buyer?.email || null,
+      musteriEpostasi: gercekEposta,
       musteri,
     })
     if (discountCode && kodHatasi) {
@@ -132,14 +151,17 @@ export async function POST(request: Request) {
       : productItems
 
     const fullName = [buyer?.firstName, buyer?.lastName].filter(Boolean).join(' ').trim() || safeContactName
+    // Faz 27: adres alanları SINIRSIZDI — megabaytlık bir "adres" doğrudan
+    // siparişe yazılabiliyordu. Sınırlar kargo etiketinin taşıyabileceği
+    // uzunluklara göre seçildi.
     const shipping_address = {
-      full_name: fullName,
-      phone,
-      city: String(shippingAddress?.city ?? ''),
-      district: String(shippingAddress?.district ?? ''),
-      neighborhood: String(shippingAddress?.neighborhood ?? ''),
-      address: String(shippingAddress?.address ?? ''),
-      zip_code: String(shippingAddress?.zipCode ?? safeZip),
+      full_name: metinAlani(fullName, 100),
+      phone: metinAlani(phone, 20),
+      city: metinAlani(shippingAddress?.city, 50),
+      district: metinAlani(shippingAddress?.district, 50),
+      neighborhood: metinAlani(shippingAddress?.neighborhood, 80),
+      address: metinAlani(shippingAddress?.address, 500),
+      zip_code: metinAlani(shippingAddress?.zipCode ?? safeZip, 10),
     }
     // Siparişe yazılan fiyatlar da doğrulanmış (DB) fiyatlardır.
     const orderItems = dogrulanmis.kalemler.map((k) => ({
@@ -153,8 +175,8 @@ export async function POST(request: Request) {
     const { error: pendingOrderError } = await serviceClient.from('orders').insert({
       order_number: orderNumber,
       status: 'pending',
-      user_id: userId || null,
-      guest_email: buyer?.email || null,
+      user_id: gercekUserId,
+      guest_email: gercekEposta,
       shipping_address,
       items: orderItems,
       subtotal,
@@ -163,7 +185,8 @@ export async function POST(request: Request) {
       // kalıyordu); hediye notu da artık kayboluyordu, birlikte kaydedilir.
       discount_amount: discountTotal,
       applied_campaign_id: uygulananKampanyaId,
-      gift_note: giftNote || null,
+      // Arayüzde 300 karakter sınırı vardı ama sunucuda yoktu.
+      gift_note: metinAlani(giftNote, 300) || null,
       // Kişisel kupon kullanıldıysa hangi kupon olduğu metadata'da taşınır;
       // ödeme onaylanınca callback bunu harcar (kupon yalnız gerçekten
       // uygulandığında tüketilir).
@@ -206,11 +229,11 @@ export async function POST(request: Request) {
       callbackUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.nbsteelora.com').replace('://nbsteelora.com', '://www.nbsteelora.com')}/api/payment/callback`,
 
       buyer: {
-        id: (userId || buyer?.email || 'user_001').replace(/[@.]/g, '_'),
+        id: (gercekUserId || gercekEposta || 'user_001').replace(/[@.]/g, '_'),
         name: firstName,
         surname: lastName,
         gsmNumber: phone,
-        email: buyer?.email || 'musteri@nbsteelora.com',
+        email: gercekEposta || 'musteri@nbsteelora.com',
         identityNumber: '11111111110',
         registrationAddress: safeAddress,
         ip: request.headers.get('x-forwarded-for') || '85.34.78.112',
@@ -248,6 +271,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       htmlContent: result.threeDSHtmlContent,
+      // Faz 27: ara sayfa imzasız içerik basmıyor. İmza SUNUCUDA üretilir;
+      // istemci onu olduğu gibi geri gönderir.
+      imza: redirectImzala(result.threeDSHtmlContent ?? ''),
       orderNumber,
       conversationId,
     })

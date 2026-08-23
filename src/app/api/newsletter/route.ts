@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cokFazlaIstek, hizSiniri, istekKimligi } from '@/lib/guvenlik/hizSiniri'
 import { ilkSiparisDuyurusu } from '@/lib/campaigns/ilkSiparisKuponu'
 import { createServiceClient } from '@/lib/supabase/service'
 
@@ -7,6 +8,10 @@ import { createServiceClient } from '@/lib/supabase/service'
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 export async function POST(request: Request) {
+  // Faz 27: kalıcı hız sınırı (bkz. lib/guvenlik/hizSiniri.ts).
+  const _sinir = await hizSiniri(`bulten:${istekKimligi(request)}`, 5, 3600)
+  if (!_sinir.gecer) return cokFazlaIstek(_sinir.bekleSaniye)
+
   let email = ''
   let source = 'homepage'
   let consent = false

@@ -1,4 +1,5 @@
 import { sendMail } from './send'
+import { epostaMaskele } from '@/lib/uyeler/liste'
 import { bildirimAdresi } from './bildirim'
 
 /**
@@ -56,7 +57,7 @@ export async function musteriMailiGonder(params: {
   if (engel) {
     console.error(
       `[musteri-maili] ENGELLENDİ (${engel.sebep}) · sipariş=${params.orderNumber ?? '—'} · ` +
-        `alıcı=${params.eposta ?? '—'} · şablon=${params.label}`
+        `alıcı=${epostaMaskele(params.eposta ?? '')} · şablon=${params.label}`
     )
     return engel
   }
@@ -72,7 +73,9 @@ export async function musteriMailiGonder(params: {
     return { gonderildi: false, sebep: 'hata', detay: sonuc.error }
   }
   console.log(
-    `[musteri-maili] gönderildi · sipariş=${params.orderNumber} · alıcı=${params.eposta} · id=${sonuc.id}`
+    // Faz 27: alıcı adresi açık metin loglanıyordu. Sipariş numarası zaten
+    // izlemeye yetiyor; adres maskeleniyor.
+    `[musteri-maili] gönderildi · sipariş=${params.orderNumber} · alıcı=${epostaMaskele(params.eposta ?? '')} · id=${sonuc.id}`
   )
   return { gonderildi: true, id: sonuc.id }
 }

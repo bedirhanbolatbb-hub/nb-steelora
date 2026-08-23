@@ -1,6 +1,19 @@
 import type { NextConfig } from "next";
+import { SABIT_GUVENLIK_BASLIKLARI } from "./src/lib/security/basliklar";
 
 const nextConfig: NextConfig = {
+  // Faz 27: `x-powered-by: Next.js` çalışan çatıyı duyuruyordu. Saldırıyı tek
+  // başına mümkün kılmaz ama hedefe uygun açık aramayı kolaylaştırır.
+  poweredByHeader: false,
+
+  /**
+   * Güvenlik başlıkları TÜM yollara (API dahil) uygulanır. CSP burada DEĞİL:
+   * her istek için ayrı nonce gerektiği için proxy.ts'te üretiliyor.
+   */
+  async headers() {
+    return [{ source: '/:path*', headers: SABIT_GUVENLIK_BASLIKLARI }]
+  },
+
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'cdn.dsmcdn.com' },

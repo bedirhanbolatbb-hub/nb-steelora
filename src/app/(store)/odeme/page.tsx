@@ -269,6 +269,13 @@ export default function OdemePage() {
         input.name = 'htmlContent'
         input.value = data.htmlContent
         form.appendChild(input)
+        // Sunucunun ürettiği imza — ara sayfa bunu doğrulamadan hiçbir şey
+        // basmaz (Faz 27).
+        const imzaInput = document.createElement('input')
+        imzaInput.type = 'hidden'
+        imzaInput.name = 'imza'
+        imzaInput.value = data.imza ?? ''
+        form.appendChild(imzaInput)
         document.body.appendChild(form)
         form.submit()
       } else {

@@ -90,7 +90,12 @@ export class MockProvider implements CarrierProvider {
   readonly ad = 'Mock (test sağlayıcısı)'
   readonly hazir = true
 
-  private webhookSecret = process.env.KARGONOMI_WEBHOOK_SECRET || 'mock-webhook-secret'
+  // Faz 27: sabit varsayılan KALDIRILDI. Bu değer kaynak kodda açıkça
+  // yazıyordu ve KARGONOMI_WEBHOOK_SECRET tanımsızken üretimde de geçerli
+  // imza üretmeye yetiyordu — kimliksiz biri sahte 'teslim_edildi' olayı
+  // gönderip siparişi delivered'a çekebilirdi. Sır yoksa imza doğrulaması
+  // hiçbir isteği kabul etmez.
+  private webhookSecret = process.env.KARGONOMI_WEBHOOK_SECRET || ''
 
   mapStatus(durumHam: string): KargoDurumu {
     return DURUM_ESLEME[durumHam] ?? 'hazirlaniyor'

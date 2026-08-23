@@ -17,6 +17,20 @@ export const dynamic = 'force-dynamic'
 // istemci ölçümü de kabul edilir.
 const IZINLI: readonly AnalyticsEvent[] = [...ISTEMCI_OLAYLARI, 'product_view']
 
+/** En fazla 10 anahtar, kısa değerler; dizi/obje değerler atılır. */
+function metaTemizle(ham: unknown): Record<string, unknown> | null {
+  if (!ham || typeof ham !== 'object' || Array.isArray(ham)) return null
+  const cikti: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(ham as Record<string, unknown>)) {
+    if (Object.keys(cikti).length >= 10) break
+    if (typeof k !== 'string' || k.length > 40) continue
+    if (typeof v === 'number' && Number.isFinite(v)) cikti[k] = v
+    else if (typeof v === 'boolean') cikti[k] = v
+    else if (typeof v === 'string') cikti[k] = v.slice(0, 120)
+  }
+  return Object.keys(cikti).length ? cikti : null
+}
+
 export async function POST(request: Request) {
   const ua = request.headers.get('user-agent')
   // Bot ise sessizce kabul edip yazmıyoruz (istemciye hata dönmenin faydası yok).
@@ -50,7 +64,9 @@ export async function POST(request: Request) {
     collectionSlug: typeof body?.collectionSlug === 'string' ? body.collectionSlug : null,
     searchQuery: typeof body?.searchQuery === 'string' ? body.searchQuery : null,
     value: Number.isFinite(Number(body?.value)) ? Number(body.value) : null,
-    meta: body?.meta && typeof body.meta === 'object' ? body.meta : null,
+    // Faz 27: `meta` istemciden gelen serbest JSON'du — boyut ve anahtar
+    // denetimi yoktu; analytics_events tablosu keyfi veriyle şişirilebilirdi.
+    meta: metaTemizle(body?.meta),
   })
 
   return NextResponse.json({ ok: true })

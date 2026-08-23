@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cokFazlaIstek, hizSiniri, istekKimligi } from '@/lib/guvenlik/hizSiniri'
 import { createServiceClient } from '@/lib/supabase/service'
 import { DURUM_ETIKETLERI, type KargoDurumu } from '@/lib/shipping/providers/types'
 
@@ -14,6 +15,10 @@ export const dynamic = 'force-dynamic'
  * Yanıtta PII yok: ad, adres, telefon, e-posta hiç dönmez.
  */
 export async function POST(request: Request) {
+  // Faz 27: kalıcı hız sınırı (bkz. lib/guvenlik/hizSiniri.ts).
+  const _sinir = await hizSiniri(`kargo-takip:${istekKimligi(request)}`, 20, 3600)
+  if (!_sinir.gecer) return cokFazlaIstek(_sinir.bekleSaniye)
+
   const body = await request.json().catch(() => null)
   const siparisNo = String(body?.order_number ?? '').trim()
   const eposta = String(body?.email ?? '').trim().toLowerCase()

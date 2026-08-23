@@ -23,10 +23,12 @@ export async function iyzicoRequest(path: string, body: object): Promise<any> {
   // base64 encode
   const authorization = 'IYZWSv2 ' + Buffer.from(authStr).toString('base64')
 
-  console.log('[iyzico] path:', path)
-  console.log('[iyzico] payload prefix:', payload.substring(0, 80))
-  console.log('[iyzico] signature (hex):', signature.substring(0, 20))
-  console.log('[iyzico] authorization prefix:', authorization.substring(0, 40))
+  // Faz 27: ayıklama günlükleri kaldırıldı. Bastıkları şeyler sırasıyla
+  // istek gövdesinin ilk 80 karakteri (kart sahibinin adının bir kısmı),
+  // HMAC imzasının ilk 80 biti, ve `authorization` ön eki — ki o ön ek
+  // base64 çözüldüğünde IYZICO_API_KEY'in ilk ~23 karakterini veriyordu.
+  // Yalnız hangi ucun çağrıldığı kalıyor.
+  console.log('[iyzico] istek:', path)
 
   const response = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
@@ -40,7 +42,19 @@ export async function iyzicoRequest(path: string, body: object): Promise<any> {
   })
 
   const result = await response.json()
-  console.log('[iyzico] response:', JSON.stringify(result))
+  // Tam yanıt kart BIN'i, son dört hane, alıcı adı ve adresi taşıyor.
+  // Denetimsiz bir kanala (Vercel çalışma günlüğü) akmasın; sorun gidermek
+  // için gereken alanlar zaten burada.
+  console.log(
+    '[iyzico] yanıt:',
+    JSON.stringify({
+      status: result?.status,
+      errorCode: result?.errorCode,
+      errorGroup: result?.errorGroup,
+      paymentId: result?.paymentId,
+      conversationId: result?.conversationId,
+    })
+  )
   return result
 }
 

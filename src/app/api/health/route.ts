@@ -37,7 +37,9 @@ async function dbKontrol(): Promise<{ kontrol: Kontrol; syncYasiSaat: number | n
       .limit(1)
       .maybeSingle()
 
-    if (error) return { kontrol: { ad: 'veritabani', ok: false, not: error.message }, syncYasiSaat: null, syncDurum: null }
+    // Faz 27: ham hata metni istemciye dönüyordu (uç kimliksiz).
+    if (error) console.error('[health] veritabanı:', error.message)
+    if (error) return { kontrol: { ad: 'veritabani', ok: false, not: 'veritabanina ulasilamadi' }, syncYasiSaat: null, syncDurum: null }
 
     const yas = data?.synced_at
       ? Math.round(((Date.now() - new Date(data.synced_at).getTime()) / 3_600_000) * 10) / 10

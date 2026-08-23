@@ -1,4 +1,5 @@
 import { formatPrice } from '@/lib/utils'
+import { htmlKacir } from '@/lib/guvenlik/girdi'
 import { WHATSAPP_URL } from '@/lib/contact'
 import { SHIPPING_LINE_LABEL } from '@/lib/shipping'
 import { CAYMA_SURESI_GUN } from '@/lib/legal/sozlesme'
@@ -328,14 +329,17 @@ export function orderCancelledEmail(
 /** Yöneticiye: yeni sipariş (Faz 15). */
 export function adminNewOrderEmail(order: any) {
   const adres = order?.shipping_address ?? {}
-  const musteri = adres.fullName || adres.full_name || order?.guest_email || 'Müşteri'
+  // Faz 27: müşteri metni HTML'e KAÇIRILARAK gömülür. `gift_note` ve
+  // `guest_email` doğrudan gömülüyordu; müşterinin yazdığı bir metin
+  // yöneticinin gelen kutusunda ham HTML olarak çalışabilirdi.
+  const musteri = htmlKacir(adres.fullName || adres.full_name || order?.guest_email || 'Müşteri')
   return {
     subject: `🛒 Yeni sipariş — ${order.order_number} · ${formatPrice(Number(order.total) || 0)}`,
     html: shell(
       'Yeni sipariş',
       `${orderNumberBox(order.order_number)}
       <p style="color:#7A5048;line-height:1.8;margin:0 0 12px;">
-        <strong>${musteri}</strong> · ${order?.guest_email ?? '—'}<br>
+        <strong>${musteri}</strong> · ${htmlKacir(order?.guest_email ?? '—')}<br>
         Tutar: <strong>${formatPrice(Number(order.total) || 0)}</strong>
         ${Number(order?.discount_amount) > 0 ? ` (indirim ${formatPrice(Number(order.discount_amount))})` : ''}
       </p>
@@ -346,7 +350,7 @@ export function adminNewOrderEmail(order: any) {
         order?.gift_note
           ? `<div style="background:#FFF8E6;border:1px solid #E8D8A0;padding:14px;margin-bottom:16px;">
                <p style="margin:0 0 4px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#A88070;">Sipariş notu</p>
-               <p style="margin:0;color:#2A1E1E;">${order.gift_note}</p>
+               <p style="margin:0;color:#2A1E1E;">${htmlKacir(order.gift_note)}</p>
              </div>`
           : ''
       }
@@ -369,7 +373,7 @@ export function adminOrderRequestEmail(order: any, tur: 'cancel' | 'return', mes
         Müşteri <strong>${baslik.toLowerCase()}</strong> oluşturdu.
         Tutar: <strong>${formatPrice(Number(order.total) || 0)}</strong>
       </p>
-      ${mesaj ? `<p style="color:#7A5048;line-height:1.8;margin:0 0 12px;">Müşteri mesajı: ${mesaj}</p>` : ''}
+      ${mesaj ? `<p style="color:#7A5048;line-height:1.8;margin:0 0 12px;">Müşteri mesajı: ${htmlKacir(mesaj)}</p>` : ''}
       <p style="color:#A88070;font-size:13px;line-height:1.7;">
         Onayladığınızda ödeme iyzico üzerinden iade edilir ve stok geri eklenir.
       </p>
@@ -383,15 +387,15 @@ export function adminOrderRequestEmail(order: any, tur: 'cancel' | 'return', mes
 /** Yöneticiye: yeni yorum (Faz 15). */
 export function adminNewReviewEmail(params: { urun: string; puan: number; govde: string; yazar?: string | null }) {
   return {
-    subject: `⭐ Yeni yorum (${params.puan}/5) — ${params.urun}`,
+    subject: `⭐ Yeni yorum (${params.puan}/5) — ${htmlKacir(params.urun)}`,
     html: shell(
       'Yeni ürün yorumu',
       `<p style="color:#7A5048;line-height:1.8;margin:0 0 12px;">
-        <strong>${params.urun}</strong> · ${params.puan}/5
-        ${params.yazar ? ` · ${params.yazar}` : ''}
+        <strong>${htmlKacir(params.urun)}</strong> · ${params.puan}/5
+        ${params.yazar ? ` · ${htmlKacir(params.yazar)}` : ''}
       </p>
       <div style="background:#FFF8F6;border:1px solid #E8D8D0;padding:16px;margin-bottom:16px;">
-        <p style="margin:0;color:#2A1E1E;line-height:1.7;">${params.govde}</p>
+        <p style="margin:0;color:#2A1E1E;line-height:1.7;">${htmlKacir(params.govde)}</p>
       </div>
       <p style="color:#A88070;font-size:13px;">Yorum onaylanana kadar sitede görünmez.</p>
       <p style="text-align:center;margin:24px 0 0;">

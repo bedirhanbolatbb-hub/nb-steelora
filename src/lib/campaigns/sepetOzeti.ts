@@ -55,7 +55,10 @@ export async function sepetOzetiHesapla(
     const { data: kodSatiri } = await supabase
       .from('campaigns')
       .select('id, code, is_active, starts_at, ends_at')
-      .ilike('code', temizKod)
+      // Faz 27: `ilike` joker kabul eder — `NB%` gibi bir önekle kod uzayı
+      // daraltılarak yayınlanmamış kodlar keşfedilebiliyordu. Kod zaten
+      // toLocaleUpperCase ile normalize ediliyor, tam eşleşme yeterli.
+      .eq('code', temizKod)
       .maybeSingle()
 
     let eslesen = kodSatiri ? kodlular.find((k) => k.id === kodSatiri.id) : null
@@ -161,7 +164,8 @@ async function kisiselKuponBul(
   const { data, error } = await supabase
     .from('campaign_coupons')
     .select('id, campaign_id, email, user_id, max_uses, used_count, expires_at, is_active')
-    .ilike('code', kod)
+    // Faz 27: joker karakterle kupon kodu keşfini engellemek için tam eşleşme.
+    .eq('code', kod)
     .maybeSingle()
 
   if (error || !data) return { kampanya: null, kuponId: null, hata: null }
@@ -173,13 +177,19 @@ async function kisiselKuponBul(
     return { kampanya: null, kuponId: null, hata: 'Bu kupon daha önce kullanılmış' }
   }
   // Sahiplik: kupon kişiye özel; hangi adrese ait olduğu SÖYLENMEZ.
+  //
+  // Faz 27: kontrol AÇIK başarısız oluyordu. Koşul `sahip && veren && ...`
+  // biçimindeydi; kuponun `email` alanı boşsa (ya da `user_id` ile
+  // tanımlanmışsa) hiçbir kontrol çalışmıyor ve kişiye özel kupon HERKESE
+  // açılıyordu. Artık kapalı başarısız: campaign_coupons tablosundaki bir
+  // kupon kişiseldir, sahibi doğrulanmadan kullanılamaz.
   const sahip = (data.email ?? '').trim().toLocaleLowerCase('tr-TR')
   const veren = (eposta ?? '').trim().toLocaleLowerCase('tr-TR')
-  if (sahip && veren && sahip !== veren) {
-    return { kampanya: null, kuponId: null, hata: 'Bu kupon başka bir hesaba tanımlı' }
-  }
-  if (sahip && !veren) {
+  if (!veren) {
     return { kampanya: null, kuponId: null, hata: 'Kuponu kullanmak için e-posta adresinizi girin' }
+  }
+  if (!sahip || sahip !== veren) {
+    return { kampanya: null, kuponId: null, hata: 'Bu kupon başka bir hesaba tanımlı' }
   }
 
   const { data: sablon } = await supabase

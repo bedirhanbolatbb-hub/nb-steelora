@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { adminIstegiMi, cronIstegiMi } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 import { sendMail } from '@/lib/emails/send'
 import { bildirimAdresi } from '@/lib/emails/bildirim'
@@ -18,17 +19,6 @@ export const maxDuration = 60
  * sayfalarla 50 bin satıra kadar çekiyor; günlük mail için gereksiz.
  */
 
-function isCronRequest(request: Request): boolean {
-  const secret = process.env.CRON_SECRET
-  return Boolean(secret) && request.headers.get('authorization') === `Bearer ${secret}`
-}
-
-function isAdminRequest(request: Request): boolean {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const adminToken = cookieHeader.match(/admin_token=([^;]+)/)?.[1]
-  const secret = process.env.ADMIN_SECRET_TOKEN
-  return Boolean(secret) && adminToken === secret
-}
 
 /** İstanbul takvimine göre dünün tarihi (YYYY-MM-DD). */
 function dunIstanbul(simdi = new Date()): string {
@@ -112,7 +102,7 @@ async function calistir(gonder: boolean) {
 }
 
 export async function GET(request: Request) {
-  if (isCronRequest(request)) {
+  if (cronIstegiMi(request)) {
     try {
       return NextResponse.json(await calistir(true))
     } catch (error: any) {
@@ -121,7 +111,7 @@ export async function GET(request: Request) {
   }
 
   // Panelden önizleme: veriyi gösterir, mail ATMAZ.
-  if (isAdminRequest(request)) {
+  if (await adminIstegiMi(request)) {
     try {
       return NextResponse.json(await calistir(new URL(request.url).searchParams.get('gonder') === '1'))
     } catch (error: any) {

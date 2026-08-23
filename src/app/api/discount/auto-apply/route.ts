@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cokFazlaIstek, hizSiniri, istekKimligi } from '@/lib/guvenlik/hizSiniri'
 import { createServiceClient } from '@/lib/supabase/service'
 import { sepetOzetiHesapla, musteriDurumu } from '@/lib/campaigns/sepetOzeti'
 import { ilkSiparisDuyurusu } from '@/lib/campaigns/ilkSiparisKuponu'
@@ -15,6 +16,10 @@ export const dynamic = 'force-dynamic'
  * fiyat, kampanya seçimi, tavan ve toplam sunucuda hesaplanır.
  */
 export async function POST(request: Request) {
+  // Faz 27: kalıcı hız sınırı (bkz. lib/guvenlik/hizSiniri.ts).
+  const _sinir = await hizSiniri(`sepet-ozeti:${istekKimligi(request)}`, 300, 3600)
+  if (!_sinir.gecer) return cokFazlaIstek(_sinir.bekleSaniye)
+
   const body = await request.json().catch(() => null)
   const items = Array.isArray(body?.items) ? body.items : []
   const kod = typeof body?.kod === 'string' ? body.kod : null

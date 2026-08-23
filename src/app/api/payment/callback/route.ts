@@ -55,7 +55,11 @@ export async function POST(request: Request) {
 
     console.log('[callback] paymentId:', paymentId, 'status:', status, 'mdStatus:', mdStatus)
 
-    if (status !== 'success' && mdStatus !== '1') {
+    // Faz 27: kapı `&&` ile kurulmuştu — yalnız İKİ koşul BİRDEN başarısız
+    // olduğunda reddediyordu. status='failure' ama mdStatus='1' gelen bir
+    // yanıt (ya da tersi) geçiyordu. Doğrusu: ikisinden BİRİ bile
+    // sağlanmıyorsa reddet.
+    if (status !== 'success' || mdStatus !== '1') {
       console.error('[callback] 3DS failed. status:', status, 'mdStatus:', mdStatus)
       return NextResponse.redirect(`${siteUrl}/odeme/basarisiz`, { status: 302 })
     }
@@ -66,7 +70,11 @@ export async function POST(request: Request) {
       paymentId,
     })
 
-    console.log('[callback] completeThreeDS full result:', JSON.stringify(result))
+    // Faz 27: tam yanıt kart BIN'i, son dört hane ve alıcı bilgisi taşıyor.
+    console.log(
+      '[callback] completeThreeDS:',
+      JSON.stringify({ status: result.status, paymentId: result.paymentId, basketId: result.basketId })
+    )
 
     if (result.status !== 'success') {
       console.error('[callback] completeThreeDS failed:', result.errorMessage)
@@ -82,6 +90,42 @@ export async function POST(request: Request) {
     // brüt sepet (kargo dahil) olduğu için buraya yazılması ürün ara toplamını
     // bozuyordu; doğru değer pending kaydında zaten var. total ise gerçekten
     // tahsil edilen tutarla (paidPrice) güncellenir.
+    // ── Faz 27 · tekrar oynatma ve tutar koruması ────────────────────────
+    // Callback yalnızca conversationId/paymentId taşıyor ve iyzico'nun imzası
+    // doğrulanmıyor. Aşağıdaki iki kontrol, sipariş kaydının KENDİ durumuna
+    // bakarak kötü geçişleri reddeder; iyi yolu hiç değiştirmez.
+    const { data: mevcutSiparis } = await serviceClient
+      .from('orders')
+      .select('status, total, payment_refunded_at')
+      .eq('order_number', result.basketId)
+      .maybeSingle()
+
+    if (mevcutSiparis) {
+      // (a) İptal/iade edilmiş bir sipariş TEKRAR 'paid' yapılamaz. Eski
+      //     callback'in yeniden gönderilmesi para iadesini geri alamamalı.
+      const kapali = ['cancelled', 'refunded'].includes(String(mevcutSiparis.status))
+      if (kapali || mevcutSiparis.payment_refunded_at) {
+        console.error(
+          '[callback] KAPALI siparişe ödeme callback\'i geldi, yok sayıldı:',
+          result.basketId,
+          mevcutSiparis.status
+        )
+        return NextResponse.redirect(`${siteUrl}/odeme/basarisiz`, { status: 302 })
+      }
+      // (b) Tahsil edilen tutar beklenen tutardan DÜŞÜKSE üzerine yazma.
+      //     Sipariş sunucuda hesaplanmış bir tutarla açılıyor; iyzico'nun
+      //     bildirdiği tutar ondan azsa bir şey yanlış demektir.
+      const beklenen = Number(mevcutSiparis.total) || 0
+      if (beklenen > 0 && paidTotal + 0.01 < beklenen) {
+        console.error(
+          '[callback] TUTAR UYUŞMUYOR — sipariş açılmadı:',
+          result.basketId,
+          `beklenen=${beklenen} tahsil=${paidTotal}`
+        )
+        return NextResponse.redirect(`${siteUrl}/odeme/basarisiz`, { status: 302 })
+      }
+    }
+
     const { data: updatedRows, error: updateError } = await serviceClient
       .from('orders')
       .update({

@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
+import { sayiAlani } from '@/lib/guvenlik/girdi'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const productId = searchParams.get('id')
   const category = searchParams.get('category')
-  const limit = parseInt(searchParams.get('limit') || '4')
+  // Faz 27: `limit` doğrulanmıyordu — 'limit=100000' ya da NaN geçebiliyordu.
+  const limit = sayiAlani(searchParams.get('limit'), 1, 24, 4)
 
   if (!productId || !category) {
     return NextResponse.json([])

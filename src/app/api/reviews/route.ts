@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cokFazlaIstek, hizSiniri, istekKimligi } from '@/lib/guvenlik/hizSiniri'
 import { createServiceClient } from '@/lib/supabase/service'
 import { sendMail } from '@/lib/emails/send'
 import { adminNewReviewEmail } from '@/lib/emails/templates'
@@ -10,22 +11,13 @@ import { bildirimAdresi } from '@/lib/emails/bildirim'
  * reviews tablosuna anon yazım RLS ile kapalı; kayıt yalnız buradan, service
  * role ile geçer.
  */
-const RATE_LIMIT_PER_HOUR = 3
 const MAX_BODY = 2000
 const MAX_NAME = 80
 
-// Basit in-route sayaç: tek sunucu örneği içinde IP başına saatlik sınır.
-const hits = new Map<string, number[]>()
-
-function rateLimited(ip: string): boolean {
-  const now = Date.now()
-  const hourAgo = now - 60 * 60 * 1000
-  const recent = (hits.get(ip) ?? []).filter((t) => t > hourAgo)
-  recent.push(now)
-  hits.set(ip, recent)
-  if (hits.size > 5000) hits.clear() // kaba temizlik
-  return recent.length > RATE_LIMIT_PER_HOUR
-}
+// Faz 27: bellek içi sayaç KALDIRILDI. Vercel'de her istek başka bir
+// sunucusuz örnekte çalışabildiği için sayaç neredeyse her seferinde sıfırdan
+// başlıyordu; üstelik 5000 anahtarı aşınca hits.clear() HERKESİN sayacını
+// siliyordu. Yerine kalıcı sayaç (lib/guvenlik/hizSiniri.ts).
 
 function clientIp(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for')
@@ -33,6 +25,10 @@ function clientIp(request: Request): string {
 }
 
 export async function POST(request: Request) {
+  // Faz 27: kalıcı hız sınırı (bkz. lib/guvenlik/hizSiniri.ts).
+  const _sinir = await hizSiniri(`yorum:${istekKimligi(request)}`, 5, 3600)
+  if (!_sinir.gecer) return cokFazlaIstek(_sinir.bekleSaniye)
+
   let body: any
   try {
     body = await request.json()
@@ -62,12 +58,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Geçerli bir e-posta adresi girin' }, { status: 400 })
   }
 
-  if (rateLimited(clientIp(request))) {
-    return NextResponse.json(
-      { error: 'Çok fazla değerlendirme gönderdiniz, lütfen bir süre sonra tekrar deneyin' },
-      { status: 429 }
-    )
-  }
 
   try {
     const supabase = createServiceClient()
@@ -90,7 +80,10 @@ export async function POST(request: Request) {
       .from('orders')
       .select('id')
       .in('status', ['delivered', 'completed'])
-      .ilike('guest_email', email)
+      // Faz 27: `ilike` joker kabul ediyordu — `%@%` gibi bir değerle
+      // herhangi bir siparişe eşleşip sahte "doğrulanmış alışveriş" rozeti
+      // alınabiliyordu. Tam eşleşme.
+      .eq('guest_email', email.toLowerCase())
       .limit(1)
 
     const isVerifiedPurchase = Boolean(orders && orders.length > 0)

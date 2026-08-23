@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { adminIstegiMi, cronIstegiMi } from '@/lib/admin/requireAdmin'
 import { revalidatePath } from 'next/cache'
 import {
   closeStaleRuns,
@@ -11,17 +12,6 @@ import {
 
 export const maxDuration = 60
 
-function isCronRequest(request: Request): boolean {
-  const secret = process.env.CRON_SECRET
-  return Boolean(secret) && request.headers.get('authorization') === `Bearer ${secret}`
-}
-
-function isAdminRequest(request: Request): boolean {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const adminToken = cookieHeader.match(/admin_token=([^;]+)/)?.[1]
-  const secret = process.env.ADMIN_SECRET_TOKEN
-  return Boolean(secret) && adminToken === secret
-}
 
 /**
  * Koşunun tamamı bu istekte yapılır: bütün sayfalar, sonra pasife çekme.
@@ -87,7 +77,7 @@ async function runSync() {
 }
 
 export async function POST(request: Request) {
-  if (!isCronRequest(request) && !isAdminRequest(request)) {
+  if (!cronIstegiMi(request) && !(await adminIstegiMi(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -100,12 +90,21 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   // Vercel cron bu yoldan gelir: koşunun tamamı burada işlenir.
-  if (isCronRequest(request)) {
+  if (cronIstegiMi(request)) {
     try {
       return await runSync()
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+  }
+
+  // Faz 27: durum okuma da PANELE bağlandı. Bu dal korumasızdı ve kimlik
+  // doğrulaması olmadan 200 dönüyordu: son 10 senkron koşusu, hata mesajları,
+  // aktif ürün sayısı ve çalışan sürüm bilgisi dışarıya açıktı. Müşteri
+  // verisi yoktu ama bir saldırgan için sistem haritası çıkarmaya yarardı
+  // (hangi sürüm, hangi sağlayıcı, ne sıklıkla çalışıyor, hangi hatayı veriyor).
+  if (!(await adminIstegiMi(request))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // Normal GET — son sync durumu

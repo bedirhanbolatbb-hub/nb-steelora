@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cronIstegiMi } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 
 export const dynamic = 'force-dynamic'
@@ -15,12 +16,16 @@ export const maxDuration = 60
  */
 export async function GET(request: Request) {
   const url = new URL(request.url)
-  const gizli = process.env.CRON_SECRET
-  const yetkili =
-    request.headers.get('authorization') === `Bearer ${gizli}` ||
-    url.searchParams.get('secret') === gizli ||
-    request.headers.get('x-vercel-cron') === '1'
-  if (!yetkili) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Faz 27: iki kusur kapatıldı.
+  //  1. `x-vercel-cron: 1` tek başına yetki sayılıyordu — bu başlık dışarıdan
+  //     gelen istekte de taşınabilir, Vercel onu güvenilir kimlik olarak
+  //     GARANTİ ETMEZ. Kimliksiz biri bu uçla analytics_events üzerinde toplu
+  //     silme çalıştırabilirdi (aşağıda 395 günden eski her satır siliniyor).
+  //  2. CRON_SECRET tanımsızsa şablon dize "Bearer undefined" üretiyordu ve
+  //     saldırgan tam o başlıkla yetkili sayılıyordu — açık başarısız.
+  // İkisi de tek kaynaktaki `cronIstegiMi` ile çözüldü: sabit zamanlı
+  // karşılaştırma, sır yoksa kapalı başarısız.
+  if (!cronIstegiMi(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const supabase = createServiceClient()
   const gun = url.searchParams.get('gun') || new Date(Date.now() - 86400000).toISOString().slice(0, 10)

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cokFazlaIstek, hizSiniri, istekKimligi } from '@/lib/guvenlik/hizSiniri'
 import { createClient } from '@/lib/supabase/server'
 import { kuponDogrula } from '@/lib/campaigns/pricing'
 
@@ -8,6 +9,10 @@ import { kuponDogrula } from '@/lib/campaigns/pricing'
  * yeniden doğrulanır (bkz. /api/payment/initialize).
  */
 export async function POST(request: Request) {
+  // Faz 27: kalıcı hız sınırı (bkz. lib/guvenlik/hizSiniri.ts).
+  const _sinir = await hizSiniri(`kupon:${istekKimligi(request)}`, 20, 3600)
+  if (!_sinir.gecer) return cokFazlaIstek(_sinir.bekleSaniye)
+
   const body = await request.json().catch(() => null)
   const kod = String(body?.code ?? '')
   const sepetTutari = Number(body?.cartTotal)
