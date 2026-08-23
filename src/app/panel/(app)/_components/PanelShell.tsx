@@ -68,7 +68,7 @@ export default function PanelShell({ children }: { children: ReactNode }) {
                         className={cn(
                           'block rounded-[4px] px-2 py-1.5 text-[13px] transition-colors',
                           isActive(link.href)
-                            ? 'bg-[var(--p-bg)] font-semibold text-[var(--p-ink)] shadow-[inset_2px_0_0_var(--p-accent)]'
+                            ? 'bg-[var(--p-bg)] font-semibold text-[var(--p-ink)] shadow-[inset_2px_0_0_var(--p-accent-line)]'
                             : 'text-[var(--p-ink-soft)] hover:bg-[var(--p-bg)] hover:text-[var(--p-ink)]'
                         )}
                       >

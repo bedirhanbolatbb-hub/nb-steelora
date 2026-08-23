@@ -40,7 +40,7 @@ export function PButton({
 
 /* ── Form alanları ───────────────────────────────────────────────────── */
 const fieldBase =
-  'w-full rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface)] px-3 py-2 text-[13px] text-[var(--p-ink)] placeholder:text-[var(--p-muted)] focus:border-[var(--p-accent)] focus:outline-none transition-colors'
+  'w-full rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface)] px-3 py-2 text-[13px] text-[var(--p-ink)] placeholder:text-[var(--p-muted)] focus:border-[var(--p-accent-line)] focus:outline-none transition-colors'
 
 export function PInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(fieldBase, 'min-h-[36px]', className)} {...props} />
@@ -62,7 +62,7 @@ const badgeTones: Record<BadgeTone, string> = {
   warning: 'bg-[var(--p-warning-bg)] text-[var(--p-warning)] border-[var(--p-warning)]/25',
   danger: 'bg-[var(--p-danger-bg)] text-[var(--p-danger)] border-[var(--p-danger)]/25',
   neutral: 'bg-[var(--p-bg)] text-[var(--p-ink-soft)] border-[var(--p-line)]',
-  accent: 'bg-[#f5efe2] text-[var(--p-accent-deep)] border-[var(--p-accent)]/30',
+  accent: 'bg-[#f5efe2] text-[var(--p-accent-deep)] border-[var(--p-accent-line)]/30',
 }
 
 export function PBadge({ tone = 'neutral', children }: { tone?: BadgeTone; children: ReactNode }) {

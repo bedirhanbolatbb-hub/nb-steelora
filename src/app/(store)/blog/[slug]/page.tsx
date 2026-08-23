@@ -137,7 +137,7 @@ export default async function BlogPostPage({
               {post.title}
             </h1>
             {post.excerpt && (
-              <p className="text-[14px] font-body text-ink-soft mt-4 leading-relaxed border-l-2 border-accent pl-4">
+              <p className="text-[14px] font-body text-ink-soft mt-4 leading-relaxed border-l-2 border-accent-line pl-4">
                 {post.excerpt}
               </p>
             )}
@@ -201,7 +201,7 @@ export default async function BlogPostPage({
                   <Link
                     key={p.id}
                     href={`/blog/${p.slug}`}
-                    className="group bg-surface border border-line rounded-[4px] overflow-hidden hover:border-accent/50 transition-colors"
+                    className="group bg-surface border border-line rounded-[4px] overflow-hidden hover:border-accent-line/50 transition-colors"
                     data-reveal
                     style={{ '--reveal-delay': `${i * 50}ms` } as React.CSSProperties}
                   >

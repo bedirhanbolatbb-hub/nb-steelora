@@ -30,11 +30,11 @@ export default function Sparkline({
       aria-label="Son 30 günün günlük ciro eğrisi"
       preserveAspectRatio="none"
     >
-      <polygon points={area} fill="var(--p-accent)" opacity="0.12" />
+      <polygon points={area} fill="var(--p-accent-line)" opacity="0.12" />
       <polyline
         points={points.join(' ')}
         fill="none"
-        stroke="var(--p-accent)"
+        stroke="var(--p-accent-line)"
         strokeWidth="1.5"
         strokeLinejoin="round"
         strokeLinecap="round"

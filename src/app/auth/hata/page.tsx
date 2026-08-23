@@ -75,7 +75,7 @@ export default async function AuthHataPage({
 
         <Link
           href={icerik.birincil.yol}
-          className="inline-block border border-accent px-8 py-3 font-body text-[11px] uppercase tracking-[0.15em] text-accent-deep transition-all hover:bg-accent-deep hover:text-white"
+          className="inline-block border border-accent-line px-8 py-3 font-body text-[11px] uppercase tracking-[0.15em] text-accent-deep transition-all hover:bg-accent-deep hover:text-white"
         >
           {icerik.birincil.yazi}
         </Link>

@@ -148,7 +148,7 @@ export default function IletisimClient() {
             onChange={(e) => updateField('message', e.target.value)}
             required
             rows={5}
-            className="w-full border border-line bg-white px-4 py-3 text-sm font-body text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors resize-none"
+            className="w-full border border-line bg-white px-4 py-3 text-sm font-body text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors resize-none"
           />
 
           <Button

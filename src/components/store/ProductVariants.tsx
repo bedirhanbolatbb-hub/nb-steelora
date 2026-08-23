@@ -45,7 +45,7 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
                 className={`min-w-[44px] text-center px-3 py-2 text-[12px] font-body border rounded-[4px] transition-colors ${
                   isCurrent
                     ? 'border-ink text-ink font-medium'
-                    : 'border-line text-ink-soft hover:border-accent hover:text-accent-deep'
+                    : 'border-line text-ink-soft hover:border-accent-line hover:text-accent-deep'
                 } ${outOfStock ? 'opacity-40' : ''}`}
               >
                 {member.variant_label}
@@ -67,7 +67,7 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
                 aria-current={isCurrent ? 'page' : undefined}
                 title={member.display_title}
                 className={`relative w-16 h-20 shrink-0 bg-surface-muted overflow-hidden border-2 transition-colors ${
-                  isCurrent ? 'border-accent' : 'border-transparent hover:border-line'
+                  isCurrent ? 'border-accent-line' : 'border-transparent hover:border-line'
                 }`}
               >
                 {image && (

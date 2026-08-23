@@ -69,7 +69,7 @@ export default function KargoTakipClient({
   }
 
   const alanSinifi =
-    'w-full border border-line bg-bg px-4 py-3 text-[14px] text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors'
+    'w-full border border-line bg-bg px-4 py-3 text-[14px] text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors'
 
   const aktifIdx = sonuc?.gonderi ? DURUM_SIRASI.indexOf(sonuc.gonderi.durum) : -1
   const dalMesaji = sonuc?.gonderi ? DAL_DURUMLARI[sonuc.gonderi.durum] : undefined

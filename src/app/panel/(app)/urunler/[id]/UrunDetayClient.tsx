@@ -291,7 +291,7 @@ export default function UrunDetayClient({ urun }: { urun: UrunDetay }) {
                 <div>
                   <label className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]">Öne çıkan</label>
                   <label className="flex min-h-[36px] cursor-pointer items-center gap-2 text-[13px]">
-                    <input type="checkbox" checked={form.isFeatured} onChange={(e) => set('isFeatured', e.target.checked)} className="h-4 w-4 accent-[var(--p-accent)]" />
+                    <input type="checkbox" checked={form.isFeatured} onChange={(e) => set('isFeatured', e.target.checked)} className="h-4 w-4 accent-[var(--p-accent-line)]" />
                     Sıralamada öne alınır
                   </label>
                 </div>

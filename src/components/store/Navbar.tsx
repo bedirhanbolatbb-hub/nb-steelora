@@ -214,7 +214,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-[11px] uppercase tracking-[0.16em] font-body text-ink-soft hover:text-ink border-b border-transparent hover:border-accent pb-0.5 transition-colors whitespace-nowrap"
+                className="text-[11px] uppercase tracking-[0.16em] font-body text-ink-soft hover:text-ink border-b border-transparent hover:border-accent-line pb-0.5 transition-colors whitespace-nowrap"
               >
                 {link.label}
               </Link>

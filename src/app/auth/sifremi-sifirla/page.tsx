@@ -108,7 +108,7 @@ export default function SifreSifirlaPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-4 py-3 border border-line bg-white font-body text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors"
+            className="w-full px-4 py-3 border border-line bg-white font-body text-sm text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors"
           />
           <input
             type="password"
@@ -116,7 +116,7 @@ export default function SifreSifirlaPage() {
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             required
-            className="w-full px-4 py-3 border border-line bg-white font-body text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors"
+            className="w-full px-4 py-3 border border-line bg-white font-body text-sm text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors"
           />
           {error && (
             <p className="text-red-500 text-sm font-body">{error}</p>

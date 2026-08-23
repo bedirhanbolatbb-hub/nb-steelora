@@ -142,7 +142,7 @@ export default function KoleksiyonlarClient({
               key={c.id}
               onClick={() => ac(c)}
               className={`rounded-[6px] border bg-[var(--p-surface)] p-4 text-left transition-colors ${
-                acikId === c.id ? 'border-[var(--p-accent)]' : 'border-[var(--p-line)] hover:border-[var(--p-ink)]'
+                acikId === c.id ? 'border-[var(--p-accent-line)]' : 'border-[var(--p-line)] hover:border-[var(--p-ink)]'
               }`}
             >
               <p className="text-[14px] font-semibold text-[var(--p-ink)]">{c.name}</p>

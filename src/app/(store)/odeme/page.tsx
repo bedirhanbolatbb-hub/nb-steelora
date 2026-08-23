@@ -326,7 +326,7 @@ export default function OdemePage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Üyelik uyarısı — sadece giriş yapılmamış kullanıcılara */}
           {!userId && (
-            <div className="bg-accent-soft/60 border border-accent/30 p-5 rounded-[4px]">
+            <div className="bg-accent-soft/60 border border-accent-line/30 p-5 rounded-[4px]">
               <p className="text-[13px] font-body font-medium text-ink mb-1">
                 Üye olarak sipariş verin, daha fazlasını kazanın
               </p>
@@ -496,7 +496,7 @@ export default function OdemePage() {
               maxLength={300}
               /* text-base: iOS, 16px'ten küçük alanlara dokunulduğunda sayfayı
                  yakınlaştırıyor; masaüstünde tasarım ölçüsü korunuyor. */
-              className="w-full border border-line bg-white px-4 py-3 text-base sm:text-sm font-body text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors resize-none"
+              className="w-full border border-line bg-white px-4 py-3 text-base sm:text-sm font-body text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors resize-none"
             />
             <p className="text-[10px] font-body text-muted mt-1 text-right">{giftNote.length}/300</p>
           </section>

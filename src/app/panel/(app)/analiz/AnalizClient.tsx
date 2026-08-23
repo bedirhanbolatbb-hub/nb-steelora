@@ -101,13 +101,13 @@ function Seri({ seri }: { seri: Rapor['seri'] }) {
     <div className="overflow-x-auto px-4 py-3">
       <svg viewBox={`0 0 ${G} ${Y}`} className="h-[160px] w-full min-w-[320px]" role="img" aria-label="Ziyaretçi ve ciro eğrisi">
         <path d={cizgi(yz, (s) => s.ziyaretci)} fill="none" stroke="var(--p-ink)" strokeWidth="1.5" />
-        <path d={cizgi(yc, (s) => s.ciro)} fill="none" stroke="var(--p-accent)" strokeWidth="1.5" strokeDasharray="4 3" />
+        <path d={cizgi(yc, (s) => s.ciro)} fill="none" stroke="var(--p-accent-line)" strokeWidth="1.5" strokeDasharray="4 3" />
       </svg>
       <div className="mt-1 flex flex-wrap justify-between gap-2 text-[10px] text-[var(--p-muted)]">
         <span>{seri[0].gun}</span>
         <span className="flex gap-3">
           <span className="flex items-center gap-1"><span className="inline-block h-px w-4 bg-[var(--p-ink)]" /> ziyaretçi (en çok {sayi(maxZ)})</span>
-          <span className="flex items-center gap-1"><span className="inline-block h-px w-4 border-t border-dashed border-[var(--p-accent)]" /> ciro (en çok {formatPrice(maxC)})</span>
+          <span className="flex items-center gap-1"><span className="inline-block h-px w-4 border-t border-dashed border-[var(--p-accent-line)]" /> ciro (en çok {formatPrice(maxC)})</span>
         </span>
         <span>{seri[seri.length - 1].gun}</span>
       </div>
@@ -334,7 +334,7 @@ export default function AnalizClient({
                   {/* Sepete ekleme, aynı üründen tekrar eklemeyle görüntülemeyi
                       aşabilir; çubuk %100'de doyar, sayı gerçeği gösterir. */}
                   <div
-                    className="h-full bg-[var(--p-accent)]"
+                    className="h-full bg-[var(--p-accent-line)]"
                     style={{ width: `${Math.min(Math.max(a.oran, 0.5), 100)}%` }}
                   />
                 </div>

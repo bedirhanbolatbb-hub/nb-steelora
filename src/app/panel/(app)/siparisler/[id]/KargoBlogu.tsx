@@ -251,7 +251,7 @@ export default function KargoBlogu({
               value={form.adres}
               onChange={(e) => setForm({ ...form, adres: e.target.value })}
               rows={2}
-              className="w-full rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface)] px-3 py-2 text-[13px] text-[var(--p-ink)] focus:border-[var(--p-accent)] focus:outline-none"
+              className="w-full rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface)] px-3 py-2 text-[13px] text-[var(--p-ink)] focus:border-[var(--p-accent-line)] focus:outline-none"
             />
           </label>
 
@@ -425,7 +425,7 @@ export default function KargoBlogu({
         <ol className="space-y-2 border-l border-[var(--p-line)] pl-4">
           {gonderi.olaylar.map((o) => (
             <li key={o.id} className="relative">
-              <span className="absolute -left-[21px] top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--p-accent)]" />
+              <span className="absolute -left-[21px] top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--p-accent-line)]" />
               <p className="text-[12px] text-[var(--p-ink)]">
                 {DURUM_ETIKETLERI[o.durum]}
                 {o.not ? <span className="text-[var(--p-muted)]"> — {o.not}</span> : null}

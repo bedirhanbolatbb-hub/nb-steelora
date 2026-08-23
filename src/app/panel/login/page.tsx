@@ -51,7 +51,7 @@ export default function PanelLoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoFocus
-          className="w-full rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface)] px-3 py-2.5 text-[14px] text-[var(--p-ink)] focus:border-[var(--p-accent)] focus:outline-none"
+          className="w-full rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface)] px-3 py-2.5 text-[14px] text-[var(--p-ink)] focus:border-[var(--p-accent-line)] focus:outline-none"
         />
         {hata && <p className="mt-2 text-[12px] text-[var(--p-danger)]">{hata}</p>}
 

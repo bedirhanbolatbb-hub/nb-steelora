@@ -10,13 +10,26 @@ import {
 import { ORG_EMAIL } from '@/lib/seo'
 import SaticiKunyesi from '@/components/store/SaticiKunyesi'
 import { kunyeGetir } from '@/lib/legal/veriSorumlusu'
+import { createServiceClient } from '@/lib/supabase/service'
+import { MESAFELI_SURUMU, surumBloguHtml } from '@/lib/legal/surum'
 
 export const metadata = { title: 'Mesafeli Satış Sözleşmesi' }
 export const dynamic = 'force-dynamic'
 
 export default async function MesafeliSatisSozlesmesiPage() {
   // Satıcı bilgileri tek kaynaktan (panel → Site Metinleri künyesi).
-  const kunye = await kunyeGetir()
+  const supabase = createServiceClient()
+  const [kunye, surumSatiri] = await Promise.all([
+    kunyeGetir(),
+    // Faz 26: sürüm ve yürürlük tarihi bu sayfada HİÇ yoktu. Müşterinin
+    // onayladığı sözleşmenin hangi sürüm olduğu siparişe yazılıyor ama
+    // sayfada görünmüyordu.
+    supabase
+      .from('site_content')
+      .select('key, value')
+      .in('key', ['mesafeli_surum', 'mesafeli_yururluk'])
+      .then(({ data }) => Object.fromEntries((data || []).map((r: any) => [r.key, (r.value || '').trim()]))),
+  ])
   return (
     <LegalPageLayout eyebrow="Hukuk" title="Mesafeli Satış Sözleşmesi">
       <h2>1. Taraflar</h2>
@@ -127,6 +140,16 @@ export default async function MesafeliSatisSozlesmesiPage() {
       <p>
         İşbu sözleşme, ALICI tarafından elektronik ortamda onaylandığı tarihte yürürlüğe girer.
       </p>
+
+      <div
+        dangerouslySetInnerHTML={{
+          __html: surumBloguHtml(
+            MESAFELI_SURUMU,
+            { surum: surumSatiri.mesafeli_surum, yururluk: surumSatiri.mesafeli_yururluk },
+            'Siparişinizi onayladığınız anda geçerli olan sözleşme sürümü siparişinize kaydedilir.'
+          ),
+        }}
+      />
     </LegalPageLayout>
   )
 }

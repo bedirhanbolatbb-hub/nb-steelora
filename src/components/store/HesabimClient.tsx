@@ -67,8 +67,8 @@ function hasPendingCustomerRequest(requests: any[] | undefined) {
 }
 
 const btnPrimary = 'py-3 px-8 bg-ink text-white text-[11px] tracking-[0.15em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-50'
-const btnOutline = 'py-2 px-4 border border-line text-ink-soft text-[10px] tracking-[0.12em] uppercase font-body hover:border-accent hover:text-accent-deep transition-colors disabled:opacity-50 disabled:pointer-events-none'
-const inputClass = 'w-full px-3 py-2 border border-line bg-white font-body text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors'
+const btnOutline = 'py-2 px-4 border border-line text-ink-soft text-[10px] tracking-[0.12em] uppercase font-body hover:border-accent-line hover:text-accent-deep transition-colors disabled:opacity-50 disabled:pointer-events-none'
+const inputClass = 'w-full px-3 py-2 border border-line bg-white font-body text-sm text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors'
 
 export default function HesabimClient({ user, profile, orders }: HesabimClientProps) {
   const [tab, setTab] = useState('profil')
@@ -298,7 +298,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
         {tabs.map((t) => (
           <button key={t.id} onClick={() => handleTabClick(t.id)}
             className={`pb-3 text-[11px] uppercase tracking-[0.15em] font-body transition-colors ${
-              tab === t.id ? 'border-b-2 border-accent text-ink font-medium' : 'text-muted hover:text-ink'
+              tab === t.id ? 'border-b-2 border-accent-line text-ink font-medium' : 'text-muted hover:text-ink'
             }`}>
             {t.label}
           </button>
@@ -643,7 +643,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                   <button onClick={saveAddress} disabled={addressSaving} className="flex-1 py-2 bg-ink text-bg rounded-[4px] text-[11px] uppercase tracking-wider hover:bg-accent-deep transition-colors disabled:opacity-50">
                     {addressSaving ? 'Kaydediliyor...' : 'Kaydet'}
                   </button>
-                  <button onClick={() => setAddressForm(null)} className="flex-1 py-2 border border-line text-muted text-[11px] uppercase tracking-wider hover:border-accent transition-colors">
+                  <button onClick={() => setAddressForm(null)} className="flex-1 py-2 border border-line text-muted text-[11px] uppercase tracking-wider hover:border-accent-line transition-colors">
                     İptal
                   </button>
                 </div>

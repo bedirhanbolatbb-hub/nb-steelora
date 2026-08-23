@@ -20,6 +20,7 @@
   --color-line: #E7E1D8;
   --color-accent: #B8934E;
   --color-accent-deep: #836835;
+  --color-accent-line: #A78443;
   --color-accent-soft: #F5EFE2;
 
   --font-heading: var(--font-display), 'Playfair Display', serif;
@@ -43,6 +44,13 @@
      ve doygunluk (0,43) birebir korunarak koyulaştırıldı; artık sitedeki her
      zeminde en az 4,58. */
   --accent-deep: #836835;
+  /* Faz 26: ÇİZGİ ve İKON tonu. Altın vurgu grafik nesnelerde 2,50–2,87
+     veriyordu; WCAG 1.4.11 arayüz bileşenleri ve anlam taşıyan grafikler için
+     3:1 istiyor. Metin tonundan (--accent-deep) ayrı ve ondan AÇIK: ikon 3:1'e
+     tabi, metin 4,5'e. --accent'in kendisi DEĞİŞTİRİLMEDİ — footer'da koyu
+     zemin üstünde metin olarak kullanılıyor ve orada koyulaşma 5,45'i 4,49'a
+     düşürüp metni eşiğin altına atardı. */
+  --accent-line: #A78443;
   --accent-soft: #F5EFE2;
 }
 

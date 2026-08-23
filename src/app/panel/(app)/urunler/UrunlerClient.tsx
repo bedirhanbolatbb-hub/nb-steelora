@@ -296,7 +296,7 @@ export default function UrunlerClient({
 
       {/* Toplu işlem çubuğu */}
       {secili.size > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-[6px] border border-[var(--p-accent)]/40 bg-[#f5efe2] px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 rounded-[6px] border border-[var(--p-accent-line)]/40 bg-[#f5efe2] px-3 py-2">
           <p className="text-[13px] font-medium text-[var(--p-ink)]">{secili.size} seçili</p>
           <PButton variant="ghost" onClick={() => setRozetDialog(true)} disabled={isleniyor}>
             Rozet ata
@@ -328,7 +328,7 @@ export default function UrunlerClient({
           <thead className="sticky top-0 z-10 bg-[var(--p-surface)]">
             <tr className="border-b border-[var(--p-line)] text-left text-[11px] uppercase tracking-[0.08em] text-[var(--p-muted)]">
               <th className="w-10 px-3 py-2.5">
-                <input type="checkbox" checked={hepsiSecili} onChange={toggleHepsi} aria-label="Tümünü seç" className="h-4 w-4 accent-[var(--p-accent)]" />
+                <input type="checkbox" checked={hepsiSecili} onChange={toggleHepsi} aria-label="Tümünü seç" className="h-4 w-4 accent-[var(--p-accent-line)]" />
               </th>
               <th className="px-3 py-2.5 font-semibold">Ürün</th>
               <th className="px-3 py-2.5 font-semibold">Barkod</th>
@@ -342,7 +342,7 @@ export default function UrunlerClient({
             {satirlar.map((p) => (
               <tr key={p.id} className={cn('border-b border-[var(--p-line)]/60 last:border-0 hover:bg-[var(--p-bg)]/60', secili.has(p.id) && 'bg-[#f5efe2]/50')}>
                 <td className="px-3 py-2">
-                  <input type="checkbox" checked={secili.has(p.id)} onChange={() => toggle(p.id)} aria-label={p.title} className="h-4 w-4 accent-[var(--p-accent)]" />
+                  <input type="checkbox" checked={secili.has(p.id)} onChange={() => toggle(p.id)} aria-label={p.title} className="h-4 w-4 accent-[var(--p-accent-line)]" />
                 </td>
                 <td className="px-3 py-2">
                   <Link href={`/panel/urunler/${p.id}`} className="flex items-center gap-3 group">
@@ -374,8 +374,8 @@ export default function UrunlerClient({
       {/* ── Mobil kartlar ── */}
       <div className="space-y-2 sm:hidden">
         {satirlar.map((p) => (
-          <div key={p.id} className={cn('flex items-center gap-3 rounded-[6px] border border-[var(--p-line)] bg-[var(--p-surface)] p-3', secili.has(p.id) && 'border-[var(--p-accent)]')}>
-            <input type="checkbox" checked={secili.has(p.id)} onChange={() => toggle(p.id)} aria-label={p.title} className="h-5 w-5 shrink-0 accent-[var(--p-accent)]" />
+          <div key={p.id} className={cn('flex items-center gap-3 rounded-[6px] border border-[var(--p-line)] bg-[var(--p-surface)] p-3', secili.has(p.id) && 'border-[var(--p-accent-line)]')}>
+            <input type="checkbox" checked={secili.has(p.id)} onChange={() => toggle(p.id)} aria-label={p.title} className="h-5 w-5 shrink-0 accent-[var(--p-accent-line)]" />
             <Link href={`/panel/urunler/${p.id}`} className="flex min-w-0 flex-1 items-center gap-3">
               <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
                 {p.image && <Image src={p.image} unoptimized={isRemoteMedia(p.image)} alt="" width={48} height={48} sizes="48px" className="h-12 w-12 object-cover" />}

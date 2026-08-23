@@ -196,7 +196,7 @@ export default function BlogClient({ yazilar }: { yazilar: YaziSatiri[] }) {
                   <PInput inputMode="numeric" value={String(form.readTime)} onChange={(e) => setForm({ ...form, readTime: Number(e.target.value) || 1 })} />
                 </div>
                 <label className="col-span-2 flex min-h-[44px] cursor-pointer items-center gap-2 text-[13px]">
-                  <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} className="h-4 w-4 accent-[var(--p-accent)]" />
+                  <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} className="h-4 w-4 accent-[var(--p-accent-line)]" />
                   Yayında
                 </label>
               </div>

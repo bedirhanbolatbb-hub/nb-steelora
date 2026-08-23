@@ -39,7 +39,7 @@ export default async function SiparisTamamlandiPage({
         </Link>
         <Link
           href="/urunler"
-          className="inline-block border border-line text-ink-soft text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:border-accent hover:text-accent-deep transition-all"
+          className="inline-block border border-line text-ink-soft text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:border-accent-line hover:text-accent-deep transition-all"
         >
           Alışverişe Devam
         </Link>

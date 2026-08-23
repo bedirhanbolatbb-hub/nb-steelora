@@ -12,7 +12,7 @@ const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>
           // sayfayı otomatik yakınlaştırıyor ve kullanıcı ödeme formunda
           // yatay kaydırmaya mahkûm kalıyordu (Faz 19 ölçümü: 15/15 alan 14px).
           // Masaüstü görünümü değişmiyor.
-          'w-full border border-line bg-white px-4 py-3 text-base sm:text-sm font-body text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors',
+          'w-full border border-line bg-white px-4 py-3 text-base sm:text-sm font-body text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors',
           className
         )}
         {...props}

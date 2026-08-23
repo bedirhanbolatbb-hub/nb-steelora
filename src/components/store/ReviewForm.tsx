@@ -106,7 +106,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
               <svg
                 className={`w-8 h-8 transition-colors ${
                   star <= displayRating
-                    ? 'fill-accent text-accent'
+                    ? 'fill-accent-line text-accent-line'
                     : 'fill-none text-line'
                 }`}
                 viewBox="0 0 24 24"
@@ -203,7 +203,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
           required
           rows={4}
           maxLength={1000}
-          className="w-full border border-line bg-white px-4 py-3 text-sm font-body text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors resize-none"
+          className="w-full border border-line bg-white px-4 py-3 text-sm font-body text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors resize-none"
         />
         <p className="text-[10px] font-body text-muted mt-1 text-right">
           {form.body.length}/1000

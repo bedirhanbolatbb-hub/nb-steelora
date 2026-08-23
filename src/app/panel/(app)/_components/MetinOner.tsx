@@ -116,7 +116,7 @@ export default function MetinOner({
                   onSec(m)
                   setOneriler(null)
                 }}
-                className="w-full rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface-muted)] px-3 py-2 text-left text-[12px] leading-relaxed text-[var(--p-ink)] transition-colors hover:border-[var(--p-accent)] hover:bg-[var(--p-surface)]"
+                className="w-full rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface-muted)] px-3 py-2 text-left text-[12px] leading-relaxed text-[var(--p-ink)] transition-colors hover:border-[var(--p-accent-line)] hover:bg-[var(--p-surface)]"
               >
                 {m}
               </button>

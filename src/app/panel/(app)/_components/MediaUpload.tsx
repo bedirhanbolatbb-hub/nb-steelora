@@ -103,7 +103,7 @@ export default function MediaUpload({
         type="button"
         onClick={() => girisRef.current?.click()}
         disabled={yuzde !== null}
-        className="flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-[4px] border border-dashed border-[var(--p-line)] bg-[var(--p-surface)] px-3 py-2 text-[12px] text-[var(--p-ink-soft)] hover:border-[var(--p-accent)] hover:text-[var(--p-ink)] transition-colors disabled:opacity-60"
+        className="flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-[4px] border border-dashed border-[var(--p-line)] bg-[var(--p-surface)] px-3 py-2 text-[12px] text-[var(--p-ink-soft)] hover:border-[var(--p-accent-line)] hover:text-[var(--p-ink)] transition-colors disabled:opacity-60"
       >
         <ImagePlus size={14} />
         {yuzde === null ? etiket : `Yükleniyor… %${yuzde}`}
@@ -111,7 +111,7 @@ export default function MediaUpload({
       {yuzde !== null && (
         <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[var(--p-line)]">
           <div
-            className="h-full bg-[var(--p-accent)] transition-[width] duration-200"
+            className="h-full bg-[var(--p-accent-line)] transition-[width] duration-200"
             style={{ width: `${yuzde}%` }}
           />
         </div>

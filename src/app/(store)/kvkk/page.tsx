@@ -2,6 +2,8 @@ import LegalPageLayout from '@/components/store/LegalPageLayout'
 import { kunyeGetir, kunyeHtml } from '@/lib/legal/veriSorumlusu'
 import { HAKLAR_HTML, YURTDISI_HTML, basvuruHtml } from '@/lib/legal/metinler'
 import { hesapSilmeMetniGetir } from '@/lib/legal/hesapSilmeMetni'
+import { createServiceClient } from '@/lib/supabase/service'
+import { KVKK_SURUMU, surumBloguHtml } from '@/lib/legal/surum'
 
 export const metadata = { title: 'KVKK Aydınlatma Metni' }
 export const dynamic = 'force-dynamic'
@@ -13,7 +15,18 @@ export const dynamic = 'force-dynamic'
  * ölçüm paragrafı. Metin taslaktır; avukat onayı ayrı yürüyor.
  */
 export default async function KvkkPage() {
-  const [kunye, hesapSilmeBlok] = await Promise.all([kunyeGetir(), hesapSilmeMetniGetir()])
+  const supabase = createServiceClient()
+  const [kunye, hesapSilmeBlok, surumSatiri] = await Promise.all([
+    kunyeGetir(),
+    hesapSilmeMetniGetir(),
+    // Faz 26: sürüm ve yürürlük tarihi bu sayfada HİÇ yoktu. Panelden
+    // düzenlenebilir; boşsa koddaki değerler basılır.
+    supabase
+      .from('site_content')
+      .select('key, value')
+      .in('key', ['kvkk_surum', 'kvkk_yururluk'])
+      .then(({ data }) => Object.fromEntries((data || []).map((r: any) => [r.key, (r.value || '').trim()]))),
+  ])
 
   // Künye panelden doldurulmadıysa mevcut asgari bilgiyle basılır — sayfa
   // hiçbir koşulda "veri sorumlusu" başlığı olmadan yayına çıkmaz.
@@ -88,6 +101,11 @@ Süre sonunda verileriniz silinir, yok edilir veya anonim hâle getirilir.
     HAKLAR_HTML,
     hesapSilmeBlok,
     basvuruHtml(kunye.eposta, kunye.kep, kunye.adres),
+    surumBloguHtml(
+      KVKK_SURUMU,
+      { surum: surumSatiri.kvkk_surum, yururluk: surumSatiri.kvkk_yururluk },
+      'Metin güncellendiğinde bu tarih değişir; hangi sürüme tabi olduğunuzu buradan görebilirsiniz.'
+    ),
   ].join('\n')
 
   return (

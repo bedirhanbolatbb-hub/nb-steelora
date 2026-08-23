@@ -9,7 +9,7 @@ import {
   YURTDISI_HTML,
   basvuruHtml,
 } from '@/lib/legal/metinler'
-import { CONSENT_VERSION } from '@/lib/analytics/consent'
+import { CEREZ_SURUMU, surumBloguHtml } from '@/lib/legal/surum'
 import { hesapSilmeMetniGetir } from '@/lib/legal/hesapSilmeMetni'
 
 export const metadata = { title: 'Çerez Politikası' }
@@ -50,10 +50,6 @@ export default async function CerezPolitikasiPage() {
   const [kunye, hesapSilmeBlok] = await Promise.all([kunyeGetir(), hesapSilmeMetniGetir()])
 
   const giris = icerik.cerez_politikasi || GIRIS_TASLAK
-  // Sürüm rıza kaydıyla aynı olmalı: panelde boşsa koddaki rıza sürümü basılır.
-  const surum = icerik.cerez_politikasi_surum || CONSENT_VERSION
-  // Yürürlük tarihi GG.AA.YYYY biçiminde; boşsa satır hiç basılmaz.
-  const yururluk = icerik.cerez_politikasi_yururluk || ''
 
   const bolumler = [
     kunyeHtml(kunye),
@@ -77,15 +73,15 @@ işlevler çalışmayabilir.
 Kişisel verilerinizin korunmasına ilişkin genel bilgilendirme için
 <a href="/kvkk">KVKK Aydınlatma Metni</a> sayfamızı inceleyebilirsiniz.
 </p>`.trim(),
-    `
-<hr>
-<p><small>
-<strong>Sürüm:</strong> ${surum}<br>
-${yururluk ? `<strong>Yürürlük tarihi:</strong> ${yururluk}<br>` : ''}
-Bu politikanın sürümü, çerez tercihinizi kaydederken tutulan sürüm bilgisiyle aynıdır; böylece
+    // Sürüm + yürürlük TEK KAYNAKTAN (Faz 26). Panel alanları boşken yürürlük
+    // satırı tamamen düşüyordu; artık koddaki tarihe düşer.
+    surumBloguHtml(
+      CEREZ_SURUMU,
+      { surum: icerik.cerez_politikasi_surum, yururluk: icerik.cerez_politikasi_yururluk },
+      `Bu politikanın sürümü, çerez tercihinizi kaydederken tutulan sürüm bilgisiyle aynıdır; böylece
 hangi metin sürümüne onay verdiğiniz izlenebilir. Politika güncellendiğinde tercihiniz yeniden
-sorulur.
-</small></p>`.trim(),
+sorulur.`
+    ),
   ].filter(Boolean)
 
   return (

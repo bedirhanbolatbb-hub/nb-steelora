@@ -251,7 +251,7 @@ export default async function UrunDetayPage({
           {stock > 0 ? (
             badge && (
               <p className="mt-3">
-                <span className="bg-surface border border-accent text-accent-deep text-[10px] px-2.5 py-1 font-body font-medium uppercase tracking-[0.15em] rounded-[2px]">
+                <span className="bg-surface border border-accent-line text-accent-deep text-[10px] px-2.5 py-1 font-body font-medium uppercase tracking-[0.15em] rounded-[2px]">
                   {badge.label}
                 </span>
               </p>
@@ -327,7 +327,7 @@ export default async function UrunDetayPage({
                       <ul className="space-y-1.5 pt-1">
                         {cleaned.bullets.map((bullet) => (
                           <li key={bullet} className="flex items-start gap-2">
-                            <span className="text-accent leading-none mt-1">•</span>
+                            <span className="text-accent-line leading-none mt-1">•</span>
                             <span>{bullet}</span>
                           </li>
                         ))}

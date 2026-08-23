@@ -369,7 +369,7 @@ export default function KurasyonClient({
                       type="checkbox"
                       checked={s.is_active}
                       onChange={(e) => slaytGuncelle(s.id, { is_active: e.target.checked })}
-                      className="h-4 w-4 accent-[var(--p-accent)]"
+                      className="h-4 w-4 accent-[var(--p-accent-line)]"
                     />
                     Aktif
                   </label>

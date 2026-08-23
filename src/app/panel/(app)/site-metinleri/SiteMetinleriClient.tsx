@@ -159,11 +159,42 @@ const GRUPLAR: Grup[] = [
   },
   {
     baslik: 'Hukuki metinler',
-    neyiEtkiler: 'Çerez politikası sayfasında ve rıza bandında kullanılır.',
+    neyiEtkiler:
+      'Çerez politikası, KVKK aydınlatma metni ve mesafeli satış sözleşmesi sayfalarının altındaki sürüm satırında görünür.',
     alanlar: [
       { anahtar: 'cerez_politikasi', etiket: 'Çerez politikası', yardim: 'Sayfanın giriş metni.', cokSatir: true },
-      { anahtar: 'cerez_politikasi_surum', etiket: 'Politika sürümü', yardim: 'Metni esaslı değiştirdiğinizde artırın. Örnek: 2026-08' },
-      { anahtar: 'cerez_politikasi_yururluk', etiket: 'Yürürlük tarihi', yardim: 'Örnek: 18 Ağustos 2026' },
+      {
+        anahtar: 'cerez_politikasi_surum',
+        etiket: 'Çerez politikası sürümü',
+        yardim:
+          'Boş bırakırsanız otomatik sürüm kullanılır. Metni esaslı değiştirdiğinizde artırın — müşteriye çerez tercihi yeniden sorulur.',
+      },
+      {
+        anahtar: 'cerez_politikasi_yururluk',
+        etiket: 'Çerez politikası yürürlük tarihi',
+        yardim: 'Boş bırakırsanız otomatik tarih kullanılır. Örnek: 2026-08-23',
+      },
+      {
+        anahtar: 'kvkk_surum',
+        etiket: 'KVKK metni sürümü',
+        yardim: 'Boş bırakırsanız otomatik sürüm kullanılır.',
+      },
+      {
+        anahtar: 'kvkk_yururluk',
+        etiket: 'KVKK metni yürürlük tarihi',
+        yardim: 'Boş bırakırsanız otomatik tarih kullanılır. Örnek: 2026-08-23',
+      },
+      {
+        anahtar: 'mesafeli_surum',
+        etiket: 'Mesafeli satış sözleşmesi sürümü',
+        yardim:
+          'Boş bırakırsanız otomatik sürüm kullanılır. Müşterinin onayladığı sürüm siparişe kaydedilir.',
+      },
+      {
+        anahtar: 'mesafeli_yururluk',
+        etiket: 'Mesafeli satış sözleşmesi yürürlük tarihi',
+        yardim: 'Boş bırakırsanız otomatik tarih kullanılır. Örnek: 2026-08-23',
+      },
       { anahtar: 'hesap_silme_metni', etiket: 'Hesap silme açıklaması', yardim: 'Hesabım ekranında silme bölümünde görünür.', cokSatir: true },
     ],
   },
@@ -267,8 +298,8 @@ function HeroSablonKutusu({
             className={
               'rounded-[4px] border px-3 py-2 text-left transition-colors ' +
               (secili === sablon.kimlik
-                ? 'border-[var(--p-accent)] bg-[var(--p-surface)]'
-                : 'border-[var(--p-line)] bg-[var(--p-surface)] hover:border-[var(--p-accent)]')
+                ? 'border-[var(--p-accent-line)] bg-[var(--p-surface)]'
+                : 'border-[var(--p-line)] bg-[var(--p-surface)] hover:border-[var(--p-accent-line)]')
             }
           >
             <span className="block text-[12px] font-medium text-[var(--p-ink)]">

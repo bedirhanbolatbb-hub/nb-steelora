@@ -94,7 +94,7 @@ export default function YorumlarClient({ satirlar }: { satirlar: YorumSatiri[] }
       />
 
       {secili.size > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-[6px] border border-[var(--p-accent)]/40 bg-[#f5efe2] px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 rounded-[6px] border border-[var(--p-accent-line)]/40 bg-[#f5efe2] px-3 py-2">
           <p className="text-[13px] font-medium">{secili.size} seçili</p>
           {tab === 'bekleyen' && (
             <PButton variant="ghost" disabled={isleniyor} onClick={() => onayla([...secili])}>
@@ -122,7 +122,7 @@ export default function YorumlarClient({ satirlar }: { satirlar: YorumSatiri[] }
             key={y.id}
             className={cn(
               'rounded-[6px] border bg-[var(--p-surface)] p-3',
-              secili.has(y.id) ? 'border-[var(--p-accent)]' : 'border-[var(--p-line)]'
+              secili.has(y.id) ? 'border-[var(--p-accent-line)]' : 'border-[var(--p-line)]'
             )}
           >
             <div className="flex items-start gap-3">
@@ -131,7 +131,7 @@ export default function YorumlarClient({ satirlar }: { satirlar: YorumSatiri[] }
                 checked={secili.has(y.id)}
                 onChange={() => toggle(y.id)}
                 aria-label="Seç"
-                className="mt-1 h-5 w-5 shrink-0 accent-[var(--p-accent)]"
+                className="mt-1 h-5 w-5 shrink-0 accent-[var(--p-accent-line)]"
               />
               <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
                 {y.urunGorsel && (
@@ -147,7 +147,7 @@ export default function YorumlarClient({ satirlar }: { satirlar: YorumSatiri[] }
                   ) : (
                     <span className="text-[13px] font-medium">{y.urunAd}</span>
                   )}
-                  <span className="flex items-center gap-0.5 text-[var(--p-accent)]">
+                  <span className="flex items-center gap-0.5 text-[var(--p-accent-line)]">
                     {Array.from({ length: y.puan }, (_, i) => (
                       <Star key={i} size={12} fill="currentColor" />
                     ))}

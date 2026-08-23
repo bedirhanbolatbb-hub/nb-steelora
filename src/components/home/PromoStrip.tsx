@@ -29,7 +29,7 @@ export default function PromoStrip({ bant }: { bant: VitrinBandi | null }) {
   if (!bant?.metin) return null
 
   return (
-    <section className="border-y border-accent/30 bg-bg">
+    <section className="border-y border-accent-line/30 bg-bg">
       <Link
         href={bant.hedef}
         className="mx-auto flex max-w-[1400px] flex-wrap items-baseline justify-center gap-x-3 gap-y-1 px-4 py-3.5 text-center transition-colors hover:bg-accent-soft/40 lg:px-8"

@@ -29,7 +29,7 @@ export default function WhyUs() {
             data-reveal
             style={{ '--reveal-delay': `${i * 50}ms` } as React.CSSProperties}
           >
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-accent/40 text-accent-deep">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-accent-line/40 text-accent-deep">
               <Icon size={18} strokeWidth={1.4} />
             </span>
             <h3 className="mt-3 text-[11px] font-body font-semibold uppercase tracking-[0.16em] text-ink">

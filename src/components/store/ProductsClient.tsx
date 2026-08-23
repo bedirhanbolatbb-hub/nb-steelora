@@ -244,7 +244,7 @@ function ProductsInner({
           {/* Mobil filtre girişi — masaüstünde kenar çubuğu zaten görünür */}
           <button
             onClick={() => setFiltersOpen(true)}
-            className="lg:hidden flex items-center gap-2 px-4 py-2 border border-line bg-white font-body text-[12px] text-ink hover:border-accent transition-colors"
+            className="lg:hidden flex items-center gap-2 px-4 py-2 border border-line bg-white font-body text-[12px] text-ink hover:border-accent-line transition-colors"
           >
             <SlidersHorizontal size={14} />
             Filtrele
@@ -254,7 +254,7 @@ function ProductsInner({
             aria-label="Sıralama"
             value={currentParams.siralama || ''}
             onChange={(e) => updateParams({ siralama: e.target.value })}
-            className="w-full sm:w-auto px-4 py-2 border border-line bg-white font-body text-[12px] text-ink focus:border-accent focus:outline-none transition-colors"
+            className="w-full sm:w-auto px-4 py-2 border border-line bg-white font-body text-[12px] text-ink focus:border-accent-line focus:outline-none transition-colors"
           >
             {SIRALAMA_SECENEKLERI.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -298,7 +298,7 @@ function ProductsInner({
             onClick={() => updateParams({ tip: '' })}
             className={`px-3 py-1.5 text-[11px] font-body border transition-colors ${
               !currentParams.tip
-                ? 'border-accent text-accent-deep'
+                ? 'border-accent-line text-accent-deep'
                 : 'border-line text-ink-soft hover:text-ink'
             }`}
           >
@@ -310,7 +310,7 @@ function ProductsInner({
               onClick={() => updateParams({ tip: currentParams.tip === chip.value ? '' : chip.value })}
               className={`px-3 py-1.5 text-[11px] font-body border transition-colors ${
                 currentParams.tip === chip.value
-                  ? 'border-accent text-accent-deep'
+                  ? 'border-accent-line text-accent-deep'
                   : 'border-line text-ink-soft hover:text-ink'
               }`}
             >

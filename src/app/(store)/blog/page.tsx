@@ -39,7 +39,7 @@ export default async function BlogPage() {
             <Link
               key={post.id}
               href={`/blog/${post.slug}`}
-              className="group flex flex-col bg-surface border border-line rounded-[4px] overflow-hidden hover:border-accent/50 transition-colors"
+              className="group flex flex-col bg-surface border border-line rounded-[4px] overflow-hidden hover:border-accent-line/50 transition-colors"
               data-reveal
               style={{ '--reveal-delay': `${(i % 3) * 50}ms` } as React.CSSProperties}
             >
@@ -81,7 +81,7 @@ export default async function BlogPage() {
                     {post.excerpt}
                   </p>
                 )}
-                <span className="mt-4 pt-1 text-[11px] uppercase tracking-[0.15em] font-body font-medium text-ink border-b border-accent pb-0.5 self-start">
+                <span className="mt-4 pt-1 text-[11px] uppercase tracking-[0.15em] font-body font-medium text-ink border-b border-accent-line pb-0.5 self-start">
                   Devamını Oku →
                 </span>
               </div>

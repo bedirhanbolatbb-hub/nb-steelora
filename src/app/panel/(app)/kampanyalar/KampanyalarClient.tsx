@@ -959,7 +959,7 @@ export default function KampanyalarClient({
               type="checkbox"
               checked={form.is_active}
               onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-              className="h-4 w-4 accent-[var(--p-accent)]"
+              className="h-4 w-4 accent-[var(--p-accent-line)]"
             />
             Aktif — vitrinde geçerli
           </label>
