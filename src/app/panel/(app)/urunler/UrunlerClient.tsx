@@ -110,6 +110,59 @@ export default function UrunlerClient({
       return next
     })
 
+  // ── Faz 21: toplu açıklama üretimi ─────────────────────────────────────
+  // İki adım: önce önizleme (hiçbir şey yazılmaz), BB listeyi görüp
+  // onaylayınca kaydetme. Tek adımda yazmak, onlarca ürünün açıklamasını
+  // görmeden değiştirmek olurdu.
+  type Onizleme = {
+    secili: number
+    uretilecek: { id: string; ad: string; metin: string }[]
+    atlanan: number
+    veriYok: { id: string; ad: string }[]
+  }
+  const [aciklamaOnizleme, setAciklamaOnizleme] = useState<Onizleme | null>(null)
+
+  const aciklamaOnizle = async () => {
+    setIsleniyor(true)
+    try {
+      const res = await fetch('/api/panel/products/aciklama-uret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [...secili], action: 'onizle' }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error || 'Önizleme alınamadı')
+      setAciklamaOnizleme(data)
+    } catch (e: any) {
+      toast(e.message, 'danger')
+    }
+    setIsleniyor(false)
+  }
+
+  const aciklamaUygula = async () => {
+    setIsleniyor(true)
+    try {
+      const res = await fetch('/api/panel/products/aciklama-uret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [...secili], action: 'uygula' }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error || 'Kaydedilemedi')
+      toast(
+        `${data.yazilan} ürüne açıklama yazıldı` +
+          (data.atlanan ? ` · ${data.atlanan} üründe açıklama zaten var, atlandı` : ''),
+        'success'
+      )
+      setAciklamaOnizleme(null)
+      setSecili(new Set())
+      router.refresh()
+    } catch (e: any) {
+      toast(e.message, 'danger')
+    }
+    setIsleniyor(false)
+  }
+
   const topluIslem = async (action: string, badge?: string) => {
     setIsleniyor(true)
     try {
@@ -212,6 +265,9 @@ export default function UrunlerClient({
           </PButton>
           <PButton variant="ghost" onClick={() => topluIslem('clear_featured')} disabled={isleniyor}>
             Öne çıkarma
+          </PButton>
+          <PButton variant="ghost" onClick={aciklamaOnizle} disabled={isleniyor}>
+            Açıklamayı verilerden üret
           </PButton>
           <button
             onClick={() => setSecili(new Set())}
@@ -328,6 +384,77 @@ export default function UrunlerClient({
           </div>
         </div>
       )}
+
+      {/* ── Toplu açıklama önizlemesi (Faz 21) ── */}
+      <PDialog
+        open={aciklamaOnizleme !== null}
+        onClose={() => setAciklamaOnizleme(null)}
+        title="Açıklama üretimi — önizleme"
+        footer={
+          <>
+            <PButton variant="ghost" onClick={() => setAciklamaOnizleme(null)}>
+              Vazgeç
+            </PButton>
+            <PButton
+              onClick={aciklamaUygula}
+              disabled={isleniyor || !aciklamaOnizleme?.uretilecek.length}
+            >
+              {isleniyor
+                ? 'Yazılıyor…'
+                : `${aciklamaOnizleme?.uretilecek.length ?? 0} ürüne yaz`}
+            </PButton>
+          </>
+        }
+      >
+        {aciklamaOnizleme && (
+          <div className="space-y-3">
+            <p className="text-[12px] text-[var(--p-muted)]">
+              {aciklamaOnizleme.secili} ürün seçildi.
+              {aciklamaOnizleme.atlanan > 0 && (
+                <>
+                  {' '}
+                  <strong>{aciklamaOnizleme.atlanan} üründe açıklama zaten var, atlandı.</strong>
+                </>
+              )}
+              {aciklamaOnizleme.veriYok.length > 0 && (
+                <> {aciklamaOnizleme.veriYok.length} üründe metin üretecek veri yok.</>
+              )}
+            </p>
+
+            {aciklamaOnizleme.uretilecek.length === 0 ? (
+              <p className="rounded-[4px] bg-[var(--p-surface-muted)] px-3 py-2 text-[13px] text-[var(--p-muted)]">
+                Yazılacak ürün yok.
+              </p>
+            ) : (
+              <ul className="max-h-[46vh] space-y-2 overflow-y-auto">
+                {aciklamaOnizleme.uretilecek.map((u) => (
+                  <li
+                    key={u.id}
+                    className="rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface-muted)] px-3 py-2"
+                  >
+                    <p className="text-[12px] font-medium text-[var(--p-ink)]">{u.ad}</p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-[var(--p-ink-soft)]">{u.metin}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {aciklamaOnizleme.veriYok.length > 0 && (
+              <div className="rounded-[4px] bg-[var(--p-warning-bg)] px-3 py-2">
+                <p className="text-[12px] text-[var(--p-warning)]">
+                  Veri yetersiz — bunlara dokunulmayacak:{' '}
+                  {aciklamaOnizleme.veriYok.map((v) => v.ad).join(', ')}
+                </p>
+              </div>
+            )}
+
+            <p className="text-[11px] leading-relaxed text-[var(--p-muted)]">
+              Metinler yalnız üründe KAYITLI veriden üretilir (kategori, malzeme, başlıktaki
+              renk/taş, ölçü). Özellik uydurulmaz. Açıklaması dolu ürünlere dokunulmaz.
+            </p>
+          </div>
+        )}
+      </PDialog>
 
       {/* ── Rozet atama dialog'u ── */}
       <PDialog
