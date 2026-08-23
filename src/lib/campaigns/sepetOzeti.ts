@@ -52,6 +52,14 @@ export async function sepetOzetiHesapla(
 
     let eslesen = kodSatiri ? kodlular.find((k) => k.id === kodSatiri.id) : null
 
+    // Zaten OTOMATİK uygulanan bir kampanyanın kodunu yazmak hata değildir.
+    // NB30 kod gerektirmeyen bir kampanya (requires_code=false) ama reklamda
+    // "NB30" yazdığı için müşteri kutuya giriyordu; kod `kodlular` listesinde
+    // olmadığından "Geçersiz ya da süresi dolmuş kod" dönüyor, ödeme ucu da
+    // bunu 400'e çevirip siparişi kesiyordu — indirim zaten uygulanmışken
+    // müşteri ödeme yapamıyordu (Faz 19 ölçümü).
+    const zatenOtomatik = kodSatiri ? otomatikler.some((k) => k.id === kodSatiri.id) : false
+
     // 2) Kişiye özel kupon (ikinci sipariş kuponu gibi) — kuralı şablon
     //    kampanyadan gelir, sahibi e-postaya bağlıdır.
     if (!eslesen) {
@@ -65,7 +73,7 @@ export async function sepetOzetiHesapla(
       }
     }
 
-    if (!eslesen && !kodHatasi) {
+    if (!eslesen && !kodHatasi && !zatenOtomatik) {
       kodHatasi = 'Geçersiz ya da süresi dolmuş kod'
     } else if (eslesen) {
       adaylar.push(eslesen)
