@@ -41,7 +41,7 @@ export default async function HomePage() {
       )}
 
       {/* 2 · Promo şeridi */}
-      <PromoStrip campaign={veri.campaign} />
+      <PromoStrip bant={veri.bant} />
 
       {/* 3 · Kategoriler */}
       <CategoryRail categoryImages={veri.categoryImages} />

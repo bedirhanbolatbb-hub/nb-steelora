@@ -1,6 +1,9 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { CATEGORIES } from '@/lib/catalog/categories'
+import { vitrinMetni, vitrinHedefi } from '@/lib/campaigns/vitrinMetni'
+import { tipCevir, kapsamCevir } from '@/lib/campaigns/yukle'
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
@@ -714,12 +717,20 @@ export default function KampanyalarClient({
             )}
           </div>
 
-          {form.type === 'banner' && (
-            <div>
-              <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Band metni</label>
-              <PInput value={form.banner_text} onChange={(e) => setForm({ ...form, banner_text: e.target.value })} />
-            </div>
-          )}
+          {/* Vitrin metni ARTIK HER TİPTE görünür (Faz 20). Eskiden yalnız
+              type='banner' kampanyalarda çıkıyordu; bu yüzden NB30'un metni
+              hiç yazılamamıştı ve bant kampanyanın PANEL ADINI basıyordu. */}
+          <div>
+            <label className="mb-1 block text-[12px] text-[var(--p-muted)]">
+              Vitrin metni <span className="text-[var(--p-muted)]">(boş bırakılırsa otomatik üretilir)</span>
+            </label>
+            <PInput
+              value={form.banner_text}
+              onChange={(e) => setForm({ ...form, banner_text: e.target.value })}
+              placeholder="ör. Yaza merhaba: tüm ürünlerde %30"
+            />
+            <VitrinOnizleme form={form} />
+          </div>
           <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-[13px]">
             <input
               type="checkbox"
@@ -748,6 +759,84 @@ export default function KampanyalarClient({
       >
         <p>Silme geri alınamaz. Geçmiş siparişlerdeki indirim kayıtları etkilenmez.</p>
       </PDialog>
+    </div>
+  )
+}
+
+/**
+ * "Vitrinde şöyle görünecek" satırı (Faz 20).
+ *
+ * Metni ve uygunluk kararını ÜRETİMDEKİ fonksiyonlardan alır (vitrinMetni,
+ * tipCevir, kapsamCevir) — önizlemenin gerçekten olacak şeyi göstermesi buna
+ * bağlı. Kod gerektiren ve kişiye özel kupon üreten kampanyalar bantta
+ * çıkmaz; önizleme bunu da söyler.
+ */
+function VitrinOnizleme({ form }: { form: Form }) {
+  const koduVar = form.type === 'discount_code'
+  const ham: any = {
+    type: form.type,
+    scope: form.scope,
+    discount_type: form.discount_type,
+  }
+  const tip = tipCevir(ham)
+
+  if (koduVar) {
+    return (
+      <p className="mt-2 rounded-[4px] bg-[var(--p-surface-muted)] px-3 py-2 text-[11px] leading-relaxed text-[var(--p-muted)]">
+        <strong>Vitrinde görünmez.</strong> Kod gerektiren kampanyalar bantta duyurulmaz —
+        müşteriye kodu kendisi girmesi gereken bir indirimi bant olarak göstermek yanıltıcı olur.
+      </p>
+    )
+  }
+
+  if (!tip) {
+    return (
+      <p className="mt-2 rounded-[4px] bg-[var(--p-surface-muted)] px-3 py-2 text-[11px] text-[var(--p-muted)]">
+        Bu tip indirim üretmiyor; vitrin bandında görünmez.
+      </p>
+    )
+  }
+
+  const k: any = {
+    id: '',
+    ad: form.name,
+    tip,
+    kapsam: kapsamCevir(ham),
+    hedefler: form.targets ?? [],
+    deger: Number(form.discount_value) || null,
+    minSepet: Number(form.min_cart_amount) || 0,
+    minAdet: Number(form.min_item_count) || 0,
+    alAdet: Number(form.buy_quantity) || null,
+    odeAdet: Number(form.pay_quantity) || null,
+    kademeler: (form.tiers ?? []).map((t) => ({
+      minTutar: Number(t.minTutar) || 0,
+      oran: Number(t.oran) || 0,
+    })),
+    birlesebilir: form.combinable,
+    oncelik: 100,
+    ilkAlisverisMi: form.first_order_only,
+    sadeceUyelere: form.members_only,
+    koduVar: false,
+  }
+
+  const metin = vitrinMetni(k, form.banner_text, (slug) => CATEGORIES.find((c) => c.slug === slug)?.title)
+
+  if (!metin) {
+    return (
+      <p className="mt-2 rounded-[4px] bg-[var(--p-warning-bg)] px-3 py-2 text-[11px] text-[var(--p-warning)]">
+        Metin üretilemedi — bant <strong>hiç basılmaz</strong>. Oran/tutar alanlarını doldurun
+        ya da vitrin metnini elle yazın.
+      </p>
+    )
+  }
+
+  return (
+    <div className="mt-2 rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface-muted)] px-3 py-2">
+      <p className="text-[10px] uppercase tracking-[0.1em] text-[var(--p-muted)]">Vitrinde şöyle görünecek</p>
+      <p className="mt-1 text-[12px] uppercase tracking-[0.14em] text-[var(--p-ink)]">{metin}</p>
+      <p className="mt-1 text-[11px] text-[var(--p-muted)]">
+        Tıklayınca: <code>{vitrinHedefi(k)}</code>
+      </p>
     </div>
   )
 }

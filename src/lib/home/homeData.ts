@@ -3,7 +3,7 @@ import { ShownProducts, MAX_SECTION_ITEMS, TARGET_SECTION_ITEMS } from './sectio
 import { LISTING_COLUMNS } from '@/lib/catalog/listing'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import { firstSentence, type CollectionCard } from '@/lib/collections'
-import { yururlukte } from '@/lib/campaigns/pricing'
+import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 
 /**
  * Anasayfanın TEK veri katmanı (Faz 9A — logo gecikmesi düzeltmesi).
@@ -38,7 +38,8 @@ export type HomeData = {
   featured: any[]
   newArrivals: any[]
   collections: CollectionCard[]
-  campaign: any | null
+  /** Vitrin bandı — kampanya değil, basılacak metin/hedef (Faz 20). */
+  bant: { metin: string; hedef: string; bitis: string | null } | null
   categoryImages: Record<string, string | null>
   blogPosts: any[]
 }
@@ -83,12 +84,15 @@ async function yukle(): Promise<HomeData> {
   const supabase = createServiceClient()
   const now = new Date().toISOString()
 
+  // Vitrin bandı ve kart fiyatları AYNI kaynaktan (Faz 20): kod gerektiren
+  // ve kişiye özel kupon şablonları burada zaten elenmiş oluyor.
+  const vitrin = await vitrinIndirimiGetir()
+
   const [
     contentRes,
     settingsRes,
     poolRes,
     collectionsRes,
-    campaignRes,
     blogRes,
   ] = await Promise.all([
     supabase.from('site_content').select('key, value'),
@@ -104,15 +108,6 @@ async function yukle(): Promise<HomeData> {
       .select('id, slug, name, description, image_url, product_ids')
       .eq('is_active', true)
       .order('sort_order', { ascending: true }),
-    supabase
-      .from('campaigns')
-      .select('*')
-      .eq('is_active', true)
-      .lte('starts_at', now)
-      .or(`ends_at.is.null,ends_at.gte.${now}`)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
     supabase
       .from('blog_posts')
       .select('id, title, slug, cover_image, read_time, published_at')
@@ -219,9 +214,10 @@ async function yukle(): Promise<HomeData> {
     newArrivals,
     collections,
     // Promo şeridi: tarih penceresi sorguda süzülüyor; kullanım limiti dolmuş
-    // kampanya da basılmaz (Faz 11 — tek yürürlük kuralı).
-    campaign:
-      campaignRes.data && yururlukte(campaignRes.data as any) ? campaignRes.data : null,
+    // Bant, vitrin indirimiyle AYNI kaynaktan gelir: kod gerektiren ve
+    // kişiye özel kupon şablonları zaten dışarıda kalır, en avantajlısı
+    // seçilir, hiçbiri yoksa null döner.
+    bant: vitrin ? { metin: vitrin.metin, hedef: vitrin.hedef, bitis: vitrin.bitis } : null,
     categoryImages,
     blogPosts: blogRes.data || [],
   }

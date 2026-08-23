@@ -24,6 +24,7 @@ import { kampanyalariYukle } from '../yukle.ts'
 import { sepetiDogrula } from '../sepetDogrula.ts'
 import { sepetHesabi, kartFiyatiGosterilsinMi, kosulRozeti } from '../hesap.ts'
 import { ILK_SIPARIS_ANAHTARLARI, ilkSiparisMetni } from '../ilkSiparisMetinleri.ts'
+import { vitrinMetni, vitrinHedefi } from '../vitrinMetni.ts'
 
 /**
  * sepetOzetiHesapla()'nın çekirdeği. O dosya doğrudan import edilemiyor
@@ -135,6 +136,17 @@ async function olc(etiket: string, simdi: Date) {
 
   const feed = await feedSimulasyonu(vitrin)
   console.log(`  (b) FEED    → ${feed.uygunKalem} uygun üründen ${feed.salePriceli} tanesinde g:sale_price`)
+
+  // Vitrin bandı — vitrinIndirimiGetir null dönerse bant HİÇ basılmaz.
+  const { otomatikler: oto } = await kampanyalariYukle(supabase as any, simdi)
+  const kazanan = oto.filter((k: any) => kartFiyatiGosterilsinMi(k)).sort((a: any, b: any) => (Number(b.deger) || 0) - (Number(a.deger) || 0))[0] ?? oto[0]
+  if (!kazanan) {
+    console.log('  (f) BANT    → hiç basılmaz (uygun kampanya yok, boş şerit kalmaz)')
+  } else {
+    const { data: ham } = await supabase.from('campaigns').select('banner_text').eq('id', kazanan.id).maybeSingle()
+    const metin = vitrinMetni(kazanan as any, ham?.banner_text)
+    console.log(`  (f) BANT    → ${metin ? `"${metin}" → ${vitrinHedefi(kazanan as any)}` : 'metin üretilemedi, bant basılmaz'}`)
+  }
 
   const kodsuz = await sepetOzeti({ items: sepet, simdi })
   console.log(`  (d) SEPET (kodsuz)      → ara ${kodsuz.ozet.araToplam} · indirim ${kodsuz.ozet.indirimToplami} · toplam ${kodsuz.ozet.toplam}`)

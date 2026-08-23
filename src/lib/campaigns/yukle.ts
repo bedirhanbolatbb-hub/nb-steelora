@@ -42,8 +42,12 @@ type HamKampanya = {
   pay_quantity?: number | null
 }
 
-/** DB tipini motor tipine çevirir. */
-function tipCevir(ham: HamKampanya): KampanyaTipi | null {
+/**
+ * DB tipini motor tipine çevirir.
+ * Panel önizlemesi de bunu çağırır — "vitrinde şöyle görünecek" satırının
+ * gerçekle birebir aynı olması buna bağlı (Faz 20).
+ */
+export function tipCevir(ham: HamKampanya): KampanyaTipi | null {
   const kapsamli = (ham.scope ?? 'cart') !== 'cart'
   const yuzdeMi = (ham.discount_type ?? 'percent') === 'percent'
 
@@ -67,7 +71,7 @@ function tipCevir(ham: HamKampanya): KampanyaTipi | null {
   }
 }
 
-function kapsamCevir(ham: HamKampanya): Kapsam {
+export function kapsamCevir(ham: HamKampanya): Kapsam {
   // DB'deki İngilizce kapsam değerleri motorun Türkçe adlarına çevrilir.
   switch (ham.scope ?? 'cart') {
     case 'category':
