@@ -1,249 +1,435 @@
 'use client'
 
+import { useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useCallback, useState } from 'react'
-import { PButton, PCard, PInput, PTextarea } from '../_components/ui'
+import { PButton, PInput, PTextarea } from '../_components/ui'
 import { useToast } from '../_components/overlays'
+import MetinOner from '../_components/MetinOner'
+import { kategoriTanitimi } from '@/lib/metin/kategoriMetni'
+import { CATEGORIES } from '@/lib/catalog/categories'
+import HeroCinema from '@/components/home/HeroCinema'
+import {
+  HERO_SABLONLARI,
+  heroSablonuUygula,
+  type HeroBaglami,
+  type HeroSablonu,
+} from '@/lib/metin/heroSablonlari'
 
 /**
- * Anahtar → insan etiketi + açıklama. Bilinmeyen anahtarlar da düzenlenebilir
- * (etiket yerine anahtar adı basılır) — panel veri kaybettirmez.
+ * Site Metinleri — Faz 22'de baştan yazıldı.
+ *
+ * ESKİ HÂLİN KUSURU: sayfa mağaza sahibi için değil yazılımcı için
+ * hazırlanmıştı. Her alanın yanında teknik anahtar yazıyordu
+ * (`marquee_text`, `hero_badge`), "eyebrow" gibi terimler geçiyordu, her
+ * alanın AYRI kaydet düğmesi vardı ve doldurulduğu hâlde vitrinde hiçbir
+ * yerde görünmeyen alanlar duruyordu.
+ *
+ * ARAŞTIRMADAN GELEN KURALLAR (Shopify Polaris + Shopify tema ayarları):
+ *  · Teknik anahtar (`id`) kullanıcıya ASLA gösterilmez; kullanıcı `label`
+ *    görür. Bu mimari bir ayrım, süsleme değil.
+ *  · Etiket kısa ve isim hâlinde (1-3 kelime), cümle düzeninde.
+ *  · Yardım metni amacı açıklar; biçimli girdilerde örnek "Örnek:" ile verilir.
+ *  · Serbest metin alanlarında placeholder KULLANILMAZ — yardım metni kullanılır
+ *    (placeholder yazmaya başlayınca kayboluyor ve kontrast sorunu yaratıyor).
+ *  · İlgili ayarlar başlık altında gruplanır, grup neyi etkilediğini söyler.
+ *  · TEK kaydet: değişen alanlar bir arada kaydedilir (contextual save bar).
  */
-const ETIKETLER: Record<string, { etiket: string; not?: string; genis?: boolean }> = {
-  iade_kargo_firmasi: {
-    etiket: 'İade kargo firması (isteğe bağlı)',
-    not: 'Boş bırakın — her iadede firma, siparişin gidiş gönderisinden önerilir ve panelden seçilir. Yalnız her iadede aynı firmayı kullanıyorsanız doldurun.',
-  },
-  iade_kargo_kodu: {
-    etiket: 'İade kargo kodu (isteğe bağlı)',
-    not: 'Boş bırakın — kod firmaya göre değişir, her iade için Kargonomi panelinden üretilip onay ekranına girilir.',
-  },
-  yanit_suresi_taahhudu: {
-    etiket: 'Yanıt süresi taahhüdü',
-    not: 'ör. "1 iş günü". Boşken kargo/iade sayfasında bu cümle hiç basılmaz.',
-  },
-  marquee_text: { etiket: 'Kayan şerit (marquee)', not: 'Vitrinde birkaç dakikada güncellenir.', genis: true },
-  promo_bar_text: { etiket: 'Promo çubuğu metni', not: 'Vitrinde birkaç dakikada güncellenir.' },
-  promo_bar_emoji: { etiket: 'Promo çubuğu emojisi' },
-  hero_badge: { etiket: 'Hero — eyebrow rozeti' },
-  hero_title_line1: { etiket: 'Hero — başlık 1. satır' },
-  hero_title_line2: { etiket: 'Hero — başlık 2. satır (italik)' },
-  hero_title_line3: { etiket: 'Hero — başlık 3. satır' },
-  hero_description: { etiket: 'Hero — açıklama', genis: true },
-  hero_cta: { etiket: 'Hero — buton metni' },
-  hero_single_mode: { etiket: 'Hero tek görsel modu', not: "'true' ya da 'false'" },
-  categories_title: { etiket: 'Kategoriler bölüm başlığı' },
-  featured_order: { etiket: 'Öne çıkanlar sıra anahtarı (teknik)' },
-  instagram_url: { etiket: 'Instagram adresi', not: 'Boşsa vitrinde ikon ve şema alanı basılmaz.' },
-  facebook_url: { etiket: 'Facebook adresi', not: 'Boşsa vitrinde ikon ve şema alanı basılmaz.' },
-  x_url: { etiket: 'X (Twitter) adresi', not: 'Boşsa vitrinde ikon ve şema alanı basılmaz.' },
-  // Hukuki metinler (Faz 12) — KVKK zorunlu unsurları
-  veri_sorumlusu_unvan: { etiket: 'Veri sorumlusu — unvan', not: 'ZORUNLU. Ticari unvan ya da ad soyad. Boşsa künye eksik basılır.' },
-  veri_sorumlusu_adres: { etiket: 'Veri sorumlusu — adres', not: 'ZORUNLU. Açık adres (mahalle, cadde, no, ilçe/il).', genis: true },
-  veri_sorumlusu_eposta: { etiket: 'Veri sorumlusu — e-posta', not: 'ZORUNLU. YALNIZ e-posta adresi; KVKK başvuru kanallarında bu basılır.' },
-  veri_sorumlusu_telefon: { etiket: 'Veri sorumlusu — telefon', not: 'ZORUNLU. YALNIZ telefon; satıcı bilgilerinde ve iletişimde basılır.' },
-  veri_sorumlusu_iletisim: { etiket: 'Veri sorumlusu — iletişim (eski)', not: 'Kullanımdan kalktı. Yukarıdaki e-posta ve telefon alanlarını doldurun.' },
-  veri_sorumlusu_vergi: { etiket: 'Vergi no / MERSİS', not: 'Varsa yazın; boşsa sayfada hiç basılmaz.' },
-  veri_sorumlusu_kep: { etiket: 'KEP adresi', not: 'Varsa yazın; KVKK başvuru kanalı olarak listelenir.' },
-  veri_sorumlusu_vergi_dairesi: { etiket: 'Vergi dairesi', not: 'Ör. İstiklal Vergi Dairesi. Boşsa basılmaz.' },
-  veri_sorumlusu_mersis: { etiket: 'MERSİS numarası', not: 'Şirketse 16 hane; şahıs işletmesinde boş bırakılabilir.' },
-  veri_sorumlusu_etbis: { etiket: 'ETBİS kayıt/doğrulama', not: 'Kayıt numarası ya da https:// ile doğrulama bağlantısı.' },
-  cerez_politikasi: { etiket: 'Çerez Politikası — giriş bölümü', not: 'HTML. Boşsa taslak metin basılır. Zorunlu bölümler (tablo, haklar, yurt dışı) koddan gelir.', genis: true },
-  cerez_politikasi_surum: { etiket: 'Çerez Politikası — sürüm', not: "Rıza kaydındaki sürümle AYNI olmalı (şu an: v1.0). Boşsa koddaki sürüm basılır." },
-  cerez_politikasi_yururluk: { etiket: 'Çerez Politikası — yürürlük tarihi', not: 'GG.AA.YYYY biçiminde (ör. 17.08.2026). Boşsa satır hiç basılmaz.' },
-  analiz_notu: { etiket: 'Analiz sayfası notu', not: 'Analiz sayfasının üstünde tek satır olarak basılır. Boşaltırsanız satır tamamen kalkar.', genis: true },
-  hesap_silme_metni: { etiket: 'Hesap silme bölümü', not: 'HTML. KVKK ve Çerez Politikası sayfalarında basılır. Boşsa koddaki varsayılan metin görünür.', genis: true },
+
+type Alan = {
+  anahtar: string
+  etiket: string
+  yardim: string
+  ornek?: string
+  cokSatir?: boolean
 }
 
-const GRUPLAR: { baslik: string; anahtarlar: string[] }[] = [
-  { baslik: 'Duyurular', anahtarlar: ['marquee_text', 'promo_bar_text', 'promo_bar_emoji'] },
+type Grup = {
+  baslik: string
+  neyiEtkiler: string
+  alanlar: Alan[]
+}
+
+const KATEGORI_TANITIM_ALANLARI: Alan[] = [
+  { anahtar: 'kategori_tanitim_tum-urunler', etiket: 'Tüm ürünler', yardim: 'Tüm ürünler sayfasının başlığı altındaki tanıtım cümlesi.' },
+  ...CATEGORIES.map((c) => ({
+    anahtar: `kategori_tanitim_${c.slug}`,
+    etiket: c.title,
+    yardim: `${c.title} kategorisi sayfasının başlığı altındaki tanıtım cümlesi.`,
+  })),
+]
+
+const GRUPLAR: Grup[] = [
   {
-    baslik: 'Hero',
-    anahtarlar: ['hero_badge', 'hero_title_line1', 'hero_title_line2', 'hero_title_line3', 'hero_description', 'hero_cta', 'hero_single_mode'],
-  },
-  { baslik: 'Sosyal bağlantılar', anahtarlar: ['instagram_url', 'facebook_url', 'x_url'] },
-  {
-    baslik: 'Hukuki — veri sorumlusu künyesi',
-    anahtarlar: [
-      'veri_sorumlusu_unvan',
-      'veri_sorumlusu_adres',
-      'veri_sorumlusu_eposta',
-      'veri_sorumlusu_telefon',
-      'veri_sorumlusu_vergi_dairesi',
-      'veri_sorumlusu_vergi',
-      'veri_sorumlusu_mersis',
-      'veri_sorumlusu_kep',
-      'veri_sorumlusu_etbis',
+    baslik: 'Ana sayfa — açılış bölümü',
+    neyiEtkiler:
+      'Ana sayfayı açan büyük fotoğrafın üzerindeki yazılar. Ziyaretçinin gördüğü ilk şey burasıdır.',
+    alanlar: [
+      {
+        anahtar: 'hero_badge',
+        etiket: 'Üst etiket',
+        yardim: 'Başlığın üzerindeki küçük yazı. Boş bırakılabilir. Örnek: YENİ KOLEKSİYON',
+      },
+      { anahtar: 'hero_title_line1', etiket: 'Başlık — 1. satır', yardim: 'Büyük başlığın ilk satırı. Örnek: Her anın' },
+      { anahtar: 'hero_title_line2', etiket: 'Başlık — 2. satır', yardim: 'İkinci satır. Örnek: zarif' },
+      { anahtar: 'hero_title_line3', etiket: 'Başlık — 3. satır', yardim: 'Üçüncü satır. Boş bırakılabilir. Örnek: tanığı' },
+      {
+        anahtar: 'hero_description',
+        etiket: 'Alt açıklama',
+        yardim: 'Başlığın altındaki tek cümle. Örnek: 316L medikal çelik. Kararmaz, paslanmaz, solmaz.',
+        cokSatir: true,
+      },
+      { anahtar: 'hero_cta', etiket: 'Düğme yazısı', yardim: 'Fotoğrafın üzerindeki düğme. Örnek: Koleksiyonu Keşfet' },
     ],
   },
   {
-    baslik: 'Hukuki — çerez politikası',
-    anahtarlar: ['cerez_politikasi', 'cerez_politikasi_surum', 'cerez_politikasi_yururluk'],
-  },
-  {
-    baslik: 'Hukuki — hesap silme',
-    anahtarlar: ['hesap_silme_metni'],
-  },
-  {
-    baslik: 'İlk sipariş kuponu',
-    anahtarlar: [
-      'ilk_siparis_kupon_kodu',
-      'ilk_siparis_serit_metni',
-      'ilk_siparis_sepet_metni',
-      'ilk_siparis_bulten_metni',
-    ],
+    baslik: 'Kategori tanıtımları',
+    neyiEtkiler:
+      'Kategori sayfalarında başlığın hemen altında görünen tek cümle. Boş bırakırsanız o sayfada cümle hiç basılmaz.',
+    alanlar: KATEGORI_TANITIM_ALANLARI,
   },
   {
     baslik: 'İade ve iletişim',
-    anahtarlar: ['iade_kargo_firmasi', 'iade_kargo_kodu', 'yanit_suresi_taahhudu'],
+    neyiEtkiler:
+      'İade akışında müşteriye gönderilen e-postalarda ve kargo/iade sayfasında kullanılır.',
+    alanlar: [
+      {
+        anahtar: 'iade_kargo_firmasi',
+        etiket: 'İade kargo firması',
+        yardim:
+          'İsteğe bağlı. Boş bırakın: her iadede firma, siparişin gidiş gönderisinden önerilir ve panelden seçilir. Yalnız her iadede aynı firmayı kullanıyorsanız doldurun.',
+      },
+      {
+        anahtar: 'iade_kargo_kodu',
+        etiket: 'İade kargo kodu',
+        yardim:
+          'İsteğe bağlı. Kod firmaya göre değişir; her iade için Kargonomi panelinden üretilip onay ekranına girilir.',
+      },
+      {
+        anahtar: 'yanit_suresi_taahhudu',
+        etiket: 'Yanıt süresi',
+        yardim: 'Kargo ve iade sayfasında yazar. Boş bırakırsanız cümle hiç basılmaz. Örnek: 1 iş günü',
+      },
+      { anahtar: 'bildirim_eposta', etiket: 'Bildirim adresi', yardim: 'Yeni sipariş, iade ve yorum bildirimleri bu adrese gider.' },
+    ],
   },
-  { baslik: 'Panel — analiz', anahtarlar: ['analiz_notu'] },
-  { baslik: 'Diğer', anahtarlar: [] },
+  {
+    baslik: 'İlk sipariş kuponu',
+    neyiEtkiler:
+      'Otomatik bir indirim kampanyası YOKKEN duyuru şeridinde, sepette ve bülten teşekkürlerinde görünür. Kampanya varken hiç gösterilmez.',
+    alanlar: [
+      { anahtar: 'ilk_siparis_kupon_kodu', etiket: 'Kupon kodu', yardim: 'Duyurulacak kod. Örnek: HOSGELDIN10' },
+      {
+        anahtar: 'ilk_siparis_serit_metni',
+        etiket: 'Duyuru şeridi yazısı',
+        yardim: '{kod} ve {oran} yazdığınız yere gerçek değerler gelir. Örnek: İlk siparişinize özel %{oran} — kod: {kod}',
+      },
+      { anahtar: 'ilk_siparis_sepet_metni', etiket: 'Sepet hatırlatması', yardim: 'Kupon kutusunun altında görünür.', cokSatir: true },
+      { anahtar: 'ilk_siparis_bulten_metni', etiket: 'Bülten teşekkürü', yardim: 'Bültene abone olan kişiye gösterilir.', cokSatir: true },
+    ],
+  },
+  {
+    baslik: 'Sosyal hesaplar',
+    neyiEtkiler: 'Alt bilgide simge olarak görünür. Boş bıraktığınız hesap hiç basılmaz.',
+    alanlar: [
+      { anahtar: 'instagram_url', etiket: 'Instagram', yardim: 'Tam adres. Örnek: https://instagram.com/nbsteelora' },
+      { anahtar: 'facebook_url', etiket: 'Facebook', yardim: 'Tam adres.' },
+      { anahtar: 'x_url', etiket: 'X', yardim: 'Tam adres.' },
+    ],
+  },
+  {
+    baslik: 'Satıcı künyesi',
+    neyiEtkiler:
+      'Alt bilgide, mesafeli satış sözleşmesinde, ön bilgilendirme formunda ve cayma formunda basılır. Yasal olarak zorunludur.',
+    alanlar: [
+      { anahtar: 'veri_sorumlusu_unvan', etiket: 'Ticari unvan', yardim: 'Ticaret sicilindeki tam unvan.' },
+      { anahtar: 'veri_sorumlusu_adres', etiket: 'Açık adres', yardim: 'İade gönderileri bu adrese yapılır.', cokSatir: true },
+      { anahtar: 'veri_sorumlusu_eposta', etiket: 'E-posta', yardim: 'Müşterinin size ulaşacağı adres.' },
+      { anahtar: 'veri_sorumlusu_telefon', etiket: 'Telefon', yardim: 'Yalnız iletişim bölümünde basılır.' },
+      { anahtar: 'veri_sorumlusu_vergi_dairesi', etiket: 'Vergi dairesi', yardim: '' },
+      { anahtar: 'veri_sorumlusu_vergi', etiket: 'Vergi numarası', yardim: '' },
+      { anahtar: 'veri_sorumlusu_mersis', etiket: 'MERSİS numarası', yardim: '' },
+      { anahtar: 'veri_sorumlusu_kep', etiket: 'KEP adresi', yardim: 'Kayıtlı elektronik posta. Varsa doldurun.' },
+      {
+        anahtar: 'veri_sorumlusu_etbis',
+        etiket: 'ETBİS doğrulama adresi',
+        yardim:
+          'https:// ile başlayan tam adres yazarsanız alt bilgide TIKLANABİLİR rozet olur. Örnek: https://etbis.eticaret.gov.tr/sitedogrulama/…',
+      },
+    ],
+  },
+  {
+    baslik: 'Hukuki metinler',
+    neyiEtkiler: 'Çerez politikası sayfasında ve rıza bandında kullanılır.',
+    alanlar: [
+      { anahtar: 'cerez_politikasi', etiket: 'Çerez politikası', yardim: 'Sayfanın giriş metni.', cokSatir: true },
+      { anahtar: 'cerez_politikasi_surum', etiket: 'Politika sürümü', yardim: 'Metni esaslı değiştirdiğinizde artırın. Örnek: 2026-08' },
+      { anahtar: 'cerez_politikasi_yururluk', etiket: 'Yürürlük tarihi', yardim: 'Örnek: 18 Ağustos 2026' },
+      { anahtar: 'hesap_silme_metni', etiket: 'Hesap silme açıklaması', yardim: 'Hesabım ekranında silme bölümünde görünür.', cokSatir: true },
+    ],
+  },
+  {
+    baslik: 'Panel notları',
+    neyiEtkiler: 'Yalnız sizin göreceğiniz not; vitrinde görünmez.',
+    alanlar: [{ anahtar: 'analiz_notu', etiket: 'Analiz notu', yardim: 'Analiz ekranının başında görünür.', cokSatir: true }],
+  },
 ]
 
-
-/**
- * Tek bir metin alanı — MODÜL seviyesinde tanımlıdır.
- *
- * Daha önce bu bileşen SiteMetinleriClient'ın içinde tanımlıydı: her tuş
- * vuruşunda üst bileşen yeniden render olunca `Alan` yeni bir fonksiyon
- * referansı oluyor, React bunu farklı bir bileşen tipi sayıp input'u
- * unmount/remount ediyordu — yazarken odak kayboluyordu. Dışarı taşındığı
- * için tip artık sabit; input DOM'da kalır.
- */
-function Alan({
-  anahtar,
+function AlanKutusu({
+  alan,
   deger,
-  orijinalDeger,
-  kaydediliyor,
+  degisti,
   onDegis,
-  onKaydet,
 }: {
-  anahtar: string
+  alan: Alan
   deger: string
-  orijinalDeger: string
-  kaydediliyor: boolean
+  degisti: boolean
   onDegis: (anahtar: string, deger: string) => void
-  onKaydet: (anahtar: string) => void
 }) {
-  const meta = ETIKETLER[anahtar] ?? { etiket: anahtar }
-  const degisti = deger !== orijinalDeger
+  const kategoriSlug = alan.anahtar.startsWith('kategori_tanitim_')
+    ? alan.anahtar.replace('kategori_tanitim_', '')
+    : null
+
   return (
-    <div>
+    <div className={degisti ? 'rounded-[4px] bg-[#f5efe2]/60 p-2 -m-2' : undefined}>
       <label
-        htmlFor={`alan-${anahtar}`}
+        htmlFor={`alan-${alan.anahtar}`}
         className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]"
       >
-        {meta.etiket} <code className="ml-1 text-[10px] text-[var(--p-muted)]">{anahtar}</code>
+        {alan.etiket}
+        {degisti && <span className="ml-2 text-[10px] font-normal text-[var(--p-accent)]">kaydedilmedi</span>}
       </label>
-      <div className="flex items-start gap-2">
-        {meta.genis ? (
-          <PTextarea
-            id={`alan-${anahtar}`}
-            rows={2}
-            value={deger}
-            onChange={(e) => onDegis(anahtar, e.target.value)}
-          />
-        ) : (
-          <PInput
-            id={`alan-${anahtar}`}
-            value={deger}
-            onChange={(e) => onDegis(anahtar, e.target.value)}
-          />
-        )}
-        <PButton
-          variant={degisti ? 'primary' : 'ghost'}
-          disabled={!degisti || kaydediliyor}
-          onClick={() => onKaydet(anahtar)}
-        >
-          {kaydediliyor ? '…' : 'Kaydet'}
-        </PButton>
+      {alan.cokSatir ? (
+        <PTextarea id={`alan-${alan.anahtar}`} rows={2} value={deger} onChange={(e) => onDegis(alan.anahtar, e.target.value)} />
+      ) : (
+        <PInput id={`alan-${alan.anahtar}`} value={deger} onChange={(e) => onDegis(alan.anahtar, e.target.value)} />
+      )}
+      {alan.yardim && <p className="mt-1 text-[11px] leading-relaxed text-[var(--p-muted)]">{alan.yardim}</p>}
+
+      {kategoriSlug && (
+        <MetinOner
+          uret={() =>
+            kategoriTanitimi(
+              kategoriSlug,
+              CATEGORIES.find((c) => c.slug === kategoriSlug)?.title ?? alan.etiket
+            )
+          }
+          onSec={(m) => onDegis(alan.anahtar, m)}
+        />
+      )}
+    </div>
+  )
+}
+
+/**
+ * Hero hazır şablonları + GERÇEK önizleme (Faz 22).
+ *
+ * Önizleme vitrindeki HeroCinema bileşeninin ta kendisi — panelde ayrı bir
+ * taklit çizilmiyor, dolayısıyla "panelde başka, sitede başka" ihtimali yok.
+ * Fotoğraf kürasyondan geldiği için önizlemede yok; bileşen o durumda zaten
+ * tipografi düzenine düşüyor.
+ */
+function HeroSablonKutusu({
+  baglam,
+  degerler,
+  onUygula,
+}: {
+  baglam: HeroBaglami
+  degerler: Record<string, string>
+  onUygula: (alanlar: Record<string, string>) => void
+}) {
+  const [sira, setSira] = useState(0)
+  const [secili, setSecili] = useState<HeroSablonu['kimlik'] | null>(null)
+  const [cihaz, setCihaz] = useState<'masaustu' | 'telefon'>('masaustu')
+
+  const uygula = (kimlik: HeroSablonu['kimlik'], yeniSira: number) => {
+    setSecili(kimlik)
+    setSira(yeniSira)
+    onUygula(heroSablonuUygula(kimlik, baglam, yeniSira) as unknown as Record<string, string>)
+  }
+
+  const genislik = cihaz === 'masaustu' ? 1280 : 390
+  const olcek = cihaz === 'masaustu' ? 0.42 : 0.62
+
+  return (
+    <div className="mb-5 rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface-muted)] p-3">
+      <p className="text-[12px] font-medium text-[var(--p-ink)]">Hazır şablon</p>
+      <p className="mt-1 text-[11px] leading-relaxed text-[var(--p-muted)]">
+        Şablon seçin, aşağıdaki alanlar bir kerede dolsun. Sonra dilediğinizi elle
+        değiştirebilirsiniz. Fotoğraf Kürasyon ekranından seçilir.
+      </p>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        {HERO_SABLONLARI.map((sablon) => (
+          <button
+            key={sablon.kimlik}
+            type="button"
+            onClick={() => uygula(sablon.kimlik, secili === sablon.kimlik ? sira + 1 : 0)}
+            className={
+              'rounded-[4px] border px-3 py-2 text-left transition-colors ' +
+              (secili === sablon.kimlik
+                ? 'border-[var(--p-accent)] bg-[var(--p-surface)]'
+                : 'border-[var(--p-line)] bg-[var(--p-surface)] hover:border-[var(--p-accent)]')
+            }
+          >
+            <span className="block text-[12px] font-medium text-[var(--p-ink)]">
+              {sablon.ad}
+              {secili === sablon.kimlik && (
+                <span className="ml-1 text-[10px] font-normal text-[var(--p-accent)]">· başka öner</span>
+              )}
+            </span>
+            <span className="mt-0.5 block text-[11px] leading-relaxed text-[var(--p-muted)]">
+              {sablon.aciklama}
+            </span>
+          </button>
+        ))}
       </div>
-      {meta.not && <p className="mt-1 text-[11px] text-[var(--p-muted)]">{meta.not}</p>}
+
+      <div className="mt-4 flex items-center gap-2">
+        <p className="text-[11px] text-[var(--p-muted)]">Önizleme</p>
+        <div className="ml-auto flex gap-1">
+          {(['masaustu', 'telefon'] as const).map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCihaz(c)}
+              className={
+                'rounded-[4px] px-2 py-1 text-[11px] ' +
+                (cihaz === c
+                  ? 'bg-[var(--p-ink)] text-[var(--p-surface)]'
+                  : 'text-[var(--p-muted)] hover:text-[var(--p-ink)]')
+              }
+            >
+              {c === 'masaustu' ? 'Masaüstü' : 'Telefon'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-2 overflow-hidden rounded-[4px] border border-[var(--p-line)] bg-white">
+        <div style={{ height: (cihaz === 'masaustu' ? 620 : 700) * olcek }}>
+          <div
+            style={{
+              width: genislik,
+              transform: `scale(${olcek})`,
+              transformOrigin: 'top left',
+              pointerEvents: 'none',
+            }}
+          >
+            <HeroCinema c={degerler} image={null} imageHref={null} />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
 
 export default function SiteMetinleriClient({
   metinler,
+  heroBaglami,
 }: {
   metinler: { key: string; value: string }[]
+  heroBaglami: HeroBaglami
 }) {
   const router = useRouter()
   const { push: toast } = useToast()
-  const [degerler, setDegerler] = useState<Record<string, string>>(
-    Object.fromEntries(metinler.map((m) => [m.key, m.value]))
+  const orijinal = useMemo(() => Object.fromEntries(metinler.map((m) => [m.key, m.value])), [metinler])
+  const [degerler, setDegerler] = useState<Record<string, string>>(orijinal)
+  const [kaydediliyor, setKaydediliyor] = useState(false)
+
+  const degisenler = useMemo(
+    () => Object.keys(degerler).filter((k) => (degerler[k] ?? '') !== (orijinal[k] ?? '')),
+    [degerler, orijinal]
   )
-  const [kaydedilen, setKaydedilen] = useState<string | null>(null)
 
-  const orijinal = Object.fromEntries(metinler.map((m) => [m.key, m.value]))
-  const gruplu = new Set(GRUPLAR.flatMap((g) => g.anahtarlar))
-  const digerleri = metinler.map((m) => m.key).filter((k) => !gruplu.has(k))
-
-  // useCallback: Alan'a giden geri çağrılar her render'da değişmesin.
   const degistir = useCallback((anahtar: string, deger: string) => {
-    setDegerler((onceki) => ({ ...onceki, [anahtar]: deger }))
+    setDegerler((o) => ({ ...o, [anahtar]: deger }))
   }, [])
 
-  const kaydet = useCallback(async (key: string) => {
-    setKaydedilen(key)
-    try {
-      const res = await fetch('/api/panel/content', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, value: degerler[key] ?? '' }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Kaydedilemedi')
-      toast('Kaydedildi — vitrin birkaç dakika içinde güncellenir', 'success')
-      router.refresh()
-    } catch (e: any) {
-      toast(e.message, 'danger')
+  // TEK KAYDET: değişen alanlar bir arada gönderilir. Alan başına kaydet
+  // düğmesi, on alanı değiştiren birinin on kez tıklamasını gerektiriyordu.
+  const hepsiniKaydet = async () => {
+    if (degisenler.length === 0) return
+    setKaydediliyor(true)
+    const basarisiz: string[] = []
+    for (const key of degisenler) {
+      try {
+        const res = await fetch('/api/panel/content', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key, value: degerler[key] ?? '' }),
+        })
+        if (!res.ok) basarisiz.push(key)
+      } catch {
+        basarisiz.push(key)
+      }
     }
-    setKaydedilen(null)
-  }, [degerler, router, toast])
+    setKaydediliyor(false)
+    if (basarisiz.length === 0) {
+      toast(`${degisenler.length} alan kaydedildi — vitrin birkaç dakika içinde güncellenir`, 'success')
+      router.refresh()
+    } else {
+      toast(`${basarisiz.length} alan kaydedilemedi`, 'danger')
+    }
+  }
 
-  // KVKK künyesi eksikse panelde görünür uyarı (Faz 12 hukuki tamamlama):
-  // boş alanlar hukuki metinlerde hiç basılmaz, bu yüzden fark edilmeleri gerekir.
-  const ZORUNLU_KUNYE = [
-    ['veri_sorumlusu_unvan', 'Unvan'],
-    ['veri_sorumlusu_adres', 'Adres'],
-    ['veri_sorumlusu_eposta', 'E-posta'],
-    ['veri_sorumlusu_telefon', 'Telefon'],
-  ] as const
-  const eksikKunye = ZORUNLU_KUNYE.filter(([k]) => !(degerler[k] ?? '').trim()).map(([, e]) => e)
+  const vazgec = () => setDegerler(orijinal)
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      {eksikKunye.length > 0 && (
-        <p className="rounded-[4px] border border-[var(--p-warning)]/30 bg-[var(--p-warning-bg)] px-3 py-2 text-[12px] leading-relaxed text-[var(--p-warning)]">
-          <strong>Veri sorumlusu künyesi eksik:</strong> {eksikKunye.join(', ')}. KVKK gereği bu
-          bilgiler Çerez Politikası ve KVKK Aydınlatma Metni'nin başında yer almalıdır; boş
-          bırakılan alanlar sayfada hiç basılmaz. Aşağıdaki «Hukuki — veri sorumlusu künyesi»
-          bölümünden doldurun.
-        </p>
-      )}
-      {GRUPLAR.map((g) => {
-        const anahtarlar = g.baslik === 'Diğer' ? digerleri : g.anahtarlar.filter((k) => k in orijinal)
-        if (anahtarlar.length === 0) return null
-        return (
-          <PCard key={g.baslik} title={g.baslik}>
-            <div className="space-y-4">
-              {anahtarlar.map((k) => (
-                <Alan
-                  key={k}
-                  anahtar={k}
-                  deger={degerler[k] ?? ''}
-                  orijinalDeger={orijinal[k] ?? ''}
-                  kaydediliyor={kaydedilen === k}
-                  onDegis={degistir}
-                  onKaydet={kaydet}
-                />
-              ))}
+    <div className="mx-auto max-w-3xl space-y-6 pb-28">
+      <p className="rounded-[6px] border border-[var(--p-line)] bg-[var(--p-surface)] px-4 py-3 text-[12px] leading-relaxed text-[var(--p-ink-soft)]">
+        Buradaki yazılar sitenin sabit metinleridir. Değişiklikler kaydedildikten sonra
+        vitrine birkaç dakika içinde yansır.{' '}
+        <span className="text-[var(--p-muted)]">
+          Yazı tipi, punto ve renkler burada ayarlanmaz — tasarım dili markanın parçasıdır ve
+          sabittir.
+        </span>
+      </p>
+
+      {GRUPLAR.map((grup) => (
+        <section key={grup.baslik} className="rounded-[6px] border border-[var(--p-line)] bg-[var(--p-surface)] p-4">
+          <h2 className="text-[14px] font-medium text-[var(--p-ink)]">{grup.baslik}</h2>
+          <p className="mt-1 text-[12px] leading-relaxed text-[var(--p-muted)]">{grup.neyiEtkiler}</p>
+          {grup.baslik === 'Ana sayfa — açılış bölümü' && (
+            <div className="mt-4">
+              <HeroSablonKutusu
+                baglam={heroBaglami}
+                degerler={degerler}
+                onUygula={(alanlar) => setDegerler((o) => ({ ...o, ...alanlar }))}
+              />
             </div>
-          </PCard>
-        )
-      })}
+          )}
+          <div className="mt-4 space-y-4">
+            {grup.alanlar.map((alan) => (
+              <AlanKutusu
+                key={alan.anahtar}
+                alan={alan}
+                deger={degerler[alan.anahtar] ?? ''}
+                degisti={(degerler[alan.anahtar] ?? '') !== (orijinal[alan.anahtar] ?? '')}
+                onDegis={degistir}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
+
+      {/* Kaydedilmemiş değişiklik çubuğu — Shopify'ın contextual save bar deseni. */}
+      {degisenler.length > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--p-line)] bg-[var(--p-surface)]/95 px-4 py-3 backdrop-blur">
+          <div className="mx-auto flex max-w-3xl items-center gap-3">
+            <p className="text-[13px] text-[var(--p-ink)]">
+              <strong>{degisenler.length}</strong> alan değişti, kaydedilmedi
+            </p>
+            <div className="ml-auto flex gap-2">
+              <PButton variant="ghost" onClick={vazgec} disabled={kaydediliyor}>
+                Geri al
+              </PButton>
+              <PButton onClick={hepsiniKaydet} disabled={kaydediliyor}>
+                {kaydediliyor ? 'Kaydediliyor…' : 'Kaydet'}
+              </PButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
