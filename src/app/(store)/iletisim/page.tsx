@@ -19,7 +19,7 @@ export default async function IletisimPage() {
       <IletisimClient />
       <section className="border-t border-line bg-surface-muted/40">
         <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-6 lg:px-8">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-accent">Yasal</p>
+          <p className="text-[11px] uppercase tracking-[0.28em] text-accent-deep">Yasal</p>
           <h2 className="mt-2 font-heading text-[26px] font-medium text-ink">Satıcı Bilgileri</h2>
           <div className="mt-5 max-w-[68ch] text-[13px] leading-relaxed font-body text-ink-soft">
             <SaticiKunyesi kunye={kunye} baslikYok />

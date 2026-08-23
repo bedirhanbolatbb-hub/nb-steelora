@@ -56,7 +56,7 @@ export default function RelatedProducts({ productId, category }: RelatedProducts
         </div>
         <Link
           href={`/urunler?kategori=${encodeURIComponent(category)}`}
-          className="text-[11px] uppercase tracking-[0.15em] font-body text-muted hover:text-accent transition-colors hidden sm:block"
+          className="text-[11px] uppercase tracking-[0.15em] font-body text-muted hover:text-accent-deep transition-colors hidden sm:block"
         >
           Tümünü Gör →
         </Link>

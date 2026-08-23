@@ -49,7 +49,7 @@ export default function PanelShell({ children }: { children: ReactNode }) {
             <span className="panel-brand text-[16px] tracking-[0.12em] text-[var(--p-ink)]">
               NB STEELORA
             </span>
-            <span className="mt-0.5 block text-[10px] uppercase tracking-[0.2em] text-[var(--p-accent)]">
+            <span className="mt-0.5 block text-[10px] uppercase tracking-[0.2em] text-[var(--p-accent-deep)]">
               Yönetim
             </span>
           </Link>

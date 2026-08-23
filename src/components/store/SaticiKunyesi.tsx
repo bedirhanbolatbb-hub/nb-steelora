@@ -44,7 +44,7 @@ export default function SaticiKunyesi({
           href={kunye.etbis}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-accent underline underline-offset-4"
+          className="text-accent-deep underline underline-offset-4"
         >
           Kayıt doğrulama
         </a>
@@ -61,7 +61,7 @@ export default function SaticiKunyesi({
         href={WHATSAPP_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-accent underline underline-offset-4"
+        className="text-accent-deep underline underline-offset-4"
       >
         {WHATSAPP_DISPLAY}
       </a>

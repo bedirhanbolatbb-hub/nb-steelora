@@ -115,7 +115,7 @@ export default function Newsletter() {
               status === 'error' ? 'text-accent-deep' : 'text-ink-soft'
             }`}
           >
-            {status === 'done' && <span className="text-accent mr-1">✓</span>}
+            {status === 'done' && <span className="text-accent-deep mr-1">✓</span>}
             {message}
           </p>
         )}

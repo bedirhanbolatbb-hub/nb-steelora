@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { PBadge, PButton, PCard } from '../_components/ui'
+import { PBadge, PButton, PCard, PSayfaNotu } from '../_components/ui'
 import { useToast } from '../_components/overlays'
 
 export type YazimSatiri = {
@@ -53,6 +53,9 @@ export default function StokSenkronClient({
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
+      <PSayfaNotu>
+        Sitede satılan ürünün stoğu Trendyol’a geri yazılır; yazılamayan kalem burada görünür ve yeniden denenebilir.
+      </PSayfaNotu>
       <PCard title="Trendyol stok yazımı">
         <p className="mb-3 text-[12px] leading-relaxed text-[var(--p-muted)]">
           Kademe: <strong className="text-[var(--p-ink)]">{mod}</strong> — {MOD_ACIKLAMA[mod] ?? ''}

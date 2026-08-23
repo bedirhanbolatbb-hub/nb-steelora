@@ -19,7 +19,7 @@ function StarRating({
           key={star}
           className={`${cls} ${
             star <= rating
-              ? 'fill-accent text-accent'
+              ? 'fill-accent text-accent-deep'
               : 'fill-none text-line'
           }`}
           viewBox="0 0 24 24"
@@ -95,7 +95,7 @@ export default function ReviewList({ productId }: { productId: string }) {
   return (
     <div id="yorum" className="mt-16 pt-16 border-t border-line scroll-mt-24">
       <h2 className="font-heading text-[28px] font-light text-ink mb-8">
-        Müşteri <span className="italic text-accent">Yorumları</span>
+        Müşteri <span className="italic text-accent-deep">Yorumları</span>
       </h2>
 
       {/* Summary */}
@@ -162,7 +162,7 @@ export default function ReviewList({ productId }: { productId: string }) {
 
       {submitted && (
         <div className="mb-8 p-4 bg-surface border border-accent/50 text-ink text-[12px] font-body">
-          <span className="text-accent mr-1">✓</span>
+          <span className="text-accent-deep mr-1">✓</span>
           Teşekkürler! Değerlendirmen onaydan sonra yayınlanır.
         </div>
       )}

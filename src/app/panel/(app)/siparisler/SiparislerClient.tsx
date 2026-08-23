@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useRef, useState } from 'react'
 import { Truck } from 'lucide-react'
 import { cn, formatPrice } from '@/lib/utils'
-import { ORDER_STATUS, PBadge, PInput, PSelect, type BadgeTone } from '../_components/ui'
+import { ORDER_STATUS, PBadge, PInput, PSelect, type BadgeTone, PSayfaNotu } from '../_components/ui'
 import { PDialog, PTabs, useToast } from '../_components/overlays'
 import { PButton } from '../_components/ui'
 
@@ -153,6 +153,9 @@ export default function SiparislerClient({
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
+      <PSayfaNotu>
+        Gelen siparişleri durumuna göre izler, kargo takip numarası girer, iade ve iptal taleplerini burada karara bağlarsınız.
+      </PSayfaNotu>
       <PTabs
         tabs={[
           { id: 'siparisler', label: `Siparişler (${satirlar.length})` },

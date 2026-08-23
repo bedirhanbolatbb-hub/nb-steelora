@@ -68,7 +68,7 @@ export default function HakkimizdaPage() {
         </h2>
         <p>
           Sorularınız ve önerileriniz için bize{' '}
-          <a href="mailto:info@nbsteelora.com" className="text-accent hover:text-accent-deep transition-colors">
+          <a href="mailto:info@nbsteelora.com" className="text-accent-deep hover:text-ink transition-colors">
             info@nbsteelora.com
           </a>{' '}
           adresinden ulaşabilirsiniz.

@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { isRemoteMedia } from '@/lib/images'
 import { createServiceClient } from '@/lib/supabase/service'
 import { formatPrice } from '@/lib/utils'
-import { ORDER_STATUS, PBadge, PCard, type BadgeTone } from './_components/ui'
+import { ORDER_STATUS, PBadge, PCard, type BadgeTone, PSayfaNotu } from './_components/ui'
 import DataTable from './_components/DataTable'
 import Sparkline from './_components/Sparkline'
 import { basarisizSayisi } from '@/lib/trendyol/stokKuyrugu'
@@ -165,6 +165,9 @@ export default async function PanelDashboard() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
+      <PSayfaNotu>
+        Günün bekleyen işleri, satış özeti ve son siparişler tek ekranda; güne başlarken ilk bakılacak yer burasıdır.
+      </PSayfaNotu>
       {/* ── Yapılacaklar ── */}
       <PCard title="Yapılacaklar">
         <ul className="divide-y divide-[var(--p-line)]">

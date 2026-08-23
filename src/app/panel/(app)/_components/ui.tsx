@@ -149,3 +149,19 @@ export function PEmptyState({
 export function PSkeleton({ className }: { className?: string }) {
   return <div className={cn('panel-skeleton h-4 w-full', className)} aria-hidden />
 }
+
+/* ── Sayfa notu ───────────────────────────────────────────────────────── */
+
+/**
+ * "Bu sayfa ne işe yarar" satırı (Faz 24).
+ *
+ * Site Metinleri ekranındaki desen panelin tamamına yayıldı: her ekranın
+ * üstünde, mağazacının diliyle yazılmış tek cümle. Teknik terim yok; ne işe
+ * yaradığını VE ne zaman kullanılacağını söyler. Tek bileşen olması, ileride
+ * tonun ya da yerleşimin tek yerden değişmesi içindir.
+ */
+export function PSayfaNotu({ children }: { children: ReactNode }) {
+  return (
+    <p className="text-[12px] leading-relaxed text-[var(--p-muted)]">{children}</p>
+  )
+}

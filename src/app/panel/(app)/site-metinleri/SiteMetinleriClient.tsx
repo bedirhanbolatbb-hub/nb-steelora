@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { PButton, PInput, PTextarea } from '../_components/ui'
+import { PButton, PInput, PTextarea, PSayfaNotu } from '../_components/ui'
 import { useToast } from '../_components/overlays'
 import MetinOner from '../_components/MetinOner'
 import { kategoriTanitimi } from '@/lib/metin/kategoriMetni'
@@ -196,7 +196,7 @@ function AlanKutusu({
         className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]"
       >
         {alan.etiket}
-        {degisti && <span className="ml-2 text-[10px] font-normal text-[var(--p-accent)]">kaydedilmedi</span>}
+        {degisti && <span className="ml-2 text-[10px] font-normal text-[var(--p-accent-deep)]">kaydedilmedi</span>}
       </label>
       {alan.cokSatir ? (
         <PTextarea id={`alan-${alan.anahtar}`} rows={2} value={deger} onChange={(e) => onDegis(alan.anahtar, e.target.value)} />
@@ -274,7 +274,7 @@ function HeroSablonKutusu({
             <span className="block text-[12px] font-medium text-[var(--p-ink)]">
               {sablon.ad}
               {secili === sablon.kimlik && (
-                <span className="ml-1 text-[10px] font-normal text-[var(--p-accent)]">· başka öner</span>
+                <span className="ml-1 text-[10px] font-normal text-[var(--p-accent-deep)]">· başka öner</span>
               )}
             </span>
             <span className="mt-0.5 block text-[11px] leading-relaxed text-[var(--p-muted)]">
@@ -376,6 +376,10 @@ export default function SiteMetinleriClient({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-28">
+      <PSayfaNotu>
+        Vitrinde geçen sabit yazıları — başlıklar, açıklamalar, kargo ve iade bilgileri —
+        buradan düzenlersiniz.
+      </PSayfaNotu>
       <p className="rounded-[6px] border border-[var(--p-line)] bg-[var(--p-surface)] px-4 py-3 text-[12px] leading-relaxed text-[var(--p-ink-soft)]">
         Buradaki yazılar sitenin sabit metinleridir. Değişiklikler kaydedildikten sonra
         vitrine birkaç dakika içinde yansır.{' '}

@@ -96,7 +96,8 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
               <div className="relative w-full pb-24 pt-40 lg:py-24 pointer-events-none">
                 <div className="max-w-[1400px] mx-auto px-4 lg:px-8 w-full">
                   <div className="max-w-xl">
-                    {s.eyebrow && <p className="eyebrow">{s.eyebrow}</p>}
+                    {/* Hero fotoğrafı KOYU: eyebrow açık altın kalır (Faz 24). */}
+                    {s.eyebrow && <p className="eyebrow eyebrow-acik">{s.eyebrow}</p>}
                     <h2 className="font-heading text-[40px] sm:text-[54px] lg:text-[64px] font-medium leading-[1.05] mt-3 text-white">
                       {s.title}
                     </h2>
@@ -109,7 +110,7 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
                       <Link
                         href={s.href}
                         tabIndex={i === aktif ? 0 : -1}
-                        className="pointer-events-auto inline-flex items-center mt-7 bg-bg text-ink text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent hover:text-white transition-colors"
+                        className="pointer-events-auto inline-flex items-center mt-7 bg-bg text-ink text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep hover:text-white transition-colors"
                       >
                         {s.cta_label}
                       </Link>

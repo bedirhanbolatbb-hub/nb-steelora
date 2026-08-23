@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { Download, Info } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
-import { PBadge, PButton, PCard, PInput } from '../_components/ui'
+import { PBadge, PButton, PCard, PInput, PSayfaNotu } from '../_components/ui'
 import type { Rapor, UrunSatiri } from '@/lib/analytics/report'
 
 const DONEMLER = [
@@ -34,7 +34,10 @@ function sure(saniye: number): string {
  * ya da "%0" demek yanıltıcı olur — o dönem için veri yoktur, sıfır değildir.
  */
 function Degisim({ simdi, onceki, veriVar = true }: { simdi: number; onceki: number; veriVar?: boolean }) {
-  if (!veriVar) return <span className="text-[11px] text-[var(--p-muted)]">veri yok</span>
+  // "veri yok" tek başına kartın KENDİ verisinin olmadığı gibi okunuyordu
+  // (Faz 24). Eksik olan karşılaştırma dönemi; cümle bunu söylesin.
+  if (!veriVar)
+    return <span className="text-[11px] text-[var(--p-muted)]">önceki dönemde veri yok</span>
   if (onceki === 0 && simdi === 0) return <span className="text-[11px] text-[var(--p-muted)]">—</span>
   if (onceki === 0) return <PBadge tone="success">yeni</PBadge>
   const fark = ((simdi - onceki) / onceki) * 100
@@ -221,6 +224,9 @@ export default function AnalizClient({
 
   return (
     <div className="space-y-4">
+      <PSayfaNotu>
+        Ziyaretçi, sipariş ve dönüşüm sayılarını seçtiğiniz dönemde izlersiniz; hangi ürünün ilgi gördüğü ve trafiğin nereden geldiği burada görünür.
+      </PSayfaNotu>
       {/* Ölçüm geçmişi notu — site_content'teki analiz_notu ile düzenlenir,
           boşaltılınca satır tamamen kalkar. */}
       {olcumNotu && (
@@ -340,9 +346,9 @@ export default function AnalizClient({
 
       {rapor.uyeKirilimi && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Kart baslik="Üye ziyaretçi" deger={sayi(rapor.uyeKirilimi.uyeZiyaretci)} oncekiVeriVar={false} />
-          <Kart baslik="Misafir ziyaretçi" deger={sayi(rapor.uyeKirilimi.misafirZiyaretci)} oncekiVeriVar={false} />
-          <Kart baslik="Üye siparişi" deger={sayi(rapor.uyeKirilimi.uyeSiparis)} oncekiVeriVar={false} />
+          <Kart baslik="Üye ziyaretçi" deger={sayi(rapor.uyeKirilimi.uyeZiyaretci)} />
+          <Kart baslik="Misafir ziyaretçi" deger={sayi(rapor.uyeKirilimi.misafirZiyaretci)} />
+          <Kart baslik="Üye siparişi" deger={sayi(rapor.uyeKirilimi.uyeSiparis)} />
           <Kart
             baslik="Üye payı"
             deger={yuzde(
@@ -354,7 +360,6 @@ export default function AnalizClient({
                   ) / 10
                 : 0
             )}
-            oncekiVeriVar={false}
             not="giriş yapmış ziyaretçiler"
           />
         </div>

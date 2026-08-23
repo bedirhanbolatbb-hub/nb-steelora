@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { RefreshCcw } from 'lucide-react'
-import { PBadge, PButton, PCard, type BadgeTone } from '../_components/ui'
+import { PBadge, PButton, PCard, type BadgeTone, PSayfaNotu } from '../_components/ui'
 import { useToast } from '../_components/overlays'
 
 export type KosuSatiri = {
@@ -71,6 +71,9 @@ export default function SenkronClient({
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
+      <PSayfaNotu>
+        Ürünler Trendyol’dan her sabah kendiliğinden alınır; burada dilediğiniz an elle yeniler ve geçmiş aktarımların sonucunu görürsünüz.
+      </PSayfaNotu>
       <PCard>
         <div className="flex flex-wrap items-center gap-3">
           <div>

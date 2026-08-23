@@ -81,7 +81,7 @@ export default function KayitPage() {
           <p className="mt-8 font-body text-[13px]">
             <Link
               href="/giris"
-              className="text-accent transition-colors hover:text-accent-deep"
+              className="text-accent-deep transition-colors hover:text-ink"
             >
               Giriş sayfasına dön
             </Link>
@@ -145,7 +145,7 @@ export default function KayitPage() {
             Zaten üye misiniz?{' '}
             <Link
               href="/giris"
-              className="text-accent hover:text-accent-deep transition-colors"
+              className="text-accent-deep hover:text-ink transition-colors"
             >
               Giriş yapın
             </Link>

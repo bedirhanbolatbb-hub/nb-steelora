@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Download, DatabaseBackup } from 'lucide-react'
-import { PBadge, PButton, PCard } from '../_components/ui'
+import { PBadge, PButton, PCard, PSayfaNotu } from '../_components/ui'
 import { useToast } from '../_components/overlays'
 
 export type YedekSatiri = {
@@ -59,6 +59,9 @@ export default function YedeklerClient({
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
+      <PSayfaNotu>
+        Mağaza verisinin haftalık yedekleri burada tutulur; dilediğiniz an yeni yedek alır, eski bir yedeği indirirsiniz.
+      </PSayfaNotu>
       <PCard>
         <div className="flex flex-wrap items-center gap-3">
           <div>
@@ -137,7 +140,7 @@ export default function YedeklerClient({
                   {y.indirmeUrl ? (
                     <a
                       href={y.indirmeUrl}
-                      className="inline-flex items-center gap-1 text-[var(--p-accent)] hover:underline"
+                      className="inline-flex items-center gap-1 text-[var(--p-accent-deep)] hover:underline"
                     >
                       <Download size={13} /> indir
                     </a>

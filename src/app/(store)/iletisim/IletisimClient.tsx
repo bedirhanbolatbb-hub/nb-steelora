@@ -58,7 +58,7 @@ export default function IletisimClient() {
           <div className="space-y-6">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 bg-surface-muted flex items-center justify-center shrink-0">
-                <Mail size={16} className="text-accent" />
+                <Mail size={16} className="text-accent-deep" />
               </div>
               <div>
                 <p className="text-[11px] font-body text-muted uppercase tracking-wider mb-1">
@@ -66,7 +66,7 @@ export default function IletisimClient() {
                 </p>
                 <a
                   href="mailto:info@nbsteelora.com"
-                  className="text-[13px] font-body text-ink hover:text-accent transition-colors"
+                  className="text-[13px] font-body text-ink hover:text-accent-deep transition-colors"
                 >
                   info@nbsteelora.com
                 </a>
@@ -85,7 +85,7 @@ export default function IletisimClient() {
                   href={WHATSAPP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[13px] font-body text-ink hover:text-accent transition-colors"
+                  className="text-[13px] font-body text-ink hover:text-accent-deep transition-colors"
                 >
                   WhatsApp ile Yazın
                 </a>
@@ -94,7 +94,7 @@ export default function IletisimClient() {
 
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 bg-surface-muted flex items-center justify-center shrink-0">
-                <MapPin size={16} className="text-accent" />
+                <MapPin size={16} className="text-accent-deep" />
               </div>
               <div>
                 <p className="text-[11px] font-body text-muted uppercase tracking-wider mb-1">
@@ -108,7 +108,7 @@ export default function IletisimClient() {
 
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 bg-surface-muted flex items-center justify-center shrink-0">
-                <Clock size={16} className="text-accent" />
+                <Clock size={16} className="text-accent-deep" />
               </div>
               <div>
                 <p className="text-[11px] font-body text-muted uppercase tracking-wider mb-1">

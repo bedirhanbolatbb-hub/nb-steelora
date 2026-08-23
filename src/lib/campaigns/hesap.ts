@@ -126,34 +126,41 @@ export function kurus(n: number): number {
 }
 
 /** Kalemin kampanya kapsamına girip girmediği. */
-export function kalemKapsamda(kalem: SepetKalemi, k: HesapKampanyasi): boolean {
+/**
+ * Stok ölçütü. `zorunlu` true ise ölçüt KAPSAMIN KENDİSİDİR (kapsam='stok');
+ * eşik geçersizse kampanya hiç uygulanmaz. False ise ölçüt bir DARALTMADIR
+ * (ör. seçili 12 ürün içinden stoğu 3 ve altı olanlar); tanımlı değilse
+ * daraltma yapılmaz.
+ */
+function stokOlcutu(kalem: SepetKalemi, k: HesapKampanyasi, zorunlu: boolean): boolean {
+  const esik = Number(k.stokAzami)
+  if (!Number.isFinite(esik) || esik <= 0) return !zorunlu
+  // null/undefined AÇIKÇA elenir: Number(null) === 0 olduğu için sessizce
+  // "stoğu 0" sayılıp kapsama giriyordu — stok bilinmiyorsa indirim yok.
+  if (kalem.stok === null || kalem.stok === undefined) return false
+  const stok = Number(kalem.stok)
+  if (!Number.isFinite(stok)) return false
+  return stok <= esik
+}
+
+/** Fiyat aralığı ölçütü. Sınırlardan biri boş bırakılabilir. */
+function fiyatOlcutu(kalem: SepetKalemi, k: HesapKampanyasi, zorunlu: boolean): boolean {
+  const alt = Number(k.fiyatMin)
+  const ust = Number(k.fiyatMax)
+  const altVar = Number.isFinite(alt) && alt > 0
+  const ustVar = Number.isFinite(ust) && ust > 0
+  if (!altVar && !ustVar) return !zorunlu
+  const fiyat = Number(kalem.fiyat) || 0
+  if (altVar && fiyat < alt) return false
+  if (ustVar && fiyat > ust) return false
+  return true
+}
+
+/** Kapsamın TEMEL kümesi — hangi kalemler baştan aday. */
+function temelKapsamda(kalem: SepetKalemi, k: HesapKampanyasi): boolean {
   if (k.kapsam === 'sepet') return true
-
-  // Stok kapsamı: eşik ve altı. Stok bilinmiyorsa kapsam DIŞI sayılır —
-  // eksik veriyle indirim vermek, vermemekten daha kötüdür.
-  if (k.kapsam === 'stok') {
-    const esik = Number(k.stokAzami)
-    if (!Number.isFinite(esik) || esik <= 0) return false
-    // null/undefined AÇIKÇA elenir: Number(null) === 0 olduğu için sessizce
-    // "stoğu 0" sayılıp kapsama giriyordu — stok bilinmiyorsa indirim yok.
-    if (kalem.stok === null || kalem.stok === undefined) return false
-    const stok = Number(kalem.stok)
-    if (!Number.isFinite(stok)) return false
-    return stok <= esik
-  }
-
-  // Fiyat aralığı: sınırlardan biri boş bırakılabilir (yalnız alt ya da yalnız üst).
-  if (k.kapsam === 'fiyat_araligi') {
-    const fiyat = Number(kalem.fiyat) || 0
-    const alt = Number(k.fiyatMin)
-    const ust = Number(k.fiyatMax)
-    const altVar = Number.isFinite(alt) && alt > 0
-    const ustVar = Number.isFinite(ust) && ust > 0
-    if (!altVar && !ustVar) return false
-    if (altVar && fiyat < alt) return false
-    if (ustVar && fiyat > ust) return false
-    return true
-  }
+  if (k.kapsam === 'stok') return stokOlcutu(kalem, k, true)
+  if (k.kapsam === 'fiyat_araligi') return fiyatOlcutu(kalem, k, true)
 
   const hedefler = (k.hedefler ?? []).map((h) => h.trim().toLocaleLowerCase('tr-TR')).filter(Boolean)
   if (hedefler.length === 0) return false
@@ -171,6 +178,24 @@ export function kalemKapsamda(kalem: SepetKalemi, k: HesapKampanyasi): boolean {
   const kimlik = kalem.productId.toLocaleLowerCase('tr-TR')
   const barkod = (kalem.barkod ?? '').toLocaleLowerCase('tr-TR')
   return hedefler.includes(kimlik) || (Boolean(barkod) && hedefler.includes(barkod))
+}
+
+/**
+ * Kalem kampanyanın kapsamında mı?
+ *
+ * Faz 24: kapsam artık İKİ katman. Temel küme (sepet / kategori / koleksiyon /
+ * seçili ürünler) ve isteğe bağlı ölçütler (stok eşiği, fiyat aralığı) o
+ * kümeyi DARALTIR. Böylece "seçtiğim 12 ürün içinden stoğu 3 ve altı olanlar"
+ * kurulabiliyor; önceden kapsam tek değerdi ve ikisi birbirini dışlıyordu.
+ *
+ * Eski kayıtlar aynen çalışır: kapsam='stok' iken ölçüt zaten temel kümedir,
+ * ikinci kez uygulanması sonucu değiştirmez.
+ */
+export function kalemKapsamda(kalem: SepetKalemi, k: HesapKampanyasi): boolean {
+  if (!temelKapsamda(kalem, k)) return false
+  if (!stokOlcutu(kalem, k, false)) return false
+  if (!fiyatOlcutu(kalem, k, false)) return false
+  return true
 }
 
 export function kalemToplami(kalemler: SepetKalemi[]): number {

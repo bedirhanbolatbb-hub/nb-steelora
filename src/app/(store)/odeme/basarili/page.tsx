@@ -20,7 +20,7 @@ function BasariliContent() {
       {orderNumber && (
         <p className="text-[13px] font-body text-ink-soft mb-2">
           Sipariş Numarası:{' '}
-          <span className="text-accent font-medium">{orderNumber}</span>
+          <span className="text-accent-deep font-medium">{orderNumber}</span>
         </p>
       )}
       <p className="text-[12px] font-body text-muted mb-8 leading-relaxed">
@@ -29,7 +29,7 @@ function BasariliContent() {
       </p>
       <Link
         href="/urunler"
-        className="inline-block border border-accent text-accent text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:bg-accent hover:text-white transition-all"
+        className="inline-block border border-accent text-accent-deep text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:bg-accent-deep hover:text-white transition-all"
       >
         Alışverişe Devam Et
       </Link>

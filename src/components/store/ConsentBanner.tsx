@@ -187,11 +187,11 @@ export default function ConsentBanner() {
             <p className="text-[13px] leading-snug text-ink-soft">
               Sitemizi geliştirmek için anonim ziyaret istatistikleri tutuyoruz. Dilerseniz tekrar
               gelen ziyaretçi analizine de izin verebilirsiniz.{' '}
-              <Link href="/cerez-politikasi" className="text-accent underline underline-offset-4">
+              <Link href="/cerez-politikasi" className="text-accent-deep underline underline-offset-4">
                 Çerez Politikası
               </Link>
               {' · '}
-              <Link href="/kvkk" className="text-accent underline underline-offset-4">
+              <Link href="/kvkk" className="text-accent-deep underline underline-offset-4">
                 KVKK Aydınlatma Metni
               </Link>
             </p>
@@ -232,11 +232,11 @@ export default function ConsentBanner() {
             </div>
             <p className="text-[12px] text-ink-soft">
               Ayrıntılar:{' '}
-              <Link href="/cerez-politikasi" className="text-accent underline underline-offset-4">
+              <Link href="/cerez-politikasi" className="text-accent-deep underline underline-offset-4">
                 Çerez Politikası
               </Link>
               {' · '}
-              <Link href="/kvkk" className="text-accent underline underline-offset-4">
+              <Link href="/kvkk" className="text-accent-deep underline underline-offset-4">
                 KVKK Aydınlatma Metni
               </Link>
             </p>

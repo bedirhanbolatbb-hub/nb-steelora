@@ -26,7 +26,7 @@ export default function AddToCartButton({ product, disabled }: AddToCartButtonPr
   // Boştaki hover rengi masaüstündeki hâliyle korunur; değişen yalnız onay hâli.
   const tone = added
     ? 'bg-ink text-white opacity-100'
-    : 'bg-ink text-white hover:bg-accent hover:text-white disabled:opacity-40 disabled:cursor-not-allowed'
+    : 'bg-ink text-white hover:bg-accent-deep hover:text-white disabled:opacity-40 disabled:cursor-not-allowed'
 
   return (
     <button

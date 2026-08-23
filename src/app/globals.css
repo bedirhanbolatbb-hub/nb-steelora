@@ -52,13 +52,24 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
 }
 
-/* Bölüm başlığı üstündeki altın eyebrow */
+/* Bölüm başlığı üstündeki altın eyebrow.
+   Faz 24 · okunabilirlik: 10px altın metin AÇIK zeminde 2,70:1 veriyordu
+   (WCAG AA normal metin için 4,5 gerekir). Koyu tona alındı → 4,55:1.
+   41 kullanımın 39'u açık zeminde; kalan ikisi (hero fotoğrafı üstü)
+   `.eyebrow-acik` ile açık tonda kalır — koyu altın orada okunmazdı.
+   Bu kural KATMANSIZ olduğu için `text-accent` gibi utility sınıfları onu
+   ezemez; istisna da bu yüzden sınıfla veriliyor. */
 .eyebrow {
   font-family: var(--font-body);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.28em;
   text-transform: uppercase;
+  color: var(--accent-deep);
+}
+
+/* Koyu zemin (hero fotoğrafı) üstündeki eyebrow: açık altın doğru seçim. */
+.eyebrow-acik {
   color: var(--accent);
 }
 
@@ -259,7 +270,8 @@ html:has(:target) {
   font-weight: 600;
 }
 .prose-blog a {
-  color: var(--accent);
+  /* Faz 24: gövde metni bağlantısı — açık zeminde 2,70 → 4,55. */
+  color: var(--accent-deep);
   text-decoration: underline;
   text-underline-offset: 3px;
   transition: opacity 0.2s;

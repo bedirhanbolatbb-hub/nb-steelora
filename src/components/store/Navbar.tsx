@@ -91,10 +91,10 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
 
   const ikonlar = (
     <div className="flex items-center gap-4">
-      <button className="text-ink-soft hover:text-accent transition-colors" aria-label="Ara" onClick={() => setSearchOpen(true)}>
+      <button className="text-ink-soft hover:text-accent-deep transition-colors" aria-label="Ara" onClick={() => setSearchOpen(true)}>
         <Search size={18} strokeWidth={1.6} />
       </button>
-      <Link href="/favorilerim" className="hidden sm:block relative text-ink-soft hover:text-accent transition-colors" aria-label="Favoriler">
+      <Link href="/favorilerim" className="hidden sm:block relative text-ink-soft hover:text-accent-deep transition-colors" aria-label="Favoriler">
         <Heart size={18} strokeWidth={1.6} />
         {wishlistCount > 0 && (
           <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 min-w-[18px] min-h-[18px] bg-ink text-bg text-[9px] rounded-full flex items-center justify-center font-body font-medium">
@@ -102,10 +102,10 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
           </span>
         )}
       </Link>
-      <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="hidden sm:block text-ink-soft hover:text-accent transition-colors" aria-label="Hesap">
+      <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="hidden sm:block text-ink-soft hover:text-accent-deep transition-colors" aria-label="Hesap">
         <User size={18} strokeWidth={1.6} />
       </Link>
-      <button className="relative text-ink-soft hover:text-accent transition-colors" aria-label="Sepet" onClick={() => setCartOpen(true)}>
+      <button className="relative text-ink-soft hover:text-accent-deep transition-colors" aria-label="Sepet" onClick={() => setCartOpen(true)}>
         <ShoppingBag size={18} strokeWidth={1.6} />
         {totalItems > 0 && (
           <span
@@ -123,7 +123,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
     <header className="sticky top-0 z-50 w-full bg-bg border-b border-line">
       {/* Duyuru şeridi */}
       <div className="text-center py-2 px-4" style={{ backgroundColor: bannerColor || '#2A1E1E' }}>
-        <p className="text-accent text-[10px] tracking-[0.2em] uppercase font-body">
+        <p className="text-accent-deep text-[10px] tracking-[0.2em] uppercase font-body">
           {/* Öncelik: panelden tanımlı banner kampanyası > ilk sipariş kuponu
               duyurusu > varsayılan satır. Kupon duyurusu YALNIZ otomatik bir
               vitrin kampanyası yokken dolu gelir (bkz. ilkSiparisKuponu.ts) —
@@ -152,7 +152,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
             <span className="font-heading text-[19px] font-light tracking-[0.16em] text-ink block leading-none">
               NB STEELORA
             </span>
-            <span className="text-[8px] uppercase tracking-[0.3em] text-accent font-body">Fine Jewellery</span>
+            <span className="text-[8px] uppercase tracking-[0.3em] text-accent-deep font-body">Fine Jewellery</span>
             <LogoPending />
           </Link>
           <div className="justify-self-end">{ikonlar}</div>
@@ -171,7 +171,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
             <span className="font-heading text-[27px] font-light tracking-[0.2em] text-ink block leading-none">
               NB STEELORA
             </span>
-            <span className="text-[9px] uppercase tracking-[0.42em] text-accent font-body mt-1 block">
+            <span className="text-[9px] uppercase tracking-[0.42em] text-accent-deep font-body mt-1 block">
               Fine Jewellery
             </span>
             <LogoPending />
@@ -250,10 +250,10 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
               </Link>
             ))}
             <div className="flex items-center gap-5 pt-3 border-t border-line">
-              <Link href="/favorilerim" className="text-ink-soft hover:text-accent transition-colors py-2" aria-label="Favoriler" onClick={() => setMobileOpen(false)}>
+              <Link href="/favorilerim" className="text-ink-soft hover:text-accent-deep transition-colors py-2" aria-label="Favoriler" onClick={() => setMobileOpen(false)}>
                 <Heart size={18} strokeWidth={1.6} />
               </Link>
-              <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="text-ink-soft hover:text-accent transition-colors py-2" aria-label="Hesap" onClick={() => setMobileOpen(false)}>
+              <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="text-ink-soft hover:text-accent-deep transition-colors py-2" aria-label="Hesap" onClick={() => setMobileOpen(false)}>
                 <User size={18} strokeWidth={1.6} />
               </Link>
             </div>

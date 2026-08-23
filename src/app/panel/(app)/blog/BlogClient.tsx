@@ -5,7 +5,7 @@ import { isRemoteMedia } from '@/lib/images'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { ExternalLink, Lock, Plus } from 'lucide-react'
-import { PBadge, PButton, PInput, PTextarea } from '../_components/ui'
+import { PBadge, PButton, PInput, PTextarea, PSayfaNotu } from '../_components/ui'
 import { PTabs, useToast } from '../_components/overlays'
 import MediaUpload from '../_components/MediaUpload'
 
@@ -98,6 +98,9 @@ export default function BlogClient({ yazilar }: { yazilar: YaziSatiri[] }) {
     <div className="mx-auto max-w-5xl space-y-4">
       {acik === null ? (
         <>
+          <PSayfaNotu>
+            Sitedeki blog yazılarını yazar, kapak görseli ve özetini eklersiniz; taslak olarak bekletebilir ya da yayına alabilirsiniz.
+          </PSayfaNotu>
           <div className="flex flex-wrap items-center gap-2">
             <PInput placeholder="Yazı ara…" value={arama} onChange={(e) => setArama(e.target.value)} className="w-full sm:max-w-xs" />
             <p className="text-[12px] text-[var(--p-muted)]">{liste.length} yazı</p>

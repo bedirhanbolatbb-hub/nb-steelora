@@ -35,7 +35,7 @@ export default function MetinOner({
       <button
         type="button"
         onClick={yenile}
-        className="inline-flex items-center gap-1.5 text-[11px] text-[var(--p-accent)] hover:underline"
+        className="inline-flex items-center gap-1.5 text-[11px] text-[var(--p-accent-deep)] hover:underline"
       >
         <Sparkles size={12} />
         {oneriler ? 'Başka öner' : etiket}

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { Download } from 'lucide-react'
-import { PBadge, PButton, PCard, PInput } from '../_components/ui'
+import { PBadge, PButton, PCard, PInput, PSayfaNotu } from '../_components/ui'
 import { PDialog, useToast } from '../_components/overlays'
 
 export type AboneSatiri = {
@@ -64,6 +64,9 @@ export default function BultenClient({ satirlar }: { satirlar: AboneSatiri[] }) 
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
+      <PSayfaNotu>
+        Bültene kayıt olan e-posta adresleri; rıza durumunu görür, listeyi dışa aktarır, silme talebi gelen adresi çıkarırsınız.
+      </PSayfaNotu>
       <PCard>
         <p className="text-[13px] leading-relaxed text-[var(--p-ink-soft)]">
           📮 Toplu e-posta gönderimi bilinçli olarak panel dışında — İYS kaydı tamamlanınca

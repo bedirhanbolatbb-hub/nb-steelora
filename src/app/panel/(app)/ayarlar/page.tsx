@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { createServiceClient } from '@/lib/supabase/service'
 import { SHIPPING_COST } from '@/lib/shipping'
 import { formatPrice } from '@/lib/utils'
-import { PCard } from '../_components/ui'
+import { PCard, PSayfaNotu } from '../_components/ui'
 import KopyalanabilirAlan from './KopyalanabilirAlan'
 import KvkkBlogu from './KvkkBlogu'
 
@@ -32,6 +32,9 @@ export default async function PanelAyarlarPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
+      <PSayfaNotu>
+        Kargo, iade ve sistem bilgilerinin özeti; buradaki değerler başka ekranlardan yönetilir, bu sayfa kontrol içindir.
+      </PSayfaNotu>
       <PCard title="Sistem özeti">
         <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
           {satirlar.map((s) => (

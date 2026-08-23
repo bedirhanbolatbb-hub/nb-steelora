@@ -67,7 +67,7 @@ function hasPendingCustomerRequest(requests: any[] | undefined) {
 }
 
 const btnPrimary = 'py-3 px-8 bg-ink text-white text-[11px] tracking-[0.15em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-50'
-const btnOutline = 'py-2 px-4 border border-line text-ink-soft text-[10px] tracking-[0.12em] uppercase font-body hover:border-accent hover:text-accent transition-colors disabled:opacity-50 disabled:pointer-events-none'
+const btnOutline = 'py-2 px-4 border border-line text-ink-soft text-[10px] tracking-[0.12em] uppercase font-body hover:border-accent hover:text-accent-deep transition-colors disabled:opacity-50 disabled:pointer-events-none'
 const inputClass = 'w-full px-3 py-2 border border-line bg-white font-body text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none transition-colors'
 
 export default function HesabimClient({ user, profile, orders }: HesabimClientProps) {
@@ -386,7 +386,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                         >
                           {statusLabels[order.status] || order.status}
                         </span>
-                        <p className="font-body text-[16px] font-medium text-accent mt-2">
+                        <p className="font-body text-[16px] font-medium text-accent-deep mt-2">
                           {formatPrice(order.total)}
                         </p>
                       </div>
@@ -414,7 +414,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                         {/* Faz 10A: durum çizelgesi kargo takip sayfasında. */}
                         <Link
                           href={`/kargo-takip?kod=${encodeURIComponent(String(order.tracking_number))}`}
-                          className="mt-2 inline-block text-[12px] font-body text-accent underline underline-offset-4 hover:text-ink transition-colors"
+                          className="mt-2 inline-block text-[12px] font-body text-accent-deep underline underline-offset-4 hover:text-ink transition-colors"
                         >
                           Kargoyu takip et →
                         </Link>
@@ -614,7 +614,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                   <p className="font-body text-[12px] text-ink-soft">{addr.district}, {addr.city}</p>
                   <p className="font-body text-[12px] text-ink-soft">{addr.address}</p>
                   <div className="flex gap-3 mt-3">
-                    <button onClick={() => setAddressForm({ ...addr })} className="text-[11px] text-accent hover:text-accent-deep font-body transition-colors">Düzenle</button>
+                    <button onClick={() => setAddressForm({ ...addr })} className="text-[11px] text-accent-deep hover:text-ink font-body transition-colors">Düzenle</button>
                     <button onClick={() => deleteAddress(addr.id)} className="text-[11px] text-red-400 hover:text-red-600 font-body transition-colors">Sil</button>
                   </div>
                 </div>

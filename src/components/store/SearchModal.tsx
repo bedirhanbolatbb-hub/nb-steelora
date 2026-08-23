@@ -160,7 +160,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   {product.option_count > 0 && ` · +${product.option_count} seçenek`}
                 </p>
               </div>
-              <p className="text-[13px] font-body text-accent font-medium shrink-0">
+              <p className="text-[13px] font-body text-accent-deep font-medium shrink-0">
                 {formatPrice(product.display_price)}
               </p>
             </button>

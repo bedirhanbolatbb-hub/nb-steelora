@@ -41,7 +41,7 @@ export default function PanelLoginPage() {
         <p className="panel-brand text-center text-[18px] tracking-[0.12em] text-[var(--p-ink)]">
           NB STEELORA
         </p>
-        <p className="mb-6 mt-1 text-center text-[10px] uppercase tracking-[0.2em] text-[var(--p-accent)]">
+        <p className="mb-6 mt-1 text-center text-[10px] uppercase tracking-[0.2em] text-[var(--p-accent-deep)]">
           Yönetim Paneli
         </p>
 

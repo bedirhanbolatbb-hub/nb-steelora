@@ -121,7 +121,7 @@ function ProductsInner({
             </span>
             <button
               onClick={() => router.push(pathname)}
-              className="text-[10px] text-accent hover:text-accent-deep font-body transition-colors"
+              className="text-[10px] text-accent-deep hover:text-ink font-body transition-colors"
             >
               Temizle
             </button>
@@ -162,7 +162,7 @@ function ProductsInner({
               onClick={() => updateParams({ kategori: cat })}
               className={`block text-[12px] font-body w-full text-left py-1 transition-colors ${
                 currentParams.kategori === cat
-                  ? 'text-accent font-medium'
+                  ? 'text-accent-deep font-medium'
                   : 'text-ink-soft hover:text-ink'
               }`}
             >
@@ -193,7 +193,7 @@ function ProductsInner({
                 }
                 className={`block text-[12px] font-body w-full text-left py-1 transition-colors ${
                   isActive
-                    ? 'text-accent font-medium'
+                    ? 'text-accent-deep font-medium'
                     : 'text-ink-soft hover:text-ink'
                 }`}
               >
@@ -284,7 +284,7 @@ function ProductsInner({
           ))}
           <button
             onClick={() => router.push(pathname)}
-            className="text-[11px] font-body text-accent-deep underline underline-offset-4 hover:text-accent transition-colors ml-1"
+            className="text-[11px] font-body text-accent-deep underline underline-offset-4 hover:text-ink transition-colors ml-1"
           >
             Temizle
           </button>
@@ -298,7 +298,7 @@ function ProductsInner({
             onClick={() => updateParams({ tip: '' })}
             className={`px-3 py-1.5 text-[11px] font-body border transition-colors ${
               !currentParams.tip
-                ? 'border-accent text-accent'
+                ? 'border-accent text-accent-deep'
                 : 'border-line text-ink-soft hover:text-ink'
             }`}
           >
@@ -310,7 +310,7 @@ function ProductsInner({
               onClick={() => updateParams({ tip: currentParams.tip === chip.value ? '' : chip.value })}
               className={`px-3 py-1.5 text-[11px] font-body border transition-colors ${
                 currentParams.tip === chip.value
-                  ? 'border-accent text-accent'
+                  ? 'border-accent text-accent-deep'
                   : 'border-line text-ink-soft hover:text-ink'
               }`}
             >

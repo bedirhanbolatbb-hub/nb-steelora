@@ -88,7 +88,7 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                     <div className="flex items-center border border-line">
                       <button
                         onClick={() => updateQuantity(product.id, quantity - 1)}
-                        className="p-1.5 text-ink-soft hover:text-accent transition-colors"
+                        className="p-1.5 text-ink-soft hover:text-accent-deep transition-colors"
                         aria-label="Azalt"
                       >
                         <Minus size={14} />
@@ -96,7 +96,7 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                       <span className="px-3 text-[12px] font-body">{quantity}</span>
                       <button
                         onClick={() => updateQuantity(product.id, quantity + 1)}
-                        className="p-1.5 text-ink-soft hover:text-accent transition-colors"
+                        className="p-1.5 text-ink-soft hover:text-accent-deep transition-colors"
                         aria-label="Artır"
                       >
                         <Plus size={14} />
@@ -132,14 +132,14 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                 <span>{shipping === 0 ? SHIPPING_LINE_LABEL : formatPrice(shipping)}</span>
               </div>
               <p className="text-[11px] font-body text-ink">
-                <span className="text-accent">✓</span> {FREE_SHIPPING_LABEL}
+                <span className="text-accent-deep">✓</span> {FREE_SHIPPING_LABEL}
               </p>
 
               {/* Kupon hatırlatması — otomatik kampanya daha avantajlıysa
                   "uygulanır" demek yanıltıcı olur: indirimler toplanmıyor. */}
               {couponApplies(coupon, subtotal) && (
                 <p className="text-[11px] font-body text-ink-soft pt-1">
-                  <span className="text-accent">✦</span> {coupon.label}
+                  <span className="text-accent-deep">✦</span> {coupon.label}
                   <span className="text-muted">
                     {indirimTutari > 0
                       ? ' — yukarıdaki kampanya daha avantajlı, o uygulanıyor'
@@ -152,11 +152,11 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                   biter bitmez kendiliğinden görünür; ikisi hiç çakışmaz. */}
               {ilkSiparisMetni && (
                 <p className="text-[11px] font-body text-ink-soft pt-1">
-                  <span className="text-accent">✦</span> {ilkSiparisMetni}
+                  <span className="text-accent-deep">✦</span> {ilkSiparisMetni}
                 </p>
               )}
               {indirim && (
-                <div className="flex justify-between text-[13px] font-body text-accent">
+                <div className="flex justify-between text-[13px] font-body text-accent-deep">
                   <span>{indirim.ad}</span>
                   <span>−{formatPrice(indirimTutari)}</span>
                 </div>
@@ -190,7 +190,7 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
               </Link>
               <Link
                 href="/urunler"
-                className="block text-center text-[11px] font-body text-muted hover:text-accent transition-colors"
+                className="block text-center text-[11px] font-body text-muted hover:text-accent-deep transition-colors"
               >
                 Alışverişe devam et
               </Link>

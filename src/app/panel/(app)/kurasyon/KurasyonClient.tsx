@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { ArrowDown, ArrowUp, Plus, RefreshCcw, Trash2 } from 'lucide-react'
 import { CATEGORIES } from '@/lib/catalog/categories'
-import { PBadge, PButton, PCard, PInput, PSelect } from '../_components/ui'
+import { PBadge, PButton, PCard, PInput, PSelect, PSayfaNotu } from '../_components/ui'
 import { useToast } from '../_components/overlays'
 import ProductPicker, { type PickerUrun } from '../_components/ProductPicker'
 import MediaUpload from '../_components/MediaUpload'
@@ -227,10 +227,10 @@ export default function KurasyonClient({
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
-      <p className="text-[13px] text-[var(--p-muted)]">
-        Anasayfa küratörlü alanları. Kayıt sonrası vitrin birkaç dakika içinde güncellenir (önbellek).
-        Her bölümün başlığındaki sayı, anasayfada kaç öğe basıldığını gösterir.
-      </p>
+      <PSayfaNotu>
+        Anasayfanın hangi görselleri, hangi ürünleri ve hangi bölümleri göstereceğini burada
+        seçersiniz; kaydettikten birkaç dakika sonra vitrinde görünür.
+      </PSayfaNotu>
 
       {/* ── Hero slaytları (Faz 9A — kampanya bandı) ── */}
       <PCard

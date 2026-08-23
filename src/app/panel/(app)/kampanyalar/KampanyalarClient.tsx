@@ -7,10 +7,11 @@ import { oncelikliVesile, ELLE_VESILELER, VESILE_ADLARI, type Vesile } from '@/l
 import { CATEGORIES } from '@/lib/catalog/categories'
 import { vitrinMetni, vitrinHedefi } from '@/lib/campaigns/vitrinMetni'
 import { tipCevir, kapsamCevir } from '@/lib/campaigns/yukle'
+import UrunSecici from './UrunSecici'
 import { useState, useMemo, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
-import { PBadge, PButton, PInput, PSelect } from '../_components/ui'
+import { PBadge, PButton, PInput, PSelect, PSayfaNotu } from '../_components/ui'
 import { PDialog, useToast } from '../_components/overlays'
 
 export type KampanyaSatiri = {
@@ -164,6 +165,8 @@ export default function KampanyalarClient({
     [satirlar]
   )
   const [silinecek, setSilinecek] = useState<KampanyaSatiri | null>(null)
+  /** "12 ürün" rozetine tıklanınca açılan kapsam listesi (Faz 24). */
+  const [kapsamListesi, setKapsamListesi] = useState<{ ad: string; hedefler: string[] } | null>(null)
   const [isleniyor, setIsleniyor] = useState(false)
   const [onizleme, setOnizleme] = useState<any>(null)
   const [onizleniyor, setOnizleniyor] = useState(false)
@@ -279,6 +282,16 @@ export default function KampanyalarClient({
     try {
       const govde = {
         ...form,
+        // Faz 24 DÜZELTME: ölçütler `hedefleme` altında gönderilmeliydi.
+        // Form onları düz alan olarak taşıyor, doğrulayıcı ise
+        // `body.hedefleme.stokAzami` okuyor — Faz 22'de tanımlanan stok/fiyat
+        // hedeflemesi bu yüzden HİÇ KAYDEDİLMİYORDU. Canlıda doğrulandı:
+        // hiçbir kampanyanın metadata'sında `hedefleme` yoktu.
+        hedefleme: {
+          stokAzami: form.stokAzami,
+          fiyatMin: form.fiyatMin,
+          fiyatMax: form.fiyatMax,
+        },
         starts_at: dtIso(form.starts_at) || undefined,
         ends_at: dtIso(form.ends_at) || null,
         tiers: form.tiers
@@ -334,6 +347,9 @@ export default function KampanyalarClient({
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
+      <PSayfaNotu>
+        İndirim kodu, sepet indirimi, ücretsiz kargo ve vitrin bandı burada tanımlanır; tarihini, kapsamını ve koşullarını siz belirlersiniz.
+      </PSayfaNotu>
       <div className="flex items-center justify-between">
         <p className="text-[13px] text-[var(--p-muted)]">
           Vitrindeki kupon davranışı değişmez — panel yalnız veriyi yönetir.
@@ -363,12 +379,43 @@ export default function KampanyalarClient({
                 {c.discountType === 'percent' ? `%${c.discountValue}` : formatPrice(c.discountValue)}
               </span>
             )}
-            {c.scope && c.scope !== 'cart' && (
-              <PBadge tone="neutral">
-                {KAPSAM_ETIKET[c.scope]}
-                {c.hedefler.length > 0 ? ` (${c.hedefler.length})` : ''}
-              </PBadge>
+            {/* Faz 24: ürün kapsamında rozet "12 ürün" der ve tıklanınca
+                hangi ürünler olduğunu listeler. Eskiden "Ürün (12)" yazıyordu
+                ve hangi 12 ürün olduğunu görmenin tek yolu kampanyayı
+                düzenlemeye açmaktı. */}
+            {c.scope === 'product' && c.hedefler.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setKapsamListesi({ ad: c.name, hedefler: c.hedefler })}
+                className="rounded-[4px] border border-[var(--p-line)] px-1.5 py-0.5 text-[11px] text-[var(--p-ink-soft)] underline underline-offset-2 hover:border-[var(--p-ink)] hover:text-[var(--p-ink)]"
+              >
+                {c.hedefler.length} ürün
+              </button>
+            ) : (
+              c.scope &&
+              c.scope !== 'cart' && (
+                <PBadge tone="neutral">
+                  {KAPSAM_ETIKET[c.scope]}
+                  {c.hedefler.length > 0 ? ` (${c.hedefler.length})` : ''}
+                </PBadge>
+              )
             )}
+            {(c.metadata?.hedefleme?.stokAzami ||
+              c.metadata?.hedefleme?.fiyatMin ||
+              c.metadata?.hedefleme?.fiyatMax) &&
+              c.scope !== 'stock' &&
+              c.scope !== 'price_range' && (
+                <PBadge tone="neutral">
+                  {[
+                    c.metadata?.hedefleme?.stokAzami ? `stok ≤${c.metadata.hedefleme.stokAzami}` : '',
+                    c.metadata?.hedefleme?.fiyatMin || c.metadata?.hedefleme?.fiyatMax
+                      ? `${c.metadata?.hedefleme?.fiyatMin ?? 0}–${c.metadata?.hedefleme?.fiyatMax ?? '∞'}₺`
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </PBadge>
+              )}
             {c.minCart > 0 && (
               <span className="text-[12px] text-[var(--p-muted)]">min {formatPrice(c.minCart)}</span>
             )}
@@ -554,21 +601,69 @@ export default function KampanyalarClient({
               )}
 
               {form.scope === 'product' && (
-                <div className="mt-2">
-                  <PInput
-                    placeholder="Ürün kimlikleri ya da barkodlar, virgülle"
-                    value={form.targets.join(', ')}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        targets: e.target.value.split(',').map((t) => t.trim()).filter(Boolean),
-                      })
-                    }
-                  />
-                  <p className="mt-1 text-[11px] text-[var(--p-muted)]">
-                    Ürünler ekranındaki barkodu (ör. NBK199) yapıştırabilirsiniz.
+                <UrunSecici
+                  secili={form.targets}
+                  onChange={(hedefler) => setForm({ ...form, targets: hedefler })}
+                  kategoriler={kategoriler}
+                  koleksiyonlar={koleksiyonlar}
+                />
+              )}
+
+              {/* Faz 24: DARALTICI ölçütler. Kapsam artık iki katman — temel
+                  küme (kategori/koleksiyon/seçili ürünler) ve onu daraltan
+                  ölçüt. "Seçtiğim 12 ürün içinden stoğu 3 ve altı olanlar"
+                  böyle kurulur. Ölçüt kapsamlarının (stok / fiyat aralığı)
+                  kendisinde bu bölüm çıkmaz: orada ölçüt zaten kapsamın
+                  ta kendisidir, ikinci kez sormak kafa karıştırırdı. */}
+              {(form.scope === 'category' || form.scope === 'collection' || form.scope === 'product') && (
+                <details className="mt-3 rounded-[4px] border border-[var(--p-line)] px-3 py-2">
+                  <summary className="cursor-pointer text-[12px] text-[var(--p-muted)]">
+                    Daralt: stok ya da fiyat ölçütü
+                    {(form.stokAzami || form.fiyatMin || form.fiyatMax) && (
+                      <span className="ml-1.5 text-[var(--p-accent-deep)]">· etkin</span>
+                    )}
+                  </summary>
+                  <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div>
+                      <label className="mb-1 block text-[12px] text-[var(--p-muted)]">
+                        Stok en çok
+                      </label>
+                      <PInput
+                        inputMode="numeric"
+                        value={form.stokAzami}
+                        onChange={(e) => setForm({ ...form, stokAzami: e.target.value })}
+                        placeholder="boş = sınır yok"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[12px] text-[var(--p-muted)]">
+                        Fiyat alt sınır (₺)
+                      </label>
+                      <PInput
+                        inputMode="numeric"
+                        value={form.fiyatMin}
+                        onChange={(e) => setForm({ ...form, fiyatMin: e.target.value })}
+                        placeholder="boş = sınır yok"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[12px] text-[var(--p-muted)]">
+                        Fiyat üst sınır (₺)
+                      </label>
+                      <PInput
+                        inputMode="numeric"
+                        value={form.fiyatMax}
+                        onChange={(e) => setForm({ ...form, fiyatMax: e.target.value })}
+                        placeholder="boş = sınır yok"
+                      />
+                    </div>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-[var(--p-muted)]">
+                    Boş bırakılan ölçüt daraltma yapmaz. Ölçüt anlıktır: stok değiştikçe
+                    kampanyanın kapsadığı ürünler kendiliğinden değişir, donmuş liste tutulmaz.
+                    Stoğu bilinmeyen ürün, stok ölçütü varken kapsam dışında kalır.
                   </p>
-                </div>
+                </details>
               )}
             </div>
           )}
@@ -871,6 +966,72 @@ export default function KampanyalarClient({
       >
         <p>Silme geri alınamaz. Geçmiş siparişlerdeki indirim kayıtları etkilenmez.</p>
       </PDialog>
+
+      {/* Kapsam listesi — "12 ürün" rozetine tıklanınca (Faz 24) */}
+      <PDialog
+        open={kapsamListesi !== null}
+        onClose={() => setKapsamListesi(null)}
+        title={`"${kapsamListesi?.ad}" kapsamındaki ürünler`}
+        footer={<PButton variant="ghost" onClick={() => setKapsamListesi(null)}>Kapat</PButton>}
+      >
+        {kapsamListesi && <KapsamListesi hedefler={kapsamListesi.hedefler} />}
+      </PDialog>
+    </div>
+  )
+}
+
+/**
+ * Kampanya kapsamındaki ürünleri okunur biçimde listeler (Faz 24).
+ *
+ * Hedefler kimlik ya da barkod olabilir; ikisini de aynı uç çözer. Katalogda
+ * bulunamayanlar ayrıca gösterilir — pasife düşmüş ya da barkodu değişmiş
+ * ürünün sessizce listeden kaybolması, kampanyanın neden çalışmadığını
+ * gizlerdi.
+ */
+function KapsamListesi({ hedefler }: { hedefler: string[] }) {
+  const [urunler, setUrunler] = useState<any[] | null>(null)
+  const [bulunamayan, setBulunamayan] = useState<string[]>([])
+
+  useEffect(() => {
+    let iptal = false
+    fetch('/api/panel/campaigns/urun-ara', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mod: 'coz', hedefler }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (iptal || !d?.ok) return
+        setUrunler(d.urunler)
+        setBulunamayan(d.bulunamayan ?? [])
+      })
+      .catch(() => !iptal && setUrunler([]))
+    return () => {
+      iptal = true
+    }
+  }, [hedefler])
+
+  if (urunler === null) return <p className="text-[13px] text-[var(--p-muted)]">Yükleniyor…</p>
+
+  return (
+    <div className="space-y-2">
+      <ul className="max-h-[340px] space-y-1 overflow-y-auto text-[13px]">
+        {urunler.map((u) => (
+          <li key={u.id} className="flex items-center gap-2">
+            <span className="min-w-0 flex-1 truncate">{u.ad}</span>
+            <span className="shrink-0 text-[11px] text-[var(--p-muted)]">{u.barkod ?? '—'}</span>
+            <span className="shrink-0 tabular-nums">{formatPrice(u.fiyat)}</span>
+            <span className="w-14 shrink-0 text-right text-[11px] tabular-nums text-[var(--p-muted)]">
+              stok {u.stok}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {bulunamayan.length > 0 && (
+        <p className="text-[12px] text-[var(--p-warning)]">
+          Katalogda bulunamayan {bulunamayan.length} hedef: {bulunamayan.join(', ')}
+        </p>
+      )}
     </div>
   )
 }

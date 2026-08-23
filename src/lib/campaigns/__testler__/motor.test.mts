@@ -7,7 +7,9 @@ const esit = (ad: string, bulunan: any, beklenen: any) => {
   ok ? gecti++ : kaldi++
 }
 const K = (o: any) => ({ id: o.id ?? 'k1', ad: o.ad ?? 'Kampanya', tip: o.tip, kapsam: o.kapsam ?? 'sepet',
-  hedefler: o.hedefler ?? [], deger: o.deger ?? null, minSepet: o.minSepet ?? 0, minAdet: o.minAdet ?? 0,
+  hedefler: o.hedefler ?? [],
+  stokAzami: o.stokAzami ?? null, fiyatMin: o.fiyatMin ?? null, fiyatMax: o.fiyatMax ?? null,
+  deger: o.deger ?? null, minSepet: o.minSepet ?? 0, minAdet: o.minAdet ?? 0,
   alAdet: o.alAdet ?? null, odeAdet: o.odeAdet ?? null, kademeler: o.kademeler ?? null,
   birlesebilir: o.birlesebilir ?? false, oncelik: o.oncelik ?? 100, ilkAlisverisMi: o.ilkAlisverisMi ?? false,
   sadeceUyelere: o.sadeceUyelere ?? false, koduVar: o.koduVar ?? false })
@@ -95,5 +97,63 @@ esit('rozet: 3 al 2 öde', kosulRozeti(K({tip:'x_al_y_ode', alAdet:3, odeAdet:2}
   const s = sepetHesabi({ kalemler:[kolye,kupe,bileklik], kampanyalar:[K({tip:'sepet_yuzde', deger:30})], kargoTutari:0 })
   esit('toplam tutarlılığı', [s.araToplam, s.indirimToplami, s.toplam], [1549.60, 464.88, 1084.72])
 }
+// ── Faz 24: kapsam + ölçüt birleşimi ───────────────────────────────────
+// Kapsam artık iki katman: temel küme (seçili ürünler) + daraltıcı ölçüt.
+{
+  const stoklu = (o: any, stok: number | null) => ({ ...o, stok })
+  const k1 = stoklu(kolye, 2)      // NBK199, 449,90 · stok 2
+  const k2 = stoklu(kupe, 9)       // BKP090, 299,90 ×2 · stok 9
+  const k3 = stoklu(bileklik, 1)   // NBB133, 499,90 · stok 1
+  const k4 = stoklu(bileklik, null) // stok bilinmiyor
+
+  // Yalnız ürün seçimi: üç ürün de kapsamda
+  esit('seçili 3 ürün %10',
+    kampanyaIndirimi([k1,k2,k3], K({tip:'kapsam_yuzde', kapsam:'urun', hedefler:['NBK199','BKP090','NBB133'], deger:10})),
+    154.96)
+  // Aynı seçim + "stoğu 3 ve altı": küpe (stok 9) elenir
+  esit('seçili 3 ürün, stok≤3 daraltması',
+    kampanyaIndirimi([k1,k2,k3], K({tip:'kapsam_yuzde', kapsam:'urun', hedefler:['NBK199','BKP090','NBB133'], deger:10, stokAzami:3})),
+    94.98)
+  // Aynı seçim + fiyat aralığı 400–500: küpe (299,90) elenir
+  esit('seçili 3 ürün, 400–500₺ daraltması',
+    kampanyaIndirimi([k1,k2,k3], K({tip:'kapsam_yuzde', kapsam:'urun', hedefler:['NBK199','BKP090','NBB133'], deger:10, fiyatMin:400, fiyatMax:500})),
+    94.98)
+  // İki ölçüt birlikte: stok≤1 VE 400₺ üzeri → yalnız bileklik
+  esit('seçili 3 ürün, stok≤1 + 400₺ üzeri',
+    kampanyaIndirimi([k1,k2,k3], K({tip:'kapsam_yuzde', kapsam:'urun', hedefler:['NBK199','BKP090','NBB133'], deger:10, stokAzami:1, fiyatMin:400})),
+    49.99)
+  // Stoğu bilinmeyen ürün ölçüt varken kapsam DIŞI kalır
+  esit('stok bilinmiyor + stok ölçütü → kapsam dışı',
+    kampanyaIndirimi([k4], K({tip:'kapsam_yuzde', kapsam:'urun', hedefler:['NBB133'], deger:10, stokAzami:3})),
+    0)
+  // Ölçüt yoksa stoğu bilinmeyen ürün normal kapsamda
+  esit('stok bilinmiyor, ölçüt yok → kapsamda',
+    kampanyaIndirimi([k4], K({tip:'kapsam_yuzde', kapsam:'urun', hedefler:['NBB133'], deger:10})),
+    49.99)
+  // Kategori kapsamı da daraltılabilir
+  esit('kategori kapsamı + stok≤3',
+    kampanyaIndirimi([k1,k2], K({tip:'kapsam_yuzde', kapsam:'kategori', hedefler:['kolye','küpe'], deger:10, stokAzami:3})),
+    44.99)
+  // GERİYE UYUM: kapsam='stok' eskisi gibi çalışır
+  esit('kapsam=stok (eski kayıt) ≤3',
+    kampanyaIndirimi([k1,k2,k3], K({tip:'kapsam_yuzde', kapsam:'stok', deger:10, stokAzami:3})),
+    94.98)
+  // GERİYE UYUM: kapsam='stok' ama eşik yok → hiç uygulanmaz
+  esit('kapsam=stok, eşik yok → 0',
+    kampanyaIndirimi([k1,k2,k3], K({tip:'kapsam_yuzde', kapsam:'stok', deger:10})),
+    0)
+  // GERİYE UYUM: kapsam='fiyat_araligi' eskisi gibi
+  esit('kapsam=fiyat_araligi 400–500',
+    kampanyaIndirimi([k1,k2,k3], K({tip:'kapsam_yuzde', kapsam:'fiyat_araligi', deger:10, fiyatMin:400, fiyatMax:500})),
+    94.98)
+  esit('kapsam=fiyat_araligi, sınır yok → 0',
+    kampanyaIndirimi([k1,k2,k3], K({tip:'kapsam_yuzde', kapsam:'fiyat_araligi', deger:10})),
+    0)
+  // Ölçüt hiçbir kalemi bırakmazsa indirim yok
+  esit('daraltma her şeyi elerse → 0',
+    kampanyaIndirimi([k1,k2,k3], K({tip:'kapsam_yuzde', kapsam:'urun', hedefler:['NBK199'], deger:10, stokAzami:1})),
+    0)
+}
+
 console.log(`\n  ${gecti} geçti, ${kaldi} kaldı`)
 process.exit(kaldi ? 1 : 0)

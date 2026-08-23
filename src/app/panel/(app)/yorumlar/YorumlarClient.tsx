@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { ExternalLink, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { PBadge, PButton } from '../_components/ui'
+import { PBadge, PButton, PSayfaNotu } from '../_components/ui'
 import { PDialog, PTabs, useToast } from '../_components/overlays'
 
 export type YorumSatiri = {
@@ -78,6 +78,9 @@ export default function YorumlarClient({ satirlar }: { satirlar: YorumSatiri[] }
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
+      <PSayfaNotu>
+        Müşterilerin bıraktığı ürün yorumları önce burada bekler; onayladığınız yorum ürün sayfasında görünür, uygunsuz olanı silersiniz.
+      </PSayfaNotu>
       <PTabs
         tabs={[
           { id: 'bekleyen', label: `Bekleyen (${bekleyen})` },

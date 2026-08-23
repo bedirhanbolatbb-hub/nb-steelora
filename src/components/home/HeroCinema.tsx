@@ -27,7 +27,9 @@ export default function HeroCinema({
   const metinBlogu = (
     <div className="max-w-[1400px] mx-auto px-4 lg:px-8 w-full">
       <div className="max-w-xl">
-        <span className={`eyebrow hero-line ${image ? 'text-accent' : ''}`}>
+        {/* Fotoğraflı hero KOYU zemindir: orada AÇIK altın doğru seçim,
+            koyu ton okunmaz olurdu (Faz 24 kontrast düzeltmesinin istisnası). */}
+        <span className={`eyebrow hero-line ${image ? 'eyebrow-acik' : ''}`}>
           {c.hero_badge || 'Yeni Koleksiyon — 2026'}
         </span>
         <h1
@@ -54,7 +56,7 @@ export default function HeroCinema({
             href="/urunler"
             className={`inline-flex items-center text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] transition-colors ${
               image
-                ? 'bg-bg text-ink hover:bg-accent hover:text-white'
+                ? 'bg-bg text-ink hover:bg-accent-deep hover:text-white'
                 : 'bg-ink text-bg hover:bg-accent-deep'
             }`}
           >
@@ -63,7 +65,7 @@ export default function HeroCinema({
           <Link
             href="/#one-cikanlar"
             className={`text-[11px] uppercase tracking-[0.16em] font-body underline underline-offset-4 transition-colors ${
-              image ? 'text-white/80 hover:text-white' : 'text-accent-deep hover:text-accent'
+              image ? 'text-white/80 hover:text-white' : 'text-accent-deep hover:text-ink'
             }`}
           >
             Öne Çıkanlar →

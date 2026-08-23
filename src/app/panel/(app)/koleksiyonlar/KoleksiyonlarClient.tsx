@@ -7,7 +7,7 @@ import { isRemoteMedia } from '@/lib/images'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { ArrowDown, ArrowUp, Lock, Plus, Trash2 } from 'lucide-react'
-import { PBadge, PButton, PCard, PInput, PTextarea } from '../_components/ui'
+import { PBadge, PButton, PCard, PInput, PTextarea, PSayfaNotu } from '../_components/ui'
 import { PDialog, useToast } from '../_components/overlays'
 import ProductPicker, { type PickerUrun } from '../_components/ProductPicker'
 import MediaUpload from '../_components/MediaUpload'
@@ -120,6 +120,9 @@ export default function KoleksiyonlarClient({
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
+      <PSayfaNotu>
+        Ürünleri temalı gruplara ayırırsınız; her koleksiyonun vitrinde kendi adresi, kapak görseli ve sırası olur.
+      </PSayfaNotu>
       <div className="flex items-center justify-between">
         <p className="text-[13px] text-[var(--p-muted)]">
           {koleksiyonlar.length} koleksiyon · vitrin adresi <code className="text-[12px]">/koleksiyon/…</code>

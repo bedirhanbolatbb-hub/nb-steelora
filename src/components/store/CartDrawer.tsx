@@ -55,7 +55,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
           </h2>
           <button
             onClick={onClose}
-            className="text-ink-soft hover:text-accent transition-colors"
+            className="text-ink-soft hover:text-accent-deep transition-colors"
             aria-label="Kapat"
           >
             <X size={20} />
@@ -91,7 +91,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                       <p className="text-[11px] text-muted font-body mt-0.5">
                         {item.product.trendyol_category}
                       </p>
-                      <p className="text-[13px] text-accent font-body font-medium mt-1">
+                      <p className="text-[13px] text-accent-deep font-body font-medium mt-1">
                         {formatPrice(item.product.display_price)}
                       </p>
                       <div className="flex items-center justify-between mt-2">
@@ -100,7 +100,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                             onClick={() =>
                               updateQuantity(item.product.id, item.quantity - 1)
                             }
-                            className="w-7 h-7 flex items-center justify-center text-ink-soft hover:text-accent transition-colors"
+                            className="w-7 h-7 flex items-center justify-center text-ink-soft hover:text-accent-deep transition-colors"
                             aria-label="Azalt"
                           >
                             <Minus size={12} />
@@ -112,7 +112,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                             onClick={() =>
                               updateQuantity(item.product.id, item.quantity + 1)
                             }
-                            className="w-7 h-7 flex items-center justify-center text-ink-soft hover:text-accent transition-colors"
+                            className="w-7 h-7 flex items-center justify-center text-ink-soft hover:text-accent-deep transition-colors"
                             aria-label="Artır"
                           >
                             <Plus size={12} />
@@ -136,7 +136,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                 ilerleme çubuğu kaldırıldı (tek satır kaldı). */}
             <div className="px-6 py-3 bg-surface-muted/50">
               <p className="text-[11px] font-body text-ink text-center">
-                <span className="text-accent">✓</span> {FREE_SHIPPING_LABEL}
+                <span className="text-accent-deep">✓</span> {FREE_SHIPPING_LABEL}
               </p>
             </div>
 
@@ -144,7 +144,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
             {couponApplies(coupon ?? null, subtotal) && (
               <div className="px-6 py-2.5 border-t border-line">
                 <p className="text-[11px] font-body text-ink-soft">
-                  <span className="text-accent">✦</span> {coupon!.label}
+                  <span className="text-accent-deep">✦</span> {coupon!.label}
                   <span className="text-muted">
                     {indirim
                       ? ' — kampanya daha avantajlı, o uygulanıyor'
@@ -162,7 +162,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                     Ara Toplam
                   </span>
                   <span
-                    className={`text-[14px] font-body ${indirim ? 'text-muted line-through' : 'text-accent font-medium text-[16px]'}`}
+                    className={`text-[14px] font-body ${indirim ? 'text-muted line-through' : 'text-accent-deep font-medium text-[16px]'}`}
                   >
                     {formatPrice(subtotal)}
                   </span>
@@ -172,7 +172,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                   <>
                     <div className="flex items-center justify-between">
                       <span className="text-[12px] font-body text-ink-soft">{indirim.ad}</span>
-                      <span className="text-[13px] font-body text-accent">
+                      <span className="text-[13px] font-body text-accent-deep">
                         −{formatPrice(indirim.tutar)}
                       </span>
                     </div>
@@ -180,7 +180,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                       <span className="text-[12px] font-body uppercase tracking-wider text-ink">
                         Toplam
                       </span>
-                      <span className="text-[16px] font-body font-medium text-accent">
+                      <span className="text-[16px] font-body font-medium text-accent-deep">
                         {formatPrice(indirimliToplam)}
                       </span>
                     </div>

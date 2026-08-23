@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { formatPrice } from '@/lib/utils'
-import { PBadge, PCard, PEmptyState, PInput } from '../_components/ui'
+import { PBadge, PCard, PEmptyState, PInput, PSayfaNotu } from '../_components/ui'
 
 export type Satir = {
   id: string
@@ -51,6 +51,9 @@ export default function UyelerClient({
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
+      <PSayfaNotu>
+        Siteye üye olan müşterilerin listesi; kimin ne zaman katıldığını, sipariş verip vermediğini ve site içi hareketlerini görürsünüz.
+      </PSayfaNotu>
       <p className="text-[12px] leading-relaxed text-[var(--p-muted)]">
         E-posta adresleri <strong className="font-medium text-[var(--p-ink)]">maskeli</strong>{' '}
         gösterilir — ekran paylaşırken müşteri adresi ifşa olmasın diye. Tam adres siparişin

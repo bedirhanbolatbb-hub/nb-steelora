@@ -62,7 +62,7 @@ export default function GirisPage() {
           <div className="text-right">
             <Link
               href="/sifremi-unuttum"
-              className="text-[12px] font-body text-accent hover:text-accent-deep transition-colors"
+              className="text-[12px] font-body text-accent-deep hover:text-ink transition-colors"
             >
               Şifremi unuttum
             </Link>
@@ -82,7 +82,7 @@ export default function GirisPage() {
             Üye değil misiniz?{' '}
             <Link
               href="/kayit"
-              className="text-accent hover:text-accent-deep transition-colors"
+              className="text-accent-deep hover:text-ink transition-colors"
             >
               Üye olun
             </Link>

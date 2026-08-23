@@ -347,10 +347,10 @@ export default function OdemePage() {
                 Kargo takibi, sipariş geçmişi ve özel kampanyalar için üye olun.
               </p>
               <div className="flex items-center gap-4 text-[12px] font-body">
-                <a href="/giris" className="text-accent-deep underline underline-offset-4 hover:text-accent transition-colors">
+                <a href="/giris" className="text-accent-deep underline underline-offset-4 hover:text-ink transition-colors">
                   Giriş yap
                 </a>
-                <a href="/kayit" className="text-accent-deep underline underline-offset-4 hover:text-accent transition-colors">
+                <a href="/kayit" className="text-accent-deep underline underline-offset-4 hover:text-ink transition-colors">
                   Üye ol
                 </a>
                 <span className="text-muted">veya misafir olarak devam edin ↓</span>
@@ -557,7 +557,7 @@ export default function OdemePage() {
                 kampanya varken bu metni hiç göndermiyor. */}
             {ilkSiparisMetni && !appliedDiscount && (
               <p className="mt-2 font-body text-[11px] text-ink-soft">
-                <span className="text-accent">✦</span> {ilkSiparisMetni}
+                <span className="text-accent-deep">✦</span> {ilkSiparisMetni}
               </p>
             )}
           </section>

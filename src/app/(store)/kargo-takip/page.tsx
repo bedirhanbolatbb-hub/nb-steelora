@@ -15,7 +15,7 @@ export default async function KargoTakipPage({
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
       <header className="mx-auto max-w-[560px] text-center">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-accent">Sipariş takibi</p>
+        <p className="text-[11px] uppercase tracking-[0.28em] text-accent-deep">Sipariş takibi</p>
         <h1 className="mt-3 font-heading text-[34px] font-medium leading-[1.15] text-ink sm:text-[46px]">
           Kargonuz nerede?
         </h1>

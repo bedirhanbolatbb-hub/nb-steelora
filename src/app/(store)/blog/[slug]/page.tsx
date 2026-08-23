@@ -107,11 +107,11 @@ export default async function BlogPostPage({
         <div className="max-w-[68ch] mx-auto px-4 py-12">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-[10px] font-body text-muted uppercase tracking-wider mb-8 flex-wrap">
-            <Link href="/" className="hover:text-accent transition-colors">
+            <Link href="/" className="hover:text-accent-deep transition-colors">
               Ana Sayfa
             </Link>
             <span>/</span>
-            <Link href="/blog" className="hover:text-accent transition-colors">
+            <Link href="/blog" className="hover:text-accent-deep transition-colors">
               Blog
             </Link>
             <span>/</span>
@@ -176,7 +176,7 @@ export default async function BlogPostPage({
                 </div>
                 <Link
                   href={kesfetYolu}
-                  className="text-[11px] uppercase tracking-[0.15em] font-body text-accent hover:text-accent-deep transition-colors"
+                  className="text-[11px] uppercase tracking-[0.15em] font-body text-accent-deep hover:text-ink transition-colors"
                 >
                   Tümünü gör
                 </Link>

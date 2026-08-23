@@ -7,7 +7,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { SlidersHorizontal, X } from 'lucide-react'
 import { cn, formatPrice } from '@/lib/utils'
-import { PBadge, PButton, PInput, PSelect } from '../_components/ui'
+import { PBadge, PButton, PInput, PSelect, PSayfaNotu } from '../_components/ui'
 import { PDialog, useToast } from '../_components/overlays'
 
 export type UrunSatiri = {
@@ -231,6 +231,9 @@ export default function UrunlerClient({
 
   return (
     <div className="mx-auto max-w-6xl space-y-3">
+      <PSayfaNotu>
+        Vitrindeki ürünlerin tümü burada listelenir; arar, rozet verir, öne çıkarır, düzenlemek için ürünün kendi sayfasına girersiniz.
+      </PSayfaNotu>
       <div className="flex flex-wrap items-center gap-1 border-b border-[var(--p-line)]">
         {sekmeler.map((s) => (
           <button
