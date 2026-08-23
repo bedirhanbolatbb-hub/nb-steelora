@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     eposta: typeof body?.eposta === 'string' ? body.eposta : null,
   })
 
-  const { ozet, kodHatasi } = await sepetOzetiHesapla(supabase, {
+  const { ozet, kodHatasi, kuponDurumu } = await sepetOzetiHesapla(supabase, {
     items,
     kod,
     // Kişiye özel kuponun sahiplik kontrolü için: kupon yalnız kendi
@@ -58,6 +58,9 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ozet,
     kodHatasi,
+    // Ekran mesajın TONUNU buradan öğrenir: "daha avantajlı kampanya var"
+    // kırmızı basılmamalı, o iyi haber (Faz 25).
+    kuponDurumu,
     ilkSiparisMetni: duyuru?.sepet ?? null,
   })
 }

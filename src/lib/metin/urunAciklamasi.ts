@@ -89,3 +89,80 @@ export function urunAciklamasiUret(u: UrunVerisi): string {
 
   return cumleler.join(' ').trim()
 }
+
+/**
+ * Aynı VERİDEN birden çok anlatım (Faz 25).
+ *
+ * "Başka öner" tek bir açıklama döndürdüğü için hiçbir zaman başkasını
+ * öneremiyordu. Varyantlar yeni BİLGİ eklemez — aynı olguları farklı sırada
+ * ve farklı bağlaçla kurar. Uydurma özellik kuralı aynen geçerli: elde ne
+ * varsa o yazılır.
+ */
+export function urunAciklamasiVaryantlari(u: UrunVerisi): string[] {
+  const kategori = kategoriAdi(u.kategori)
+  const malzeme = (u.malzeme ?? '').trim()
+  const renk = ilkEslesme(u.baslik, RENKLER)
+  const tas = ilkEslesme(u.baslik, TASLAR)
+  const olcu = (u.olcu ?? '').trim()
+  const bakim = (u.bakim ?? '').trim()
+
+  const buyut = (m: string) => `${m.charAt(0).toLocaleUpperCase('tr-TR')}${m.slice(1)}`
+  const detay = [tas ? `${tas} detaylı` : null, renk].filter(Boolean).join(', ')
+
+  /** Cümleleri birleştirir, boşları atar; hiç cümle yoksa boş string. */
+  const kur = (...parcalar: (string | null)[]) =>
+    parcalar.filter((x): x is string => Boolean(x && x.trim())).join(' ').trim()
+
+  const adaylar = [
+    // 1) Malzeme + kategori önde (Faz 21'in özgün sırası)
+    kur(
+      malzeme && kategori ? `${malzeme} ${kategori}.` : malzeme ? `${malzeme}.` : kategori ? `${buyut(kategori)}.` : null,
+      detay ? `${buyut(detay)}.` : null,
+      olcu ? `Ölçü: ${olcu}.` : null,
+      bakim || null
+    ),
+    // 2) Renk/taş önde — başlıkta güçlü bir görsel ipucu varsa daha doğal
+    detay
+      ? kur(
+          `${buyut(detay)}${kategori ? ` ${kategori}` : ''}.`,
+          malzeme ? `${malzeme}.` : null,
+          olcu ? `Ölçü: ${olcu}.` : null,
+          bakim || null
+        )
+      : null,
+    // 3) Tek cümlede malzeme ve detay
+    malzeme && detay
+      ? kur(`${malzeme}, ${detay}${kategori ? ` ${kategori}` : ''}.`, olcu ? `Ölçü: ${olcu}.` : null, bakim || null)
+      : null,
+    // 4) Bakım notu olmadan kısa hâl
+    kur(
+      malzeme && kategori ? `${malzeme} ${kategori}.` : malzeme ? `${malzeme}.` : kategori ? `${buyut(kategori)}.` : null,
+      detay ? `${buyut(detay)}.` : null,
+      olcu ? `Ölçü: ${olcu}.` : null
+    ),
+    // 5) Kategori önde, malzeme niteleyici
+    kategori && malzeme
+      ? kur(`${buyut(kategori)} — ${malzeme}.`, detay ? `${buyut(detay)}.` : null, olcu ? `Ölçü: ${olcu}.` : null, bakim || null)
+      : null,
+    // 6) Ölçü öne alınmış hâl (beden varyantlı ürünlerde işe yarar)
+    olcu
+      ? kur(
+          `${olcu} ölçüsünde${kategori ? ` ${kategori}` : ''}.`,
+          malzeme ? `${malzeme}.` : null,
+          detay ? `${buyut(detay)}.` : null,
+          bakim || null
+        )
+      : null,
+  ]
+
+  // Tekilleştir: veri seyrekse birkaç varyant aynı cümleye düşebilir.
+  const gorulen = new Set<string>()
+  const sonuc: string[] = []
+  for (const a of adaylar) {
+    if (!a) continue
+    if (gorulen.has(a)) continue
+    gorulen.add(a)
+    sonuc.push(a)
+  }
+  return sonuc
+}

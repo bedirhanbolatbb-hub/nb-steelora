@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { kuponMesaji } from './kuponMesaji'
 
 /**
  * İndirim motorunun TEK kaynağı (Faz 11).
@@ -91,21 +92,32 @@ export async function kuponDogrula(
     .eq('code', temizKod)
     .maybeSingle()
 
+  // Faz 25: hata metinleri tek sözlükten (kuponMesaji) geliyor. Önceden
+  // burası "Geçersiz kod", sepet özeti ucu "Geçersiz ya da süresi dolmuş kod"
+  // diyordu; aynı koda iki farklı cevap müşteriyi şaşırtıyordu.
   const k = data as Kampanya | null
-  if (!k || !k.is_active) return { gecerli: false, hata: 'Geçersiz kod' }
-  if (henuzBaslamadi(k, simdi)) return { gecerli: false, hata: 'Kampanya henüz başlamadı' }
-  if (suresiDoldu(k, simdi)) return { gecerli: false, hata: 'Kampanya süresi doldu' }
+  if (!k) return { gecerli: false, hata: kuponMesaji({ tip: 'bulunamadi' })! }
+  if (!k.is_active) return { gecerli: false, hata: kuponMesaji({ tip: 'kapali' })! }
+  if (henuzBaslamadi(k, simdi)) return { gecerli: false, hata: kuponMesaji({ tip: 'baslamadi' })! }
+  if (suresiDoldu(k, simdi)) return { gecerli: false, hata: kuponMesaji({ tip: 'suresi_dolmus' })! }
   if (k.max_uses != null && (k.used_count ?? 0) >= k.max_uses) {
-    return { gecerli: false, hata: 'Kampanya kullanım limiti doldu' }
+    return { gecerli: false, hata: 'Bu kodun kullanım hakkı dolmuş.' }
   }
 
   const altSinir = Number(k.min_cart_amount ?? 0)
   if (sepetTutari < altSinir) {
-    return { gecerli: false, hata: `Minimum ${altSinir.toFixed(2)} TL sepet tutarı gerekli` }
+    return {
+      gecerli: false,
+      hata: kuponMesaji({
+        tip: 'uygun_degil',
+        sebep: 'Sepet tutarı yetersiz',
+        eksikTutar: altSinir - sepetTutari,
+      })!,
+    }
   }
 
   const indirim = indirimTutari(k, sepetTutari)
-  if (indirim <= 0) return { gecerli: false, hata: 'Bu kod şu an indirim üretmiyor' }
+  if (indirim <= 0) return { gecerli: false, hata: kuponMesaji({ tip: 'uygun_degil' })! }
 
   return { gecerli: true, kampanya: k, indirim }
 }

@@ -11,6 +11,7 @@ import { useCart } from '@/hooks/useCart'
 import { FREE_SHIPPING_LABEL, SHIPPING_LINE_LABEL, shippingCostFor } from '@/lib/shipping'
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
 import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
+import KuponKutusu, { useKuponKodu } from '@/components/store/KuponKutusu'
 
 // Sepet localStorage'da tutuluyor; ilk sunucu çıktısıyla uyumsuzluk olmasın diye
 // içerik yalnızca hidrasyondan sonra basılır.
@@ -23,8 +24,11 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
   const subtotal = totalPrice()
   const shipping = shippingCostFor(subtotal)
   // Kampanya indirimi ödeme adımını beklemeden burada da görünür (Faz 15).
-  const { ozet, indirim, ilkSiparisMetni } = useOtomatikIndirim(
-    items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 }))
+  // Kupon artık SEPETTE de girilebiliyor (Faz 25); kod ödeme adımına taşınır.
+  const [kod, setKod] = useKuponKodu()
+  const { ozet, indirim, kodHatasi, kuponBilgiMi, kuponUygulandi, ilkSiparisMetni } = useOtomatikIndirim(
+    items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 })),
+    kod || null
   )
   const indirimTutari = ozet.indirimToplami
   const hasItems = hydrated && items.length > 0
@@ -147,6 +151,21 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                   </span>
                 </p>
               )}
+              <div className="border-t border-line pt-4">
+                <KuponKutusu
+                  kod={kod}
+                  onKod={setKod}
+                  mesaj={kodHatasi}
+                  bilgiTonu={kuponBilgiMi}
+                  uygulanan={
+                    // Kuponun kazanıp kazanmadığını SUNUCU söyler; ekranda
+                    // ada bakarak tahmin etmek NB30'u kupon sanmaya yol açardı.
+                    kuponUygulandi && indirim
+                      ? { ad: indirim.ad, tutar: formatPrice(indirimTutari) }
+                      : null
+                  }
+                />
+              </div>
               {/* İlk sipariş kuponu hatırlatması (Faz 19). Sunucu yalnız
                   otomatik bir vitrin kampanyası YOKKEN dolduruyor, yani NB30
                   biter bitmez kendiliğinden görünür; ikisi hiç çakışmaz. */}

@@ -13,6 +13,7 @@ import CheckoutSteps from '@/components/store/CheckoutSteps'
 import { izle } from '@/lib/analytics/izle'
 import { SHIPPING_LINE_LABEL, shippingCostFor } from '@/lib/shipping'
 import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
+import KuponKutusu, { useKuponKodu } from '@/components/store/KuponKutusu'
 
 export default function OdemePage() {
   const { items, totalPrice, clearCart } = useCart()
@@ -50,10 +51,6 @@ export default function OdemePage() {
   }, [])
   const [loading, setLoading] = useState(false)
   const [paymentError, setPaymentError] = useState('')
-  const [discountCode, setDiscountCode] = useState('')
-  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; amount: number; description: string } | null>(null)
-  const [discountError, setDiscountError] = useState('')
-  const [discountLoading, setDiscountLoading] = useState(false)
 
   const [form, setForm] = useState({
     firstName: '',
@@ -86,9 +83,19 @@ export default function OdemePage() {
   // ödeme başlatma ucuyla birebir aynı fonksiyondan hesaplanır. İstemci burada
   // hiçbir tutar üretmez — Faz 15'te bulunan "ekranda başka, tahsilatta başka"
   // kusurunun kaynağı buydu.
-  const { ozet, indirim: secilenIndirim, kodHatasi: sunucuKodHatasi, ilkSiparisMetni } = useOtomatikIndirim(
+  // Faz 25: kupon kutusu artık sepetle ORTAK bileşen ve kod localStorage'da
+  // taşınıyor; müşteri sepette girdiğini burada tekrar yazmıyor.
+  const [kod, setKod] = useKuponKodu()
+  const {
+    ozet,
+    indirim: secilenIndirim,
+    kodHatasi: sunucuKodHatasi,
+    kuponBilgiMi,
+    kuponUygulandi,
+    ilkSiparisMetni,
+  } = useOtomatikIndirim(
     items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 })),
-    appliedDiscount?.code ?? null,
+    kod || null,
     form.email || null
   )
   const totalDiscount = ozet.indirimToplami
@@ -100,29 +107,9 @@ export default function OdemePage() {
   const shipping = shippingCostFor(discountedSubtotal)
   const total = discountedSubtotal + shipping
 
-  const applyDiscount = async () => {
-    if (!discountCode.trim()) return
-    setDiscountLoading(true)
-    setDiscountError('')
-    try {
-      const res = await fetch('/api/discount/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: discountCode, cartTotal: subtotal }),
-      })
-      const data = await res.json()
-      if (data.discount) {
-        setAppliedDiscount(data.discount)
-        setDiscountError('')
-      } else {
-        setDiscountError(data.error || 'Geçersiz kod')
-        setAppliedDiscount(null)
-      }
-    } catch {
-      setDiscountError('Bir hata oluştu')
-    }
-    setDiscountLoading(false)
-  }
+  // Faz 25: ayrı bir /api/discount/apply çağrısı KALDIRILDI. Kod artık
+  // doğrudan sepet özeti ucuna gidiyor; kabul/ret kararı ve mesajı tek
+  // yerden geliyor. İki uç iki farklı cevap verebiliyordu.
 
   const updateField = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -264,7 +251,7 @@ export default function OdemePage() {
           giftNote: giftNote || null,
           // Faz 11: kod sunucuya gönderilir ve orada YENİDEN doğrulanır;
           // tutar istemciden taşınmaz.
-          discountCode: appliedDiscount?.code || null,
+          discountCode: kod || null,
           // Mesafeli satış onayı — sunucu bunu ZORUNLU tutar ve siparişe
           // sürüm + zaman damgasıyla yazar (Faz 19).
           sozlesmeOnay: true,
@@ -514,48 +501,23 @@ export default function OdemePage() {
             <p className="text-[10px] font-body text-muted mt-1 text-right">{giftNote.length}/300</p>
           </section>
 
-          {/* İndirim Kodu */}
+          {/* İndirim Kodu — sepetle AYNI bileşen, AYNI mesajlar (Faz 25) */}
           <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
-            <p className="text-[10px] uppercase tracking-[0.15em] font-body text-muted mb-3">
-              İndirim Kodu
-            </p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Kodu girin"
-                value={discountCode}
-                onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                className="flex-1"
-                disabled={!!appliedDiscount}
-              />
-              {appliedDiscount ? (
-                <button
-                  onClick={() => { setAppliedDiscount(null); setDiscountCode('') }}
-                  className="shrink-0 px-4 py-2 border border-line text-ink-soft text-[11px] uppercase tracking-[0.15em] font-body hover:border-ink hover:text-ink transition-colors rounded-[4px]"
-                >
-                  Kaldır
-                </button>
-              ) : (
-                <button
-                  onClick={applyDiscount}
-                  disabled={discountLoading || !discountCode.trim()}
-                  className="shrink-0 px-4 py-2 border border-ink text-ink text-[11px] uppercase tracking-[0.15em] font-body hover:bg-ink hover:text-bg transition-colors disabled:opacity-40 rounded-[4px]"
-                >
-                  {discountLoading ? '...' : 'Uygula'}
-                </button>
-              )}
-            </div>
-            {discountError && (
-              <p className="text-[11px] text-red-600 font-body mt-2">{discountError}</p>
-            )}
-            {appliedDiscount && (
-              <p className="text-[11px] text-green-700 font-body mt-2">
-                ✓ {appliedDiscount.description} — {formatPrice(appliedDiscount.amount)} indirim
-              </p>
-            )}
+            <KuponKutusu
+              kod={kod}
+              onKod={setKod}
+              mesaj={sunucuKodHatasi}
+              bilgiTonu={kuponBilgiMi}
+              uygulanan={
+                kuponUygulandi && secilenIndirim
+                  ? { ad: secilenIndirim.ad, tutar: formatPrice(secilenIndirim.tutar) }
+                  : null
+              }
+            />
             {/* İlk sipariş kuponu hatırlatması (Faz 19). Kod zaten
-                uygulanmışsa tekrar önermeye gerek yok; sunucu da otomatik
+                girilmişse tekrar önermeye gerek yok; sunucu da otomatik
                 kampanya varken bu metni hiç göndermiyor. */}
-            {ilkSiparisMetni && !appliedDiscount && (
+            {ilkSiparisMetni && !kod && (
               <p className="mt-2 font-body text-[11px] text-ink-soft">
                 <span className="text-accent-deep">✦</span> {ilkSiparisMetni}
               </p>
@@ -698,7 +660,7 @@ export default function OdemePage() {
               <p className="text-[11px] font-body text-green-700">
                 {formatPrice(totalDiscount)} kazandınız
                 {ozet.tavanUygulandi && <span className="text-muted"> · indirim tavanı uygulandı</span>}
-                {appliedDiscount && ozet.uygulananlar.every((u) => u.ad !== appliedDiscount.description) && (
+                {kod && !kuponUygulandi && (
                   <span className="text-muted"> · en avantajlı kampanya uygulandı, indirimler toplanmaz</span>
                 )}
               </p>

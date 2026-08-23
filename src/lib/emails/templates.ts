@@ -185,7 +185,7 @@ export function reviewInviteEmail(order: OrderLike, products: ReviewInviteProduc
         </td>
         <td style="padding: 12px 12px; border-bottom: 1px solid #F0E8E0; font-size: 14px;">${product.display_title}</td>
         <td style="padding: 12px 0; border-bottom: 1px solid #F0E8E0; text-align: right;">
-          <a href="${SITE}/urun/${product.slug}#yorum" style="color: #8C6D33; font-size: 12px; text-decoration: underline;">Değerlendir</a>
+          <a href="${SITE}/urun/${product.slug}#yorum" style="color: #836835; font-size: 12px; text-decoration: underline;">Değerlendir</a>
         </td>
       </tr>`
     )

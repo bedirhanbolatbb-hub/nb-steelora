@@ -1,7 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { sepetiDogrula } from './sepetDogrula'
 import { kampanyalariYukle } from './yukle'
-import { sepetHesabi, type HesapKampanyasi as HesapKampanyasiTipi, type HesapSonucu, type MusteriDurumu } from './hesap'
+import { sepetHesabi, kampanyaUygunMu, type HesapKampanyasi as HesapKampanyasiTipi, type HesapSonucu, type MusteriDurumu } from './hesap'
+import { kuponMesaji, type KuponDurumu } from './kuponMesaji'
 
 /**
  * Sepet özetinin TEK kaynağı (Faz 17).
@@ -26,6 +27,8 @@ export async function sepetOzetiHesapla(
   ozet: HesapSonucu
   kalemler: ReturnType<typeof sepetiDogrula> extends Promise<infer T> ? T extends { kalemler: infer K } ? K : never : never
   kodHatasi: string | null
+  /** Kupon kutusunun durumu — ekranlar mesajı buradan basar (Faz 25). */
+  kuponDurumu: KuponDurumu | null
   kullanilanKampanyaId: string | null
   kisiselKuponId: string | null
 }> {
@@ -41,12 +44,17 @@ export async function sepetOzetiHesapla(
   let kisiselKuponId: string | null = null
   let kisiselKuponKampanyaId: string | null = null
 
+  // Kupon kutusunun ne diyeceğini belirleyen durum (Faz 25). Sepet ve ödeme
+  // adımı aynı cümleyi bassın diye kararı BURASI verir, ekranlar değil.
+  let kuponDurumu: KuponDurumu | null = null
+  let eslesenKampanya: HesapKampanyasiTipi | null = null
+
   if (temizKod) {
-    // 1) Genel kampanya kodu
+    // 1) Genel kampanya kodu. Tarih/aktiflik SÜZMEDEN okunur: "süresi dolmuş"
+    //    ile "böyle bir kod yok" arasındaki farkı ancak böyle söyleyebiliriz.
     const { data: kodSatiri } = await supabase
       .from('campaigns')
-      .select('id, code')
-      .eq('is_active', true)
+      .select('id, code, is_active, starts_at, ends_at')
       .ilike('code', temizKod)
       .maybeSingle()
 
@@ -73,10 +81,23 @@ export async function sepetOzetiHesapla(
       }
     }
 
-    if (!eslesen && !kodHatasi && !zatenOtomatik) {
-      kodHatasi = 'Geçersiz ya da süresi dolmuş kod'
-    } else if (eslesen) {
+    if (eslesen) {
       adaylar.push(eslesen)
+      eslesenKampanya = eslesen
+    } else if (zatenOtomatik) {
+      kuponDurumu = { tip: 'zaten_otomatik' }
+    } else if (kodSatiri) {
+      // Kod var ama yürürlükte değil — hangisi?
+      const simdi = params.simdi ?? new Date()
+      const bitti = kodSatiri.ends_at && new Date(kodSatiri.ends_at) < simdi
+      const baslamadi = kodSatiri.starts_at && new Date(kodSatiri.starts_at) > simdi
+      kuponDurumu = baslamadi
+        ? { tip: 'baslamadi' }
+        : bitti
+          ? { tip: 'suresi_dolmus' }
+          : { tip: 'kapali' }
+    } else if (!kodHatasi) {
+      kuponDurumu = { tip: 'bulunamadi' }
     }
   }
 
@@ -87,6 +108,30 @@ export async function sepetOzetiHesapla(
     kargoTutari: params.kargoTutari ?? 0,
   })
 
+  // Kod bir kampanyaya bağlandıysa: kazandı mı, koşula mı takıldı, yoksa
+  // daha avantajlı bir kampanya mı öne geçti? (Faz 25)
+  if (eslesenKampanya) {
+    const kazandi = ozet.uygulananlar.some((u) => u.kampanyaId === eslesenKampanya!.id)
+    if (kazandi) {
+      kuponDurumu = { tip: 'uygulandi' }
+    } else {
+      const uygunluk = kampanyaUygunMu(
+        dogrulanmis.kalemler as any,
+        eslesenKampanya,
+        // sepetHesabi ile AYNI varsayılan: müşteri bilgisi verilmediyse
+        // "misafir, ilk alışveriş" kabul edilir.
+        params.musteri ?? { uyeMi: false, oncekiTeslimatVar: false }
+      )
+      kuponDurumu = uygunluk.uygun
+        ? { tip: 'golgelendi', kazananAd: ozet.uygulananlar[0]?.ad }
+        : { tip: 'uygun_degil', sebep: uygunluk.sebep, eksikTutar: uygunluk.eksikTutar }
+    }
+  }
+
+  // Eski `kodHatasi` alanı korunuyor (ödeme ucu onu okuyor) ama artık metni
+  // tek kaynaktan geliyor.
+  if (kuponDurumu) kodHatasi = kuponMesaji(kuponDurumu)
+
   // Kupon gerçekten kazandı mı? (daha yüksek kampanya varsa kupon harcanmaz)
   const kuponUygulandi = Boolean(
     kisiselKuponKampanyaId && ozet.uygulananlar.some((u) => u.kampanyaId === kisiselKuponKampanyaId)
@@ -96,6 +141,7 @@ export async function sepetOzetiHesapla(
     ozet,
     kalemler: dogrulanmis.kalemler as any,
     kodHatasi,
+    kuponDurumu,
     kullanilanKampanyaId: ozet.uygulananlar[0]?.kampanyaId ?? null,
     // Kişisel kupon YALNIZ gerçekten uygulandıysa harcanır; daha yüksek bir
     // kampanya kazandıysa kupon müşterinin cebinde kalır.

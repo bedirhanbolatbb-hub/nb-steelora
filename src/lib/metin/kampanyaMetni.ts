@@ -141,6 +141,7 @@ function dondur<T>(dizi: T[], tohum: number): T[] {
  *
  * @param harici Son kampanyalarda kullanılmış metinler — tekrar önerilmez.
  * @param tohum  Aynı kampanya için sıranın sabit kalmasını sağlar.
+ * @param adet   0 ise TÜM adaylar döner (pencereyi çağıran taraf kaydırır).
  */
 export function kampanyaMetinleri(
   b: MetinBaglami,
@@ -174,7 +175,9 @@ export function kampanyaMetinleri(
     if (yasak.has(a.trim().toLocaleLowerCase('tr-TR'))) continue
     if (secilen.includes(a)) continue
     secilen.push(a)
-    if (secilen.length >= adet) break
+    // adet=0 → SINIR YOK (Faz 25). "Başka öner" havuzun tamamını ister;
+    // üçe kırpılmış liste her tıklamada aynı üçü verirdi.
+    if (adet > 0 && secilen.length >= adet) break
   }
   // Hepsi yasaklıysa yine de bir şey öner — boş dönmek işe yaramaz.
   return secilen.length > 0 ? secilen : adaylar.slice(0, adet)

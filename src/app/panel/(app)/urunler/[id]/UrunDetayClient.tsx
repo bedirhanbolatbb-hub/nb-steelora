@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import MetinOner from '../../_components/MetinOner'
-import { urunAciklamasiUret } from '@/lib/metin/urunAciklamasi'
+import { urunAciklamasiVaryantlari } from '@/lib/metin/urunAciklamasi'
 import { materialCare, materialLabel } from '@/lib/catalog/material'
 import { MALZEME_SECENEKLERI, type BeyanEdilenMalzeme } from '@/lib/catalog/material'
 import { isRemoteMedia } from '@/lib/images'
@@ -251,7 +251,9 @@ export default function UrunDetayClient({ urun }: { urun: UrunDetay }) {
                   etiket="Açıklamayı verilerden üret"
                   bosMesaj="Bu üründe açıklama üretecek veri yok (kategori/malzeme boş)."
                   uret={() => {
-                    const metin = urunAciklamasiUret({
+                    // Faz 25: tek metin yerine aynı veriden birden çok
+                    // anlatım — "Başka öner" bir işe yarasın.
+                    return urunAciklamasiVaryantlari({
                       // Renk/taş tespiti için EN ZENGİN başlık: pazaryeri adı
                       // panel adından çok daha fazla bilgi taşıyor.
                       baslik: `${urun.trendyolTitle ?? ''} ${urun.overrideTitle ?? ''}`.trim(),
@@ -260,7 +262,6 @@ export default function UrunDetayClient({ urun }: { urun: UrunDetay }) {
                       bakim: form.materialType ? materialCare(form.materialType) : null,
                       olcu: urun.variantLabel,
                     })
-                    return metin ? [metin] : []
                   }}
                   onSec={(m) => set('overrideDescription', m)}
                 />

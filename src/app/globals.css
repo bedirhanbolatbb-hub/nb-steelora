@@ -19,7 +19,7 @@
   /* Çizgi ve vurgu */
   --color-line: #E7E1D8;
   --color-accent: #B8934E;
-  --color-accent-deep: #8C6D33;
+  --color-accent-deep: #836835;
   --color-accent-soft: #F5EFE2;
 
   --font-heading: var(--font-display), 'Playfair Display', serif;
@@ -38,7 +38,11 @@
   --muted: #6E675E;
   --line: #E7E1D8;
   --accent: #B8934E;
-  --accent-deep: #8C6D33;
+  /* Faz 25: #8C6D33 idi. Beyazda 4,83 veriyordu ama krem rozet zemininde
+     (#F5EFE2) 4,21'de kalıyordu — WCAG AA normal metin eşiği 4,5. Ton (39°)
+     ve doygunluk (0,43) birebir korunarak koyulaştırıldı; artık sitedeki her
+     zeminde en az 4,58. */
+  --accent-deep: #836835;
   --accent-soft: #F5EFE2;
 }
 

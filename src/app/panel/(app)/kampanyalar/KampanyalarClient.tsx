@@ -41,6 +41,8 @@ export type KampanyaSatiri = {
   firstOrderOnly: boolean
   buyQuantity: number | null
   payQuantity: number | null
+  /** Dolu ise bu kampanya hiçbir sepette kazanamıyor; değer gölgeleyenin adı. */
+  golgeleyen?: string | null
   priority: number
   performans: { siparis: number; indirim: number; ciro: number }
 }
@@ -422,6 +424,7 @@ export default function KampanyalarClient({
             {c.minItemCount ? (
               <span className="text-[12px] text-[var(--p-muted)]">min {c.minItemCount} ürün</span>
             ) : null}
+            {c.golgeleyen && <PBadge tone="warning">gölgeleniyor</PBadge>}
             {c.firstOrderOnly && <PBadge tone="neutral">ilk alışveriş</PBadge>}
             {c.membersOnly && <PBadge tone="neutral">üyelere</PBadge>}
             {c.combinable && <PBadge tone="accent">birleşebilir</PBadge>}
@@ -447,6 +450,17 @@ export default function KampanyalarClient({
               )}
               <PBadge tone={c.isActive ? 'success' : 'neutral'}>{c.isActive ? 'aktif' : 'pasif'}</PBadge>
             </span>
+            {/* Faz 25: hiçbir sepette kazanamayan kampanya sessizce ölü
+                kalıyordu. Rozet dikkat çeker, bu satır ne yapılacağını söyler. */}
+            {c.golgeleyen && (
+              <p className="basis-full text-[12px] leading-relaxed text-[var(--p-warning)]">
+                Bu kampanya hiçbir sepette uygulanmıyor:{' '}
+                <strong className="font-medium">{c.golgeleyen}</strong> her sepette daha yüksek
+                indirim verdiği ve kampanyalar birleşmediği için her seferinde o kazanıyor.
+                Değerini yükseltin, tarihini o kampanya bittikten sonraya alın ya da
+                &quot;birleşebilir&quot; işaretleyin.
+              </p>
+            )}
           </button>
         ))}
       </div>
@@ -927,8 +941,10 @@ export default function KampanyalarClient({
             </div>
             <MetinOner
               uret={() =>
+                // adet: 0 → havuzun tamamı; üçlü pencereyi MetinOner kaydırır
+                // (Faz 25). Üçe kırpılmış liste her tıklamada aynıydı.
                 kampanyaMetinleri(metinBaglami(form, vesile), {
-                  adet: 3,
+                  adet: 0,
                   harici: sonKullanilanMetinler,
                   tohum: form.name || form.code || 'yeni',
                 })

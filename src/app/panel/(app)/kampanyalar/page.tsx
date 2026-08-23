@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createServiceClient } from '@/lib/supabase/service'
 import { CATEGORIES } from '@/lib/catalog/categories'
+import { golgeDurumu, type GolgeKampanyasi } from '@/lib/campaigns/golge'
 import KampanyalarClient, { type KampanyaSatiri } from './KampanyalarClient'
 
 export const metadata: Metadata = { title: 'Kampanyalar' }
@@ -83,6 +84,30 @@ export default async function PanelKampanyalarPage() {
     priority: c.priority != null ? Number(c.priority) : 100,
     performans: performans.get(c.id) ?? { siparis: 0, indirim: 0, ciro: 0 },
   }))
+
+  // Gölgeleme uyarısı (Faz 25): hiçbir sepette kazanamayacak kampanyayı
+  // panelde göster. HOSGELDIN10 aylarca aktifti ama NB30 (%30) yüzünden bir
+  // kez bile uygulanmadı; bunu görmenin yolu yoktu.
+  const golgeGirdileri: GolgeKampanyasi[] = (kampanyaRes.data || []).map((c: any) => ({
+    id: c.id,
+    ad: c.name,
+    indirimTipi: c.discount_type,
+    deger: c.discount_value != null ? Number(c.discount_value) : null,
+    kapsam: c.scope ?? 'cart',
+    birlesebilir: Boolean(c.combinable),
+    koduVar: Boolean(c.requires_code) || c.type === 'discount_code',
+    aktif: Boolean(c.is_active),
+    baslangic: c.starts_at,
+    bitis: c.ends_at,
+    minSepet: Number(c.min_cart_amount || 0),
+  }))
+  for (const satir of satirlar) {
+    const g = golgeDurumu(
+      golgeGirdileri.find((x) => x.id === satir.id)!,
+      golgeGirdileri
+    )
+    satir.golgeleyen = g.golgeliMi ? (g.golgeleyenAd ?? null) : null
+  }
 
   return (
     <KampanyalarClient

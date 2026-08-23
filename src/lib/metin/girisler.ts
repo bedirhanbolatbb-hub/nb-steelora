@@ -95,5 +95,16 @@ export const VESILE_GIRISLERI: Record<Vesile, string[]> = {
     'Aramıza hoş geldiniz',
     'İlk alışverişiniz için',
   ],
-  yok: [],
+  // Vesilesiz kampanyalar için NÖTR açılışlar (Faz 25).
+  //
+  // Bu liste boştu; vesilesi olmayan bir kampanyada (NB30 gibi) havuz yalnız
+  // teklif cümlelerinden oluşuyor ve dört adaya düşüyordu — "Başka öner"
+  // dördüncü tıklamada başa dönmek zorunda kalıyordu. Açılışlar mevsim ya da
+  // özel gün ANMAZ; kampanyanın kendisini duyurur.
+  yok: [
+    'Seçkinin tamamında',
+    'Bu dönem boyunca',
+    'Şu an sitede',
+    'Koleksiyon genelinde',
+  ],
 }
