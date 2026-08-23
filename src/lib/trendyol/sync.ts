@@ -245,9 +245,26 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
       let failed = 0
 
       for (const item of payload) {
-        const { error: rowError } = await supabase
+        let { error: rowError } = await supabase
           .from('products')
           .upsert([item], { onConflict: 'trendyol_barcode' })
+
+        // GÜVENLİK AĞI: DB'nin CHECK kısıtı henüz tanımadığı bir malzeme tipini
+        // reddediyorsa (kodda yeni tip var ama DDL inmemiş) satırı MALZEMESİZ
+        // yaz. Aksi hâlde satır last_synced_at damgasını alamaz ve koşu sonunda
+        // "bu koşuda görülmedi" diye PASİFE ÇEKİLİR — yani bir migration
+        // gecikmesi ürünü sessizce siteden düşürür. Malzemenin bir tur eksik
+        // kalması, ürünün kaybolmasından iyidir; DDL inince kendiliğinden dolar.
+        if (rowError && item.material_type && item.material_type !== 'unknown') {
+          console.warn(
+            `Malzeme tipi reddedildi (${item.trendyol_barcode}: ${item.material_type}); ` +
+              'satır malzemesiz yazılıyor. CHECK kısıtı güncellenmeli — docs/malzeme/'
+          )
+          const { error: malzemesiz } = await supabase
+            .from('products')
+            .upsert([{ ...item, material_type: 'unknown' }], { onConflict: 'trendyol_barcode' })
+          rowError = malzemesiz
+        }
 
         if (rowError) {
           failed++

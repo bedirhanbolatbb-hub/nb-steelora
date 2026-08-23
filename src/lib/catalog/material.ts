@@ -6,10 +6,28 @@
 const MATERIAL_LABELS: Record<string, string> = {
   stainless_steel: '316L Paslanmaz Çelik',
   plated_brass: 'Premium Kaplama Pirinç',
+  beaded: 'Boncuk & Doğal Taş',
 }
 
+/**
+ * Beyan edilebilen malzemeler — panel seçenekleri, vitrin etiketi ve besleme
+ * hepsi bu listeden türer. Yeni tip eklenirken DB'nin CHECK kısıtı da
+ * genişletilmeli (bkz. docs/malzeme/01-beaded-tipi.sql).
+ */
+export const MALZEME_TIPLERI = ['stainless_steel', 'plated_brass', 'beaded'] as const
+
+export type BeyanEdilenMalzeme = (typeof MALZEME_TIPLERI)[number]
+
 /** DB'nin CHECK kısıtının kabul ettiği değerler. */
-export type MalzemeTipi = 'stainless_steel' | 'plated_brass' | 'unknown'
+export type MalzemeTipi = BeyanEdilenMalzeme | 'unknown'
+
+/** Panel seçim kutusu — etiketler tek kaynaktan. */
+export const MALZEME_SECENEKLERI: { value: BeyanEdilenMalzeme; label: string }[] =
+  MALZEME_TIPLERI.map((t) => ({ value: t, label: MATERIAL_LABELS[t] }))
+
+export function beyanEdilenMalzemeMi(deger: unknown): deger is BeyanEdilenMalzeme {
+  return typeof deger === 'string' && (MALZEME_TIPLERI as readonly string[]).includes(deger)
+}
 
 /**
  * Trendyol "Materyal" özniteliği (attributeId 14) → bizim tipimiz.
@@ -18,15 +36,15 @@ export type MalzemeTipi = 'stainless_steel' | 'plated_brass' | 'unknown'
  * yalnız dört kanonik değerden ibaret:
  *   Paslanmaz Çelik 212 · Pirinç 160 · Çelik 12 · Boncuk 9
  *
- * `Boncuk` BİLEREK eşlenmiyor: karşılığı olan bir tipimiz yok ve DB'nin
- * CHECK kısıtı yalnız üç değere izin veriyor. Boncuklu halhalı "Premium
- * Kaplama Pirinç" diye etiketlemek yanlış beyan olurdu; unknown kalıp
- * sitede ve beslemede malzeme satırı hiç basılmıyor.
+ * `Boncuk` önce eşlenemiyordu (karşılığı olan tip yoktu) ve 9 yazlık halhal
+ * 'unknown' kalıyordu. Boncuklu bir halhalı "Premium Kaplama Pirinç" diye
+ * etiketlemek yanlış beyan olurdu; doğru çözüm tipi eklemek oldu: `beaded`.
  */
 const TRENDYOL_MATERYAL: Record<string, MalzemeTipi> = {
   'paslanmaz çelik': 'stainless_steel',
   çelik: 'stainless_steel',
   pirinç: 'plated_brass',
+  boncuk: 'beaded',
 }
 
 function kucult(deger: string | null | undefined): string {
@@ -64,6 +82,10 @@ export function malzemeBasliktan(title: string | null | undefined): MalzemeTipi 
   const celik = /(çelik|316l|paslanmaz)/.test(t)
   if (celik) return 'stainless_steel'
 
+  // "Boncuklu" başlıklar metal beyanı taşımıyor; boncuk/doğal taş gövde.
+  const boncuk = /(boncuk|doğal taş)/.test(t)
+  if (boncuk) return 'beaded'
+
   return null
 }
 
@@ -91,7 +113,7 @@ export function malzemeCoz(params: {
  * Sonuç: BB'nin panelden düzelttiği hiçbir satır senkronla geri dönmez.
  */
 export function malzemeKorunsunMu(mevcut: string | null | undefined): boolean {
-  return mevcut === 'stainless_steel' || mevcut === 'plated_brass'
+  return beyanEdilenMalzemeMi(mevcut)
 }
 
 /** Senkronun satıra yazacağı nihai değer. */
@@ -115,6 +137,9 @@ export function materialCare(materialType: string | null | undefined): string {
   }
   if (materialType === 'plated_brass') {
     return 'Kaplama yüzeyi korumak için parfüm, deniz ve havuz suyuyla temastan kaçının; kuru bir bezle silin.'
+  }
+  if (materialType === 'beaded') {
+    return 'Boncuk ve doğal taş yüzeyler suyla uzun temasta matlaşabilir; kuru bir bezle silin, parfüm ve deniz suyundan uzak tutun.'
   }
   return 'Nemli bir bezle silerek temizleyin; parfüm ve kimyasallarla doğrudan temastan kaçının.'
 }

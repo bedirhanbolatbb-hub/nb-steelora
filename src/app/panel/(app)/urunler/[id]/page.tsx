@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { beyanEdilenMalzemeMi } from '@/lib/catalog/material'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
 import UrunDetayClient from './UrunDetayClient'
@@ -44,7 +45,7 @@ export default async function PanelUrunDetayPage({
         overrideImages: (p.override_images as string[] | null) ?? null,
         badge: p.badge ?? '',
         isFeatured: Boolean(p.is_featured),
-        materialType: p.material_type === 'stainless_steel' || p.material_type === 'plated_brass' ? p.material_type : '',
+        materialType: beyanEdilenMalzemeMi(p.material_type) ? p.material_type : '',
         gender: p.gender === 'women' || p.gender === 'men' ? p.gender : '',
         note: p.note ?? '',
       }}

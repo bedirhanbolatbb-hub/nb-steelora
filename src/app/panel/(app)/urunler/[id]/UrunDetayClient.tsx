@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { MALZEME_SECENEKLERI, type BeyanEdilenMalzeme } from '@/lib/catalog/material'
 import { isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -29,7 +30,7 @@ export type UrunDetay = {
   overrideImages: string[] | null
   badge: string
   isFeatured: boolean
-  materialType: '' | 'stainless_steel' | 'plated_brass'
+  materialType: '' | BeyanEdilenMalzeme
   gender: '' | 'women' | 'men'
   note: string
 }
@@ -273,8 +274,11 @@ export default function UrunDetayClient({ urun }: { urun: UrunDetay }) {
                   <label className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]">Malzeme</label>
                   <PSelect value={form.materialType} onChange={(e) => set('materialType', e.target.value as Form['materialType'])}>
                     <option value="">Boş</option>
-                    <option value="stainless_steel">316L Paslanmaz Çelik</option>
-                    <option value="plated_brass">Kaplama Pirinç</option>
+                    {MALZEME_SECENEKLERI.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
                   </PSelect>
                 </div>
                 <div>
