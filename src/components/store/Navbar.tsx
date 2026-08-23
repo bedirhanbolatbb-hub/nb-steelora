@@ -40,6 +40,8 @@ interface NavbarProps {
   bannerColor?: string | null
   isLoggedIn?: boolean
   coupon?: CouponReminder | null
+  /** İlk sipariş kuponu satırı — yalnız otomatik kampanya YOKKEN dolu gelir. */
+  ilkSiparisSeridi?: string | null
 }
 
 /**
@@ -51,7 +53,7 @@ interface NavbarProps {
  * eşik çevresinde titremez. prefers-reduced-motion'da geçişler kapalı
  * (motion-safe). Mobil tek sıra: hamburger · logo · arama+sepet.
  */
-export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon }: NavbarProps) {
+export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, ilkSiparisSeridi }: NavbarProps) {
   const [condensed, setCondensed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
@@ -122,7 +124,15 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon }: 
       {/* Duyuru şeridi */}
       <div className="text-center py-2 px-4" style={{ backgroundColor: bannerColor || '#2A1E1E' }}>
         <p className="text-accent text-[10px] tracking-[0.2em] uppercase font-body">
-          {bannerText || `${FREE_SHIPPING_LABEL} • Premium Çelik Takılar`}
+          {/* Öncelik: panelden tanımlı banner kampanyası > ilk sipariş kuponu
+              duyurusu > varsayılan satır. Kupon duyurusu YALNIZ otomatik bir
+              vitrin kampanyası yokken dolu gelir (bkz. ilkSiparisKuponu.ts) —
+              "sepette %30" ile "kodla %10" yan yana çıkmaz. Kargo vaadi tek
+              kaynaktan (lib/shipping.ts) gelmeye devam ediyor. */}
+          {bannerText ||
+            (ilkSiparisSeridi
+              ? `${FREE_SHIPPING_LABEL} • ${ilkSiparisSeridi}`
+              : `${FREE_SHIPPING_LABEL} • Premium Çelik Takılar`)}
         </p>
       </div>
 

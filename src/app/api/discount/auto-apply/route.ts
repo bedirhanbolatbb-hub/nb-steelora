@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { sepetOzetiHesapla, musteriDurumu } from '@/lib/campaigns/sepetOzeti'
+import { ilkSiparisDuyurusu } from '@/lib/campaigns/ilkSiparisKuponu'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
         toplam: 0,
       },
       kodHatasi: null,
+      ilkSiparisMetni: (await ilkSiparisDuyurusu())?.sepet ?? null,
     })
   }
 
@@ -48,5 +50,14 @@ export async function POST(request: Request) {
     musteriEpostasi: typeof body?.eposta === 'string' ? body.eposta : null,
     musteri,
   })
-  return NextResponse.json({ ozet, kodHatasi })
+  // Kupon kutusunun altında gösterilecek hatırlatma. Otomatik bir vitrin
+  // kampanyası varken null döner — müşteriyi daha kötü olan kodu girmeye
+  // davet etmemek için (indirimler birleşmiyor, motor en yükseğini uyguluyor).
+  const duyuru = await ilkSiparisDuyurusu()
+
+  return NextResponse.json({
+    ozet,
+    kodHatasi,
+    ilkSiparisMetni: duyuru?.sepet ?? null,
+  })
 }

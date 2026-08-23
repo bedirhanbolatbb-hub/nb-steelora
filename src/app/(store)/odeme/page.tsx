@@ -86,7 +86,7 @@ export default function OdemePage() {
   // ödeme başlatma ucuyla birebir aynı fonksiyondan hesaplanır. İstemci burada
   // hiçbir tutar üretmez — Faz 15'te bulunan "ekranda başka, tahsilatta başka"
   // kusurunun kaynağı buydu.
-  const { ozet, indirim: secilenIndirim, kodHatasi: sunucuKodHatasi } = useOtomatikIndirim(
+  const { ozet, indirim: secilenIndirim, kodHatasi: sunucuKodHatasi, ilkSiparisMetni } = useOtomatikIndirim(
     items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 })),
     appliedDiscount?.code ?? null,
     form.email || null
@@ -550,6 +550,14 @@ export default function OdemePage() {
             {appliedDiscount && (
               <p className="text-[11px] text-green-700 font-body mt-2">
                 ✓ {appliedDiscount.description} — {formatPrice(appliedDiscount.amount)} indirim
+              </p>
+            )}
+            {/* İlk sipariş kuponu hatırlatması (Faz 19). Kod zaten
+                uygulanmışsa tekrar önermeye gerek yok; sunucu da otomatik
+                kampanya varken bu metni hiç göndermiyor. */}
+            {ilkSiparisMetni && !appliedDiscount && (
+              <p className="mt-2 font-body text-[11px] text-ink-soft">
+                <span className="text-accent">✦</span> {ilkSiparisMetni}
               </p>
             )}
           </section>

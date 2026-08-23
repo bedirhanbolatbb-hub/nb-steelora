@@ -41,6 +41,8 @@ export function useOtomatikIndirim(
 ) {
   const [ozet, setOzet] = useState<SepetOzeti>(BOS)
   const [kodHatasi, setKodHatasi] = useState<string | null>(null)
+  /** Kupon kutusu altındaki hatırlatma — sunucu karar verir, istemci basar. */
+  const [ilkSiparisMetni, setIlkSiparisMetni] = useState<string | null>(null)
   const anahtar =
     kalemler.map((k) => `${k.productId}x${k.adet}`).join('|') + `|${kod ?? ''}|${eposta ?? ''}`
 
@@ -66,6 +68,7 @@ export function useOtomatikIndirim(
           if (iptal) return
           setOzet(d?.ozet ?? BOS)
           setKodHatasi(d?.kodHatasi ?? null)
+          setIlkSiparisMetni(d?.ilkSiparisMetni ?? null)
         })
         .catch(() => {
           if (!iptal) setOzet(BOS)
@@ -80,5 +83,5 @@ export function useOtomatikIndirim(
   }, [anahtar])
 
   const indirim = ozet.uygulananlar[0] ?? null
-  return { ozet, indirim, kodHatasi }
+  return { ozet, indirim, kodHatasi, ilkSiparisMetni }
 }

@@ -72,6 +72,15 @@ const GRUPLAR: { baslik: string; anahtarlar: string[] }[] = [
     baslik: 'Hukuki — hesap silme',
     anahtarlar: ['hesap_silme_metni'],
   },
+  {
+    baslik: 'İlk sipariş kuponu',
+    anahtarlar: [
+      'ilk_siparis_kupon_kodu',
+      'ilk_siparis_serit_metni',
+      'ilk_siparis_sepet_metni',
+      'ilk_siparis_bulten_metni',
+    ],
+  },
   { baslik: 'Panel — analiz', anahtarlar: ['analiz_notu'] },
   { baslik: 'Diğer', anahtarlar: [] },
 ]

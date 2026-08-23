@@ -37,11 +37,12 @@ export default function Newsletter() {
 
       if (res.ok && data.success) {
         setStatus('done')
-        setMessage(
-          data.alreadySubscribed
-            ? 'Bu adres zaten kayıtlı — teşekkürler.'
-            : 'Teşekkürler, aboneliğiniz alındı.'
-        )
+        // Kupon mesajı sunucudan gelir; kampanya durumuna göre dolu ya da
+        // boş olur (Faz 19) — istemci karar vermez, yalnız basar.
+        const temel = data.alreadySubscribed
+          ? 'Bu adres zaten kayıtlı — teşekkürler.'
+          : 'Teşekkürler, aboneliğiniz alındı.'
+        setMessage(data.kuponMesaji ? `${temel} ${data.kuponMesaji}` : temel)
         setEmail('')
       } else {
         setStatus('error')

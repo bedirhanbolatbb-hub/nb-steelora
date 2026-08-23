@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { ilkSiparisDuyurusu } from '@/lib/campaigns/ilkSiparisKuponu'
 import { createServiceClient } from '@/lib/supabase/service'
 
 // newsletter_subscribers RLS açık ve politikası yok: yazma yalnız service role ile
@@ -48,7 +49,11 @@ export async function POST(request: Request) {
           .update({ is_active: true, consented_at: new Date().toISOString() })
           .eq('id', existing.id)
       }
-      return NextResponse.json({ success: true, alreadySubscribed: true })
+      return NextResponse.json({
+        success: true,
+        alreadySubscribed: true,
+        kuponMesaji: (await ilkSiparisDuyurusu())?.bulten ?? null,
+      })
     }
 
     const { error } = await supabase
@@ -60,7 +65,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Kayıt oluşturulamadı' }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true })
+    // Yeni abone: teşekkür mesajında ilk sipariş kuponu da verilir. Metin
+    // SUNUCUDA üretilir — otomatik bir vitrin kampanyası varken null döner,
+    // yani "sepette %30" sürerken kimseye daha kötü olan kod önerilmez.
+    return NextResponse.json({
+      success: true,
+      kuponMesaji: (await ilkSiparisDuyurusu())?.bulten ?? null,
+    })
   } catch (error: any) {
     console.error('Newsletter error:', error?.message)
     return NextResponse.json({ error: 'Kayıt oluşturulamadı' }, { status: 500 })

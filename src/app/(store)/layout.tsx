@@ -41,6 +41,7 @@ export default async function StoreLayout({
         bannerColor={veri.bannerColor}
         isLoggedIn={isLoggedIn}
         coupon={veri.coupon}
+        ilkSiparisSeridi={veri.ilkSiparis?.serit ?? null}
       />
       <main className="flex-1">
         <KampanyaSaglayici indirim={vitrinIndirimi}>{children}</KampanyaSaglayici>

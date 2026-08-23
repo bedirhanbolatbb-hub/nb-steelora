@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { formatPrice } from '@/lib/utils'
 import type { CouponReminder } from '@/lib/campaigns'
 import type { CollectionCard } from '@/lib/collections'
+import { ilkSiparisDuyurusu, type IlkSiparisDuyurusu } from '@/lib/campaigns/ilkSiparisKuponu'
 
 /**
  * Vitrin layout'unun (navbar bandı + kupon + footer) ortak verisi (Faz 9A).
@@ -12,6 +13,8 @@ export type LayoutData = {
   bannerText: string | null
   bannerColor: string | null
   coupon: CouponReminder | null
+  /** İlk sipariş kuponu duyurusu — otomatik kampanya varken null (Faz 19). */
+  ilkSiparis: IlkSiparisDuyurusu | null
   collections: CollectionCard[]
   content: Record<string, string>
 }
@@ -78,6 +81,13 @@ async function yukle(): Promise<LayoutData> {
     }
   }
 
+  const content: Record<string, string> = Object.fromEntries(
+    (contentRes.data || []).map((r: any) => [r.key, r.value ?? ''])
+  )
+
+  // site_content zaten okundu, ikinci kez sorgulanmasın diye geçiliyor.
+  const ilkSiparis = await ilkSiparisDuyurusu(undefined, content)
+
   const collections: CollectionCard[] = (collectionsRes.data || []).map((c: any) => ({
     slug: c.slug,
     name: c.name,
@@ -90,8 +100,9 @@ async function yukle(): Promise<LayoutData> {
     bannerText: bannerRes.data?.banner_text ?? null,
     bannerColor: bannerRes.data?.banner_color ?? null,
     coupon,
+    ilkSiparis,
     collections,
-    content: Object.fromEntries((contentRes.data || []).map((r: any) => [r.key, r.value ?? ''])),
+    content,
   }
 }
 

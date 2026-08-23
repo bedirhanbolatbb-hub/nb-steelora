@@ -23,6 +23,7 @@ import { createClient } from '@supabase/supabase-js'
 import { kampanyalariYukle } from '../yukle.ts'
 import { sepetiDogrula } from '../sepetDogrula.ts'
 import { sepetHesabi, kartFiyatiGosterilsinMi, kosulRozeti } from '../hesap.ts'
+import { ILK_SIPARIS_ANAHTARLARI, ilkSiparisMetni } from '../ilkSiparisMetinleri.ts'
 
 /**
  * sepetOzetiHesapla()'nın çekirdeği. O dosya doğrudan import edilemiyor
@@ -65,6 +66,38 @@ async function vitrinSimulasyonu(simdi: Date) {
     if (rozet) return { ad: k.ad, oran: null, rozet, fiyatGoster: false }
   }
   return null
+}
+
+/** ilkSiparisKuponu.ts karar kuralı: otomatik kampanya yoksa VE kod yürürlükteyse. */
+async function ilkSiparisSimulasyonu(simdi: Date) {
+  const vitrin = await vitrinSimulasyonu(simdi)
+  if (vitrin) return null
+
+  const { data: icerikSatirlari } = await supabase.from('site_content').select('key, value')
+  const icerik: Record<string, string> = Object.fromEntries(
+    (icerikSatirlari ?? []).map((r: any) => [r.key, r.value ?? ''])
+  )
+  const kod = ilkSiparisMetni(ILK_SIPARIS_ANAHTARLARI.kod, icerik, '', 0).trim().toLocaleUpperCase('tr-TR')
+  if (!kod) return null
+
+  const { data: satir } = await supabase
+    .from('campaigns').select('id, discount_value, discount_type')
+    .eq('is_active', true).ilike('code', kod).maybeSingle()
+  if (!satir || satir.discount_type !== 'percent') return null
+
+  const { kodlular } = await kampanyalariYukle(supabase as any, simdi)
+  if (!kodlular.some((k: any) => k.id === satir.id)) return null
+
+  const oran = Number(satir.discount_value) || 0
+  if (oran <= 0) return null
+
+  return {
+    kod,
+    oran,
+    serit: ilkSiparisMetni(ILK_SIPARIS_ANAHTARLARI.serit, icerik, kod, oran),
+    sepet: ilkSiparisMetni(ILK_SIPARIS_ANAHTARLARI.sepet, icerik, kod, oran),
+    bulten: ilkSiparisMetni(ILK_SIPARIS_ANAHTARLARI.bulten, icerik, kod, oran),
+  }
 }
 
 /** feed.xml/route.ts:105-140 fiyat dallarının birebir kopyası. */
@@ -112,6 +145,20 @@ async function olc(etiket: string, simdi: Date) {
 
   const nb30 = await sepetOzeti({ items: sepet, kod: 'NB30', simdi })
   console.log(`      NB30 yazılırsa → indirim ${nb30.ozet.indirimToplami} · hata: ${nb30.kodHatasi ?? 'yok'}`)
+
+  // İlk sipariş kuponu duyurusu.
+  // Metinler ve anahtarlar ÜRETİMDEKİ saf modülden geliyor (kopyalanmıyor);
+  // burada yalnız iki satırlık karar kuralı tekrarlanıyor — ilkSiparisKuponu.ts
+  // Next alias'ı kullandığı için düğümden doğrudan import edilemiyor.
+  const duyuru = await ilkSiparisSimulasyonu(simdi)
+  if (!duyuru) {
+    console.log(`  (e) İLK SİPARİŞ KUPONU DUYURUSU → null (otomatik kampanya var, çakışma yok)`)
+  } else {
+    console.log(`  (e) İLK SİPARİŞ KUPONU DUYURUSU → GÖRÜNÜR · kod ${duyuru.kod} · %${duyuru.oran}`)
+    console.log(`      şerit  : ${duyuru.serit}`)
+    console.log(`      sepet  : ${duyuru.sepet}`)
+    console.log(`      bülten : ${duyuru.bulten}`)
+  }
 }
 
 console.log(`Sepet: 2 × "${urun!.display_title}" (${urun!.display_price} ₺)`)

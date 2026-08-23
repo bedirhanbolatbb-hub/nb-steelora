@@ -26,10 +26,13 @@ export type VitrinIndirimi = {
  * yanıltıcı olurdu. Tutarın kendisi yine tek motordan (pricing.ts) hesaplanır;
  * burası yalnız görsel işaret üretir.
  */
-export async function vitrinIndirimiGetir(): Promise<VitrinIndirimi | null> {
+export async function vitrinIndirimiGetir(simdi?: Date): Promise<VitrinIndirimi | null> {
   try {
     const supabase = createServiceClient()
-    const { otomatikler } = await kampanyalariYukle(supabase)
+    // `simdi` yalnız simülasyon içindir: bir kampanyanın bitişinden sonra
+    // vitrinin ne göstereceğini CANLI VERİYE DOKUNMADAN ölçebilmek için
+    // (bkz. __testler__/kampanyaBitisi.sim.mts). Üretimde hiç geçilmez.
+    const { otomatikler } = await kampanyalariYukle(supabase, simdi)
     if (otomatikler.length === 0) return null
 
     // Koşulsuz kampanyalar öncelikli: kartta gerçek fiyat gösterilebilen tek

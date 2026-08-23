@@ -22,7 +22,7 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
   const subtotal = totalPrice()
   const shipping = shippingCostFor(subtotal)
   // Kampanya indirimi ödeme adımını beklemeden burada da görünür (Faz 15).
-  const { ozet, indirim } = useOtomatikIndirim(
+  const { ozet, indirim, ilkSiparisMetni } = useOtomatikIndirim(
     items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 }))
   )
   const indirimTutari = ozet.indirimToplami
@@ -142,6 +142,14 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                       ? ' — yukarıdaki kampanya daha avantajlı, o uygulanıyor'
                       : ' — ödeme adımında uygulanır'}
                   </span>
+                </p>
+              )}
+              {/* İlk sipariş kuponu hatırlatması (Faz 19). Sunucu yalnız
+                  otomatik bir vitrin kampanyası YOKKEN dolduruyor, yani NB30
+                  biter bitmez kendiliğinden görünür; ikisi hiç çakışmaz. */}
+              {ilkSiparisMetni && (
+                <p className="text-[11px] font-body text-ink-soft pt-1">
+                  <span className="text-accent">✦</span> {ilkSiparisMetni}
                 </p>
               )}
               {indirim && (
