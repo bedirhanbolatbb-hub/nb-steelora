@@ -1,4 +1,5 @@
 import { fetchApprovedProducts, fetchStockAndPriceMap } from './client'
+import { malzemeCoz, malzemeYazilacak, type MalzemeTipi } from '@/lib/catalog/material'
 import { sonYazilanBarkodlar } from './stokKuyrugu'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
@@ -34,6 +35,7 @@ type VariantRow = {
   category: string | null
   variantLabel: string | null
   gender: string | null
+  material: MalzemeTipi
 }
 
 /**
@@ -71,6 +73,14 @@ function flattenContents(contents: any[]): VariantRow[] {
       .filter(Boolean)
 
     const gender = resolveGender(content.title || '', findAttribute(content.attributes, 'Cinsiyet'))
+
+    // Malzeme content seviyesindeki "Materyal" özniteliğinden gelir (attributeId
+    // 14, 426 content'in 393'ünde dolu). Öznitelik yoksa başlıktan çıkarılır.
+    // Variant.attributes'ta yalnız "Beden" var, malzeme orada ARANMAZ.
+    const material = malzemeCoz({
+      ozellik: findAttribute(content.attributes, 'Materyal'),
+      baslik: content.title || '',
+    })
     const siblings = (content.variants || []).filter(
       (v: any) => v?.barcode && !v.archived && v.onSale !== false
     )
@@ -90,6 +100,7 @@ function flattenContents(contents: any[]): VariantRow[] {
         category: content.category?.name ?? null,
         variantLabel: labelsDistinguish ? labels[i] : null,
         gender,
+        material,
       })
     })
   }
@@ -104,6 +115,11 @@ function flattenContents(contents: any[]): VariantRow[] {
  * variant_label, is_active, last_synced_at ve satır kimliği (slug, trendyol_id).
  * Yönetici alanları (override_title / override_description / override_price,
  * is_featured, badge...) yükün İÇİNDE YOKTUR; upsert onlara dokunamaz.
+ *
+ * İki alan bu kuralın kenarında duruyor: `gender` ve `material_type`. İkisi de
+ * panelden düzenlenebiliyor ama Trendyol verisinden türetilebiliyor da. İkisi
+ * için de aynı koruma geçerli: DEĞER YALNIZ BOŞKEN yazılır, dolu değer kendi
+ * değeriyle geri yazılır — yani elle girilen hiçbir şey ezilmez.
  */
 type UpsertRow = Record<string, unknown>
 
@@ -146,7 +162,9 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
     .from('products')
     // trendyol_price/stock de okunur: taze yazılmış barkodlarda mevcut değer
     // korunacak (Faz 16B).
-    .select('id, trendyol_barcode, gender, slug, trendyol_id, trendyol_price, trendyol_stock')
+    .select(
+      'id, trendyol_barcode, gender, material_type, slug, trendyol_id, trendyol_price, trendyol_stock'
+    )
     .in('trendyol_barcode', rows.map((r) => r.barcode))
 
   // Son 15 dakikada Trendyol'a yazdığımız barkodlar — bu koşuda ezilmezler.
@@ -198,6 +216,11 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
       // gender yalnızca boşsa doldurulur; dolu (elle etiketlenmiş olabilecek)
       // değer kendi değeriyle geri yazılır, yani ezilmez.
       gender: existing ? (existing.gender ?? row.gender) : row.gender,
+      // Malzeme aynı korumayla: 'unknown'/boş satırlar Trendyol'un "Materyal"
+      // özniteliğinden doldurulur, dolu değer (panelden girilmiş olabilir)
+      // asla ezilmez. Kaynağı ayırt eden bir sütun olmadığı için tek güvenli
+      // kural bu.
+      material_type: malzemeYazilacak(existing?.material_type, row.material),
       // Mevcut satırda ikisi de değişmeden geri yazılır; yeni satırda üretilir.
       slug: existing ? existing.slug : generateSlug(row.title, row.barcode),
       trendyol_id: existing ? existing.trendyol_id : row.variantId,
