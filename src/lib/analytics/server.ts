@@ -2,6 +2,7 @@ import { after } from 'next/server'
 import { headers } from 'next/headers'
 import { olayYaz, istektenKimlik, botMu, cihazTipi, type AnalyticsEvent } from './track'
 import { oturumKimligi, istekIp } from './session'
+import { uyeKimligi } from './uye'
 
 /**
  * Sunucu tarafı ölçüm (Faz 12).
@@ -38,10 +39,13 @@ export async function sunucuOlayi(
     const device = cihazTipi(ua)
 
     after(async () => {
+      // Yanıt gönderildikten SONRA: oturum doğrulaması sayfayı geciktirmez.
+      const userId = await uyeKimligi()
       await olayYaz({
         event,
         sessionId,
         visitorId,
+        userId,
         path,
         referrer,
         userAgent: ua,

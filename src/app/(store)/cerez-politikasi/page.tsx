@@ -35,6 +35,7 @@ const GIRIS_TASLAK = `
 <li>Ziyaret sayımımız çerezsizdir; <strong>IP adresiniz saklanmaz</strong> ve kişisel profil oluşturulmaz.</li>
 <li>Kalıcı ziyaretçi numarası <strong>yalnızca açık rızanızla</strong> yazılır ve rızanızı geri aldığınızda silinir.</li>
 <li>Sitemizde <strong>reklam pikseli veya üçüncü taraf izleyici bulunmamaktadır</strong>.</li>
+<li><strong>Üye girişi yaptığınızda</strong> site içi hareketleriniz (görüntülenen ve favorilenen ürünler, sepet hareketleri, arama sorguları) üyelik hesabınızla ilişkilendirilir; bu kayıtlar 13 ay saklanır, hesabınızı sildiğinizde silinir. Ayrıntı: <a href="/kvkk">KVKK Aydınlatma Metni</a>.</li>
 </ul>
 `.trim()
 

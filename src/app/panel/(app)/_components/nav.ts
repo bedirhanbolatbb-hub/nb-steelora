@@ -15,6 +15,7 @@ export const PANEL_GROUPS: PanelGroup[] = [
     title: 'Satış',
     links: [
       { href: '/panel/siparisler', label: 'Siparişler' },
+      { href: '/panel/uyeler', label: 'Üyeler' },
       { href: '/panel/yorumlar', label: 'Yorumlar' },
     ],
   },

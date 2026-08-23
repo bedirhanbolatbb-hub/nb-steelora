@@ -35,6 +35,7 @@ veri sorumlusu sıfatıyla tarafımızca işlenmesine ilişkin sizleri bilgilend
 <li><strong>Müşteri işlem:</strong> Sipariş geçmişi, sepet içeriği, ödeme durumu, kargo takip bilgisi, ürün yorumları</li>
 <li><strong>İşlem güvenliği:</strong> Bağlantı kayıtları, tarayıcı ve cihaz bilgisi</li>
 <li><strong>Pazarlama:</strong> Bülten aboneliği (yalnız kendiniz kaydolduysanız)</li>
+<li><strong>Üyelik hareketleri:</strong> Üyeyseniz ve giriş yapmışsanız; hangi ürünleri görüntülediğiniz, favorilediğiniz, sepete eklediğiniz ve site içi arama sorgularınız</li>
 </ul>
 <p>
 Ödeme kartı bilgileriniz tarafımızca <strong>görülmez ve saklanmaz</strong>; doğrudan iyzico
@@ -48,6 +49,7 @@ veri sorumlusu sıfatıyla tarafımızca işlenmesine ilişkin sizleri bilgilend
 <li><strong>Site güvenliği ve kötüye kullanımın önlenmesi:</strong> Meşru menfaat (m.5/2-f).</li>
 <li><strong>Bülten ve tanıtım iletileri:</strong> Açık rıza (m.5/1).</li>
 <li><strong>Gelişmiş site içi ölçüm (kalıcı ziyaretçi numarası):</strong> Açık rıza (m.5/1).</li>
+<li><strong>Üyelerin site içi hareketlerinin üyelik hesabıyla ilişkilendirilmesi:</strong> Hizmetin iyileştirilmesi, ürün ve koleksiyon kararlarının verilerle alınması amacıyla meşru menfaat (m.5/2-f).</li>
 </ul>`,
     `<h2>Site İçi Ölçüm</h2>
 <p>
@@ -55,7 +57,16 @@ Sitemizde üçüncü taraf analitik hizmeti (ör. reklam ağları, harici izleyi
 <strong>kullanılmamaktadır</strong>. Sayfa görüntülemelerini kendi sunucumuzda sayarız; bu temel
 sayımda tarayıcınıza çerez yazılmaz, IP adresiniz saklanmaz ve kimliğinizi belirlemeye yarayan
 bir kayıt tutulmaz. Tekrar gelen ziyaretçileri tanıyabilmemizi sağlayan kalıcı ziyaretçi numarası
-yalnızca açık rızanızla oluşturulur ve rızanızı geri aldığınızda silinir. Ayrıntılar için
+yalnızca açık rızanızla oluşturulur ve rızanızı geri aldığınızda silinir.
+</p>
+<p>
+<strong>Üyeler için:</strong> Üye girişi yaptığınızda, yukarıda sayılan site içi hareketleriniz
+(görüntülediğiniz ve favorilediğiniz ürünler, sepet hareketleri, arama sorguları) üyelik
+hesabınızla ilişkilendirilerek kaydedilir. Bu kayıtlar <strong>13 ay</strong> saklanır ve süre
+sonunda otomatik olarak silinir. <strong>Hesabınızı sildiğinizde bu kayıtlar da silinir.</strong>
+Dilediğiniz zaman bize yazarak, hesabınızı silmeden yalnızca bu hareket kayıtlarının silinmesini
+de isteyebilirsiniz. Bu ilişkilendirme reklam amacıyla kullanılmaz ve üçüncü taraflarla
+paylaşılmaz. Ayrıntılar için
 <a href="/cerez-politikasi">Çerez Politikası</a> sayfamıza bakabilirsiniz.
 </p>`,
     `<h2>Kişisel Verilerin Aktarıldığı Taraflar</h2>

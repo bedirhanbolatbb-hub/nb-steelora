@@ -188,8 +188,13 @@ export default function AnalizClient({
       ['Üyelik', rapor.metrikler.uyelik, rapor.onceki.uyelik],
       ['Ödemeye başlama', rapor.metrikler.odemeBaslama, rapor.onceki.odemeBaslama],
       ['Sipariş', rapor.metrikler.siparis, rapor.onceki.siparis],
-      ['Ciro', rapor.metrikler.ciro, rapor.onceki.ciro],
+      ['Net ciro', rapor.metrikler.ciro, rapor.onceki.ciro],
+      ['Brüt ciro', rapor.metrikler.brutCiro, rapor.onceki.brutCiro],
+      ['İptal/iade', rapor.metrikler.iptalIade, rapor.onceki.iptalIade],
       ['Dönüşüm oranı %', rapor.metrikler.donusumOrani, rapor.onceki.donusumOrani],
+      [],
+      ['Trafik kaynağı', 'Sayfa görüntüleme', 'Pay %'],
+      ...rapor.kaynakGruplari.map((k) => [k.ad, k.adet, k.oran]),
       [],
       ['Ürün', 'Görüntüleme', 'Sepete ekleme', 'Satış', 'Görüntüleme→satış %'],
       ...rapor.urunler.map((u) => [
@@ -333,6 +338,71 @@ export default function AnalizClient({
         </ul>
       </PCard>
 
+      {rapor.uyeKirilimi && (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Kart baslik="Üye ziyaretçi" deger={sayi(rapor.uyeKirilimi.uyeZiyaretci)} oncekiVeriVar={false} />
+          <Kart baslik="Misafir ziyaretçi" deger={sayi(rapor.uyeKirilimi.misafirZiyaretci)} oncekiVeriVar={false} />
+          <Kart baslik="Üye siparişi" deger={sayi(rapor.uyeKirilimi.uyeSiparis)} oncekiVeriVar={false} />
+          <Kart
+            baslik="Üye payı"
+            deger={yuzde(
+              rapor.uyeKirilimi.uyeZiyaretci + rapor.uyeKirilimi.misafirZiyaretci
+                ? Math.round(
+                    (rapor.uyeKirilimi.uyeZiyaretci /
+                      (rapor.uyeKirilimi.uyeZiyaretci + rapor.uyeKirilimi.misafirZiyaretci)) *
+                      1000
+                  ) / 10
+                : 0
+            )}
+            oncekiVeriVar={false}
+            not="giriş yapmış ziyaretçiler"
+          />
+        </div>
+      )}
+
+      <PCard title="Saat ve gün yoğunluğu">
+        <p className="mb-3 text-[12px] leading-relaxed text-[var(--p-muted)]">
+          Sayfa görüntülemelerinin haftanın günü ve saate göre dağılımı (İstanbul saati).
+          Koyu kutu daha yoğun demek — kampanya ve gönderi saatini buna göre seçin.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="min-w-[560px] border-separate border-spacing-[2px] text-[10px]">
+            <thead>
+              <tr>
+                <th className="w-8" />
+                {Array.from({ length: 24 }, (_, h) => (
+                  <th key={h} className="w-5 font-normal text-[var(--p-muted)]">
+                    {h % 3 === 0 ? h : ''}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rapor.saatlik.map((satir) => (
+                <tr key={satir.gun}>
+                  <td className="pr-1 text-right text-[var(--p-muted)]">{satir.gun}</td>
+                  {satir.saatler.map((adet, h) => (
+                    <td
+                      key={h}
+                      title={`${satir.gun} ${String(h).padStart(2, '0')}:00 — ${adet} görüntüleme`}
+                      className="h-5 rounded-[2px]"
+                      style={{
+                        backgroundColor:
+                          adet === 0
+                            ? 'var(--p-bg)'
+                            : `color-mix(in srgb, var(--p-accent-deep) ${Math.round(
+                                (adet / rapor.saatlikTavan) * 85 + 15
+                              )}%, transparent)`,
+                      }}
+                    />
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </PCard>
+
       <PCard title="En çok görüntülenen ürünler (ilk 20)">
         <UrunTablosu
           satirlar={rapor.urunler}
@@ -376,15 +446,38 @@ export default function AnalizClient({
           </ul>
         </PCard>
         <PCard title="Trafik kaynağı">
+          {/* Faz 23-B: önce grup, sonra ham alan adı. Eskiden yalnız ham liste
+              vardı ve `api.iyzipay.com` (ödeme dönüşü) ile `nbsteelora.com.`
+              (kendi sitemiz) trafik kaynağı gibi görünüyordu. */}
           <ul className="divide-y divide-[var(--p-line)] text-[12px]">
-            {rapor.kaynaklar.length === 0 && <li className="px-4 py-6 text-center text-[var(--p-muted)]">Veri yok.</li>}
-            {rapor.kaynaklar.map((k) => (
-              <li key={k.ad} className="flex justify-between px-4 py-2">
-                <span className="truncate text-[var(--p-ink)]">{k.ad}</span>
-                <span className="tabular-nums">{sayi(k.adet)}</span>
+            {rapor.kaynakGruplari.length === 0 && <li className="px-4 py-6 text-center text-[var(--p-muted)]">Veri yok.</li>}
+            {rapor.kaynakGruplari.map((k) => (
+              <li key={k.anahtar} className="flex items-center justify-between gap-2 px-4 py-2">
+                <span className="truncate font-medium text-[var(--p-ink)]">{k.ad}</span>
+                <span className="flex shrink-0 items-baseline gap-1.5">
+                  <span className="text-[var(--p-muted)]">%{k.oran}</span>
+                  <span className="tabular-nums">{sayi(k.adet)}</span>
+                </span>
               </li>
             ))}
           </ul>
+          {rapor.kaynaklar.length > 0 && (
+            <details className="border-t border-[var(--p-line)] px-4 py-2 text-[12px]">
+              <summary className="cursor-pointer text-[var(--p-muted)]">Alan adı ayrıntısı</summary>
+              <ul className="mt-2 space-y-1">
+                {rapor.kaynaklar.map((k) => (
+                  <li key={k.ad} className="flex justify-between gap-2">
+                    <span className="truncate text-[var(--p-ink)]">{k.ad}</span>
+                    <span className="tabular-nums">{sayi(k.adet)}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-[11px] leading-relaxed text-[var(--p-muted)]">
+                Site içi dönüşler (ödeme sağlayıcısı, kendi alan adımız) yukarıdaki gruplara
+                sayılmaz ama burada görünür.
+              </p>
+            </details>
+          )}
         </PCard>
         <PCard title="Aramalar">
           <ul className="divide-y divide-[var(--p-line)] text-[12px]">

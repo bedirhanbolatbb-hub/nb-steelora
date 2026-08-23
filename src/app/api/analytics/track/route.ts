@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { olayYaz, istektenKimlik, botMu, cihazTipi, ISTEMCI_OLAYLARI, type AnalyticsEvent } from '@/lib/analytics/track'
 import { oturumKimligi, istekIp } from '@/lib/analytics/session'
+import { uyeKimligi } from '@/lib/analytics/uye'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
     event,
     sessionId,
     visitorId,
+    userId: await uyeKimligi(),
     path: typeof body?.path === 'string' ? body.path : null,
     referrer: request.headers.get('referer'),
     userAgent: ua,

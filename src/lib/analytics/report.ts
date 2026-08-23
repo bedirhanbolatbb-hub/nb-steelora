@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service'
+import { kaynakGrubu, KAYNAK_ADI, type KaynakGrubu } from './kaynak'
 
 /**
  * Panel raporlama sorguları (Faz 12).
@@ -129,8 +130,20 @@ type HamOlay = {
   search_query: string | null
   value: number | null
   order_id: string | null
+  user_id: string | null
   meta: any
 }
+
+const KOLONLAR =
+  'event, session_id, visitor_id, occurred_at, path, referrer_host, device, product_id, search_query, value, order_id, meta'
+
+/**
+ * `user_id` sütunu DDL çalışana kadar yoktur (bkz. docs/analiz/02-uye-baglantisi.sql).
+ * Emniyet: sütun yoksa PostgREST tüm sorguyu reddeder ve analiz paneli
+ * TAMAMEN boş kalırdı. Bir kez denenir, olmazsa sütunsuz sürüme düşülür ve
+ * bir daha denenmez.
+ */
+let uyeSutunuVar: boolean | null = null
 
 /** Dönemdeki ham olaylar (sayfalama ile — 50 bin satıra kadar). */
 async function olaylariCek(d: Donem): Promise<HamOlay[]> {
@@ -138,18 +151,33 @@ async function olaylariCek(d: Donem): Promise<HamOlay[]> {
   const hepsi: HamOlay[] = []
   const adim = 1000
   for (let bas = 0; bas < 50000; bas += adim) {
-    const { data, error } = await supabase
-      .from('analytics_events')
-      .select('event, session_id, visitor_id, occurred_at, path, referrer_host, device, product_id, search_query, value, order_id, meta')
-      .gte('occurred_at', d.baslangic.toISOString())
-      .lt('occurred_at', d.bitis.toISOString())
-      .order('occurred_at', { ascending: true })
-      .range(bas, bas + adim - 1)
+    const cek = (uyeli: boolean) =>
+      supabase
+        .from('analytics_events')
+        .select(uyeli ? `${KOLONLAR}, user_id` : KOLONLAR)
+        .gte('occurred_at', d.baslangic.toISOString())
+        .lt('occurred_at', d.bitis.toISOString())
+        .order('occurred_at', { ascending: true })
+        .range(bas, bas + adim - 1)
+
+    let { data, error } = await cek(uyeSutunuVar !== false)
+    if (error && uyeSutunuVar === null) {
+      uyeSutunuVar = false
+      ;({ data, error } = await cek(false))
+    } else if (!error && uyeSutunuVar === null) {
+      uyeSutunuVar = true
+    }
+
     if (error || !data || data.length === 0) break
-    hepsi.push(...(data as HamOlay[]))
+    hepsi.push(...(data as unknown as HamOlay[]))
     if (data.length < adim) break
   }
   return hepsi
+}
+
+/** Üye bağlantısı canlıda açık mı — panel notu bunu okur. */
+export function uyeBaglantisiAcikMi(): boolean {
+  return uyeSutunuVar === true
 }
 
 export type Metrikler = {
@@ -307,7 +335,16 @@ export type Rapor = {
   firsatlar: UrunSatiri[]
   favoriler: UrunSatiri[]
   cihazlar: { ad: string; adet: number }[]
+  /** Ham alan adı listesi — "hangi Instagram bağlantısı" gibi detay için. */
   kaynaklar: { ad: string; adet: number }[]
+  /** Arama / sosyal / doğrudan kırılımı (Faz 23-B). Site içi dönüşler hariç. */
+  kaynakGruplari: { ad: string; anahtar: KaynakGrubu; adet: number; oran: number }[]
+  /** Haftanın günü × saat yoğunluğu — 7 satır, her satırda 24 kutu. */
+  saatlik: { gun: string; saatler: number[] }[]
+  /** En yoğun tek kutu; panelde renk ölçeğinin tepesi. */
+  saatlikTavan: number
+  /** Üye / misafir kırılımı. Üye bağlantısı kapalıyken null. */
+  uyeKirilimi: { uyeZiyaretci: number; misafirZiyaretci: number; uyeSiparis: number } | null
   koleksiyonlar: { ad: string; adet: number }[]
   aramalar: { sorgu: string; adet: number; sonucsuz: boolean }[]
   seri: { gun: string; ziyaretci: number; ciro: number }[]
@@ -337,6 +374,12 @@ export async function raporUret(d: Donem): Promise<Rapor> {
   }
   const cihazlar = new Map<string, number>()
   const kaynaklar = new Map<string, number>()
+  const kaynakGrup = new Map<KaynakGrubu, number>()
+  // 7 gün × 24 saat, İstanbul saatiyle. Pazartesi 0. satır.
+  const saatlik: number[][] = Array.from({ length: 7 }, () => new Array(24).fill(0))
+  const uyeZiyaretciler = new Set<string>()
+  const misafirZiyaretciler = new Set<string>()
+  let uyeSiparis = 0
   const aramalar = new Map<string, { adet: number; sonucsuz: number }>()
   const gunluk = new Map<string, { oturumlar: Set<string>; ciro: number }>()
 
@@ -351,6 +394,23 @@ export async function raporUret(d: Donem): Promise<Rapor> {
       cihazlar.set(o.device || 'bilinmiyor', (cihazlar.get(o.device || 'bilinmiyor') || 0) + 1)
       const k = o.referrer_host || 'doğrudan'
       kaynaklar.set(k, (kaynaklar.get(k) || 0) + 1)
+      // Site içi dönüşler (ödeme sağlayıcısı, kendi alan adımız) kaynak değildir.
+      const g = kaynakGrubu(o.referrer_host)
+      if (g !== 'ic') kaynakGrup.set(g, (kaynakGrup.get(g) || 0) + 1)
+
+      // Yoğunluk haritası yalnız sayfa görüntülemeden — diğer olaylar
+      // sayfa başına birden çok kez düşüp saati şişirirdi.
+      const yerel = new Date(
+        new Date(o.occurred_at).toLocaleString('en-US', { timeZone: ISTANBUL })
+      )
+      saatlik[(yerel.getDay() + 6) % 7][yerel.getHours()]++
+    }
+
+    if (o.user_id) {
+      uyeZiyaretciler.add(o.session_id)
+      if (o.event === 'purchase' && !(o.order_id && iptalEdilenler.has(o.order_id))) uyeSiparis++
+    } else {
+      misafirZiyaretciler.add(o.session_id)
     }
     if (o.event === 'search' && o.search_query) {
       const mevcut = aramalar.get(o.search_query) || { adet: 0, sonucsuz: 0 }
@@ -363,8 +423,13 @@ export async function raporUret(d: Donem): Promise<Rapor> {
     const gun = new Date(o.occurred_at).toLocaleDateString('sv-SE', { timeZone: ISTANBUL })
     if (!gunluk.has(gun)) gunluk.set(gun, { oturumlar: new Set(), ciro: 0 })
     const g = gunluk.get(gun)!
-    g.oturumlar.add(o.visitor_id || o.session_id)
-    if (o.event === 'purchase') g.ciro += Number(o.value) || 0
+    // Kart metrikleriyle AYNI kimlik uzayı — burada da `visitor_id || session_id`
+    // kullanılıyordu, günlük grafik kartlardan farklı ziyaretçi sayıyordu.
+    g.oturumlar.add(o.session_id)
+    // Grafikteki ciro da net: iptal/iade edilen sipariş çizgiyi şişirmesin.
+    if (o.event === 'purchase' && !(o.order_id && iptalEdilenler.has(o.order_id))) {
+      g.ciro += Number(o.value) || 0
+    }
   }
 
   const urunler = [...urunHarita.values()]
@@ -414,6 +479,31 @@ export async function raporUret(d: Donem): Promise<Rapor> {
     favoriler,
     cihazlar: [...cihazlar.entries()].map(([ad, adet]) => ({ ad, adet })).sort((a, b) => b.adet - a.adet),
     kaynaklar: [...kaynaklar.entries()].map(([ad, adet]) => ({ ad, adet })).sort((a, b) => b.adet - a.adet).slice(0, 10),
+    kaynakGruplari: (() => {
+      const toplam = [...kaynakGrup.values()].reduce((a, b) => a + b, 0)
+      return [...kaynakGrup.entries()]
+        .map(([anahtar, adet]) => ({
+          anahtar,
+          ad: KAYNAK_ADI[anahtar],
+          adet,
+          oran: toplam ? Math.round((adet / toplam) * 1000) / 10 : 0,
+        }))
+        .sort((a, b) => b.adet - a.adet)
+    })(),
+    saatlik: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((gun, i) => ({
+      gun,
+      saatler: saatlik[i],
+    })),
+    saatlikTavan: Math.max(1, ...saatlik.flat()),
+    // Bir ziyaretçi hem üyeli hem üyesiz olay bırakmışsa (giriş yaptığı an)
+    // ÜYE sayılır; misafir kümesinden düşülür, iki yerde birden sayılmaz.
+    uyeKirilimi: uyeBaglantisiAcikMi()
+      ? {
+          uyeZiyaretci: uyeZiyaretciler.size,
+          misafirZiyaretci: [...misafirZiyaretciler].filter((s) => !uyeZiyaretciler.has(s)).length,
+          uyeSiparis,
+        }
+      : null,
     koleksiyonlar: [],
     aramalar: [...aramalar.entries()]
       .map(([sorgu, v]) => ({ sorgu, adet: v.adet, sonucsuz: v.sonucsuz > 0 }))

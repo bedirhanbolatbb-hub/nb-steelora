@@ -52,6 +52,12 @@ export type OlayGirdi = {
   event: AnalyticsEvent
   sessionId: string
   visitorId?: string | null
+  /**
+   * Giriş yapmış üyenin kimliği (Faz 23-B). KVKK kapısına tabidir:
+   * aydınlatma metni, 13 ay saklama, hesapla birlikte silinme ve panelden
+   * silme düğmesi hazır olmadan doldurulmaz.
+   */
+  userId?: string | null
   path?: string | null
   referrer?: string | null
   userAgent?: string | null
@@ -101,6 +107,13 @@ export function temizYol(path: string | null | undefined): string | null {
 }
 
 /**
+ * `user_id` sütunu DDL çalışana kadar yok (docs/analiz/02-uye-baglantisi.sql).
+ * Sütun yokken satırı olduğu gibi göndermek olayın TAMAMEN kaybolmasına yol
+ * açardı; bir kez denenir, reddedilirse sütunsuz yazılır ve bir daha denenmez.
+ */
+let uyeSutunuVar: boolean | null = null
+
+/**
  * Olayı yazar. Asla fırlatmaz — çağıran yer beklemek zorunda değildir.
  */
 export async function olayYaz(girdi: OlayGirdi): Promise<void> {
@@ -110,7 +123,7 @@ export async function olayYaz(girdi: OlayGirdi): Promise<void> {
     if (!girdi.sessionId) return
 
     const supabase = createServiceClient()
-    const { error } = await supabase.from('analytics_events').insert({
+    const satir: Record<string, unknown> = {
       event: girdi.event,
       session_id: girdi.sessionId.slice(0, 64),
       // Katman B yalnız rıza varsa; çağıran taraf zaten süzüyor, burada da guard.
@@ -124,7 +137,22 @@ export async function olayYaz(girdi: OlayGirdi): Promise<void> {
       value: girdi.value ?? null,
       order_id: girdi.orderId || null,
       meta: girdi.meta ?? null,
-    })
+    }
+
+    const yaz = (uyeli: boolean) =>
+      supabase
+        .from('analytics_events')
+        .insert(uyeli && girdi.userId ? { ...satir, user_id: girdi.userId } : satir)
+
+    let { error } = await yaz(uyeSutunuVar !== false)
+    // 42703 / PGRST204: sütun yok. Olayı kaybetmemek için sütunsuz tekrar.
+    if (error && girdi.userId && uyeSutunuVar === null && (error.code === '42703' || error.code === 'PGRST204')) {
+      uyeSutunuVar = false
+      console.warn('[analytics] user_id sütunu yok, üye bağlantısı kapalı yazılıyor')
+      ;({ error } = await yaz(false))
+    } else if (!error && girdi.userId && uyeSutunuVar === null) {
+      uyeSutunuVar = true
+    }
 
     if (error) {
       // purchase tekilliği (23505) beklenen bir durum — çift sayım engellendi.
