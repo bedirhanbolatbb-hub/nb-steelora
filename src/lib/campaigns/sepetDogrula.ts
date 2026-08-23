@@ -89,6 +89,8 @@ export async function sepetiDogrula(
       kategori: urun.trendyol_category ?? null,
       koleksiyonlar: koleksiyonHaritasi.get(id) ?? [],
       barkod: urun.trendyol_barcode ?? null,
+      // Stok kapsamı için anlık değer (Faz 22).
+      stok: urun.trendyol_stock ?? null,
     })
   }
 

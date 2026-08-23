@@ -49,6 +49,8 @@ function yonelmeEki(n: number): string {
 
 /** Kapsam ifadesi: "Tüm ürünlerde", "Kolye kategorisinde"… */
 function kapsamIfadesi(k: HesapKampanyasi, kategoriAdi?: KategoriCozucu): string {
+  if (k.kapsam === 'stok') return 'Stoğu azalan ürünlerde'
+  if (k.kapsam === 'fiyat_araligi') return 'Seçili fiyat aralığında'
   if (k.kapsam === 'sepet' || k.hedefler.length === 0) return 'Tüm ürünlerde'
   if (k.hedefler.length > 1) return 'Seçili ürünlerde'
   const hedef = k.hedefler[0]

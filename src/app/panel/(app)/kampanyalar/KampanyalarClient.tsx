@@ -7,7 +7,7 @@ import { oncelikliVesile, ELLE_VESILELER, VESILE_ADLARI, type Vesile } from '@/l
 import { CATEGORIES } from '@/lib/catalog/categories'
 import { vitrinMetni, vitrinHedefi } from '@/lib/campaigns/vitrinMetni'
 import { tipCevir, kapsamCevir } from '@/lib/campaigns/yukle'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { PBadge, PButton, PInput, PSelect } from '../_components/ui'
@@ -60,6 +60,8 @@ const KAPSAM_ETIKET: Record<string, string> = {
   category: 'Kategori',
   collection: 'Koleksiyon',
   product: 'Ürün',
+  stock: 'Stoğu azalanlar',
+  price_range: 'Fiyat aralığı',
 }
 
 /** Kapsam seçimi gerektiren tipler. */
@@ -87,9 +89,16 @@ type Form = {
   first_order_only: boolean
   buy_quantity: string
   pay_quantity: string
+  /** Faz 22 — ölçüt kapsamları. */
+  stokAzami: string
+  fiyatMin: string
+  fiyatMax: string
 }
 
 const BOS_FORM: Form = {
+  stokAzami: '',
+  fiyatMin: '',
+  fiyatMax: '',
   name: '',
   type: 'discount_code',
   code: '',
@@ -194,6 +203,11 @@ export default function KampanyalarClient({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+        hedefleme: {
+          stokAzami: form.stokAzami,
+          fiyatMin: form.fiyatMin,
+          fiyatMax: form.fiyatMax,
+        },
           kampanya: {
             id: 'taslak',
             ad: form.name || 'Taslak kampanya',
@@ -240,6 +254,9 @@ export default function KampanyalarClient({
       min_cart_amount: String(c.minCart),
       max_uses: c.maxUses != null ? String(c.maxUses) : '',
       banner_text: c.bannerText ?? '',
+      stokAzami: c.metadata?.hedefleme?.stokAzami ? String(c.metadata.hedefleme.stokAzami) : '',
+      fiyatMin: c.metadata?.hedefleme?.fiyatMin ? String(c.metadata.hedefleme.fiyatMin) : '',
+      fiyatMax: c.metadata?.hedefleme?.fiyatMax ? String(c.metadata.hedefleme.fiyatMax) : '',
       starts_at: dtLocal(c.startsAt),
       ends_at: dtLocal(c.endsAt),
       is_active: c.isActive,
@@ -433,6 +450,50 @@ export default function KampanyalarClient({
                   <option key={k} value={k}>{v}</option>
                 ))}
               </PSelect>
+
+              {/* Faz 22: ölçüt kapsamları — hedef listesi yerine sayısal eşik.
+                  Kapsam ANLIK: stok değişince kampanyanın kapsadığı ürünler
+                  kendiliğinden değişir, donmuş liste tutulmaz. */}
+              {form.scope === 'stock' && (
+                <div className="mt-2">
+                  <label className="mb-1 block text-[12px] text-[var(--p-muted)]">
+                    Stoğu şu değer ve altında olan ürünler
+                  </label>
+                  <PInput
+                    inputMode="numeric"
+                    value={form.stokAzami}
+                    onChange={(e) => setForm({ ...form, stokAzami: e.target.value })}
+                    placeholder="3"
+                  />
+                  <KapsamSayaci form={form} />
+                </div>
+              )}
+
+              {form.scope === 'price_range' && (
+                <div className="mt-2 grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Alt sınır (₺)</label>
+                    <PInput
+                      inputMode="numeric"
+                      value={form.fiyatMin}
+                      onChange={(e) => setForm({ ...form, fiyatMin: e.target.value })}
+                      placeholder="boş = sınır yok"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Üst sınır (₺)</label>
+                    <PInput
+                      inputMode="numeric"
+                      value={form.fiyatMax}
+                      onChange={(e) => setForm({ ...form, fiyatMax: e.target.value })}
+                      placeholder="boş = sınır yok"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <KapsamSayaci form={form} />
+                  </div>
+                </div>
+              )}
 
               {form.scope === 'category' && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -927,4 +988,60 @@ function metinBaglami(form: Form, vesile: Vesile): MetinBaglami {
     kod: form.code || null,
     vesile,
   }
+}
+
+/**
+ * "Şu an N ürün kapsamda" (Faz 22).
+ *
+ * Sayım canlı katalogdan, kampanya kaydedilmeden ÖNCE yapılır — BB eşiği
+ * yazarken kaç ürünü etkilediğini görür. Sayı bilgilendirmedir: kapsam
+ * üyeliği her sepet hesabında yeniden çıkarılır, bu liste dondurulmaz.
+ */
+function KapsamSayaci({ form }: { form: Form }) {
+  const [adet, setAdet] = useState<number | null>(null)
+  const [yukleniyor, setYukleniyor] = useState(false)
+
+  const anahtar = `${form.scope}|${form.stokAzami}|${form.fiyatMin}|${form.fiyatMax}`
+
+  useEffect(() => {
+    let iptal = false
+    const zaman = setTimeout(async () => {
+      setYukleniyor(true)
+      try {
+        const res = await fetch('/api/panel/campaigns/kapsam-sayisi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            scope: form.scope,
+            stokAzami: form.stokAzami,
+            fiyatMin: form.fiyatMin,
+            fiyatMax: form.fiyatMax,
+            targets: form.targets,
+          }),
+        })
+        const d = await res.json()
+        if (!iptal) setAdet(typeof d.adet === 'number' ? d.adet : null)
+      } catch {
+        if (!iptal) setAdet(null)
+      }
+      if (!iptal) setYukleniyor(false)
+    }, 350)
+    return () => {
+      iptal = true
+      clearTimeout(zaman)
+    }
+  }, [anahtar])
+
+  return (
+    <p className="mt-2 rounded-[4px] bg-[var(--p-surface-muted)] px-3 py-2 text-[12px] text-[var(--p-ink-soft)]">
+      {yukleniyor ? 'Hesaplanıyor…' : adet === null ? 'Ölçüt girin.' : (
+        <>
+          Şu an <strong>{adet} ürün</strong> kapsamda.{' '}
+          <span className="text-[var(--p-muted)]">
+            Stok değiştikçe bu sayı kendiliğinden güncellenir.
+          </span>
+        </>
+      )}
+    </p>
+  )
 }

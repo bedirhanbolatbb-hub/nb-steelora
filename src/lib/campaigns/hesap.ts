@@ -12,7 +12,18 @@
  */
 
 /** Kampanyanın hangi kalemlere dokunduğu. */
-export type Kapsam = 'sepet' | 'kategori' | 'koleksiyon' | 'urun'
+/**
+ * Kampanya kapsamı.
+ *
+ * Faz 22'de iki yeni kapsam eklendi:
+ *  · 'stok'          — stoğu bir eşiğin altında kalan ürünler (stok sonu)
+ *  · 'fiyat_araligi' — birim fiyatı verilen aralıkta olan ürünler
+ *
+ * İkisi de ANLIK hesaplanır: kapsam üyeliği sepetteki kalemin O ANKİ stok ve
+ * fiyat değerinden çıkar, önceden dondurulmuş bir ürün listesi tutulmaz.
+ * Stok değişince kapsam kendiliğinden güncellenir.
+ */
+export type Kapsam = 'sepet' | 'kategori' | 'koleksiyon' | 'urun' | 'stok' | 'fiyat_araligi'
 
 export type KampanyaTipi =
   | 'sepet_yuzde' // tüm sepete yüzde
@@ -35,6 +46,8 @@ export type SepetKalemi = {
   /** Ürünün ait olduğu koleksiyon slug'ları. */
   koleksiyonlar?: string[]
   barkod?: string | null
+  /** Anlık stok — 'stok' kapsamı bunun üzerinden eşleşir (Faz 22). */
+  stok?: number | null
 }
 
 export type HesapKampanyasi = {
@@ -44,6 +57,11 @@ export type HesapKampanyasi = {
   kapsam: Kapsam
   /** Kapsam 'kategori' ise kategori desenleri, 'koleksiyon' ise slug'lar, 'urun' ise ürün kimlikleri/barkodlar. */
   hedefler: string[]
+  /** Kapsam 'stok': stoğu bu değer ve altında olan ürünler (Faz 22). */
+  stokAzami?: number | null
+  /** Kapsam 'fiyat_araligi': birim fiyat alt/üst sınırı (Faz 22). */
+  fiyatMin?: number | null
+  fiyatMax?: number | null
   /** Yüzde tiplerinde oran, sabit tiplerinde tutar; x_al_y_ode'de kullanılmaz. */
   deger: number | null
   minSepet: number
@@ -110,6 +128,33 @@ export function kurus(n: number): number {
 /** Kalemin kampanya kapsamına girip girmediği. */
 export function kalemKapsamda(kalem: SepetKalemi, k: HesapKampanyasi): boolean {
   if (k.kapsam === 'sepet') return true
+
+  // Stok kapsamı: eşik ve altı. Stok bilinmiyorsa kapsam DIŞI sayılır —
+  // eksik veriyle indirim vermek, vermemekten daha kötüdür.
+  if (k.kapsam === 'stok') {
+    const esik = Number(k.stokAzami)
+    if (!Number.isFinite(esik) || esik <= 0) return false
+    // null/undefined AÇIKÇA elenir: Number(null) === 0 olduğu için sessizce
+    // "stoğu 0" sayılıp kapsama giriyordu — stok bilinmiyorsa indirim yok.
+    if (kalem.stok === null || kalem.stok === undefined) return false
+    const stok = Number(kalem.stok)
+    if (!Number.isFinite(stok)) return false
+    return stok <= esik
+  }
+
+  // Fiyat aralığı: sınırlardan biri boş bırakılabilir (yalnız alt ya da yalnız üst).
+  if (k.kapsam === 'fiyat_araligi') {
+    const fiyat = Number(kalem.fiyat) || 0
+    const alt = Number(k.fiyatMin)
+    const ust = Number(k.fiyatMax)
+    const altVar = Number.isFinite(alt) && alt > 0
+    const ustVar = Number.isFinite(ust) && ust > 0
+    if (!altVar && !ustVar) return false
+    if (altVar && fiyat < alt) return false
+    if (ustVar && fiyat > ust) return false
+    return true
+  }
+
   const hedefler = (k.hedefler ?? []).map((h) => h.trim().toLocaleLowerCase('tr-TR')).filter(Boolean)
   if (hedefler.length === 0) return false
 

@@ -71,7 +71,24 @@ export function tipCevir(ham: HamKampanya): KampanyaTipi | null {
   }
 }
 
+/** campaigns.metadata.hedefleme içindeki sayısal alanı okur. */
+function hedeflemeSayisi(ham: HamKampanya, alan: string): number | null {
+  const h = (ham as any)?.metadata?.hedefleme
+  const d = Number(h?.[alan])
+  return Number.isFinite(d) && d > 0 ? d : null
+}
+
 export function kapsamCevir(ham: HamKampanya): Kapsam {
+  // Faz 22: ölçüt kapsamları (stok / fiyat aralığı) campaigns.scope sütununa
+  // YAZILAMIYOR — sütunda bir CHECK kısıtı var ve yeni değerleri reddediyor.
+  // Kısıtı genişletmek DDL gerektirdiği için etkin kapsam metadata'da
+  // taşınıyor; DB'deki scope 'cart' kalıyor. `hedefleme` alanı da zaten
+  // burada duruyor, ikisi bir arada.
+  // (Kısıt genişletilirse docs/kampanya-kapsam/01-scope-check.sql ile
+  //  temiz sütuna geçilebilir; motor iki durumu da okur.)
+  const metaKapsam = (ham as any)?.metadata?.hedefleme?.kapsam
+  if (metaKapsam === 'stok' || metaKapsam === 'fiyat_araligi') return metaKapsam
+
   // DB'deki İngilizce kapsam değerleri motorun Türkçe adlarına çevrilir.
   switch (ham.scope ?? 'cart') {
     case 'category':
@@ -80,6 +97,10 @@ export function kapsamCevir(ham: HamKampanya): Kapsam {
       return 'koleksiyon'
     case 'product':
       return 'urun'
+    case 'stock':
+      return 'stok'
+    case 'price_range':
+      return 'fiyat_araligi'
     default:
       return 'sepet'
   }
@@ -176,6 +197,11 @@ export async function kampanyalariYukle(
       tip,
       kapsam: kapsamCevir(ham),
       hedefler: hedefHaritasi.get(ham.id) ?? [],
+      // Stok ve fiyat hedeflemesi campaigns.metadata.hedefleme altında
+      // tutuluyor (Faz 22) — yeni sütun açmaya gerek kalmadı.
+      stokAzami: hedeflemeSayisi(ham, 'stokAzami'),
+      fiyatMin: hedeflemeSayisi(ham, 'fiyatMin'),
+      fiyatMax: hedeflemeSayisi(ham, 'fiyatMax'),
       deger: ham.discount_value == null ? null : Number(ham.discount_value),
       minSepet: Number(ham.min_cart_amount ?? 0),
       minAdet: Number(ham.min_item_count ?? 0),
@@ -191,7 +217,20 @@ export async function kampanyalariYukle(
 
     // Kapsamlı kampanyanın hedefi yoksa uygulanamaz: sessizce tüm sepete
     // yayılması, panelde "kolyelerde %20" yazarken herkese %20 vermek olurdu.
-    if (kampanya.kapsam !== 'sepet' && kampanya.hedefler.length === 0) continue
+    //
+    // ÖLÇÜT kapsamları (stok / fiyat aralığı) hedef LİSTESİ taşımaz; onlarda
+    // aynı koruma ölçütün kendisi üzerinden işler — eşik ya da sınır yoksa
+    // kampanya yine uygulanmaz (Faz 22).
+    const olcutKapsami = kampanya.kapsam === 'stok' || kampanya.kapsam === 'fiyat_araligi'
+    if (olcutKapsami) {
+      const olcutVar =
+        kampanya.kapsam === 'stok'
+          ? Boolean(kampanya.stokAzami)
+          : Boolean(kampanya.fiyatMin || kampanya.fiyatMax)
+      if (!olcutVar) continue
+    } else if (kampanya.kapsam !== 'sepet' && kampanya.hedefler.length === 0) {
+      continue
+    }
 
     if (kampanya.koduVar) kodlular.push(kampanya)
     else otomatikler.push(kampanya)

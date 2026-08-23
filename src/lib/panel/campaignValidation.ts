@@ -11,7 +11,19 @@ export const CAMPAIGN_TYPES = [
   'buy_x_get_y_scoped',
 ]
 
-export const CAMPAIGN_SCOPES = ['cart', 'category', 'collection', 'product']
+export const CAMPAIGN_SCOPES = [
+  'cart',
+  'category',
+  'collection',
+  'product',
+  // Faz 22: hedef listesi değil, ÖLÇÜT taşıyan kapsamlar. Kapsam üyeliği
+  // sepetteki kalemin o anki stok/fiyat değerinden anlık hesaplanır.
+  'stock',
+  'price_range',
+]
+
+/** Hedef listesi yerine ölçüt kullanan kapsamlar. */
+export const OLCUT_KAPSAMLARI = ['stock', 'price_range']
 
 /** Gövdeyi doğrulayıp yazılacak satıra çevirir; hata metni döner. */
 export function validateCampaign(body: any): {
@@ -43,8 +55,30 @@ export function validateCampaign(body: any): {
   const hedefler: string[] = Array.isArray(body?.targets)
     ? body.targets.map((t: unknown) => String(t).trim()).filter(Boolean)
     : []
-  if (scope !== 'cart' && hedefler.length === 0) {
+  // Ölçüt kapsamlarında hedef listesi aranmaz; onun yerine sayısal ölçüt
+  // doğrulanır.
+  const olcut = OLCUT_KAPSAMLARI.includes(scope)
+  if (scope !== 'cart' && !olcut && hedefler.length === 0) {
     return { error: 'Kapsam seçtiğiniz kampanyada en az bir hedef seçmelisiniz' }
+  }
+
+  const sayi = (v: unknown): number | null => {
+    if (v === '' || v === null || v === undefined) return null
+    const n = Number(v)
+    return Number.isFinite(n) && n > 0 ? n : null
+  }
+  const stokAzami = sayi(body?.hedefleme?.stokAzami)
+  const fiyatMin = sayi(body?.hedefleme?.fiyatMin)
+  const fiyatMax = sayi(body?.hedefleme?.fiyatMax)
+
+  if (scope === 'stock' && !stokAzami) {
+    return { error: 'Stok kapsamında bir stok eşiği girmelisiniz (ör. 3)' }
+  }
+  if (scope === 'price_range' && !fiyatMin && !fiyatMax) {
+    return { error: 'Fiyat aralığında en az bir sınır girmelisiniz' }
+  }
+  if (fiyatMin && fiyatMax && fiyatMax < fiyatMin) {
+    return { error: 'Üst sınır, alt sınırdan küçük olamaz' }
   }
   const kademeler = Array.isArray(body?.tiers)
     ? body.tiers
@@ -68,7 +102,9 @@ export function validateCampaign(body: any): {
       name,
       type,
       code,
-      scope,
+      // Ölçüt kapsamları sütuna yazılamıyor (CHECK kısıtı); 'cart' yazılıp
+      // etkin kapsam metadata'ya konuyor. Motor metadata'yı önceler.
+      scope: olcut ? 'cart' : scope,
       requires_code: type === 'discount_code' ? true : Boolean(body?.requires_code),
       min_item_count: body?.min_item_count ? Number(body.min_item_count) : null,
       per_user_limit: body?.per_user_limit ? Number(body.per_user_limit) : null,
@@ -88,7 +124,21 @@ export function validateCampaign(body: any): {
       starts_at: starts ? starts.toISOString() : new Date().toISOString(),
       ends_at: ends ? ends.toISOString() : null,
       is_active: Boolean(body?.is_active),
-      metadata: body?.metadata && typeof body.metadata === 'object' ? body.metadata : null,
+      // Stok/fiyat hedeflemesi metadata.hedefleme altında tutulur — yeni
+      // sütun açmaya gerek kalmadı (Faz 22).
+      metadata: {
+        ...(body?.metadata && typeof body.metadata === 'object' ? body.metadata : {}),
+        ...(stokAzami || fiyatMin || fiyatMax
+          ? {
+              hedefleme: {
+                ...(olcut ? { kapsam: scope === 'stock' ? 'stok' : 'fiyat_araligi' } : {}),
+                ...(stokAzami ? { stokAzami } : {}),
+                ...(fiyatMin ? { fiyatMin } : {}),
+                ...(fiyatMax ? { fiyatMax } : {}),
+              },
+            }
+          : {}),
+      },
     },
     hedefler,
     kademeler,
