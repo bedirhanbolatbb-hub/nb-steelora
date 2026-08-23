@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { IADE_ADIMLARI, type IadeIzi } from '@/lib/iade/akis'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useRef, useState } from 'react'
 import { Truck } from 'lucide-react'
@@ -28,15 +29,23 @@ export type TalepSatiri = {
   durum: string
   sebep: string | null
   tarih: string
+  guncelleme: string | null
   siparisNo: string
   email: string | null
   tutar: number
+  kargoFirmasi: string | null
+  iadeKodu: string | null
+  kodGonderimi: string | null
+  iz: IadeIzi
+  paraIadeEdildi: boolean
 }
 
 const TALEP_TIP: Record<string, string> = { cancel: 'İptal talebi', return: 'İade talebi' }
 const TALEP_DURUM: Record<string, { label: string; tone: BadgeTone }> = {
-  pending: { label: 'Bekliyor', tone: 'warning' },
-  approved: { label: 'Onaylandı', tone: 'success' },
+  pending: { label: 'Talep alındı', tone: 'warning' },
+  cargo_sent: { label: 'Kod gönderildi', tone: 'accent' },
+  inspecting: { label: 'Ürün teslim alındı', tone: 'accent' },
+  approved: { label: 'Para iade edildi', tone: 'success' },
   rejected: { label: 'Reddedildi', tone: 'danger' },
   completed: { label: 'Tamamlandı', tone: 'success' },
 }
@@ -49,11 +58,13 @@ export default function SiparislerClient({
   talepler,
   yarimKalan,
   params,
+  iadeVarsayilanlari,
 }: {
   satirlar: SiparisSatiri[]
   talepler: TalepSatiri[]
   yarimKalan: SiparisSatiri[]
   params: { durum: string; q: string; tab: string }
+  iadeVarsayilanlari: { firma: string; kod: string }
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -61,25 +72,60 @@ export default function SiparislerClient({
   const { push: toast } = useToast()
   const [arama, setArama] = useState(params.q)
   const zamanlayici = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [talepIslem, setTalepIslem] = useState<{ talep: TalepSatiri; action: 'approve' | 'reject' } | null>(null)
+  const [talepIslem, setTalepIslem] = useState<{
+    talep: TalepSatiri
+    action: 'approve' | 'reject' | 'received' | 'refund'
+  } | null>(null)
   const [isleniyor, setIsleniyor] = useState(false)
+  const [kargoFirmasi, setKargoFirmasi] = useState(iadeVarsayilanlari.firma)
+  const [iadeKodu, setIadeKodu] = useState(iadeVarsayilanlari.kod)
+  /** İyzico iadesi düşerse satırın altında kırmızı kalır (Faz 20). */
+  const [iadeHatalari, setIadeHatalari] = useState<Record<string, string>>({})
 
-  // Mevcut guard'lı uç: onayda iptal talepleri tam iade+stok akışını çalıştırır.
+  const talepAc = (talep: TalepSatiri, action: 'approve' | 'reject' | 'received' | 'refund') => {
+    setKargoFirmasi(talep.kargoFirmasi || iadeVarsayilanlari.firma)
+    setIadeKodu(talep.iadeKodu || iadeVarsayilanlari.kod)
+    setTalepIslem({ talep, action })
+  }
+
   const talepUygula = async () => {
     if (!talepIslem) return
     setIsleniyor(true)
+    const { talep, action } = talepIslem
     try {
-      const res = await fetch(`/api/admin/order-requests/${talepIslem.talep.id}`, {
+      const res = await fetch(`/api/admin/order-requests/${talep.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: talepIslem.action }),
+        body: JSON.stringify(
+          action === 'approve' && talep.tip === 'return'
+            ? { action, kargoFirmasi, iadeKodu }
+            : { action }
+        ),
       })
       const data = await res.json()
       if (!res.ok || !data.success) throw new Error(data.error || 'İşlem başarısız')
-      toast(talepIslem.action === 'approve' ? 'Talep onaylandı' : 'Talep reddedildi', 'success')
+
+      setIadeHatalari((o) => {
+        const y = { ...o }
+        delete y[talep.id]
+        return y
+      })
+      toast(
+        action === 'approve'
+          ? talep.tip === 'return'
+            ? 'İade kodu müşteriye gönderildi'
+            : 'Talep onaylandı'
+          : action === 'received'
+            ? 'Ürün teslim alındı olarak işaretlendi'
+            : action === 'refund'
+              ? 'Para iadesi yapıldı'
+              : 'Talep reddedildi',
+        'success'
+      )
       setTalepIslem(null)
       router.refresh()
     } catch (e: any) {
+      if (action === 'refund') setIadeHatalari((o) => ({ ...o, [talep.id]: e.message }))
       toast(e.message, 'danger')
     }
     setIsleniyor(false)
@@ -240,16 +286,78 @@ export default function SiparislerClient({
                   {t.email ?? '—'} · {formatPrice(t.tutar)}
                 </p>
                 {t.sebep && <p className="mt-1 text-[12px] text-[var(--p-muted)]">Sebep: {t.sebep}</p>}
-                {t.durum === 'pending' && (
-                  <div className="mt-2 flex gap-2">
-                    <PButton variant="ghost" disabled={isleniyor} onClick={() => setTalepIslem({ talep: t, action: 'approve' })}>
-                      Onayla
-                    </PButton>
-                    <PButton variant="danger" disabled={isleniyor} onClick={() => setTalepIslem({ talep: t, action: 'reject' })}>
-                      Reddet
-                    </PButton>
-                  </div>
+
+                {/* Durum akışı: her adımın zaman damgası ve müşteriye giden
+                    mailin kimliği (Faz 20). İz siparişin metadata'sında. */}
+                {t.tip === 'return' && (
+                  <ol className="mt-3 space-y-1.5 border-l border-[var(--p-line)] pl-4">
+                    {IADE_ADIMLARI.map(({ adim, etiket }) => {
+                      const k = t.iz?.[adim]
+                      return (
+                        <li key={adim} className="relative text-[12px]">
+                          <span
+                            className={cn(
+                              'absolute -left-[21px] top-1.5 h-2 w-2 rounded-full',
+                              k ? 'bg-[var(--p-success)]' : 'bg-[var(--p-line)]'
+                            )}
+                          />
+                          <span className={k ? 'text-[var(--p-ink)]' : 'text-[var(--p-muted)]'}>{etiket}</span>
+                          {k && (
+                            <span className="ml-2 tabular-nums text-[var(--p-muted)]">
+                              {new Date(k.at).toLocaleString('tr-TR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                                timeZone: 'Europe/Istanbul',
+                              })}
+                            </span>
+                          )}
+                          {k?.mailId && (
+                            <span className="ml-2 font-mono text-[10px] text-[var(--p-muted)]">
+                              mail {String(k.mailId).slice(0, 8)}…
+                            </span>
+                          )}
+                          {k && !k.mailId && k.mailNotu && (
+                            <span className="ml-2 text-[10px] text-[var(--p-warning)]">
+                              mail gönderilmedi: {k.mailNotu}
+                            </span>
+                          )}
+                          {k?.not && (
+                            <span className="ml-2 text-[10px] text-[var(--p-muted)]">{k.not}</span>
+                          )}
+                        </li>
+                      )
+                    })}
+                  </ol>
                 )}
+
+                {iadeHatalari[t.id] && (
+                  <p className="mt-2 rounded-[4px] bg-[var(--p-danger-bg)] px-3 py-2 text-[12px] text-[var(--p-danger)]">
+                    İyzico iadesi başarısız: {iadeHatalari[t.id]}
+                  </p>
+                )}
+
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {t.durum === 'pending' && (
+                    <>
+                      <PButton variant="ghost" disabled={isleniyor} onClick={() => talepAc(t, 'approve')}>
+                        {t.tip === 'return' ? 'Onayla ve iade kodu gönder' : 'Onayla'}
+                      </PButton>
+                      <PButton variant="danger" disabled={isleniyor} onClick={() => talepAc(t, 'reject')}>
+                        Reddet
+                      </PButton>
+                    </>
+                  )}
+                  {t.durum === 'cargo_sent' && (
+                    <PButton variant="ghost" disabled={isleniyor} onClick={() => talepAc(t, 'received')}>
+                      Ürün teslim alındı
+                    </PButton>
+                  )}
+                  {t.durum === 'inspecting' && (
+                    <PButton variant="primary" disabled={isleniyor} onClick={() => talepAc(t, 'refund')}>
+                      Parayı iade et
+                    </PButton>
+                  )}
+                </div>
               </div>
             )
           })}
@@ -260,7 +368,17 @@ export default function SiparislerClient({
       <PDialog
         open={talepIslem !== null}
         onClose={() => setTalepIslem(null)}
-        title={talepIslem?.action === 'approve' ? 'Talep onaylanacak' : 'Talep reddedilecek'}
+        title={
+          talepIslem?.action === 'approve'
+            ? talepIslem.talep.tip === 'return'
+              ? 'İade kodu gönderilecek'
+              : 'Talep onaylanacak'
+            : talepIslem?.action === 'received'
+              ? 'Ürün teslim alındı işaretlenecek'
+              : talepIslem?.action === 'refund'
+                ? 'Para iade edilecek'
+                : 'Talep reddedilecek'
+        }
         footer={
           <>
             <PButton variant="ghost" onClick={() => setTalepIslem(null)}>Vazgeç</PButton>
@@ -273,11 +391,41 @@ export default function SiparislerClient({
         <p>
           {talepIslem?.talep.siparisNo} — {TALEP_TIP[talepIslem?.talep.tip ?? ''] ?? talepIslem?.talep.tip}.{' '}
           {talepIslem?.action === 'approve' && talepIslem?.talep.tip === 'cancel'
-            ? 'Onay, mevcut akışla iyzico iadesini ve stok geri yüklemesini otomatik çalıştırır.'
+            ? 'Onay, iyzico iadesini ve stok geri yüklemesini otomatik çalıştırır.'
             : talepIslem?.action === 'approve'
-              ? 'Onay sonrası iade süreci mevcut akışla ilerler.'
-              : 'Müşteri talebi reddedilmiş olarak işaretlenir.'}
+              ? 'Müşteriye iade kodu ve kargo talimatı e-postayla gönderilir. PARA ŞİMDİ İADE EDİLMEZ — ürün elimize ulaşınca ayrıca iade edeceksiniz.'
+              : talepIslem?.action === 'received'
+                ? 'Ürünün elinize ulaştığını onaylıyorsunuz. Bu işaret konmadan para iadesi yapılamaz.'
+                : talepIslem?.action === 'refund'
+                  ? 'İyzico üzerinden tam iade yapılır, stok geri yüklenir ve müşteriye "iadeniz tamamlandı" e-postası gider.'
+                  : 'Müşteri talebi reddedilmiş olarak işaretlenir.'}
         </p>
+
+        {talepIslem?.action === 'approve' && talepIslem.talep.tip === 'return' && (
+          <div className="mt-4 space-y-3">
+            <div>
+              <label className="mb-1 block text-[12px] text-[var(--p-ink-soft)]">Kargo firması</label>
+              <PInput
+                value={kargoFirmasi}
+                onChange={(e) => setKargoFirmasi(e.target.value)}
+                placeholder="ör. Yurtiçi Kargo"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[12px] text-[var(--p-ink-soft)]">İade kodu</label>
+              <PInput
+                value={iadeKodu}
+                onChange={(e) => setIadeKodu(e.target.value)}
+                placeholder="Kargonomi panelinden aldığınız kod"
+              />
+            </div>
+            <p className="text-[11px] leading-relaxed text-[var(--p-muted)]">
+              Kargonomi API&apos;sinde iade gönderisi ucu yok; kodu Kargonomi panelinden
+              &quot;iade oluştur&quot; ile üretip buraya yapıştırın. Varsayılanlar Site
+              Metinleri → &quot;İade ve iletişim&quot; alanlarından gelir.
+            </p>
+          </div>
+        )}
       </PDialog>
 
       {/* ── Yarım kalan ödemeler ── */}

@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server'
+import { talepTeyidiEmail } from '@/lib/emails/templates'
+import { musteriMailiGonder } from '@/lib/emails/musteriMaili'
+import { adimKaydet } from '@/lib/iade/akis'
+import { GERI_GONDERME_GUN } from '@/lib/legal/sozlesme'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import {
@@ -98,6 +102,39 @@ export async function POST(
     }
   } catch (bildirimHata) {
     console.error('[cancel-request] yönetici bildirimi gönderilemedi:', bildirimHata)
+  }
+
+  // MÜŞTERİYE DERHÂL TEYİT (Faz 20). Mesafeli Sözleşmeler Yönetmeliği m.11/2:
+  // internet sitesi üzerinden cayma sunuluyorsa, talebin ulaştığına ilişkin
+  // teyit bilgisinin tüketiciye derhâl iletilmesi ZORUNLUDUR. Önceden talep
+  // anında müşteriye hiçbir şey gitmiyordu.
+  try {
+    const { data: siparis } = await service
+      .from('orders')
+      .select('order_number, guest_email')
+      .eq('id', orderId)
+      .maybeSingle()
+    if (siparis) {
+      const teyit = talepTeyidiEmail({
+        orderNumber: siparis.order_number,
+        tip: 'cancel',
+        gonderimGunu: GERI_GONDERME_GUN,
+      })
+      const gonderim = await musteriMailiGonder({
+        eposta: siparis.guest_email,
+        orderNumber: siparis.order_number,
+        subject: teyit.subject,
+        html: teyit.html,
+        label: 'Cancel request received',
+      })
+      await adimKaydet(service, orderId, 'talep', {
+        mailId: (gonderim as any)?.id ?? null,
+        mailNotu: (gonderim as any)?.sebep ?? null,
+      })
+    }
+  } catch (teyitHatasi) {
+    // Teyit gönderilemezse talep yine geçerli; yalnız loglanır.
+    console.error('[cancel-request] teyit maili gönderilemedi:', teyitHatasi)
   }
 
   return NextResponse.json({ request: row }, { status: 201 })

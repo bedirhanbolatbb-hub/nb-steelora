@@ -569,3 +569,150 @@ export function saglikRaporuEmail(params: {
     ),
   }
 }
+
+/**
+ * Müşteriye: iade/iptal talebi alındı teyidi (Faz 20).
+ *
+ * Mesafeli Sözleşmeler Yönetmeliği m.11/2 son cümle: internet sitesi üzerinden
+ * cayma hakkı sunuluyorsa, talebin ulaştığına ilişkin teyit bilgisinin
+ * tüketiciye DERHÂL iletilmesi ZORUNLUDUR. Bu mail o yükümlülüğü karşılıyor —
+ * önceden talep anında müşteriye hiçbir şey gitmiyordu.
+ */
+export function talepTeyidiEmail(params: {
+  orderNumber: string
+  tip: 'return' | 'cancel'
+  gonderimGunu: number
+}) {
+  const iade = params.tip === 'return'
+  return {
+    subject: `${iade ? 'İade' : 'İptal'} talebinizi aldık — ${params.orderNumber}`,
+    html: shell(
+      `${iade ? 'İade' : 'İptal'} Talebiniz Alındı`,
+      `${orderNumberBox(params.orderNumber)}
+      <p style="color:#7A5048;line-height:1.8;margin:0 0 16px;">
+        ${iade ? 'İade' : 'İptal'} talebiniz bize ulaştı. Talebinizi en kısa sürede
+        inceleyip sonucunu size bildireceğiz.
+      </p>
+      ${
+        iade
+          ? `<div style="background:#FFF8F6;border:1px solid #E8D8D0;padding:16px;margin-bottom:16px;">
+               <p style="margin:0 0 8px;color:#2A1E1E;font-size:14px;"><strong>Sırada ne var?</strong></p>
+               <p style="margin:0;color:#7A5048;font-size:13px;line-height:1.8;">
+                 Talebinizi onayladığımızda size <strong>iade kargo kodunu</strong> ve
+                 ürünü hangi kargo şubesine bırakacağınızı ayrı bir e-postayla
+                 göndereceğiz. <strong>İade kargo ücreti bize aittir</strong> — sizden
+                 hiçbir bedel talep edilmez.
+               </p>
+               <p style="margin:10px 0 0;color:#A88070;font-size:12px;">
+                 Cayma bildiriminizi gönderdiğiniz tarihten itibaren
+                 ${params.gonderimGunu} gün içinde ürünü kargoya vermeniz gerekir.
+               </p>
+             </div>`
+          : ''
+      }
+      <p style="color:#A88070;font-size:12px;line-height:1.7;">
+        Bu e-posta, talebinizin tarafımıza ulaştığının teyididir.
+        Sorularınız için <a href="mailto:${ORG_EMAIL}" style="color:#7A5048;">${ORG_EMAIL}</a>.
+      </p>`
+    ),
+  }
+}
+
+/**
+ * Müşteriye: iade onaylandı, kargo kodu ve talimat (Faz 20).
+ * Kod ve firma panelden elle girilir (Kargonomi API'sinde iade ucu yok).
+ */
+export function iadeTalimatiEmail(params: {
+  orderNumber: string
+  kargoFirmasi: string
+  iadeKodu: string
+  sonGun: Date
+  adres: string[]
+}) {
+  const tarih = params.sonGun.toLocaleDateString('tr-TR', {
+    timeZone: 'Europe/Istanbul',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  return {
+    subject: `İade kodunuz hazır — ${params.orderNumber}`,
+    html: shell(
+      'İade Talebiniz Onaylandı',
+      `${orderNumberBox(params.orderNumber)}
+      <p style="color:#7A5048;line-height:1.8;margin:0 0 16px;">
+        İade talebiniz onaylandı. Aşağıdaki kodu kullanarak ürünü ücretsiz olarak
+        bize gönderebilirsiniz.
+      </p>
+
+      <div style="background:#2A1E1E;padding:20px;text-align:center;margin-bottom:20px;">
+        <p style="margin:0 0 6px;color:#A88070;font-size:11px;letter-spacing:.15em;text-transform:uppercase;">İade Kargo Kodu</p>
+        <p style="margin:0;color:#FFF8F6;font-size:22px;letter-spacing:.1em;font-family:monospace;">${params.iadeKodu}</p>
+        <p style="margin:8px 0 0;color:#A88070;font-size:13px;">${params.kargoFirmasi}</p>
+      </div>
+
+      <div style="background:#FFF8F6;border:1px solid #E8D8D0;padding:16px;margin-bottom:16px;">
+        <p style="margin:0 0 10px;color:#2A1E1E;font-size:14px;"><strong>Nasıl gönderirsiniz?</strong></p>
+        <ol style="margin:0;padding-left:18px;color:#7A5048;font-size:13px;line-height:1.9;">
+          <li>Ürünü, varsa kutusu ve koruyucu ambalajıyla birlikte paketleyin.</li>
+          <li>Takının çizilmemesi için yumuşak bir bezle sarın; kutuyu boşluk kalmayacak şekilde doldurun.</li>
+          <li>Paketin üzerine <strong>${params.iadeKodu}</strong> kodunu, adınızı ve telefonunuzu yazın.</li>
+          <li>En yakın <strong>${params.kargoFirmasi}</strong> şubesine bırakın ve kodu şubede belirtin.</li>
+        </ol>
+        <p style="margin:12px 0 0;color:#A88070;font-size:12px;">
+          <strong>Ücret ödemeyin.</strong> İade kargo bedeli bize aittir; şubede sizden ücret istenirse
+          bizimle iletişime geçin.
+        </p>
+      </div>
+
+      <p style="color:#7A5048;font-size:13px;line-height:1.8;margin:0 0 16px;">
+        Ürünü <strong>${tarih}</strong> tarihine kadar kargoya vermeniz gerekiyor.
+        Paket bize ulaştığında inceleyip ödemenizi iade edeceğiz ve size ayrıca
+        bilgi vereceğiz.
+      </p>
+
+      ${
+        params.adres.length > 0
+          ? `<div style="border-top:1px solid #F0E4DE;padding-top:14px;">
+               <p style="margin:0 0 6px;color:#A88070;font-size:11px;letter-spacing:.1em;text-transform:uppercase;">İade Adresi</p>
+               <p style="margin:0;color:#2A1E1E;font-size:13px;line-height:1.7;">${params.adres.join('<br>')}</p>
+             </div>`
+          : ''
+      }`
+    ),
+  }
+}
+
+/** Müşteriye: ürün ulaştı, para iade edildi (Faz 20). */
+export function iadeTamamlandiEmail(params: {
+  orderNumber: string
+  tutar: number | null
+  geriOdemeGun: number
+}) {
+  return {
+    subject: `İadeniz tamamlandı — ${params.orderNumber}`,
+    html: shell(
+      'İadeniz Tamamlandı',
+      `${orderNumberBox(params.orderNumber)}
+      <p style="color:#7A5048;line-height:1.8;margin:0 0 16px;">
+        İade ettiğiniz ürün bize ulaştı ve ödemeniz
+        ${params.tutar != null ? `<strong>${formatPrice(params.tutar)}</strong> ` : ''}
+        iade edildi.
+      </p>
+      <div style="background:#F0FDF4;border:1px solid #BBF7D0;padding:16px;margin-bottom:16px;">
+        <p style="margin:0;color:#166534;font-size:13px;line-height:1.8;">
+          Kredi kartıyla ödeme yaptıysanız bankanız, bize ulaşan tutarı kullanılabilir
+          limitinize <strong>tek seferde</strong> eklemekle yükümlüdür. Kartınıza
+          yansıması bankanıza bağlı olarak <strong>3–7 iş günü</strong> sürebilir; bu süre
+          bizim kontrolümüzde değildir.
+        </p>
+      </div>
+      <p style="color:#A88070;font-size:12px;line-height:1.7;">
+        Bir sorun olduğunu düşünüyorsanız
+        <a href="mailto:${ORG_EMAIL}" style="color:#7A5048;">${ORG_EMAIL}</a> adresinden
+        bize yazın. Tekrar görüşmek dileğiyle.
+      </p>`
+    ),
+  }
+}
