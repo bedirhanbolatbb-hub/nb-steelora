@@ -9,13 +9,16 @@ import { kunyeSatirlari } from '@/lib/layoutData'
 const categories = CATEGORIES.map((c) => ({ href: `/kategori/${c.slug}`, label: c.title }))
 
 const helpLinks = [
-  { href: '/kargo-ve-iade', label: 'Kargo ve İade' },
+  { href: '/kargo-ve-iade', label: 'Kargo, İade ve Değişim' },
+  { href: '/kargo-takip', label: 'Kargo Takip' },
   { href: '/hakkimizda', label: 'Hakkımızda' },
   { href: '/iletisim', label: 'İletişim' },
   { href: '/kvkk', label: 'KVKK Aydınlatma' },
   { href: '/gizlilik-politikasi', label: 'Gizlilik Politikası' },
   { href: '/cerez-politikasi', label: 'Çerez Politikası' },
   { href: '/mesafeli-satis-sozlesmesi', label: 'Mesafeli Satış Sözleşmesi' },
+  { href: '/on-bilgilendirme-formu', label: 'Ön Bilgilendirme Formu' },
+  { href: '/cayma-formu', label: 'Örnek Cayma Formu' },
 ]
 
 const accountLinks = {

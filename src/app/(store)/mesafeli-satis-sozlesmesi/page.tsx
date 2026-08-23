@@ -1,4 +1,13 @@
 import LegalPageLayout from '@/components/store/LegalPageLayout'
+import Link from 'next/link'
+import {
+  GERI_GONDERME_GUN,
+  GERI_ODEME_GUN,
+  HAKEM_HEYETI_SINIRI_TL,
+  HAKEM_HEYETI_YILI,
+  SOZLESME_YOLLARI,
+} from '@/lib/legal/sozlesme'
+import { ORG_EMAIL } from '@/lib/seo'
 import SaticiKunyesi from '@/components/store/SaticiKunyesi'
 import { kunyeGetir } from '@/lib/legal/veriSorumlusu'
 
@@ -55,28 +64,65 @@ export default async function MesafeliSatisSozlesmesiPage() {
         ALICI, ürünü teslim aldığı tarihten itibaren 14 (on dört) gün içinde herhangi bir
         gerekçe göstermeksizin ve cezai şart ödemeksizin cayma hakkını kullanabilir.
       </p>
-      <p>Cayma hakkının kullanılması için:</p>
+      <p>Cayma hakkının kullanılmasına ilişkin esaslar:</p>
       <ul>
-        <li>Ürün kullanılmamış ve orijinal ambalajında olmalıdır</li>
-        <li>Fatura ile birlikte iade edilmelidir</li>
-        <li>info@nbsteelora.com adresine yazılı bildirim yapılmalıdır</li>
-        <li>İade kargo ücreti ALICI'ya aittir</li>
-        <li>Ürün SATICI'ya ulaştıktan sonra 5-10 iş günü içinde ödeme iadesi yapılır</li>
+        <li>
+          ALICI, Hesabım → Siparişlerim ekranından iade talebi oluşturabilir,{' '}
+          <Link href={SOZLESME_YOLLARI.caymaFormu}>örnek cayma formunu</Link> gönderebilir
+          ya da açık bir cayma beyanını {ORG_EMAIL} adresine iletebilir. Form kullanmak
+          zorunlu değildir; talep SATICI'ya ulaştığında derhâl teyit bildirimi gönderilir.
+        </li>
+        <li>
+          ALICI, cayma bildirimini yönelttiği tarihten itibaren {GERI_GONDERME_GUN} gün
+          içinde ürünü SATICI'ya geri gönderir (Yönetmelik m.13/1).
+        </li>
+        <li>
+          <strong>İade kargo ücreti SATICI'ya aittir.</strong> Yönetmelikte tüketiciye iade
+          masrafı yükleyen hüküm bulunmamaktadır.
+        </li>
+        <li>
+          ALICI, ürünü işleyişine, teknik özelliklerine ve kullanım talimatlarına uygun
+          biçimde incelemesinden doğan değişikliklerden sorumlu değildir (m.13/2);
+          ambalajın açılmış olması tek başına cayma hakkını ortadan kaldırmaz.
+        </li>
+        <li>
+          Ürünün, iade için belirtilen taşıyıcıya teslim edildiği tarihten itibaren en geç{' '}
+          {GERI_ODEME_GUN} gün içinde, varsa teslimat masrafları dâhil tahsil edilen tüm
+          ödemeler, ALICI'nın kullandığı ödeme aracına uygun şekilde ve tek seferde iade
+          edilir (m.12/1).
+        </li>
       </ul>
 
       <h2>7. Cayma Hakkının Kullanılamayacağı Haller</h2>
-      <p>Yönetmelik gereği aşağıdaki hallerde cayma hakkı kullanılamaz:</p>
+      <p>Yönetmelik m.15 gereği yalnızca aşağıdaki hallerde cayma hakkı kullanılamaz:</p>
       <ul>
-        <li>Tüketicinin özel istekleri doğrultusunda üretilen veya kişiye özel hale getirilen ürünler</li>
-        <li>Hijyen açısından iade edilemeyecek ürünler (kulak delme küpeleri vb.)</li>
-        <li>Ambalajı açılmış ve kullanılmış ürünler</li>
+        <li>
+          <strong>m.15/1(b)</strong> — ALICI'nın istekleri veya kişisel ihtiyaçları
+          doğrultusunda hazırlanan ürünler (isim/harf/tarih yazdırılan ya da özel ölçüye
+          göre üretilen ürünler).
+        </li>
+        <li>
+          <strong>m.15/1(ç)</strong> — Tesliminden sonra ambalaj, bant, mühür veya paket
+          gibi koruyucu unsurları açılmış olan ürünlerden, iadesi sağlık ve hijyen
+          açısından uygun olmayanlar; mağazada bu kapsama yalnızca küpe, piercing ve
+          benzeri vücut deldirme takıları girer.
+        </li>
       </ul>
+      <p>
+        Bunların dışındaki ürünlerde ambalajın açılmış olması cayma hakkını ortadan
+        kaldırmaz.
+      </p>
 
       <h2>8. Genel Hükümler</h2>
       <p>
-        İşbu sözleşmeden doğan uyuşmazlıklarda Mersin Tüketici Hakem Heyetleri ve Mersin
-        Mahkemeleri yetkilidir. ALICI, sipariş onayı ile işbu sözleşmenin tüm koşullarını
-        kabul etmiş sayılır.
+        İşbu sözleşmeden doğan uyuşmazlıklarda ALICI, değeri{' '}
+        {HAKEM_HEYETI_SINIRI_TL.toLocaleString('tr-TR')} TL'nin altındaki uyuşmazlıklar
+        için <strong>kendi yerleşim yerinin bulunduğu veya işlemin yapıldığı yerdeki</strong>{' '}
+        İl veya İlçe Tüketici Hakem Heyetine başvurabilir ({HAKEM_HEYETI_YILI} yılı parasal
+        sınırı; her yıl yeniden değerleme oranında artar). Bu tutarın üzerindeki
+        uyuşmazlıklarda 6502 sayılı Kanun m.73/A uyarınca dava açılmadan önce arabulucuya
+        başvurulması dava şartıdır; ardından Tüketici Mahkemesine başvurulabilir. ALICI'nın
+        tüketici sıfatından doğan yetkili merci seçme hakkı bu sözleşmeyle sınırlandırılamaz.
       </p>
       <p>
         İşbu sözleşme, ALICI tarafından elektronik ortamda onaylandığı tarihte yürürlüğe girer.

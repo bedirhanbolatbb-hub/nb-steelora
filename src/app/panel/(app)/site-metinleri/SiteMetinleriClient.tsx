@@ -81,6 +81,10 @@ const GRUPLAR: { baslik: string; anahtarlar: string[] }[] = [
       'ilk_siparis_bulten_metni',
     ],
   },
+  {
+    baslik: 'İade ve iletişim',
+    anahtarlar: ['iade_kargo_firmasi', 'iade_kargo_kodu', 'yanit_suresi_taahhudu'],
+  },
   { baslik: 'Panel — analiz', anahtarlar: ['analiz_notu'] },
   { baslik: 'Diğer', anahtarlar: [] },
 ]

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { CAYMA_SURESI_GUN, URUN_TOLERANS_KISA } from '@/lib/legal/sozlesme'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Gift, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
@@ -62,7 +63,7 @@ export async function generateMetadata({
   const seoTitle = data.trendyol_title || data.display_title
   const description = `${seoTitle} — ${data.trendyol_category ?? 'NB Steelora'}. ${formatPrice(
     data.display_price
-  )}. ${FREE_SHIPPING_LABEL}, 14 gün koşulsuz iade.`
+  )}. ${FREE_SHIPPING_LABEL}, ${CAYMA_SURESI_GUN} gün koşulsuz iade.`
 
   return {
     title: seoTitle,
@@ -347,6 +348,12 @@ export default async function UrunDetayPage({
                       </p>
                     )}
                     <p>{materialCare(product.material_type)}</p>
+                    {/* Üretim toleransı (Faz 20): beklenti yönetir, sorumluluk
+                        kaldırmaz — ikinci cümle ayıplı mal haklarını açıkça
+                        saklı tutuyor, aksi hâlde haksız şart olurdu. Metin
+                        lib/legal/sozlesme.ts'te, ön bilgilendirme formuyla
+                        aynı kaynaktan. */}
+                    <p className="text-muted">{URUN_TOLERANS_KISA}</p>
                   </div>
                 ),
               },
@@ -354,12 +361,14 @@ export default async function UrunDetayPage({
                 title: 'Kargo & İade',
                 content: (
                   <div className="space-y-2">
+                    <p>{FREE_SHIPPING_LABEL} — alt sınır yoktur.</p>
                     <p>
-                      Tüm siparişlerde kargo ücretsizdir; siparişlerde kargo ücreti sepette gösterilir.
+                      Siparişler 1–2 iş günü içinde kargoya verilir; tahmini teslim süresi
+                      1–5 iş günüdür.
                     </p>
-                    <p>Siparişler 1-5 iş günü içinde kargoya verilir.</p>
                     <p>
-                      Teslimattan itibaren 14 gün içinde koşulsuz iade hakkınız vardır.
+                      Teslimattan itibaren {CAYMA_SURESI_GUN} gün içinde koşulsuz iade
+                      hakkınız vardır; <strong>iade kargo ücreti bize aittir</strong>.
                       Ayrıntılar için{' '}
                       <Link href="/kargo-ve-iade" className="text-accent-deep underline underline-offset-2">
                         Kargo ve İade
