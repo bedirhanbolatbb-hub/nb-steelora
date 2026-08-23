@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import {
   closeStaleRuns,
   failRun,
@@ -46,6 +47,21 @@ async function runSync() {
       runId: start.runId,
       runStartedAt: start.runStartedAt,
     })
+
+    // Katalog değişti: beslemeyi ve site haritasını tazelenmek üzere işaretle.
+    // İkisi de ISR ile üretiliyor (/feed.xml saatlik, /sitemap.xml günlük);
+    // işaretlemezsek senkron bittikten sonra bir saate kadar ESKİ malzeme,
+    // fiyat ve ürün kümesini yayınlamaya devam ediyorlar. 23 Ağustos'ta malzeme
+    // düzeltmesi canlıya indiğinde besleme tam olarak bu yüzden bir saat
+    // boyunca eski hâlini servis etti.
+    try {
+      revalidatePath('/feed.xml')
+      revalidatePath('/sitemap.xml')
+    } catch (e: any) {
+      // Tazeleme işareti konamazsa koşu yine başarılıdır; besleme kendi
+      // süresi dolunca tazelenir.
+      console.warn('[sync] besleme/harita tazeleme işareti konamadı:', e?.message)
+    }
 
     return NextResponse.json({
       run_id: result.runId,
