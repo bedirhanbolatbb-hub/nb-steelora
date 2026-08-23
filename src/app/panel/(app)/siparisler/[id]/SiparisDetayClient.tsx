@@ -35,6 +35,10 @@ export type SiparisDetay = {
     zip_code?: string
   } | null
   hediyeNotu: string | null
+  /** Kurumsal fatura — yalnız müşteri istediyse dolu (Faz 28). */
+  fatura: { firma: string; vergiDairesi: string; vergiNo: string } | null
+  /** Aynı gün aynı müşteriye 5.000 TL (KDV hariç) üzeri satış yapıldıysa. */
+  bsUyarisi: { gunlukToplam: number; matrah: number; siparisSayisi: number } | null
   /** Müşteri maili engellendiyse sebebi (Faz 15 sonrası güvenlik ağı). */
   mailEngeli?: 'alici-yok' | 'yonetici-adresi' | 'test-siparisi' | 'hata' | null
   iyzicoId: string | null
@@ -156,6 +160,49 @@ export default function SiparisDetayClient({
                   ? 'Sipariş numarası test verisi olarak işaretli (NBS-TEST…); müşteri maili gönderilmez.'
                   : 'Son gönderim başarısız oldu; sunucu kayıtlarını kontrol edin.'}
           </p>
+        </div>
+      )}
+
+      {/* Faz 28 · Bs bildirimi eşiği.
+          Nihai tüketiciye kesilen faturada kimlik numarası zorunlu DEĞİL; tek
+          istisna aynı müşteriye aynı gün 5.000 TL (KDV hariç) üzeri satış.
+          Numara otomatik toplanmıyor, gerektiğinde bu uyarı çıkıyor. */}
+      {siparis.bsUyarisi && (
+        <div className="rounded-[6px] border border-[var(--p-warning)]/50 bg-[var(--p-warning-bg)] p-4">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--p-warning)]">
+            Bs bildirimi eşiği aşıldı
+          </p>
+          <p className="text-[13px] leading-relaxed text-[var(--p-ink)]">
+            Bu müşteriye aynı gün içinde{' '}
+            <strong>{siparis.bsUyarisi.siparisSayisi} siparişte </strong>
+            toplam <strong>{formatPrice(siparis.bsUyarisi.gunlukToplam)}</strong> satış yapıldı
+            (KDV hariç {formatPrice(siparis.bsUyarisi.matrah)}). Form Bs bildirimi için
+            müşteriden <strong>TC kimlik numarası istenmesi gerekebilir</strong>.
+            Mali müşavirinize danışın.
+          </p>
+        </div>
+      )}
+
+      {/* Kurumsal fatura bilgisi — yalnız müşteri istediyse (Faz 28). */}
+      {siparis.fatura && (
+        <div className="rounded-[6px] border border-[var(--p-line)] bg-[var(--p-surface)] p-4">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--p-muted)]">
+            Kurumsal fatura
+          </p>
+          <dl className="grid grid-cols-1 gap-2 text-[13px] sm:grid-cols-3">
+            <div>
+              <dt className="text-[11px] text-[var(--p-muted)]">Firma</dt>
+              <dd className="mt-0.5 text-[var(--p-ink)]">{siparis.fatura.firma}</dd>
+            </div>
+            <div>
+              <dt className="text-[11px] text-[var(--p-muted)]">Vergi dairesi</dt>
+              <dd className="mt-0.5 text-[var(--p-ink)]">{siparis.fatura.vergiDairesi}</dd>
+            </div>
+            <div>
+              <dt className="text-[11px] text-[var(--p-muted)]">Vergi no</dt>
+              <dd className="mt-0.5 tabular-nums text-[var(--p-ink)]">{siparis.fatura.vergiNo}</dd>
+            </div>
+          </dl>
         </div>
       )}
 

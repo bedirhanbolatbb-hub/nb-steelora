@@ -9,6 +9,7 @@ import SiparisDetayClient from './SiparisDetayClient'
 import type { PanelGonderi } from './KargoBlogu'
 import { musteriMailiEngeli } from '@/lib/emails/musteriMaili'
 import { bildirimAdresi } from '@/lib/emails/bildirim'
+import { bsDurumu } from '@/lib/orders/bsBildirimi'
 
 export const metadata: Metadata = { title: 'Sipariş detayı' }
 export const dynamic = 'force-dynamic'
@@ -23,6 +24,10 @@ export default async function PanelSiparisDetayPage({
 
   const { data: o } = await supabase.from('orders').select('*').eq('id', id).maybeSingle()
   const yoneticiAdresi = await bildirimAdresi()
+  // Faz 28: Bs bildirimi eşiği — aynı müşteriye aynı gün 5.000 TL (KDV hariç)
+  // üzeri satış yapıldıysa panelde uyarı çıkar. Kimlik numarası otomatik
+  // TOPLANMAZ; gerekirse BB müşteriden ister.
+  const bs = o ? await bsDurumu(supabase, o.guest_email, o.created_at) : null
   if (!o) notFound()
 
   // Kalemlerdeki ürünlerin güncel görsel/slug bilgisi (görüntüleme için).
@@ -155,6 +160,15 @@ export default async function PanelSiparisDetayPage({
         toplam: Number(o.total || 0),
         adres: (o.shipping_address as any) ?? null,
         hediyeNotu: o.gift_note ?? null,
+        // Kurumsal fatura yalnız müşteri istediyse dolu (Faz 28).
+        fatura: (o.metadata as any)?.fatura ?? null,
+        bsUyarisi: bs?.asildi
+          ? {
+              gunlukToplam: bs.gunlukToplam,
+              matrah: bs.matrah,
+              siparisSayisi: bs.siparisSayisi,
+            }
+          : null,
         iyzicoId: o.iyzico_payment_id ?? null,
         takipNo: o.tracking_number ?? null,
         createdAt: o.created_at,

@@ -32,8 +32,10 @@ export const CEREZ_SURUMU: MetinSurumu = {
 
 /** KVKK aydınlatma metni. Faz 23'te üye hareketi paragrafı eklendi. */
 export const KVKK_SURUMU: MetinSurumu = {
-  surum: 'v1.1',
-  yururluk: '2026-08-23',
+  // Faz 28: T.C. kimlik numarası toplanmadığı açıkça yazıldı, kurumsal fatura
+  // verisi eklendi.
+  surum: 'v1.2',
+  yururluk: '2026-08-24',
 }
 
 /** Mesafeli satış sözleşmesi ve ön bilgilendirme formu. */

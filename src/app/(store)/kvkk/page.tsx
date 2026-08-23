@@ -43,7 +43,8 @@ veri sorumlusu sıfatıyla tarafımızca işlenmesine ilişkin sizleri bilgilend
     kunyeBlok,
     `<h2>İşlenen Kişisel Veriler</h2>
 <ul>
-<li><strong>Kimlik:</strong> Ad, soyad</li>
+<li><strong>Kimlik:</strong> Ad, soyad. <strong>T.C. kimlik numarası talep edilmez.</strong></li>
+<li><strong>Fatura (yalnız kurumsal fatura isteyen müşterilerde):</strong> Firma unvanı, vergi dairesi, vergi kimlik numarası</li>
 <li><strong>İletişim:</strong> E-posta adresi, telefon numarası, teslimat adresi</li>
 <li><strong>Müşteri işlem:</strong> Sipariş geçmişi, sepet içeriği, ödeme durumu, kargo takip bilgisi, ürün yorumları</li>
 <li><strong>İşlem güvenliği:</strong> Bağlantı kayıtları, tarayıcı ve cihaz bilgisi</li>
@@ -58,6 +59,7 @@ veri sorumlusu sıfatıyla tarafımızca işlenmesine ilişkin sizleri bilgilend
 <ul>
 <li><strong>Siparişin alınması, ödemenin yürütülmesi ve teslimat:</strong> Sözleşmenin kurulması ve ifası (m.5/2-c).</li>
 <li><strong>Fatura, muhasebe ve yasal kayıtlar:</strong> Hukuki yükümlülüğün yerine getirilmesi (m.5/2-ç).</li>
+<li><strong>Kurumsal fatura bilgileri (firma unvanı, vergi dairesi, vergi numarası):</strong> Yalnız kurumsal fatura talep eden müşterilerde, faturanın düzenlenmesi amacıyla; hukuki yükümlülüğün yerine getirilmesi (m.5/2-ç). Bu bilgiler yalnız fatura için kullanılır, pazarlama amacıyla işlenmez.</li>
 <li><strong>Müşteri destek talepleri ve iade/değişim süreçleri:</strong> Sözleşmenin ifası ve meşru menfaat (m.5/2-c, m.5/2-f).</li>
 <li><strong>Site güvenliği ve kötüye kullanımın önlenmesi:</strong> Meşru menfaat (m.5/2-f).</li>
 <li><strong>Bülten ve tanıtım iletileri:</strong> Açık rıza (m.5/1).</li>

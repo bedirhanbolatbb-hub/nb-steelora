@@ -69,6 +69,16 @@ export default function OdemePage() {
   })
   const [giftNote, setGiftNote] = useState('')
   /**
+   * Kurumsal fatura (Faz 28).
+   *
+   * TC kimlik numarasından FARKLI bir ihtiyaç: şahıs müşteriye kesilen
+   * faturada kimlik numarası gerekmiyor, ama müşteri şirket adına fatura
+   * isterse vergi kimlik numarası ve vergi dairesi zorunlu. Bu yüzden alan
+   * herkese sorulmuyor, yalnız isteyene açılıyor.
+   */
+  const [kurumsalFatura, setKurumsalFatura] = useState(false)
+  const [fatura, setFatura] = useState({ firma: '', vergiDairesi: '', vergiNo: '' })
+  /**
    * Mesafeli satış onayı (Faz 19). Mesafeli Sözleşmeler Yönetmeliği m.5/m.6:
    * tüketici sipariş vermeden ÖNCE ön bilgilendirmeyi okuduğunu ve sözleşmeyi
    * kabul ettiğini açıkça beyan etmeli. İşaretlenmeden ödeme başlatılamaz;
@@ -184,7 +194,9 @@ export default function OdemePage() {
     form.expireMonth.length >= 1 &&
     form.expireYear.length === 4 &&
     form.cvc.length >= 3 &&
-    sozlesmeOnay
+    sozlesmeOnay &&
+    (!kurumsalFatura ||
+      (fatura.firma.trim() && fatura.vergiDairesi.trim() && fatura.vergiNo.trim()))
 
   /** Düğme pasifken hangi alanların eksik olduğu tek satırda yazılır. */
   const eksikAlanlar = [
@@ -201,6 +213,9 @@ export default function OdemePage() {
     form.expireYear.length !== 4 && 'son kullanma yılı',
     form.cvc.length < 3 && 'CVV',
     !sozlesmeOnay && 'sözleşme onayı',
+    kurumsalFatura &&
+      !(fatura.firma.trim() && fatura.vergiDairesi.trim() && fatura.vergiNo.trim()) &&
+      'kurumsal fatura bilgileri',
   ].filter(Boolean) as string[]
 
   // Ödemeye başlama ölçümü — form gönderilmeden önce bir kez (Faz 12).
@@ -249,6 +264,11 @@ export default function OdemePage() {
           },
           userId,
           giftNote: giftNote || null,
+          // Yalnız işaretlendiyse gönderilir; işaretlenmediyse hiçbir vergi
+          // bilgisi toplanmaz.
+          fatura: kurumsalFatura
+            ? { firma: fatura.firma, vergiDairesi: fatura.vergiDairesi, vergiNo: fatura.vergiNo }
+            : null,
           // Faz 11: kod sunucuya gönderilir ve orada YENİDEN doğrulanır;
           // tutar istemciden taşınmaz.
           discountCode: kod || null,
@@ -506,6 +526,53 @@ export default function OdemePage() {
               className="w-full border border-line bg-white px-4 py-3 text-base sm:text-sm font-body text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors resize-none"
             />
             <p className="text-[10px] font-body text-muted mt-1 text-right">{giftNote.length}/300</p>
+          </section>
+
+          {/* Kurumsal fatura (Faz 28) — isteğe bağlı */}
+          <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={kurumsalFatura}
+                onChange={(e) => setKurumsalFatura(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-[#836835]"
+              />
+              <span className="font-body text-[13px] text-ink">
+                Kurumsal fatura istiyorum
+                <span className="mt-0.5 block text-[11px] text-muted">
+                  Şirket adına fatura için vergi dairesi ve vergi numarası gerekir.
+                  İşaretlemezseniz faturanız adınıza kesilir; kimlik numarası istemiyoruz.
+                </span>
+              </span>
+            </label>
+
+            {kurumsalFatura && (
+              <div className="mt-4 space-y-3">
+                <Input
+                  placeholder="Firma unvanı"
+                  value={fatura.firma}
+                  onChange={(e) => setFatura((f) => ({ ...f, firma: e.target.value.slice(0, 150) }))}
+                />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Input
+                    placeholder="Vergi dairesi"
+                    value={fatura.vergiDairesi}
+                    onChange={(e) => setFatura((f) => ({ ...f, vergiDairesi: e.target.value.slice(0, 80) }))}
+                  />
+                  <Input
+                    placeholder="Vergi numarası"
+                    inputMode="numeric"
+                    value={fatura.vergiNo}
+                    onChange={(e) =>
+                      setFatura((f) => ({ ...f, vergiNo: e.target.value.replace(/\D/g, '').slice(0, 11) }))
+                    }
+                  />
+                </div>
+                <p className="font-body text-[11px] leading-relaxed text-muted">
+                  Bu bilgiler yalnız faturanızın düzenlenmesi için saklanır.
+                </p>
+              </div>
+            )}
           </section>
 
           {/* İndirim Kodu — sepetle AYNI bileşen, AYNI mesajlar (Faz 25) */}

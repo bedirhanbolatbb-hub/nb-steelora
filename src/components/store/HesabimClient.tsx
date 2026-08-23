@@ -95,7 +95,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
   const [billingLoaded, setBillingLoaded] = useState(false)
   const [billingForm, setBillingForm] = useState({
     billing_type: 'individual',
-    full_name: '', tc_no: '', company_name: '', tax_office: '', tax_no: '',
+    full_name: '', company_name: '', tax_office: '', tax_no: '',
     city: '', district: '', address: '',
   })
   const [billingSaving, setBillingSaving] = useState(false)
@@ -216,7 +216,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
       setBilling(data)
       setBillingForm({
         billing_type: data.billing_type || 'individual',
-        full_name: data.full_name || '', tc_no: data.tc_no || '',
+        full_name: data.full_name || '',
         company_name: data.company_name || '', tax_office: data.tax_office || '',
         tax_no: data.tax_no || '', city: data.city || '',
         district: data.district || '', address: data.address || '',
@@ -674,7 +674,10 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
             {billingForm.billing_type === 'individual' ? (
               <>
                 <input className={inputClass} placeholder="Ad Soyad" value={billingForm.full_name} onChange={(e) => setBillingForm((f) => ({ ...f, full_name: e.target.value }))} />
-                <input className={inputClass} placeholder="TC Kimlik No" value={billingForm.tc_no} onChange={(e) => setBillingForm((f) => ({ ...f, tc_no: e.target.value }))} />
+                {/* Faz 28: TC Kimlik No alanı KALDIRILDI. Vergi mükellefi
+                    olmayan nihai tüketiciye kesilen faturada TC/vergi numarası
+                    zorunluluğu yok; alan toplanıyor ama hiçbir yerde
+                    kullanılmıyordu. */}
               </>
             ) : (
               <>

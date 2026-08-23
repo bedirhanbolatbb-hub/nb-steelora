@@ -31,6 +31,19 @@ export async function POST(request: Request) {
     const { items, buyer, shippingAddress, paymentCard, userId, discountCode, giftNote, sozlesmeOnay } =
       body
 
+    /**
+     * Kurumsal fatura bilgisi (Faz 28) — isteğe bağlı.
+     *
+     * Üçü birden dolu değilse HİÇ saklanmaz: yarım bir vergi kaydı fatura
+     * kesmeye yaramaz, yalnız gereksiz kişisel/ticari veri olur.
+     */
+    const f = body?.fatura
+    const firma = metinAlani(f?.firma, 150)
+    const vergiDairesi = metinAlani(f?.vergiDairesi, 80)
+    const vergiNo = metinAlani(f?.vergiNo, 11).replace(/\D/g, '')
+    const kurumsalFatura =
+      firma && vergiDairesi && vergiNo ? { firma, vergiDairesi, vergiNo } : null
+
     // ── Mesafeli satış onayı ZORUNLU (Faz 19) ─────────────────────────────
     // Mesafeli Sözleşmeler Yönetmeliği m.5/m.6: tüketicinin ön bilgilendirmeyi
     // okuduğunu ve sözleşmeyi kabul ettiğini sipariş ÖNCESİNDE beyan etmesi
@@ -196,6 +209,10 @@ export async function POST(request: Request) {
       metadata: {
         ...(kisiselKuponId ? { kisisel_kupon_id: kisiselKuponId } : {}),
         sozlesme_onayi: sozlesmeOnayiDamgasi(),
+        // Faz 28: kurumsal fatura YALNIZ müşteri istediyse saklanır. Yeni
+        // sütun açmak yerine metadata: bu veri her siparişte yok ve yalnız
+        // fatura düzenlemek için okunuyor.
+        ...(kurumsalFatura ? { fatura: kurumsalFatura } : {}),
       },
       total,
       iyzico_payment_id: null,
@@ -234,7 +251,18 @@ export async function POST(request: Request) {
         surname: lastName,
         gsmNumber: phone,
         email: gercekEposta || 'musteri@nbsteelora.com',
-        identityNumber: '11111111110',
+        // Faz 28: STANDART DOLGU. Müşterinin gerçek TC kimlik numarası
+        // iyzico'ya HİÇBİR ZAMAN gönderilmez ve bizde saklanmaz.
+        //
+        // Ölçüm (24.08.2026, canlı iyzico API'sine dört varyantla): alan hiç
+        // gönderilmediğinde, boş gönderildiğinde, '11111111110' ve
+        // '11111111111' ile gönderildiğinde iyzico'nun yanıtı BİREBİR AYNI
+        // (errorCode 5152 — kart aşamasına geçilmiş demektir). Yani alan
+        // istek doğrulamasında zorunlu tutulmuyor. Yine de akışın ilerleyen
+        // adımlarında istenmesi ihtimaline karşı dolgu gönderilmeye devam
+        // ediyor; ölçüm ikisinin de eşdeğer olduğunu gösterdiği için
+        // mevzuatta standart kabul edilen değer seçildi.
+        identityNumber: '11111111111',
         registrationAddress: safeAddress,
         ip: request.headers.get('x-forwarded-for') || '85.34.78.112',
         city: safeCity,
