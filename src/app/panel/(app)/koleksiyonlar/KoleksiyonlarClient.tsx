@@ -1,6 +1,8 @@
 'use client'
 
 import Image from 'next/image'
+import MetinOner from '../_components/MetinOner'
+import { koleksiyonTanitimi } from '@/lib/metin/kategoriMetni'
 import { isRemoteMedia } from '@/lib/images'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -197,6 +199,13 @@ export default function KoleksiyonlarClient({
             <div>
               <label className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]">Açıklama</label>
               <PTextarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              {/* Faz 21: koleksiyon adı ve ürün sayısından tanıtım cümlesi.
+                  Ürün hakkında iddia üretilmez — yalnız seçkinin kendisi
+                  anlatılır (docs/marka-sesi.md). */}
+              <MetinOner
+                uret={() => koleksiyonTanitimi(form.name, form.productIds.length)}
+                onSec={(m) => setForm((f) => (f ? { ...f, description: m } : f))}
+              />
             </div>
 
             <div>

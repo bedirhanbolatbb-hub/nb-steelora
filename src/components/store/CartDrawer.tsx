@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
@@ -210,7 +211,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center px-6">
             <ShoppingBag size={48} className="text-line mb-4" />
-            <p className="text-[13px] font-body text-muted">Sepetiniz boş</p>
+            <p className="text-[13px] font-body text-muted">{BOS_DURUM.sepet.baslik}</p>
             <Button variant="outline" className="mt-6" onClick={onClose}>
               Alışverişe Başla
             </Button>

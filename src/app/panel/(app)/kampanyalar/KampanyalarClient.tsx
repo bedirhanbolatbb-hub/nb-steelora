@@ -1,10 +1,13 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import MetinOner from '../_components/MetinOner'
+import { kampanyaMetinleri, kampanyaAciklamalari, type MetinBaglami } from '@/lib/metin/kampanyaMetni'
+import { oncelikliVesile, ELLE_VESILELER, VESILE_ADLARI, type Vesile } from '@/lib/metin/vesile'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import { vitrinMetni, vitrinHedefi } from '@/lib/campaigns/vitrinMetni'
 import { tipCevir, kapsamCevir } from '@/lib/campaigns/yukle'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { PBadge, PButton, PInput, PSelect } from '../_components/ui'
@@ -136,6 +139,21 @@ export default function KampanyalarClient({
 
   const [duzenlenen, setDuzenlenen] = useState<string | 'yeni' | null>(null)
   const [form, setForm] = useState<Form>(BOS_FORM)
+
+  // ── Faz 21: metin önerileri ────────────────────────────────────────────
+  // Vesile tarihe göre kendiliğinden gelir; BB listeden değiştirebilir.
+  const otomatikVesile = useMemo(() => oncelikliVesile(), [])
+  const [vesile, setVesile] = useState<Vesile>(otomatikVesile)
+
+  // Tekrar önleme: son 3 kampanyada kullanılmış vitrin metni tekrar önerilmez.
+  const sonKullanilanMetinler = useMemo(
+    () =>
+      satirlar
+        .map((k) => (k.bannerText ?? '').trim())
+        .filter(Boolean)
+        .slice(0, 3),
+    [satirlar]
+  )
   const [silinecek, setSilinecek] = useState<KampanyaSatiri | null>(null)
   const [isleniyor, setIsleniyor] = useState(false)
   const [onizleme, setOnizleme] = useState<any>(null)
@@ -729,6 +747,39 @@ export default function KampanyalarClient({
               onChange={(e) => setForm({ ...form, banner_text: e.target.value })}
               placeholder="ör. Yaza merhaba: tüm ürünlerde %30"
             />
+
+            {/* Faz 21: metin kütüphanesinden öneri. Vesile tarihe göre
+                kendiliğinden seçilir; BB isterse listeden değiştirir. */}
+            <div className="mt-2 flex items-center gap-2">
+              <label className="text-[11px] text-[var(--p-muted)]">Vesile</label>
+              <PSelect
+                value={vesile}
+                onChange={(e) => setVesile(e.target.value as Vesile)}
+                className="max-w-[220px]"
+              >
+                <option value={otomatikVesile}>
+                  {VESILE_ADLARI[otomatikVesile as Vesile]} (tarihe göre)
+                </option>
+                {(['yok', ...ELLE_VESILELER] as Vesile[])
+                  .filter((v) => v !== otomatikVesile)
+                  .map((v) => (
+                    <option key={v} value={v}>
+                      {VESILE_ADLARI[v]}
+                    </option>
+                  ))}
+              </PSelect>
+            </div>
+            <MetinOner
+              uret={() =>
+                kampanyaMetinleri(metinBaglami(form, vesile), {
+                  adet: 3,
+                  harici: sonKullanilanMetinler,
+                  tohum: form.name || form.code || 'yeni',
+                })
+              }
+              onSec={(m) => setForm((f) => ({ ...f, banner_text: m }))}
+            />
+
             <VitrinOnizleme form={form} />
           </div>
           <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-[13px]">
@@ -839,4 +890,41 @@ function VitrinOnizleme({ form }: { form: Form }) {
       </p>
     </div>
   )
+}
+
+/** Panel formunu metin kütüphanesinin beklediği bağlama çevirir (Faz 21). */
+function metinBaglami(form: Form, vesile: Vesile): MetinBaglami {
+  const kapsamli = form.scope !== 'cart'
+  const yuzdeMi = form.discount_type === 'percent'
+
+  let tip: MetinBaglami['tip'] = yuzdeMi ? 'sepet_yuzde' : 'sepet_sabit'
+  if (form.type === 'discount_code') tip = 'kupon'
+  else if (form.type === 'tiered_discount') tip = 'kademeli'
+  else if (form.type === 'buy_x_get_y' || form.type === 'buy_x_get_y_scoped') tip = 'x_al_y_ode'
+  else if (form.type === 'free_shipping') tip = 'ucretsiz_kargo'
+  else if (kapsamli) tip = yuzdeMi ? 'kapsam_yuzde' : 'kapsam_sabit'
+
+  // Kapsam adı: tek kategori/koleksiyon seçiliyse onun başlığı, yoksa null
+  // ("tüm ürünlerde" denir). Birden fazla hedefte isim vermek yanıltıcı olur.
+  const hedef = form.targets.length === 1 ? form.targets[0] : null
+  const kapsamAdi =
+    hedef && form.scope === 'category'
+      ? (CATEGORIES.find((c) => c.slug === hedef)?.title ?? null)
+      : null
+
+  const oranlar = (form.tiers ?? []).map((t) => Number(t.oran) || 0)
+  const esikler = (form.tiers ?? []).map((t) => Number(t.minTutar) || 0).filter((n) => n > 0)
+
+  return {
+    tip,
+    kapsamAdi,
+    deger: Number(form.discount_value) || null,
+    minSepet: Number(form.min_cart_amount) || 0,
+    alAdet: Number(form.buy_quantity) || null,
+    odeAdet: Number(form.pay_quantity) || null,
+    kademeEnYuksek: oranlar.length ? Math.max(...oranlar) : null,
+    kademeEnDusukEsik: esikler.length ? Math.min(...esikler) : null,
+    kod: form.code || null,
+    vesile,
+  }
 }

@@ -1,6 +1,9 @@
 'use client'
 
 import Image from 'next/image'
+import MetinOner from '../../_components/MetinOner'
+import { urunAciklamasiUret } from '@/lib/metin/urunAciklamasi'
+import { materialCare, materialLabel } from '@/lib/catalog/material'
 import { MALZEME_SECENEKLERI, type BeyanEdilenMalzeme } from '@/lib/catalog/material'
 import { isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
@@ -240,6 +243,27 @@ export default function UrunDetayClient({ urun }: { urun: UrunDetay }) {
               <div>
                 <label className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]">Açıklama (override_description)</label>
                 <PTextarea rows={4} value={form.overrideDescription} onChange={(e) => set('overrideDescription', e.target.value)} />
+                {/* Faz 21: açıklama YALNIZ veriden üretilir — kategori,
+                    malzeme, başlıktaki renk/taş ve ölçü. Özellik uydurulmaz;
+                    veri yoksa cümle kısalır. Öneri tıklanmadıkça hiçbir şey
+                    yazılmaz, otomatik kaydetme yok. */}
+                <MetinOner
+                  etiket="Açıklamayı verilerden üret"
+                  bosMesaj="Bu üründe açıklama üretecek veri yok (kategori/malzeme boş)."
+                  uret={() => {
+                    const metin = urunAciklamasiUret({
+                      // Renk/taş tespiti için EN ZENGİN başlık: pazaryeri adı
+                      // panel adından çok daha fazla bilgi taşıyor.
+                      baslik: `${urun.trendyolTitle ?? ''} ${urun.overrideTitle ?? ''}`.trim(),
+                      kategori: urun.trendyolCategory,
+                      malzeme: materialLabel(form.materialType || null),
+                      bakim: form.materialType ? materialCare(form.materialType) : null,
+                      olcu: urun.variantLabel,
+                    })
+                    return metin ? [metin] : []
+                  }}
+                  onSec={(m) => set('overrideDescription', m)}
+                />
                 {!form.overrideDescription && (
                   <p className="mt-1 text-[11px] text-[var(--p-muted)]">
                     Boş — vitrinde Trendyol açıklaması sanitize edilerek gösteriliyor.

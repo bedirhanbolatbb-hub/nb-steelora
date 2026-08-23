@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { useRouter } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
@@ -121,7 +122,8 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
           {!loading && query.length >= 2 && results.length === 0 && (
             <p className="p-6 text-center text-muted text-[13px] font-body">
-              &ldquo;{query}&rdquo; için sonuç yok — başka bir kelime deneyin.
+              &ldquo;{query}&rdquo; — {BOS_DURUM.arama.baslik.toLocaleLowerCase('tr-TR')}.{' '}
+              {BOS_DURUM.arama.metin}
             </p>
           )}
 

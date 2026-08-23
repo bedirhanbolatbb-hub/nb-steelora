@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
 import { useSyncExternalStore } from 'react'
@@ -40,7 +41,9 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
         <p className="text-muted font-body text-sm">Sepet yükleniyor…</p>
       ) : !hasItems ? (
         <div>
-          <p className="text-muted font-body text-sm mb-6">Sepetiniz şu anda boş.</p>
+          <p className="text-muted font-body text-sm mb-6">
+            {BOS_DURUM.sepet.baslik}. {BOS_DURUM.sepet.metin}
+          </p>
           <Link
             href="/urunler"
             className="inline-block bg-ink text-bg text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
