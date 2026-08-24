@@ -12,6 +12,8 @@ export type PanelGonderi = {
   saglayici: string
   saglayiciAdi: string
   saglayiciHazir: boolean
+  /** Kargonomi'deki gönderi numarası — panelde doğrudan bağlantı için. */
+  saglayiciGonderiId: string
   takipKodu: string | null
   firmaAdi: string | null
   durum: KargoDurumu
@@ -437,12 +439,24 @@ export default function KargoBlogu({
           ))}
         </ol>
 
-        <div className="flex flex-wrap gap-2 border-t border-[var(--p-line)] pt-3">
-          {gonderi.takipKodu && (
-            <PButton variant="ghost" onClick={etiketIndir} disabled={isleniyor !== null}>
-              <Download size={13} /> {isleniyor === 'label' ? 'Hazırlanıyor…' : 'Etiketi indir (PDF)'}
-            </PButton>
-          )}
+        <div className="flex flex-wrap items-center gap-2 border-t border-[var(--p-line)] pt-3">
+          {/* Faz 29: etiket düğmesi TAKİP KODU şartına bağlıydı; kod
+              gelmediğinde düğme hiç görünmüyordu ve BB etiketi Kargonomi
+              panelinden almak zorunda kalmıştı. Kargonomi'nin barkod ucu
+              takip kodundan bağımsız çalışıyor (canlıda doğrulandı: 68 KB
+              geçerli PDF), o yüzden düğme gönderi varken hep açık. */}
+          <PButton variant="ghost" onClick={etiketIndir} disabled={isleniyor !== null}>
+            <Download size={13} /> {isleniyor === 'label' ? 'Hazırlanıyor…' : 'Etiketi indir (PDF)'}
+          </PButton>
+          {/* Yedek yol: API bir gün etiketi vermezse Kargonomi paneli açık. */}
+          <a
+            href={`https://app.kargonomi.com.tr/shipments/${gonderi.saglayiciGonderiId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[12px] text-[var(--p-accent-deep)] underline underline-offset-2"
+          >
+            Kargonomi&apos;de aç
+          </a>
           <PButton variant="danger" onClick={() => setIptalAcik(true)} disabled={isleniyor !== null}>
             İptal et
           </PButton>

@@ -92,6 +92,7 @@ export default async function PanelSiparisDetayPage({
         saglayici: gonderiSatiri.provider,
         saglayiciAdi: saglayici.ad,
         saglayiciHazir: saglayici.hazir,
+        saglayiciGonderiId: gonderiSatiri.provider_shipment_id,
         takipKodu: gonderiSatiri.tracking_code,
         firmaAdi: gonderiSatiri.carrier_name,
         durum: gonderiSatiri.status,
