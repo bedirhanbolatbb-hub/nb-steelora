@@ -161,6 +161,8 @@ export default async function PanelSiparisDetayPage({
           .map((i: any) => {
             const pid = i?.productId ?? i?.product_id
             return {
+              // Faz 30: kalem iptali için ürün kimliği de taşınıyor.
+              productId: String(pid ?? ''),
               ad: i?.name ?? '—',
               adet: Number(i?.quantity || 1),
               birim: Number(i?.price || 0),
@@ -175,6 +177,10 @@ export default async function PanelSiparisDetayPage({
         toplam: Number(o.total || 0),
         adres: (o.shipping_address as any) ?? null,
         hediyeNotu: o.gift_note ?? null,
+        // Kalem iptali yalnız kargo oluşturulmadan ve ödeme aşamasındayken.
+        kalemIptalMumkun:
+          ['paid', 'preparing'].includes(String(o.status)) && !gonderiSatiri && itemler.length > 1,
+        iptalEdilenKalemler: ((o.metadata as any)?.iptal_kalemler ?? []) as any[],
         // Faz 30: hangi mail ne zaman gitti — panelde görünür olsun.
         mailGecmisi: ((o.metadata as any)?.bildirim ?? {}) as Record<string, string>,
         // Kurumsal fatura yalnız müşteri istediyse dolu (Faz 28).

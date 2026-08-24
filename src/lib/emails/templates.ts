@@ -721,3 +721,47 @@ export function iadeTamamlandiEmail(params: {
     ),
   }
 }
+
+/**
+ * Kalem iptali — tedarik edilemeyen ürünün bedeli iade edildi (Faz 30).
+ *
+ * Ton: özür dileyen ama telaşsız. Müşteri iki şeyi net bilmeli — hangi ürün
+ * çıkarıldı ve parası ne zaman hesabına döner.
+ */
+export function kalemIptalEmail(
+  order: OrderLike & { total?: number | null },
+  kalem: { ad: string; adet: number; iadeTutari: number; sebep?: string | null }
+) {
+  return {
+    subject: `Siparişinizde bir değişiklik — ${order.order_number}`,
+    html: shell(
+      'Bir ürün siparişinizden çıkarıldı',
+      `<p style="color:#7A5048;line-height:1.8;margin:0 0 20px;">
+        Siparişinizdeki <strong>${htmlKacir(kalem.ad)}</strong> ürününü tedarik edemedik.
+        Bu ürünü siparişinizden çıkardık ve bedelini iade ettik. Kusurumuza bakmayın.
+      </p>
+      ${orderNumberBox(order.order_number)}
+      <div style="background:#FFF8E6;border:1px solid #E8D8A0;padding:16px;margin:0 0 20px;">
+        <p style="margin:0 0 6px;color:#2A1E1E;">
+          <strong>Çıkarılan ürün:</strong> ${htmlKacir(kalem.ad)}${kalem.adet > 1 ? ` (${kalem.adet} adet)` : ''}
+        </p>
+        <p style="margin:0;color:#2A1E1E;">
+          <strong>İade edilen tutar:</strong> ${formatPrice(kalem.iadeTutari)}
+        </p>
+      </div>
+      ${
+        kalem.sebep
+          ? `<p style="color:#7A5048;font-size:14px;line-height:1.8;margin:0 0 20px;">${htmlKacir(kalem.sebep)}</p>`
+          : ''
+      }
+      <p style="color:#7A5048;font-size:14px;line-height:1.8;margin:0 0 20px;">
+        İade, kartınızı veren bankaya göre <strong>1-7 iş günü</strong> içinde hesabınıza yansır.
+        Siparişinizin kalan ürünleri hazırlanmaya devam ediyor; kargoya verildiğinde ayrıca
+        haber vereceğiz.
+      </p>
+      <p style="color:#7A5048;font-size:14px;line-height:1.8;margin:0;">
+        Siparişinizin güncel tutarı: <strong>${formatPrice(Number(order.total) || 0)}</strong>
+      </p>`
+    ),
+  }
+}

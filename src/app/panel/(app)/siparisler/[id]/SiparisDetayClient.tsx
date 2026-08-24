@@ -12,7 +12,7 @@ import { PDialog, useToast } from '../../_components/overlays'
 import KargoBlogu, { type KargoBloguProps } from './KargoBlogu'
 import MailGecmisi from './MailGecmisi'
 
-type Kalem = { ad: string; adet: number; birim: number; slug: string | null; image: string | null }
+type Kalem = { productId: string; ad: string; adet: number; birim: number; slug: string | null; image: string | null }
 
 export type SiparisDetay = {
   id: string
@@ -36,6 +36,10 @@ export type SiparisDetay = {
     zip_code?: string
   } | null
   hediyeNotu: string | null
+  /** Kalem iptali bu siparişte mümkün mü (ödeme aşamasında + kargo yok). */
+  kalemIptalMumkun: boolean
+  /** Daha önce iptal edilmiş kalemler — iz olarak gösterilir. */
+  iptalEdilenKalemler: { ad: string | null; adet: number; iadeTutari: number; zaman: string; sebep?: string | null }[]
   /** Gönderilen müşteri maillerinin damgaları (tür → ISO zaman). */
   mailGecmisi: Record<string, string>
   /** Kurumsal fatura — yalnız müşteri istediyse dolu (Faz 28). */
@@ -74,6 +78,36 @@ export default function SiparisDetayClient({
   kargo: KargoBloguProps
 }) {
   const router = useRouter()
+  /** Faz 30: kalem iptali — tedarik edilemeyen ürünü çıkar, bedelini iade et. */
+  const [iptalKalem, setIptalKalem] = useState<Kalem | null>(null)
+  const [iptalSebep, setIptalSebep] = useState('')
+  const [kalemIsleniyor, setKalemIsleniyor] = useState(false)
+
+  const kalemIptalEt = async () => {
+    if (!iptalKalem) return
+    setKalemIsleniyor(true)
+    try {
+      const res = await fetch(`/api/panel/orders/${siparis.id}/kalem-iptal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: iptalKalem.productId, sebep: iptalSebep.trim() || null }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d?.error || 'İptal edilemedi')
+      toast(
+        `${iptalKalem.ad} çıkarıldı · ${formatPrice(d.iadeEdilen)} iade edildi` +
+          (d.mailGonderildi ? ' · müşteriye bildirildi' : ' · MAİL GİTMEDİ'),
+        'success'
+      )
+      setIptalKalem(null)
+      setIptalSebep('')
+      router.refresh()
+    } catch (e: any) {
+      toast(e?.message || 'İptal edilemedi', 'danger')
+    }
+    setKalemIsleniyor(false)
+  }
+
   const { push: toast } = useToast()
 
   const [hedefDurum, setHedefDurum] = useState(siparis.durum)
@@ -186,6 +220,58 @@ export default function SiparisDetayClient({
         </div>
       )}
 
+      {siparis.iptalEdilenKalemler.length > 0 && (
+        <PCard title="İptal edilen kalemler">
+          <ul className="divide-y divide-[var(--p-line)] text-[13px]">
+            {siparis.iptalEdilenKalemler.map((k, i) => (
+              <li key={i} className="flex flex-wrap items-center gap-2 py-2">
+                <span className="text-[var(--p-ink)]">{k.ad ?? 'Ürün'}</span>
+                {k.adet > 1 && <span className="text-[var(--p-muted)]">×{k.adet}</span>}
+                {k.sebep && <span className="text-[11px] text-[var(--p-muted)]">· {k.sebep}</span>}
+                <span className="ml-auto tabular-nums text-[var(--p-success)]">
+                  {formatPrice(k.iadeTutari)} iade
+                </span>
+                <span className="text-[11px] tabular-nums text-[var(--p-muted)]">
+                  {new Date(k.zaman).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </PCard>
+      )}
+
+      <PDialog
+        open={iptalKalem !== null}
+        onClose={() => setIptalKalem(null)}
+        title={`"${iptalKalem?.ad}" siparişten çıkarılacak`}
+        footer={
+          <>
+            <PButton variant="ghost" onClick={() => setIptalKalem(null)} disabled={kalemIsleniyor}>
+              Vazgeç
+            </PButton>
+            <PButton variant="danger" onClick={kalemIptalEt} disabled={kalemIsleniyor}>
+              {kalemIsleniyor ? 'İşleniyor…' : 'Çıkar ve iade et'}
+            </PButton>
+          </>
+        }
+      >
+        <p className="text-[13px] leading-relaxed">
+          Bu ürün siparişten çıkarılacak, <strong>bedeli karta iade edilecek</strong>, stok geri
+          eklenecek (bizde ve Trendyol&apos;da) ve müşteriye açıklayıcı bir e-posta gidecek.
+          Geri alınamaz.
+        </p>
+        <label className="mt-3 block">
+          <span className="mb-1 block text-[12px] text-[var(--p-muted)]">
+            Müşteriye yazılacak açıklama (isteğe bağlı)
+          </span>
+          <PInput
+            value={iptalSebep}
+            onChange={(e) => setIptalSebep(e.target.value.slice(0, 300))}
+            placeholder="Örn: Bu ürünün stoğu tükendi, en kısa sürede yeniden getireceğiz."
+          />
+        </label>
+      </PDialog>
+
       {/* Faz 30 · müşteri mail geçmişi.
           "Bildirimler çok çok önemli" — hangisinin gittiği görünmüyordu ve
           ilk gerçek siparişte iki mailin gitmediği ancak sonradan anlaşıldı. */}
@@ -246,6 +332,15 @@ export default function SiparisDetayClient({
                     <span className="text-[12px] text-[var(--p-muted)]">{k.adet} × {formatPrice(k.birim)}</span>
                   </span>
                   <span className="tabular-nums text-[13px]">{formatPrice(k.adet * k.birim)}</span>
+                  {siparis.kalemIptalMumkun && (
+                    <button
+                      type="button"
+                      onClick={() => setIptalKalem(k)}
+                      className="shrink-0 text-[11px] text-[var(--p-muted)] underline underline-offset-2 hover:text-[var(--p-danger)]"
+                    >
+                      iptal
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>

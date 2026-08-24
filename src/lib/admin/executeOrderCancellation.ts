@@ -39,6 +39,26 @@ export async function executeAdminOrderCancellation(
     return { ok: true }
   }
 
+  // Faz 30: kargo gönderisi oluşturulmuşsa iptal edilemez. Geçiş matrisi
+  // 'shipped → cancelled'ı zaten kapatıyor ama sipariş 'preparing' iken de
+  // gönderi oluşturulmuş olabiliyor — o aralık açıktı. Paket kargodayken
+  // siparişi iptal etmek, parayı iade edip malı da göndermek demekti.
+  const { data: acikGonderi } = await serviceClient
+    .from('shipments')
+    .select('id, provider_shipment_id, status')
+    .eq('order_id', orderId)
+    .is('cancelled_at', null)
+    .maybeSingle()
+  if (acikGonderi) {
+    return {
+      ok: false,
+      status: 409,
+      error:
+        `Kargo gönderisi oluşturulmuş (${acikGonderi.provider_shipment_id}) — sipariş iptal edilemez. ` +
+        'Önce kargo bölümünden gönderiyi iptal edin, sonra siparişi iptal edebilirsiniz.',
+    }
+  }
+
   const cancelErr = validateOrderStatusTransition(existing.status, 'cancelled')
   if (cancelErr) {
     console.warn('[admin-order-cancel] rejected', { orderId, reason: cancelErr })
