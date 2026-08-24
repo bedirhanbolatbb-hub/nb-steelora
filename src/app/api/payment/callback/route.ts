@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
+import { bildirimDamgala } from '@/lib/emails/bildirimSuprugu'
 import { completeThreeDS } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
 import { decreaseStock } from '@/lib/trendyol/stockUpdate'
@@ -9,6 +10,12 @@ import { musteriMailiGonder } from '@/lib/emails/musteriMaili'
 import { sendMail } from '@/lib/emails/send'
 import { kullanimArtir } from '@/lib/campaigns/pricing'
 import { olayYaz } from '@/lib/analytics/track'
+
+/**
+ * Faz 29: rotada süre sınırı TANIMLI DEĞİLDİ. Zincir uzun (iyzico + stok +
+ * kupon + Trendyol + iki mail); varsayılan kısa sınır son adımları kesiyordu.
+ */
+export const maxDuration = 60
 
 function itemsFromIyzicoTransactions(transactions: unknown) {
   if (!Array.isArray(transactions)) return []
@@ -324,27 +331,50 @@ export async function POST(request: Request) {
       console.error('[callback] stok kuyruğu hatası (ödeme etkilenmedi):', kuyrukHata?.message)
     }
 
-    // Sipariş onay e-postası gönder (şablon: lib/emails/templates.ts)
-    if (order) {
-      const { subject, html } = orderConfirmationEmail(order as any)
-      await musteriMailiGonder({
-        eposta: order.guest_email,
-        orderNumber: order.order_number,
-        subject,
-        html,
-        label: 'Order confirmation',
-      })
-    }
+    /**
+     * ── Faz 29 · bildirimler yeniden düzenlendi ────────────────────────
+     *
+     * İlk gerçek siparişte (NBS-…3108) BB'ye bildirim maili GİTMEDİ. Mail
+     * hattı, bildirim adresi ve şablonun kendisi ayrı ayrı sınandı ve üçü de
+     * SAĞLAM çıktı — kusur sıradaydı: bildirim, callback'in EN SONUNDAKİ
+     * adımdı. Önünde iyzico çağrısı, sipariş güncellemesi, dört kalemlik stok
+     * düşümü, kupon işlemi, Trendyol kuyruğu (dış API) ve bir Resend çağrısı
+     * daha vardı. Bu zincirin herhangi bir yerinde işlev süresi dolarsa
+     * kaybolan tam olarak SON adım oluyor. Üstelik rotada `maxDuration`
+     * tanımlı değildi, yani varsayılan (kısa) sınırla çalışıyordu.
+     *
+     * Üç değişiklik:
+     *  1. YÖNETİCİ bildirimi önce gönderiliyor — BB'nin siparişten haberi
+     *     olması, müşteri mailinden daha önceliklidir.
+     *  2. İkisi de `after()` içinde: yanıt (müşteriye "teşekkürler" sayfası)
+     *     maillerin tamamlanmasını BEKLEMİYOR.
+     *  3. Gönderim siparişe damgalanıyor; damgasız kalan siparişleri gecelik
+     *     sağlık işi süpürüp gönderiyor (lib/emails/bildirimSuprugu.ts).
+     */
+    after(async () => {
+      if (!order) return
+      try {
+        const alici = await bildirimAdresi()
+        const bildirim = adminNewOrderEmail(order)
+        const sonuc = await sendMail({ to: alici, ...bildirim, label: 'Admin new order' })
+        if (!sonuc.error) await bildirimDamgala(order.id, 'yeni_siparis')
+      } catch (bildirimHata: any) {
+        console.error('[callback] yönetici bildirimi gönderilemedi:', bildirimHata?.message)
+      }
 
-    // Mağaza sahibine anında bildirim (Faz 15): sipariş geldiğini panele
-    // bakmadan öğrenmenin başka yolu yoktu.
-    try {
-      const alici = await bildirimAdresi()
-      const bildirim = adminNewOrderEmail(order)
-      await sendMail({ to: alici, ...bildirim, label: 'Admin new order' })
-    } catch (bildirimHata) {
-      console.error('[callback] yönetici bildirimi gönderilemedi:', bildirimHata)
-    }
+      try {
+        const { subject, html } = orderConfirmationEmail(order as any)
+        await musteriMailiGonder({
+          eposta: order.guest_email,
+          orderNumber: order.order_number,
+          subject,
+          html,
+          label: 'Order confirmation',
+        })
+      } catch (e: any) {
+        console.error('[callback] sipariş onayı gönderilemedi:', e?.message)
+      }
+    })
 
     return NextResponse.redirect(
       `${siteUrl}/siparis-tamamlandi?siparis=${encodeURIComponent(result.basketId || '')}`,

@@ -110,6 +110,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           ...(durum.takipKodu ? { tracking_code: durum.takipKodu } : {}),
           ...(durum.firmaAdi ? { carrier_name: durum.firmaAdi, carrier_slug: durum.firmaSlug } : {}),
         })
+        // Faz 29: yoklamada takip kodu gelirse siparişe de yazılır. Eskiden
+        // yalnız 'select' dalında yapılıyordu; firma seçimi sırasında kod
+        // henüz null gelmiş olabiliyor (Kargonomi onu sonradan dolduruyor) ve
+        // o durumda sipariş takip numarasız kalıyordu — /kargo-takip
+        // sayfasından takip edilemiyordu.
+        if (durum.takipKodu) await siparisTakipNoSenkronla(gonderi.order_id, durum.takipKodu)
         if (degisti) {
           await olayEkle({
             shipmentId: id,
@@ -119,7 +125,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             source: 'poll',
           })
         }
-        return NextResponse.json({ ok: true, status: durum.durum })
+        return NextResponse.json({
+          ok: true,
+          status: durum.durum,
+          takipKodu: durum.takipKodu,
+          firmaAdi: durum.firmaAdi,
+        })
       }
 
       default:

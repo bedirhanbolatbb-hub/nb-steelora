@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { bildirimleriSupur } from '@/lib/emails/bildirimSuprugu'
 import { adminIstegiMi, cronIstegiMi } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 import { sendMail } from '@/lib/emails/send'
@@ -92,6 +93,17 @@ async function raporVerisi() {
 }
 
 async function calistir(gonder: boolean) {
+  // Faz 29: kaybolan yönetici bildirimlerini süpür. İlk gerçek siparişte
+  // bildirim gitmemişti; bu ağ, callback tamamlanmasa bile BB'nin siparişten
+  // haberdar olmasını garanti eder.
+  const bildirimSupurgesi = await bildirimleriSupur(48)
+  if (bildirimSupurgesi.gonderilen > 0) {
+    console.warn(
+      '[sağlık] kaybolmuş yönetici bildirimi gönderildi:',
+      bildirimSupurgesi.siparisler.join(', ')
+    )
+  }
+
   const veri = await raporVerisi()
   if (!gonder) return { ...veri, mail: 'gönderilmedi (önizleme)' }
 

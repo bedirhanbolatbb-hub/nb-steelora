@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 import {
+  adminNewOrderEmail,
+  adminNewReviewEmail,
+  adminOrderRequestEmail,
   orderConfirmationEmail,
   reviewInviteEmail,
   shippingNotificationEmail,
@@ -50,10 +53,28 @@ export async function POST(request: Request) {
   const shipping = shippingNotificationEmail(order, 'TEST123456789')
   const invite = reviewInviteEmail(order, sampleProducts)
 
-  const results = {
-    confirmation: await sendMail({ to, ...confirmation, label: 'Order confirmation (test)' }),
-    shipping: await sendMail({ to, ...shipping, label: 'Shipping notification (test)' }),
-    reviewInvite: await sendMail({ to, ...invite, label: 'Review invite (test)' }),
+  // Faz 29: YÖNETİCİ bildirimleri de sınanabiliyor. İlk gerçek siparişte
+  // bildirim gitmemişti ve bunu önceden yakalayacak bir kontrol yoktu.
+  const yalnizYonetici = body?.kapsam === 'yonetici'
+  const yeniSiparis = adminNewOrderEmail(order)
+  const iadeTalebi = adminOrderRequestEmail(order, 'return', 'Test iade gerekçesi')
+  const yeniYorum = adminNewReviewEmail({
+    urun: sampleProducts[0]?.display_title ?? 'Örnek ürün',
+    puan: 5,
+    govde: 'Test yorum metni.',
+    yazar: 'Test Müşteri',
+  })
+
+  const results: Record<string, unknown> = {
+    adminYeniSiparis: await sendMail({ to, ...yeniSiparis, label: 'Admin new order (test)' }),
+    adminIadeTalebi: await sendMail({ to, ...iadeTalebi, label: 'Admin return request (test)' }),
+    adminYeniYorum: await sendMail({ to, ...yeniYorum, label: 'Admin new review (test)' }),
+  }
+
+  if (!yalnizYonetici) {
+    results.confirmation = await sendMail({ to, ...confirmation, label: 'Order confirmation (test)' })
+    results.shipping = await sendMail({ to, ...shipping, label: 'Shipping notification (test)' })
+    results.reviewInvite = await sendMail({ to, ...invite, label: 'Review invite (test)' })
   }
 
   return NextResponse.json({ to, results })

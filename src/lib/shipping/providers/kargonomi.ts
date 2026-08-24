@@ -117,10 +117,15 @@ export class KargonomiProvider implements CarrierProvider {
     })
     const veri = yanit?.data ?? yanit
     const durumHam = String(veri?.status ?? 'draft')
+    // Oluşturma yanıtında firma ve takip kodu HENÜZ null gelir (dokümanda da
+    // böyle yazıyor); yine de dolu gelirse kaçırmayalım.
     return {
       saglayiciGonderiId: String(veri?.id ?? ''),
       durum: this.mapStatus(durumHam),
       durumHam,
+      firmaAdi: veri?.shipping_provider_name ?? null,
+      firmaSlug: veri?.shipping_provider_slug ?? null,
+      takipKodu: veri?.shipping_webservice_tracking_code ?? null,
     }
   }
 
@@ -213,18 +218,55 @@ export class KargonomiProvider implements CarrierProvider {
     return { durum: this.mapStatus(durumHam), durumHam }
   }
 
+  /**
+   * Gönderinin güncel durumu.
+   *
+   * ── Faz 29 KUSURU ────────────────────────────────────────────────────
+   * Buradaki alan adlarının HEPSİ yanlıştı. İlk gerçek siparişte (NBS-…3108,
+   * 24.08.2026) HepsiJet seçilmesine rağmen kayda `carrier_slug='bilinmiyor'`,
+   * `carrier_name='—'` ve `tracking_code=NULL` yazıldı; müşteri kargosunu
+   * takip edemedi.
+   *
+   * Kargonomi'nin GERÇEK yanıtı (canlı gönderi 3098702 ile doğrulandı ve
+   * API dokümanıyla teyit edildi):
+   *   okunan (yanlış)              → gerçek alan
+   *   shipping_provider.name       → shipping_provider_name
+   *   (slug hiç okunmuyordu)       → shipping_provider_slug
+   *   tracking_code / barcode      → shipping_webservice_tracking_code
+   *   price                        → estimated_price / real_price
+   *
+   * Alanlar gönderi OLUŞTURULURKEN null gelir, firma seçildikten sonra
+   * dolar — bu yüzden yoklama (bu fonksiyon) tek doğru kaynak.
+   */
   async fetchShipment(saglayiciGonderiId: string): Promise<GonderiDurum> {
     const yanit = await this.istek<any>(`/shipments/${saglayiciGonderiId}`)
     const veri = yanit?.data ?? yanit
     const durumHam = String(veri?.status ?? 'draft')
-    const firmaAdi = veri?.shipping_provider?.name ?? veri?.provider_name ?? null
+
+    const firmaAdi =
+      veri?.shipping_provider_name ??
+      veri?.shipping_provider?.name ??
+      veri?.provider_name ??
+      null
+    const firmaSlugHam = veri?.shipping_provider_slug ?? null
+
+    // Takip kodu: sağlayıcının verdiği kod; yoksa barkod, o da yoksa
+    // web servis sipariş numarası (HepsiJet'te ikisi aynı geliyor).
+    const takipKodu =
+      veri?.shipping_webservice_tracking_code ||
+      veri?.shipping_webservice_barcode ||
+      veri?.shipping_webservice_order_id ||
+      veri?.tracking_code ||
+      null
+
+    const fiyatHam = veri?.real_price ?? veri?.estimated_price ?? veri?.price
     return {
       durum: this.mapStatus(durumHam),
       durumHam,
-      takipKodu: veri?.tracking_code ?? veri?.tracking_number ?? veri?.barcode ?? null,
-      firmaAdi,
-      firmaSlug: firmaAdi ? slugla(String(firmaAdi)) : null,
-      fiyat: veri?.price != null ? Number(veri.price) : null,
+      takipKodu: takipKodu ? String(takipKodu) : null,
+      firmaAdi: firmaAdi ? String(firmaAdi) : null,
+      firmaSlug: firmaSlugHam ? String(firmaSlugHam) : firmaAdi ? slugla(String(firmaAdi)) : null,
+      fiyat: fiyatHam != null ? Math.round(Number(fiyatHam) * 100) / 100 : null,
     }
   }
 

@@ -73,6 +73,10 @@ export type GonderiOlusturSonuc = {
   saglayiciGonderiId: string
   durum: KargoDurumu
   durumHam: string
+  /** Oluşturma anında genelde null; firma seçilince dolar (Faz 29). */
+  firmaAdi?: string | null
+  firmaSlug?: string | null
+  takipKodu?: string | null
 }
 
 /** Fiyat teklifi — firma seçimi bu listeden yapılır. */
