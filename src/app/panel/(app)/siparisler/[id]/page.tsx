@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { gonderiyiYokla } from '@/lib/shipping/yoklama'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getAdminSelectableOrderStatuses } from '@/lib/orders/statusTransitions'
@@ -21,6 +22,19 @@ export default async function PanelSiparisDetayPage({
 }) {
   const { id } = await params
   const supabase = createServiceClient()
+
+  /**
+   * Faz 30: sayfa açılışında kargo yoklaması.
+   *
+   * Vercel Hobby'de dakikalık cron yok; webhook düşerse durumun ilerlemesi
+   * için üçüncü tetikleyici bu. BB siparişe baktığı an veri taze olur.
+   * Hata yutulur — yoklama başarısızsa sayfa yine açılır.
+   */
+  try {
+    await gonderiyiYokla(id)
+  } catch {
+    /* sayfa yoklamaya bağımlı değil */
+  }
 
   const { data: o } = await supabase.from('orders').select('*').eq('id', id).maybeSingle()
   const yoneticiAdresi = await bildirimAdresi()
@@ -161,6 +175,8 @@ export default async function PanelSiparisDetayPage({
         toplam: Number(o.total || 0),
         adres: (o.shipping_address as any) ?? null,
         hediyeNotu: o.gift_note ?? null,
+        // Faz 30: hangi mail ne zaman gitti — panelde görünür olsun.
+        mailGecmisi: ((o.metadata as any)?.bildirim ?? {}) as Record<string, string>,
         // Kurumsal fatura yalnız müşteri istediyse dolu (Faz 28).
         fatura: (o.metadata as any)?.fatura ?? null,
         bsUyarisi: bs?.asildi

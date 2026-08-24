@@ -10,6 +10,7 @@ import { formatPrice } from '@/lib/utils'
 import { ORDER_STATUS, PBadge, PButton, PCard, PInput, PSelect } from '../../_components/ui'
 import { PDialog, useToast } from '../../_components/overlays'
 import KargoBlogu, { type KargoBloguProps } from './KargoBlogu'
+import MailGecmisi from './MailGecmisi'
 
 type Kalem = { ad: string; adet: number; birim: number; slug: string | null; image: string | null }
 
@@ -35,6 +36,8 @@ export type SiparisDetay = {
     zip_code?: string
   } | null
   hediyeNotu: string | null
+  /** Gönderilen müşteri maillerinin damgaları (tür → ISO zaman). */
+  mailGecmisi: Record<string, string>
   /** Kurumsal fatura — yalnız müşteri istediyse dolu (Faz 28). */
   fatura: { firma: string; vergiDairesi: string; vergiNo: string } | null
   /** Aynı gün aynı müşteriye 5.000 TL (KDV hariç) üzeri satış yapıldıysa. */
@@ -182,6 +185,11 @@ export default function SiparisDetayClient({
           </p>
         </div>
       )}
+
+      {/* Faz 30 · müşteri mail geçmişi.
+          "Bildirimler çok çok önemli" — hangisinin gittiği görünmüyordu ve
+          ilk gerçek siparişte iki mailin gitmediği ancak sonradan anlaşıldı. */}
+      <MailGecmisi siparisId={siparis.id} gecmis={siparis.mailGecmisi} />
 
       {/* Kurumsal fatura bilgisi — yalnız müşteri istediyse (Faz 28). */}
       {siparis.fatura && (

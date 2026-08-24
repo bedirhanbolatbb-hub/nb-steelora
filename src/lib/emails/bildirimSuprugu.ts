@@ -23,6 +23,19 @@ export type SuprukSonucu = {
   siparisler: string[]
 }
 
+/** Bu tür daha önce damgalandı mı? */
+export async function bildirimDamgasi(orderId: string, tur: string): Promise<string | null> {
+  try {
+    const supabase = createServiceClient()
+    const { data } = await supabase.from('orders').select('metadata').eq('id', orderId).maybeSingle()
+    const d = (data?.metadata as any)?.bildirim?.[tur]
+    return typeof d === 'string' ? d : null
+  } catch {
+    // Okunamazsa "damgasız" varsayılır: iki mail, hiç mail olmamasından iyidir.
+    return null
+  }
+}
+
 /** Gönderim damgası — orders.metadata.bildirim.<tur> = ISO zaman. */
 export async function bildirimDamgala(orderId: string, tur: string): Promise<void> {
   try {

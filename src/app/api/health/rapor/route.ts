@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { gonderileriYokla } from '@/lib/shipping/yoklama'
 import { bildirimleriSupur } from '@/lib/emails/bildirimSuprugu'
 import { adminIstegiMi, cronIstegiMi } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
@@ -93,6 +94,12 @@ async function raporVerisi() {
 }
 
 async function calistir(gonder: boolean) {
+  // Faz 30: kargo yoklaması — webhook düşerse sipariş durumu burada ilerler.
+  const yoklama = await gonderileriYokla(25)
+  if (yoklama.ilerleyenSiparis > 0 || yoklama.gonderilenMail > 0) {
+    console.warn('[sağlık] yoklama ilerletti:', yoklama.ayrinti.join(' | '))
+  }
+
   // Faz 29: kaybolan yönetici bildirimlerini süpür. İlk gerçek siparişte
   // bildirim gitmemişti; bu ağ, callback tamamlanmasa bile BB'nin siparişten
   // haberdar olmasını garanti eder.

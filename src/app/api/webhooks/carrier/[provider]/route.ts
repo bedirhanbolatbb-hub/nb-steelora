@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { siparisiKargodanIlerlet } from '@/lib/orders/otomatikDurum'
 import { kritikUyari } from '@/lib/izleme/uyari'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getProviderBySlug } from '@/lib/shipping/providers'
@@ -8,8 +9,6 @@ import {
   olayEkle,
   siparisTakipNoSenkronla,
 } from '@/lib/shipping/shipments'
-import { reviewInviteEmail } from '@/lib/emails/templates'
-import { sendMail } from '@/lib/emails/send'
 
 export const dynamic = 'force-dynamic'
 
@@ -86,61 +85,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ pro
     await siparisTakipNoSenkronla(gonderi.order_id, cozum.takipKodu)
   }
 
-  if (cozum.durum === 'teslim_edildi') {
-    await teslimEdildiAkisi(gonderi.order_id)
-  }
+  // Faz 30: sipariş durumu ve müşteri maili TEK motordan ilerliyor.
+  // Eskiden yalnız 'teslim_edildi' işleniyordu; kargo yola çıktığında sipariş
+  // 'preparing' kalıyor ve müşteriye kargo bildirimi HİÇ gitmiyordu.
+  const ilerleme = await siparisiKargodanIlerlet(gonderi.order_id, cozum.durum, cozum.takipKodu)
 
-  return NextResponse.json({ ok: true, status: cozum.durum })
+  return NextResponse.json({ ok: true, status: cozum.durum, ilerleme })
 }
 
-/**
- * Teslim edildiğinde mevcut akış: sipariş durumu 'delivered' olur ve
- * değerlendirme daveti gider. Mail şablonu ve idempotans damgası
- * /api/admin/orders/[id] ile birebir aynı — yeni mail mantığı yazılmaz.
- */
-async function teslimEdildiAkisi(orderId: string): Promise<void> {
-  const supabase = createServiceClient()
-  const { data: order } = await supabase
-    .from('orders')
-    .select('id, order_number, status, guest_email, items, review_invite_sent_at')
-    .eq('id', orderId)
-    .maybeSingle()
-  if (!order) return
-
-  // Durum matrisi korunur: yalnız shipped → delivered geçişi yapılır.
-  if (order.status === 'shipped') {
-    await supabase
-      .from('orders')
-      .update({ status: 'delivered', updated_at: new Date().toISOString() })
-      .eq('id', orderId)
-  }
-
-  if (!order.guest_email || order.review_invite_sent_at) return
-
-  const items = Array.isArray(order.items) ? (order.items as any[]) : []
-  const productIds = items.map((i) => i?.productId).filter(Boolean)
-  let productRows: any[] = []
-  if (productIds.length > 0) {
-    const { data } = await supabase
-      .from('products_display')
-      .select('slug, display_title, display_images')
-      .in('id', productIds)
-    productRows = data || []
-  }
-
-  const { subject, html } = reviewInviteEmail(
-    order as any,
-    productRows.map((p) => ({
-      slug: p.slug,
-      display_title: p.display_title,
-      image: (p.display_images as string[] | null)?.[0] ?? null,
-    }))
-  )
-  const sent = await sendMail({ to: order.guest_email, subject, html, label: 'Review invite' })
-  if (sent.id) {
-    await supabase
-      .from('orders')
-      .update({ review_invite_sent_at: new Date().toISOString() })
-      .eq('id', orderId)
-  }
-}

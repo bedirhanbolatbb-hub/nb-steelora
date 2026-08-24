@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { gonderileriYokla } from '@/lib/shipping/yoklama'
 import { adminIstegiMi, cronIstegiMi } from '@/lib/admin/requireAdmin'
 import { revalidatePath } from 'next/cache'
 import {
@@ -51,6 +52,15 @@ async function runSync() {
       // Tazeleme işareti konamazsa koşu yine başarılıdır; besleme kendi
       // süresi dolunca tazelenir.
       console.warn('[sync] besleme/harita tazeleme işareti konamadı:', e?.message)
+    }
+
+    // Faz 30: günlük senkron ikinci yoklama turu. Webhook düşerse sipariş
+    // durumu en geç burada ilerler.
+    try {
+      const yoklama = await gonderileriYokla(25)
+      if (yoklama.ilerleyenSiparis > 0) console.warn('[sync] yoklama:', yoklama.ayrinti.join(' | '))
+    } catch (e: any) {
+      console.error('[sync] yoklama hatası (senkron etkilenmedi):', e?.message)
     }
 
     return NextResponse.json({
