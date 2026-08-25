@@ -44,7 +44,10 @@ export async function generateMetadata({
   const yol = sayfa > 1 ? `/kategori/${slug}?sayfa=${sayfa}` : `/kategori/${slug}`
 
   return {
-    title: `Çelik ${def.title} Modelleri | NB Steelora`,
+    // Kök layout başlığa zaten "| NB Steelora" ekliyor (title.template);
+    // burada da yazınca iki kez basılıyordu. `absolute` ile tam başlık
+    // istenen hâline sabitlenir, sonek bir kez gelir.
+    title: { absolute: `Çelik ${def.title} Modelleri | NB Steelora` },
     description: tanitim.slice(0, 158),
     alternates: { canonical: yol },
     openGraph: {
