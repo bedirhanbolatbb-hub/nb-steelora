@@ -32,7 +32,7 @@ export default function SifremiUnuttumPage() {
         <div className="w-full max-w-md text-center">
           <div className="mb-6 text-4xl">✉️</div>
           <h1 className="mb-4 font-heading text-[28px] font-light text-ink">
-            E-postanı kontrol et
+            E-postanızı kontrol edin
           </h1>
           {/*
             Adresin kayıtlı olup olmadığı SÖYLENMEZ: "böyle bir üyelik yok"
@@ -45,7 +45,7 @@ export default function SifremiUnuttumPage() {
             olmayabilirsiniz.
           </p>
           <p className="mb-3 font-body text-[13px] text-ink-soft">
-            Hesabın yok mu?{' '}
+            Hesabınız yok mu?{' '}
             <Link href="/kayit" className="text-accent-deep transition-colors hover:text-ink">
               Üye ol
             </Link>

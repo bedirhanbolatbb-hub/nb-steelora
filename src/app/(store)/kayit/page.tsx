@@ -66,14 +66,14 @@ export default function KayitPage() {
         <div className="w-full max-w-md text-center">
           <div className="mb-6 text-4xl">✉️</div>
           <h1 className="mb-4 font-heading text-[28px] font-light text-ink">
-            E-postanı kontrol et
+            E-postanızı kontrol edin
           </h1>
           <p className="mb-2 font-body text-[13px] leading-relaxed text-ink-soft">
             <strong className="text-ink">{form.email}</strong> adresine doğrulama bağlantısı
-            gönderdik. Bağlantıya tıkladığında hesabın açılır.
+            gönderdik. Bağlantıya tıkladığınızda hesabınız açılır.
           </p>
           <p className="mb-8 font-body text-[12px] leading-relaxed text-muted">
-            Birkaç dakika içinde ulaşmazsa spam/gereksiz klasörünü kontrol et.
+            Birkaç dakika içinde ulaşmazsa spam/gereksiz klasörünüzü kontrol edin.
           </p>
 
           <DogrulamaTekrarGonder eposta={form.email} />

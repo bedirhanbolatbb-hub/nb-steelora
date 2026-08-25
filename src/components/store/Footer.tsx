@@ -9,6 +9,7 @@ import { kunyeSatirlari } from '@/lib/layoutData'
 const categories = CATEGORIES.map((c) => ({ href: `/kategori/${c.slug}`, label: c.title }))
 
 const helpLinks = [
+  { href: '/sss', label: 'Sık Sorulan Sorular' },
   { href: '/kargo-ve-iade', label: 'Kargo, İade ve Değişim' },
   { href: '/kargo-takip', label: 'Kargo Takip' },
   { href: '/hakkimizda', label: 'Hakkımızda' },
@@ -29,6 +30,18 @@ const accountLinks = {
   ],
 }
 
+/**
+ * Faz 11A — footer bağlantılarında `prefetch={false}`.
+ *
+ * Footer her sayfanın altında ve içinde onlarca bağlantı var; hepsi görünür
+ * alana girdiği anda Next router her biri için ayrı bir RSC isteği açıyordu.
+ * Bunlar kimsenin tıklamadığı sayfalar için ücretsiz kargo etiketinden ETBİS
+ * satırına kadar sunucu çalıştırıyor. Tıklandığında zaten anında yükleniyor;
+ * öncesinde ısıtmanın karşılığı yok.
+ *
+ * Ana menü ve ürün kartları DOKUNULMADI: onlar gerçekten tıklanan yollar,
+ * orada prefetch hızın kendisi.
+ */
 export default function Footer({
   isLoggedIn,
   collections,
@@ -97,6 +110,7 @@ export default function Footer({
                 <li key={cat.href}>
                   <Link
                     href={cat.href}
+                    prefetch={false}
                     className="text-[12px] font-body text-line/70 hover:text-accent transition-colors"
                   >
                     {cat.label}
@@ -116,6 +130,7 @@ export default function Footer({
                     <li key={collection.slug}>
                       <Link
                         href={`/koleksiyon/${collection.slug}`}
+                        prefetch={false}
                         className="text-[12px] font-body text-line/70 hover:text-accent transition-colors"
                       >
                         {collection.name}
@@ -137,6 +152,7 @@ export default function Footer({
                 <li key={link.href}>
                   <Link
                     href={link.href}
+                    prefetch={false}
                     className="text-[12px] font-body text-line/70 hover:text-accent transition-colors"
                   >
                     {link.label}
@@ -147,6 +163,7 @@ export default function Footer({
                 <li key={link.href}>
                   <Link
                     href={link.href}
+                    prefetch={false}
                     className="text-[12px] font-body text-line/70 hover:text-accent transition-colors"
                   >
                     {link.label}

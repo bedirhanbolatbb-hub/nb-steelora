@@ -92,6 +92,27 @@ export default function ReviewList({ productId }: { productId: string }) {
     fetchReviews()
   }
 
+  /**
+   * Faz 11A: onaylı yorum YOKKEN koca "Müşteri Yorumları" başlığı ve altında
+   * "henüz değerlendirme yok" satırı basılıyordu — her ürün sayfasında,
+   * 281 kartın neredeyse hepsinde. Boş bir bölüm, ürünün ilgi görmediğini
+   * ilan etmekten başka bir işe yaramıyor. Artık tek satırlık davet çıkar.
+   */
+  const yorumYok = !loading && reviews.length === 0 && !submitted
+
+  if (yorumYok && !showForm) {
+    return (
+      <div id="yorum" className="mt-16 border-t border-line pt-8 scroll-mt-24">
+        <button
+          onClick={() => setShowForm(true)}
+          className="font-body text-[13px] text-accent-deep underline underline-offset-4 hover:text-ink transition-colors"
+        >
+          Bu ürünü değerlendiren ilk siz olun →
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div id="yorum" className="mt-16 pt-16 border-t border-line scroll-mt-24">
       <h2 className="font-heading text-[28px] font-light text-ink mb-8">
@@ -137,18 +158,6 @@ export default function ReviewList({ productId }: { productId: string }) {
         </div>
       )}
 
-      {/* Henüz onaylı yorum yoksa yıldız/özet hiç basılmaz, davet satırı çıkar */}
-      {!loading && reviews.length === 0 && !submitted && (
-        <p className="mb-6 text-[13px] font-body text-ink-soft">
-          Bu ürün için henüz değerlendirme yok.{' '}
-          <button
-            onClick={() => setShowForm(true)}
-            className="text-accent-deep underline underline-offset-2"
-          >
-            İlk değerlendirmeyi sen yaz
-          </button>
-        </p>
-      )}
 
       {/* Write review button / form */}
       {!showForm && !submitted && (
