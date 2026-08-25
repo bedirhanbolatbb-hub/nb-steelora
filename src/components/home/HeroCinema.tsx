@@ -30,7 +30,10 @@ export default function HeroCinema({
         {/* Fotoğraflı hero KOYU zemindir: orada AÇIK altın doğru seçim,
             koyu ton okunmaz olurdu (Faz 24 kontrast düzeltmesinin istisnası). */}
         <span className={`eyebrow hero-line ${image ? 'eyebrow-acik' : ''}`}>
-          {c.hero_badge || 'Yeni Koleksiyon — 2026'}
+          {/* Faz 11A: varsayılan "Yeni Koleksiyon — 2026" idi ama katalogda yeni
+              ürün yok — karşılığı olmayan bir vaat. Yerine her zaman doğru olan
+              iki bilgi. Panelde hero_badge doluysa o basılır. */}
+          {c.hero_badge || '316L Çelik · Tüm siparişlerde ücretsiz kargo'}
         </span>
         <h1
           className={`font-heading text-[42px] sm:text-[56px] lg:text-[68px] font-medium leading-[1.05] mt-4 hero-line ${

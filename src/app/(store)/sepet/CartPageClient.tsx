@@ -1,6 +1,9 @@
 'use client'
 
 import Image from 'next/image'
+import { kampanyaEtiketi } from '@/lib/campaignLabel'
+import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
+import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
@@ -26,6 +29,7 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
   // Kampanya indirimi ödeme adımını beklemeden burada da görünür (Faz 15).
   // Kupon artık SEPETTE de girilebiliyor (Faz 25); kod ödeme adımına taşınır.
   const [kod, setKod] = useKuponKodu()
+  const kampanyaIndirimi = useVitrinIndirimi()
   const { ozet, indirim, kodHatasi, kuponBilgiMi, kuponUygulandi, ilkSiparisMetni } = useOtomatikIndirim(
     items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 })),
     kod || null
@@ -85,7 +89,22 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                     {product.display_title}
                   </Link>
                   <p className="price text-[13px] text-ink mt-1.5">
-                    {formatPrice(product.display_price)}
+                    {(() => {
+                      const f = vitrinFiyati(
+                        (product as any).override_price ?? product.display_price,
+                        kampanyaIndirimi
+                      )
+                      return (
+                        <>
+                          {formatPrice(f.gosterilen)}
+                          {f.ustuCizili != null && (
+                            <span className="ml-2 text-[12px] text-muted line-through">
+                              {formatPrice(f.ustuCizili)}
+                            </span>
+                          )}
+                        </>
+                      )
+                    })()}
                   </p>
 
                   <div className="flex items-center gap-3 mt-3">
@@ -118,7 +137,12 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                 </div>
 
                 <p className="text-[14px] font-body text-ink shrink-0">
-                  {formatPrice(product.display_price * quantity)}
+                  {formatPrice(
+                    vitrinFiyati(
+                      (product as any).override_price ?? product.display_price,
+                      kampanyaIndirimi
+                    ).gosterilen * quantity
+                  )}
                 </p>
               </div>
             ))}
@@ -161,7 +185,7 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                     // Kuponun kazanıp kazanmadığını SUNUCU söyler; ekranda
                     // ada bakarak tahmin etmek NB30'u kupon sanmaya yol açardı.
                     kuponUygulandi && indirim
-                      ? { ad: indirim.ad, tutar: formatPrice(indirimTutari) }
+                      ? { ad: kampanyaEtiketi(indirim.ad), tutar: formatPrice(indirimTutari) }
                       : null
                   }
                 />
@@ -176,7 +200,7 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
               )}
               {indirim && (
                 <div className="flex justify-between text-[13px] font-body text-accent-deep">
-                  <span>{indirim.ad}</span>
+                  <span>{kampanyaEtiketi(indirim.ad)}</span>
                   <span>−{formatPrice(indirimTutari)}</span>
                 </div>
               )}

@@ -1,6 +1,9 @@
 'use client'
 
 import Image from 'next/image'
+import { kampanyaEtiketi } from '@/lib/campaignLabel'
+import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
+import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
@@ -21,6 +24,8 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, totalPrice } = useCart()
+  // Faz 11A: fiyat gösterimi vitrin kampanyasından türer (tek kaynak).
+  const kampanyaIndirimi = useVitrinIndirimi()
   const subtotal = totalPrice()
   // İndirim artık ödeme adımını beklemeden burada görünüyor (Faz 15).
   const { ozet, indirim } = useOtomatikIndirim(
@@ -91,8 +96,27 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                       <p className="text-[11px] text-muted font-body mt-0.5">
                         {item.product.trendyol_category}
                       </p>
-                      <p className="text-[13px] text-accent-deep font-body font-medium mt-1">
-                        {formatPrice(item.product.display_price)}
+                      {/* Faz 11A: satır liste fiyatını gösteriyordu; ürün
+                          sayfasında indirimli, burada tam fiyat çıkıyordu. */}
+                      <p className="text-[13px] font-body mt-1">
+                        {(() => {
+                          const f = vitrinFiyati(
+                            (item.product as any).override_price ?? item.product.display_price,
+                            kampanyaIndirimi
+                          )
+                          return (
+                            <>
+                              <span className="text-accent-deep font-medium">
+                                {formatPrice(f.gosterilen)}
+                              </span>
+                              {f.ustuCizili != null && (
+                                <span className="text-muted line-through ml-2 text-[12px]">
+                                  {formatPrice(f.ustuCizili)}
+                                </span>
+                              )}
+                            </>
+                          )
+                        })()}
                       </p>
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center border border-line">
@@ -171,7 +195,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                 {indirim && (
                   <>
                     <div className="flex items-center justify-between">
-                      <span className="text-[12px] font-body text-ink-soft">{indirim.ad}</span>
+                      <span className="text-[12px] font-body text-ink-soft">{kampanyaEtiketi(indirim.ad)}</span>
                       <span className="text-[13px] font-body text-accent-deep">
                         −{formatPrice(indirim.tutar)}
                       </span>

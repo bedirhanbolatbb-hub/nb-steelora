@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
+import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { useRouter } from 'next/navigation'
 import { Search, X } from 'lucide-react'
@@ -14,6 +16,8 @@ interface SearchModalProps {
 
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [query, setQuery] = useState('')
+  // Faz 11A: fiyat gösterimi vitrin kampanyasından türer (tek kaynak).
+  const kampanyaIndirimi = useVitrinIndirimi()
   const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -160,8 +164,23 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   {product.option_count > 0 && ` · +${product.option_count} seçenek`}
                 </p>
               </div>
-              <p className="text-[13px] font-body text-accent-deep font-medium shrink-0">
-                {formatPrice(product.display_price)}
+              {/* Faz 11A: arama sonucu liste fiyatı gösteriyordu. */}
+              <p className="text-[13px] font-body shrink-0 text-right">
+                {(() => {
+                  const f = vitrinFiyati((product as any).display_price, kampanyaIndirimi)
+                  return (
+                    <>
+                      <span className="text-accent-deep font-medium block">
+                        {formatPrice(f.gosterilen)}
+                      </span>
+                      {f.ustuCizili != null && (
+                        <span className="text-muted line-through text-[11px]">
+                          {formatPrice(f.ustuCizili)}
+                        </span>
+                      )}
+                    </>
+                  )
+                })()}
               </p>
             </button>
           ))}

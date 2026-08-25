@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import GeriSayim from './GeriSayim'
 
 /**
  * Vitrin kampanya bandı (Faz 20'de yeniden yazıldı).
@@ -29,18 +30,20 @@ export default function PromoStrip({ bant }: { bant: VitrinBandi | null }) {
   if (!bant?.metin) return null
 
   return (
-    <section className="border-y border-accent-line/30 bg-bg">
+    /* Faz 11A: bant vardı ama silikti — ince çizgi arası, açık zemin, küçük
+       gri yazı. Kampanya sitenin en güçlü dönüşüm aracıyken göze çarpmıyordu.
+       Artık dolgulu zemin ve tam genişlik; renk markanın altın tonu, bağırma
+       yok. Süre kampanya kaydından gelir (ends_at), kodda sabit tarih yok. */
+    <section className="bg-accent-soft">
       <Link
         href={bant.hedef}
-        className="mx-auto flex max-w-[1400px] flex-wrap items-baseline justify-center gap-x-3 gap-y-1 px-4 py-3.5 text-center transition-colors hover:bg-accent-soft/40 lg:px-8"
+        className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 py-4 text-center transition-colors hover:bg-[#efe6d4] lg:px-8"
       >
-        <p className="font-body text-[12px] uppercase tracking-[0.14em] text-ink">{bant.metin}</p>
-        {bant.bitis && (
-          <p className="font-body text-[10px] tracking-[0.08em] text-muted">
-            {new Date(bant.bitis).toLocaleDateString('tr-TR', { timeZone: 'Europe/Istanbul' })} tarihine kadar
-          </p>
-        )}
-        <span className="font-body text-[10px] uppercase tracking-[0.14em] text-accent-deep underline underline-offset-2">
+        <p className="font-body text-[13px] font-medium tracking-[0.06em] text-ink sm:text-[14px]">
+          {bant.metin}
+        </p>
+        {bant.bitis && <GeriSayim bitis={bant.bitis} />}
+        <span className="font-body text-[11px] uppercase tracking-[0.14em] text-accent-deep underline underline-offset-4">
           Keşfet
         </span>
       </Link>

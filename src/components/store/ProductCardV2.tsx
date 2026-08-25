@@ -1,6 +1,8 @@
 'use client'
 
 import Image from 'next/image'
+import { useSepetPaneli } from '@/hooks/useSepetPaneli'
+import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import Link from 'next/link'
 import { useState } from 'react'
 import { formatPrice } from '@/lib/utils'
@@ -51,14 +53,15 @@ export default function ProductCardV2({
   // Aktif otomatik kampanya varsa kartta üstü çizili fiyat + oran rozeti
   // gösterilir; tutar yine sepette tek motordan hesaplanır (Faz 15).
   const kampanya = useVitrinIndirimi()
+  const panelAc = useSepetPaneli((s) => s.ac)
   const listeFiyati = Number((product as any).override_price ?? product.display_price) || 0
   // Koşullu kampanyada (min sepet, kategori kapsamı, X al Y öde…) kartta
   // indirimli fiyat GÖSTERİLMEZ: müşteri tek ürün alırken o fiyata ulaşamaz.
   // Yerine koşulu anlatan küçük bir rozet basılır (Faz 17).
-  const kampanyaliFiyat =
-    kampanya?.fiyatGoster && kampanya.oran
-      ? Math.round(listeFiyati * (1 - kampanya.oran / 100) * 100) / 100
-      : null
+  // Faz 11A: hesap tek kaynaktan (lib/campaigns/vitrinFiyat.ts). Aynı formül
+  // burada ve ürün sayfasında ayrı ayrı yazılıydı, kalan yüzeylerde hiç yoktu.
+  const fiyat = vitrinFiyati(listeFiyati, kampanya)
+  const kampanyaliFiyat = fiyat.indirimliMi ? fiyat.gosterilen : null
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -66,6 +69,8 @@ export default function ProductCardV2({
     if (outOfStock || added) return
     addItem(product)
     setAdded(true)
+    // Faz 11A: karttan eklemede de sepet paneli açılır.
+    panelAc()
     setTimeout(() => setAdded(false), ADDED_FEEDBACK_MS)
   }
 

@@ -1,7 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
+import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { useCart } from '@/hooks/useCart'
+import { useSepetPaneli } from '@/hooks/useSepetPaneli'
 import { formatPrice } from '@/lib/utils'
 import type { Product } from '@/types'
 
@@ -35,6 +38,9 @@ export default function StickyBuyBar({
   outOfStock: boolean
   hasSizes: boolean
 }) {
+  const kampanyaIndirimi = useVitrinIndirimi()
+  const panelAc = useSepetPaneli((s) => s.ac)
+  const fiyat = vitrinFiyati(price, kampanyaIndirimi)
   const addItem = useCart((s) => s.addItem)
   const [passedBuyBlock, setPassedBuyBlock] = useState(false)
   const [inputFocused, setInputFocused] = useState(false)
@@ -125,9 +131,11 @@ export default function StickyBuyBar({
     }
 
     addItem(product)
+    // Faz 11A: mobil çubuktan eklemede de sepet paneli açılır.
+    panelAc()
     setAdded(true)
     setTimeout(() => setAdded(false), ADDED_FEEDBACK_MS)
-  }, [addItem, added, hasSizes, outOfStock, product])
+  }, [addItem, added, hasSizes, outOfStock, product, panelAc])
 
   const show = passedBuyBlock && !inputFocused && !keyboardOpen
 
@@ -140,7 +148,16 @@ export default function StickyBuyBar({
       <div className="flex items-center gap-3 px-4 py-2.5">
         <div className="min-w-0 flex-1">
           <p className="text-[12px] font-body text-ink truncate">{title}</p>
-          <p className="price text-[14px] text-ink leading-tight">{formatPrice(price)}</p>
+          {/* Faz 11A: çubuk liste fiyatını gösteriyordu; aynı sayfanın
+              üstünde indirimli fiyat yazarken burada tam fiyat çıkıyordu. */}
+          <p className="price text-[14px] text-ink leading-tight">
+            {formatPrice(fiyat.gosterilen)}
+            {fiyat.ustuCizili != null && (
+              <span className="ml-2 text-[12px] text-muted line-through">
+                {formatPrice(fiyat.ustuCizili)}
+              </span>
+            )}
+          </p>
         </div>
         <button
           onClick={handleAdd}
