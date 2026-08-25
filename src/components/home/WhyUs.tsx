@@ -7,7 +7,10 @@ import { FREE_SHIPPING_MIN_LABEL } from '@/lib/shipping'
  */
 const MADDELER = [
   { Icon: Gem, baslik: '316L Medikal Çelik', metin: 'Kararmaz, paslanmaz, solmaz.' },
-  { Icon: Truck, baslik: 'Ücretsiz Kargo', metin: `${FREE_SHIPPING_MIN_LABEL.toLocaleLowerCase('tr-TR')}.` },
+  // Faz 11A: etiket küçültülüyordu ve ekranda cümle "tüm siparişlerde." diye
+  // küçük harfle başlıyordu. Diğer üç maddenin hepsi büyük harfle başlıyor;
+  // tek bu satır bozuktu. Sabit olduğu gibi basılır.
+  { Icon: Truck, baslik: 'Ücretsiz Kargo', metin: `${FREE_SHIPPING_MIN_LABEL}.` },
   { Icon: RotateCcw, baslik: 'Kolay İade', metin: 'Koşulsuz 14 gün iade hakkı.' },
   { Icon: Gift, baslik: 'Hediye Paketi', metin: 'Her siparişte ücretsiz premium kutu.' },
 ]

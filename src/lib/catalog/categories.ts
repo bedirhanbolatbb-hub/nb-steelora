@@ -84,3 +84,25 @@ export function buildCategoryFilter(def: CategoryDef, chipValue?: string): Categ
     expression: patterns.map((p) => `trendyol_category.ilike.%${p}%`).join(','),
   }
 }
+
+/**
+ * /urunler filtresinde gösterilecek kategoriler (Faz 11A).
+ *
+ * Menüdeki 7 kategori + Halhal. Halhal menüde ayrı madde değil (Bileklik'in
+ * içinde bir çip) ama katalogda 9 ürünü var ve filtrede aranabilir olması
+ * gerekiyor. Trendyol'un ham kategori adları HİÇ görünmez.
+ */
+export const FILTRE_KATEGORILERI: { slug: string; title: string; patterns: string[] }[] = [
+  ...CATEGORIES.map((c) => ({
+    slug: c.slug,
+    title: c.title,
+    patterns: c.patterns ?? c.titlePatterns ?? [c.title],
+  })),
+  { slug: 'halhal', title: 'Halhal', patterns: ['Halhal'] },
+]
+
+/** Marka kategorisi adından Trendyol desenlerini bulur (filtre eşleştirmesi). */
+export function filtreDesenleri(baslik: string): string[] {
+  const k = FILTRE_KATEGORILERI.find((c) => c.title === baslik)
+  return k?.patterns ?? [baslik]
+}

@@ -1,6 +1,8 @@
 'use client'
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import type { FiyatKovasi } from '@/lib/catalog/fiyatKovalari'
 import { useCallback, useState, Suspense } from 'react'
 import { SlidersHorizontal, X } from 'lucide-react'
 import ProductCardV2 from './ProductCardV2'
@@ -13,19 +15,16 @@ const SIRALAMA_SECENEKLERI = [
   { value: 'fiyat-azalan', label: 'Fiyat: Yüksekten Düşüğe' },
 ]
 
-const FIYAT_ARALIKLARI = [
-  { label: 'Tümü', min: '', max: '' },
-  { label: '0 — 200 ₺', min: '0', max: '200' },
-  { label: '200 — 500 ₺', min: '200', max: '500' },
-  { label: '500 — 1000 ₺', min: '500', max: '1000' },
-  { label: '1000 ₺ üzeri', min: '1000', max: '' },
-]
+// Faz 11A: sabit kovalar KALDIRILDI — dördün üçü hiç sonuç vermiyordu.
+// Aralıklar artık listedeki gerçek fiyatlardan sunucuda türetilip geliyor.
 
 interface ProductsClientProps {
   /** Gruplanmış kartlar: kapak ürünü + gruptaki diğer üye sayısı */
   cards: { product: Product; optionCount: number }[]
   total: number
   categories: string[]
+  /** Sunucuda gerçek fiyatlardan türetilmiş aralıklar (Faz 11A). */
+  fiyatAraliklari: FiyatKovasi[]
   currentPage: number
   perPage: number
   currentParams: Record<string, string>
@@ -40,6 +39,7 @@ function ProductsInner({
   cards,
   total,
   categories,
+  fiyatAraliklari,
   currentPage,
   perPage,
   currentParams,
@@ -178,7 +178,7 @@ function ProductsInner({
           Fiyat Aralığı
         </h3>
         <div className="space-y-2">
-          {FIYAT_ARALIKLARI.map((range) => {
+          {fiyatAraliklari.map((range) => {
             const isActive =
               (currentParams.min_fiyat || '') === range.min &&
               (currentParams.max_fiyat || '') === range.max
@@ -396,25 +396,34 @@ function ProductsInner({
                   viewport dışına itiyordu. */}
               {totalPages > 1 && (
                 <div className="flex flex-wrap justify-center gap-2 mt-12">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => (
-                      <button
+                  {/* Faz 11A: sayfa numaraları <button> + router.push idi —
+                      arama motoru için tıklanabilir bağlantı değillerdi, yani
+                      2. sayfadan sonraki ürünler taranamıyordu. Gerçek
+                      <Link href="?sayfa=N"> oldu; davranış aynı, adres aynı. */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    const params = new URLSearchParams(sp.toString())
+                    params.set('sayfa', page.toString())
+                    return (
+                      <Link
                         key={page}
-                        onClick={() => {
-                          const params = new URLSearchParams(sp.toString())
-                          params.set('sayfa', page.toString())
-                          router.push(`${pathname}?${params.toString()}`)
-                        }}
-                        className={`w-10 h-10 text-[12px] font-body transition-colors ${
+                        href={`${pathname}?${params.toString()}`}
+                        scroll
+                        // Faz 11A: 20 sayfalık listede her sayfa numarası ayrı
+                        // bir RSC isteği açıyordu; müşteri en fazla birine
+                        // tıklıyor. Bağlantı tarayıcı için görünür kalır
+                        // (SEO değişmez), yalnız önden ısıtma kapanır.
+                        prefetch={false}
+                        aria-current={page === currentPage ? 'page' : undefined}
+                        className={`flex h-10 w-10 items-center justify-center text-[12px] font-body transition-colors ${
                           page === currentPage
                             ? 'bg-ink text-bg'
                             : 'bg-surface-muted text-ink hover:bg-ink hover:text-bg'
                         }`}
                       >
                         {page}
-                      </button>
+                      </Link>
                     )
-                  )}
+                  })}
                 </div>
               )}
             </>

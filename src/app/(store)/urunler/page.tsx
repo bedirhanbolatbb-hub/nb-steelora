@@ -1,4 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
+import { filtreIcinTemizle } from '@/lib/guvenlik/girdi'
+import { FILTRE_KATEGORILERI, filtreDesenleri } from '@/lib/catalog/categories'
+import { fiyatKovalari } from '@/lib/catalog/fiyatKovalari'
 import ProductsClient from '@/components/store/ProductsClient'
 import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
 import { getSiteContent } from '@/lib/supabase/content'
@@ -19,7 +22,13 @@ export default async function UrunlerPage({
 
   // Kategori filtresi
   if (params.kategori) {
-    query = query.ilike('trendyol_category', `%${params.kategori}%`)
+    // Faz 11A: filtre artık MARKA adı taşıyor ("Bileklik"); Trendyol'un ham
+    // kategorisi farklı olabiliyor ("Çelik Halhal"). Marka adı desenlere
+    // çevrilip hepsi eşleştirilir.
+    const desenler = filtreDesenleri(params.kategori)
+    query = query.or(
+      desenler.map((d) => `trendyol_category.ilike.%${filtreIcinTemizle(d)}%`).join(',')
+    )
   }
 
   // Fiyat aralığı
@@ -54,23 +63,32 @@ export default async function UrunlerPage({
   const { data: products } = await query
   const { cards, total } = paginateGroupedProducts((products || []) as any[], sayfa)
 
-  // Kategorileri al
-  const { data: categoryData } = await supabase
-    .from('products_display')
-    .select('trendyol_category')
-    .not('trendyol_category', 'is', null)
+  /**
+   * Faz 11A: filtre listesi TRENDYOL'un ham kategori adlarını basıyordu
+   * ("316L Çelik Kolye", "Bijuteri Küpe" gibi 20+ satır). Müşteri menüde
+   * "Kolye" görürken filtrede başka bir sözlükle karşılaşıyordu.
+   * Artık menüdeki marka taksonomisi kullanılır; ham ad hiç görünmez.
+   *
+   * Halhal menüde yok ama katalogda var — filtrede görünmesi gerekiyor.
+   */
+  const categories = FILTRE_KATEGORILERI.map((k) => k.title)
 
-  const categories = [
-    ...new Set(
-      categoryData?.map((p) => p.trendyol_category).filter(Boolean) || []
-    ),
-  ]
+  /**
+   * Fiyat kovaları GÖSTERİLEN fiyatların gerçek min/max'ından türer.
+   * Sabit kovaların üçü boştu (0-200, 500-1000, 1000+) çünkü katalog
+   * 279-649 ₺ bandında. Kampanya bitince de kendiliğinden doğru kalır.
+   */
+  const tumFiyatlar = (products || [])
+    .map((p: any) => Number(p.display_price) || 0)
+    .filter((n) => n > 0)
+  const fiyatAraliklari = fiyatKovalari(tumFiyatlar)
 
   return (
     <ProductsClient
       cards={cards}
       total={total}
       categories={categories}
+      fiyatAraliklari={fiyatAraliklari}
       currentPage={sayfa}
       perPage={PER_PAGE}
       currentParams={{

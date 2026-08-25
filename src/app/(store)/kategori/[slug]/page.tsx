@@ -1,11 +1,59 @@
 import { createClient } from '@/lib/supabase/server'
+import { kategoriTanitimi } from '@/lib/metin/kategoriMetni'
+import type { Metadata } from 'next'
 import ProductsClient from '@/components/store/ProductsClient'
 import { notFound } from 'next/navigation'
 import { buildCategoryFilter, getCategory } from '@/lib/catalog/categories'
 import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
+import { fiyatKovalari } from '@/lib/catalog/fiyatKovalari'
 import JsonLd from '@/components/seo/JsonLd'
 import { getSiteContent } from '@/lib/supabase/content'
 import { breadcrumbJsonLd } from '@/lib/seo'
+
+/**
+ * Kategori sayfası üst verisi (Faz 11A).
+ *
+ * KUSUR: kategori sayfalarının title ve description'ı ANASAYFAYLA AYNIYDI ve
+ * canonical yoktu. Arama motoru sekiz kategori sayfasını da anasayfanın
+ * kopyası sanıyordu; hiçbiri kendi başına sıralanamıyordu.
+ *
+ * Açıklama Faz 21 kategori tanıtım cümlesinden gelir (site_content:
+ * kategori_tanitim_*) — yeni metin uydurulmaz. O da yoksa kütüphanenin
+ * kendi cümlesi kullanılır.
+ */
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<Record<string, string | undefined>>
+}): Promise<Metadata> {
+  const { slug } = await params
+  const sp = await searchParams
+  const def = getCategory(slug)
+  if (!def) return {}
+
+  const icerik = await getSiteContent()
+  const tanitim =
+    (icerik[`kategori_tanitim_${slug}`] || '').trim() ||
+    kategoriTanitimi(slug, def.title)[0] ||
+    `${def.title} modelleri.`
+
+  const sayfa = Math.max(1, parseInt(sp.sayfa || '1'))
+  // Sayfa 2+ KENDİNE canonical: içerikleri farklı, birbirinin kopyası değil.
+  const yol = sayfa > 1 ? `/kategori/${slug}?sayfa=${sayfa}` : `/kategori/${slug}`
+
+  return {
+    title: `Çelik ${def.title} Modelleri | NB Steelora`,
+    description: tanitim.slice(0, 158),
+    alternates: { canonical: yol },
+    openGraph: {
+      title: `Çelik ${def.title} Modelleri`,
+      description: tanitim.slice(0, 158),
+      url: yol,
+    },
+  }
+}
 
 export default async function KategoriPage({
   params,
@@ -66,6 +114,11 @@ export default async function KategoriPage({
   const { data: products } = await query
   const { cards, total } = paginateGroupedProducts((products || []) as any[], sayfa)
 
+  // Faz 11A: fiyat kovaları bu kategorinin gerçek fiyatlarından türer.
+  const fiyatAraliklari = fiyatKovalari(
+    (products || []).map((p: any) => Number(p.display_price) || 0)
+  )
+
   return (
     <>
       <JsonLd
@@ -79,6 +132,7 @@ export default async function KategoriPage({
       cards={cards}
       total={total}
       categories={[kategori]}
+      fiyatAraliklari={fiyatAraliklari}
       currentPage={sayfa}
       perPage={PER_PAGE}
       currentParams={{
