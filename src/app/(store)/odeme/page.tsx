@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { kampanyaEtiketi } from '@/lib/campaignLabel'
+import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
+import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { isRemoteMedia } from '@/lib/images'
 import Image from 'next/image'
 import { useCart } from '@/hooks/useCart'
@@ -96,6 +99,7 @@ export default function OdemePage() {
   // Faz 25: kupon kutusu artık sepetle ORTAK bileşen ve kod localStorage'da
   // taşınıyor; müşteri sepette girdiğini burada tekrar yazmıyor.
   const [kod, setKod] = useKuponKodu()
+  const kampanyaIndirimi = useVitrinIndirimi()
   const {
     ozet,
     indirim: secilenIndirim,
@@ -226,7 +230,15 @@ export default function OdemePage() {
     izle('begin_checkout', { value: subtotal, meta: { kalem: items.length } })
   }, [items.length, subtotal])
 
+  /** İlk "Öde" denemesi yapıldı mı — eksik alan uyarısı ondan sonra çıkar. */
+  const [denendi, setDenendi] = useState(false)
+
   const handlePayment = async () => {
+    // Faz 11A: düğme artık pasif değil, çünkü pasif düğme tıklanamıyor ve
+    // "ilk denemede uyar" kuralı hiç çalışmazdı. Doğrulama AYNEN duruyor:
+    // form geçersizse ödeme başlamaz, yalnız uyarı görünür hâle gelir.
+    setDenendi(true)
+    if (!isFormValid) return
     if (!isFormValid) return
     setPaymentError('')
     setLoading(true)
@@ -584,7 +596,7 @@ export default function OdemePage() {
               bilgiTonu={kuponBilgiMi}
               uygulanan={
                 kuponUygulandi && secilenIndirim
-                  ? { ad: secilenIndirim.ad, tutar: formatPrice(secilenIndirim.tutar) }
+                  ? { ad: kampanyaEtiketi(secilenIndirim.ad), tutar: formatPrice(secilenIndirim.tutar) }
                   : null
               }
             />
@@ -651,15 +663,23 @@ export default function OdemePage() {
 
             {/* Düğme pasifken sessiz kalmıyor: neyin eksik olduğu tek satırda
                 yazılıyor (Faz 15 — BB yılı 2 haneli yazınca hiçbir uyarı yoktu). */}
-            {!isFormValid && eksikAlanlar.length > 0 && (
+            {/* Faz 11A: uyarı müşteri hiçbir şeye dokunmadan görünüyordu —
+                sayfaya girer girmez "Eksik alanlar: ad, soyad, e-posta…"
+                yazıyordu. İlk gönderme denemesine kadar gizli; denemeden
+                sonra Faz 19 düzeni korunur (düğmeyle birlikte hep görünür,
+                ekran dışına kaymaz). */}
+            {denendi && !isFormValid && eksikAlanlar.length > 0 && (
               <p className="mb-2 text-center text-[12px] font-body text-red-600">
                 Eksik alanlar: {eksikAlanlar.join(', ')}
               </p>
             )}
             <button
               onClick={handlePayment}
-              disabled={loading || !isFormValid}
-              className="w-full py-4 bg-ink text-bg font-body font-medium text-[12px] tracking-[0.15em] uppercase rounded-[4px] hover:bg-accent-deep transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={loading}
+              aria-disabled={!isFormValid}
+              className={`w-full py-4 bg-ink text-bg font-body font-medium text-[12px] tracking-[0.15em] uppercase rounded-[4px] hover:bg-accent-deep transition-colors disabled:cursor-not-allowed ${
+                isFormValid ? '' : 'opacity-60'
+              }`}
             >
               {loading ? 'İşleniyor...' : `${formatPrice(total)} Öde`}
             </button>
@@ -713,7 +733,12 @@ export default function OdemePage() {
                   </p>
                 </div>
                 <p className="price text-[13px] text-ink shrink-0">
-                  {formatPrice(item.product.display_price * item.quantity)}
+                  {formatPrice(
+                    vitrinFiyati(
+                      (item.product as any).override_price ?? item.product.display_price,
+                      kampanyaIndirimi
+                    ).gosterilen * item.quantity
+                  )}
                 </p>
               </li>
             ))}
@@ -726,7 +751,7 @@ export default function OdemePage() {
             </div>
             {ozet.uygulananlar.map((u) => (
               <div key={u.kampanyaId} className="flex items-baseline justify-between gap-4">
-                <dt className="text-[12px] font-body text-green-700 min-w-0 truncate">{u.ad}</dt>
+                <dt className="text-[12px] font-body text-green-700 min-w-0 truncate">{kampanyaEtiketi(u.ad)}</dt>
                 <dd className="price text-[13px] text-green-700 shrink-0">-{formatPrice(u.tutar)}</dd>
               </div>
             ))}

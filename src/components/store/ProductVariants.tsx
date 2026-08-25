@@ -15,9 +15,10 @@ type Props = {
  * bağlantıyla gider: URL değişir, geçmişe eklenir, her ürünün kendi sayfası
  * erişilir kalır. Sepete ekleme her zaman görüntülenen tekil ürünün id'si ile.
  *
- * Etiketli gruplar (yüzük bedenleri) satın alma kolonunda, fiyatın üstünde
- * durur — beden seçimi satın alma kararının parçasıdır. Görselle ayrışan
- * gruplar (harf kolyeleri) galerinin altında kalır.
+ * Faz 11A: HER İKİ tür de satın alma kolonunda, FİYATIN ÜSTÜNDE durur.
+ * Görselle ayrışan gruplar (harf kolyeleri, renk seçenekleri) eskiden
+ * galerinin altındaydı; müşteri diğer seçeneği göremeden fiyata ve sepete
+ * ekle düğmesine bakıyordu. Seçim de fiyat da aynı sütunda olmalı.
  */
 export default function ProductVariants({ members, currentId, variant }: Props) {
   if (members.length < 2) return null
@@ -26,7 +27,7 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
     <div
       // Yapışkan çubuk bedenli üründe ilk basışta buraya kaydırıp vurguluyor.
       id={variant === 'chips' ? 'beden-secimi' : undefined}
-      className={variant === 'chips' ? 'mt-5 scroll-mt-28' : 'mt-6'}
+      className={variant === 'chips' ? 'mt-5 scroll-mt-28' : 'mt-5'}
     >
       <p className="text-[10px] uppercase tracking-[0.2em] font-body text-muted mb-3">
         {variant === 'chips' ? `Beden seçin (${members.length})` : `Diğer seçenekler (${members.length})`}
@@ -66,7 +67,7 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
                 href={`/urun/${member.slug}`}
                 aria-current={isCurrent ? 'page' : undefined}
                 title={member.display_title}
-                className={`relative w-16 h-20 shrink-0 bg-surface-muted overflow-hidden border-2 transition-colors ${
+                className={`relative w-14 h-[68px] shrink-0 bg-surface-muted overflow-hidden rounded-[3px] border-2 transition-colors ${
                   isCurrent ? 'border-accent-line' : 'border-transparent hover:border-line'
                 }`}
               >
@@ -77,7 +78,7 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
                     alt={member.display_title}
                     fill
                     className={`object-cover ${outOfStock ? 'opacity-40' : ''}`}
-                    sizes="64px"
+                    sizes="56px"
                     quality={IMAGE_QUALITY}
                   />
                 )}

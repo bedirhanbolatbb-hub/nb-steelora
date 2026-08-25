@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { CAYMA_SURESI_GUN, URUN_TOLERANS_KISA } from '@/lib/legal/sozlesme'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -11,6 +12,9 @@ import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
 import { cleanDescription, hasContent } from '@/lib/catalog/description'
 import { materialCare, materialLabel } from '@/lib/catalog/material'
+import { SSS_URUN } from '@/lib/legal/sss'
+import { urunOlcusu } from '@/lib/catalog/olculer'
+import WishlistButton from '@/components/store/WishlistButton'
 import { resolveBadge } from '@/lib/catalog/badge'
 import ProductImageGallery from '@/components/store/ProductImageGallery'
 import ProductVariants from '@/components/store/ProductVariants'
@@ -109,6 +113,8 @@ export default async function UrunDetayPage({
   const mergedProduct = { ...product, override_price: priceRow?.override_price ?? product.override_price ?? null }
 
   const material = materialLabel(product.material_type)
+
+  const olcu = urunOlcusu(product)
   const stock = Number(product.trendyol_stock) || 0
   // Vitrin kampanyası (kart ile aynı kaynak).
   const vitrinIndirimi = await vitrinIndirimiGetir()
@@ -184,13 +190,6 @@ export default async function UrunDetayPage({
             images={product.display_images || []}
             title={product.display_title}
           />
-          {!useLabels && (
-            <ProductVariants
-              members={variantMembers}
-              currentId={product.id}
-              variant="thumbnails"
-            />
-          )}
         </div>
 
         {/* Ürün bilgisi */}
@@ -204,9 +203,15 @@ export default async function UrunDetayPage({
             {product.display_title}
           </h1>
 
-          {useLabels && (
-            <ProductVariants members={variantMembers} currentId={product.id} variant="chips" />
-          )}
+          {/* Seçenekler (Faz 11A): hem bedenli hem görselle ayrışan gruplar artık
+              SATIN ALMA SÜTUNUNDA, fiyatın üstünde. Görselle ayrışanlar eskiden
+              galerinin altında, kararın verildiği yerin dışında kalıyordu —
+              müşteri diğer rengi göremeden fiyata bakıyordu. */}
+          <ProductVariants
+            members={variantMembers}
+            currentId={product.id}
+            variant={useLabels ? 'chips' : 'thumbnails'}
+          />
 
           {/* Fiyat — aktif kampanya varsa indirimli tutar önde, liste fiyatı
               üstü çizili ve oran rozetiyle (Faz 15). */}
@@ -236,13 +241,13 @@ export default async function UrunDetayPage({
             </div>
             {kampanyaliFiyat != null && (
               <p className="mt-1 font-body text-[12px] text-accent-deep">
-                {vitrinIndirimi!.ad} — sepette {formatPrice(listeFiyati - kampanyaliFiyat)} kazanıyorsunuz
+                {kampanyaEtiketi(vitrinIndirimi!.ad)} — sepette {formatPrice(listeFiyati - kampanyaliFiyat)} kazanıyorsunuz
               </p>
             )}
             {/* Koşullu kampanya: indirimli fiyat yerine koşul rozeti (Faz 17). */}
             {kampanyaliFiyat == null && vitrinIndirimi?.rozet && (
               <p className="mt-1 font-body text-[12px] text-accent-deep">
-                {vitrinIndirimi.ad} — {vitrinIndirimi.rozet}
+                {kampanyaEtiketi(vitrinIndirimi.ad)} — {vitrinIndirimi.rozet}
               </p>
             )}
           </div>
@@ -263,11 +268,17 @@ export default async function UrunDetayPage({
           )}
 
           {/* Sepete ekle — yapışkan çubuk bu bloğun görünürlüğünü izler */}
-          <div className="mt-7" id={BUY_BLOCK_ID}>
-            <AddToCartButton
-              product={mergedProduct}
-              disabled={stock === 0}
-            />
+          <div className="mt-7 flex items-stretch gap-3" id={BUY_BLOCK_ID}>
+            <div className="flex-1">
+              <AddToCartButton
+                product={mergedProduct}
+                disabled={stock === 0}
+              />
+            </div>
+            {/* Favori (Faz 11A): almaya hazır olmayan müşterinin ürünü
+                kaybetmeden bırakabileceği tek yer. Kalp zaten kartlarda vardı,
+                kararın verildiği sayfada yoktu. */}
+            <WishlistButton productId={product.id} gorunum="kutu" />
           </div>
 
           {/* Güven şeridi — tek sıra ikonlu kompakt satır (vaatler sabitlerden) */}
@@ -347,6 +358,15 @@ export default async function UrunDetayPage({
                         <span className="text-ink font-medium">Malzeme:</span> {material}
                       </p>
                     )}
+                    {/* Ölçüler (Faz 11A): YALNIZ ürünün kendi yayın metninde
+                        açık bir ölçü varsa basılır. Trendyol'da uzunluk/ağırlık
+                        özniteliği yok (513 üründe ölçüldü) — olmayan ölçü
+                        uydurulmaz, satır hiç basılmaz. */}
+                    {olcu && (
+                      <p>
+                        <span className="text-ink font-medium">Ölçüler:</span> {olcu}
+                      </p>
+                    )}
                     <p>{materialCare(product.material_type)}</p>
                     {/* Üretim toleransı (Faz 20): beklenti yönetir, sorumluluk
                         kaldırmaz — ikinci cümle ayıplı mal haklarını açıkça
@@ -372,6 +392,30 @@ export default async function UrunDetayPage({
                       Ayrıntılar için{' '}
                       <Link href="/kargo-ve-iade" className="text-accent-deep underline underline-offset-2">
                         Kargo ve İade
+                      </Link>{' '}
+                      sayfasına bakabilirsiniz.
+                    </p>
+                  </div>
+                ),
+              },
+              {
+                /* Sık sorulanlar (Faz 11A): satın almadan önce en çok sorulan
+                   dört şey burada — kararma, su/parfüm teması, hediye paketi
+                   ve iade. Cevaplar lib/legal/sss.ts'te, /sss sayfasıyla TEK
+                   KAYNAK; ikisi ayrışmasın diye burada metin tekrarı yok. */
+                title: 'Sık Sorulanlar',
+                content: (
+                  <div className="space-y-4">
+                    {SSS_URUN.map((s) => (
+                      <div key={s.soru}>
+                        <p className="text-ink font-medium">{s.soru}</p>
+                        <p className="mt-1">{s.cevap}</p>
+                      </div>
+                    ))}
+                    <p>
+                      Tüm sorular için{' '}
+                      <Link href="/sss" className="text-accent-deep underline underline-offset-2">
+                        Sık Sorulan Sorular
                       </Link>{' '}
                       sayfasına bakabilirsiniz.
                     </p>

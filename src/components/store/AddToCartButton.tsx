@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSepetPaneli } from '@/hooks/useSepetPaneli'
 import { useCart } from '@/hooks/useCart'
 import { Check } from 'lucide-react'
 import type { Product } from '@/types'
@@ -13,10 +14,14 @@ interface AddToCartButtonProps {
 export default function AddToCartButton({ product, disabled }: AddToCartButtonProps) {
   const addItem = useCart((s) => s.addItem)
   const [added, setAdded] = useState(false)
+  const panelAc = useSepetPaneli((s) => s.ac)
 
   const handleClick = () => {
     addItem(product)
     setAdded(true)
+    // Faz 11A: ekledikten sonra sepet paneli açılır — ödemeye giden yol
+    // müşterinin kendi çabasına bırakılmasın. Onay yazısı yerinde kalır.
+    panelAc()
     setTimeout(() => setAdded(false), 2000)
   }
 

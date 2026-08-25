@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useSepetPaneli } from '@/hooks/useSepetPaneli'
 import { useLinkStatus } from 'next/link'
 import { useState, useEffect } from 'react'
 import { Search, Heart, User, ShoppingBag, Menu, X } from 'lucide-react'
@@ -56,7 +57,11 @@ interface NavbarProps {
 export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, ilkSiparisSeridi }: NavbarProps) {
   const [condensed, setCondensed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [cartOpen, setCartOpen] = useState(false)
+  // Faz 11A: sepet paneli durumu ORTAK store'a taşındı; ürün sayfası ve
+  // kartlar da paneli açabilsin diye (eskiden yalnız Navbar açabiliyordu).
+  const cartOpen = useSepetPaneli((s) => s.acik)
+  const setCartOpen = (v: boolean) =>
+    v ? useSepetPaneli.getState().ac() : useSepetPaneli.getState().kapat()
   const [searchOpen, setSearchOpen] = useState(false)
   const totalItems = useCart((s) => s.totalItems())
   const wishlistCount = useWishlist((s) => s.items.length)

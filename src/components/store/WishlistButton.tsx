@@ -2,9 +2,21 @@
 
 import { useWishlist } from '@/hooks/useWishlist'
 
-export default function WishlistButton({ productId }: { productId: string }) {
+/**
+ * `kutu` görünümü (Faz 11A): ürün sayfasında kalp, Sepete Ekle'nin YANINDA
+ * durur ve onunla aynı yüksekliktedir. Kartlardaki serbest ikon görünümü
+ * (`ikon`) olduğu gibi kalır.
+ */
+export default function WishlistButton({
+  productId,
+  gorunum = 'ikon',
+}: {
+  productId: string
+  gorunum?: 'ikon' | 'kutu'
+}) {
   const { toggleItem, isInWishlist } = useWishlist()
   const inWishlist = isInWishlist(productId)
+  const kutu = gorunum === 'kutu'
 
   return (
     <button
@@ -13,8 +25,14 @@ export default function WishlistButton({ productId }: { productId: string }) {
         e.stopPropagation()
         toggleItem(productId)
       }}
-      className="p-2 transition-transform hover:scale-110"
+      className={
+        kutu
+          ? 'shrink-0 flex items-center justify-center w-[58px] py-[18px] border border-line rounded-[4px] transition-colors hover:border-accent-line'
+          : 'p-2 transition-transform hover:scale-110'
+      }
       title={inWishlist ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+      aria-label={inWishlist ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+      aria-pressed={inWishlist}
     >
       <svg
         className={`w-5 h-5 transition-colors ${
