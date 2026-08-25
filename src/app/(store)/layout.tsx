@@ -35,7 +35,11 @@ export default async function StoreLayout({
   }
 
   return (
-    <>
+    // Faz 11A: sağlayıcı yalnız <main>'i sarıyordu; Navbar onun DIŞINDAydı.
+    // Sepet paneli ve arama kutusu Navbar'ın içinde olduğu için ikisi de
+    // kampanyayı hiç göremiyor, satırda liste fiyatını basıyordu — ürün
+    // sayfası ₺314,93 derken panel ₺449,90 diyordu. Kabuğun tamamı sarıldı.
+    <KampanyaSaglayici indirim={vitrinIndirimi}>
       <Navbar
         bannerText={veri.bannerText}
         bannerColor={veri.bannerColor}
@@ -43,13 +47,11 @@ export default async function StoreLayout({
         coupon={veri.coupon}
         ilkSiparisSeridi={veri.ilkSiparis?.serit ?? null}
       />
-      <main className="flex-1">
-        <KampanyaSaglayici indirim={vitrinIndirimi}>{children}</KampanyaSaglayici>
-      </main>
+      <main className="flex-1">{children}</main>
       <Footer isLoggedIn={isLoggedIn} collections={veri.collections} content={veri.content} />
       <FloatingWhatsApp />
       <RevealController />
       <ConsentGate />
-    </>
+    </KampanyaSaglayici>
   )
 }
