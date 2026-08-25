@@ -14,6 +14,7 @@ import { cleanDescription, hasContent } from '@/lib/catalog/description'
 import { materialCare, materialLabel } from '@/lib/catalog/material'
 import { SSS_URUN } from '@/lib/legal/sss'
 import { urunOlcusu } from '@/lib/catalog/olculer'
+import { markaKategorisi } from '@/lib/catalog/categories'
 import WishlistButton from '@/components/store/WishlistButton'
 import { resolveBadge } from '@/lib/catalog/badge'
 import ProductImageGallery from '@/components/store/ProductImageGallery'
@@ -196,7 +197,7 @@ export default async function UrunDetayPage({
         <div>
           {/* Kategori · malzeme — ince eyebrow hissiyatında (tek kanonik yer) */}
           <p className="text-[10px] font-body text-accent-deep uppercase tracking-[0.22em]">
-            {[product.trendyol_category, material].filter(Boolean).join(' · ')}
+            {[markaKategorisi(product.trendyol_category), material].filter(Boolean).join(' · ')}
           </p>
 
           <h1 className="mt-2.5 font-heading text-[34px] lg:text-[46px] font-medium text-ink leading-[1.1]">

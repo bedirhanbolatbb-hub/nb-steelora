@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
+import { markaKategorisi } from '@/lib/catalog/categories'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { useRouter } from 'next/navigation'
@@ -160,7 +161,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   {product.display_title}
                 </p>
                 <p className="text-[11px] font-body text-muted mt-0.5">
-                  {product.trendyol_category}
+                  {markaKategorisi(product.trendyol_category)}
                   {product.option_count > 0 && ` · +${product.option_count} seçenek`}
                 </p>
               </div>

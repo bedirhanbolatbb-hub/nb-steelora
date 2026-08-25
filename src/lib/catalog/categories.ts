@@ -106,3 +106,28 @@ export function filtreDesenleri(baslik: string): string[] {
   const k = FILTRE_KATEGORILERI.find((c) => c.title === baslik)
   return k?.patterns ?? [baslik]
 }
+
+/**
+ * Ham Trendyol kategorisini MARKA kategorisine çevirir (Faz 11A).
+ *
+ * Müşteriye "Bijuteri Bileklik" ya da "Çelik Kolye" diye tedarikçi
+ * sınıflandırması gösteriliyordu — arama sonucunda, kartın altında, sepet
+ * satırında. Menüde ve süzgeçte "Bileklik" yazarken aynı ürünün altında
+ * "Bijuteri Bileklik" yazması iki ayrı taksonomi izlenimi veriyor.
+ *
+ * Eşleşme bulunamazsa ham değer OLDUĞU GİBİ döner: uydurma etiket basmaktansa
+ * elimizdekini göstermek daha dürüst.
+ */
+export function markaKategorisi(ham: string | null | undefined): string {
+  const metin = String(ham ?? '').trim()
+  if (!metin) return ''
+  const kucuk = metin.toLocaleLowerCase('tr-TR')
+  // Halhal, Bileklik'in desenlerinde de geçiyor; önce daha özel olan denenir.
+  const sirali = [...FILTRE_KATEGORILERI].sort((a, b) => b.patterns.length - a.patterns.length)
+  const halhal = sirali.find((c) => c.slug === 'halhal')
+  if (halhal && kucuk.includes('halhal')) return halhal.title
+  for (const k of FILTRE_KATEGORILERI) {
+    if (k.patterns.some((d) => kucuk.includes(d.toLocaleLowerCase('tr-TR')))) return k.title
+  }
+  return metin
+}

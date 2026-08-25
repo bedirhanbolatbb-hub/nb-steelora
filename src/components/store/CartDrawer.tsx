@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
+import { markaKategorisi } from '@/lib/catalog/categories'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { isRemoteMedia } from '@/lib/images'
@@ -94,7 +95,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                         {item.product.display_title}
                       </h3>
                       <p className="text-[11px] text-muted font-body mt-0.5">
-                        {item.product.trendyol_category}
+                        {markaKategorisi(item.product.trendyol_category)}
                       </p>
                       {/* Faz 11A: satır liste fiyatını gösteriyordu; ürün
                           sayfasında indirimli, burada tam fiyat çıkıyordu. */}
