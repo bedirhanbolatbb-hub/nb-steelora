@@ -669,14 +669,22 @@ export default function OdemePage() {
                 sonra Faz 19 düzeni korunur (düğmeyle birlikte hep görünür,
                 ekran dışına kaymaz). */}
             {denendi && !isFormValid && eksikAlanlar.length > 0 && (
-              <p className="mb-2 text-center text-[12px] font-body text-red-600">
+              <p
+                id="odeme-eksikler"
+                role="alert"
+                className="mb-2 text-center text-[12px] font-body text-red-600"
+              >
                 Eksik alanlar: {eksikAlanlar.join(', ')}
               </p>
             )}
+            {/* aria-disabled KULLANILMIYOR: düğme gerçekten tıklanabilir ve
+                tıklanınca eksikleri söylüyor. "Pasif" diye duyurulan ama basınca
+                çalışan düğme, ekran okuyucu kullananı hiç uyarıya ulaştırmaz.
+                Sönük görünüm hazır olmadığını gösterir, engel koymaz. */}
             <button
               onClick={handlePayment}
               disabled={loading}
-              aria-disabled={!isFormValid}
+              aria-describedby={denendi && !isFormValid ? 'odeme-eksikler' : undefined}
               className={`w-full py-4 bg-ink text-bg font-body font-medium text-[12px] tracking-[0.15em] uppercase rounded-[4px] hover:bg-accent-deep transition-colors disabled:cursor-not-allowed ${
                 isFormValid ? '' : 'opacity-60'
               }`}
