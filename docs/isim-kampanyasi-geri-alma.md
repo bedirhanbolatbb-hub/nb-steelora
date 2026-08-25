@@ -43,3 +43,51 @@ curl -X PATCH "$SUPABASE_URL/rest/v1/products?note=eq.auto-title-v1" \
 
 Geri alma sonrası beklenen durum: `/urunler` kart sayısı 282 → 304, ürün adları
 uzun Trendyol başlıklarına döner. Slug/URL, feed ve sitemap etkilenmez.
+
+---
+
+# İsim kampanyası v2 — ÖNERİ (25 Ağu, Faz 11A · **UYGULANMADI**)
+
+Bu bölüm de kayıt amaçlıdır; **hiçbir satır yazılmadı**. Onay bekliyor.
+
+## Sorun
+
+v1 uzun Trendyol başlıklarını kısalttı ama bazı kartlar aynı ada düştü.
+Ölçüm (25 Ağu, aktif 430 ürün / 281 kart):
+
+- Adı çakışan **30 grup**, etkilenen **70 kart**
+- Ayrıca: 1 marka adı (`Tifany`), 1 yazım hatası (`Makinası`),
+  1 üründe malzeme adı (`Pirinç`), 14 kart 5 kelimeden uzun
+
+## Öneri listeleri
+
+- `docs/isim-kampanyasi-v2-oneri.csv` — çakışan 70 kart (kod;grup;eski;yeni;dayanak)
+- `docs/isim-kampanyasi-v2-diger.csv` — marka/yazım/uzunluk düzeltmeleri (16 satır)
+
+Adlar ürünün **kendi görselinden** türetildi: motif/biçim + tür, 2–5 kelime.
+Tür tek başına ad olarak KULLANILMADI. `Erkek` ve motif kelimesi düşürülmedi.
+
+**8 kart "AYIRT EDİLEMEDİ" işaretli** — görselde ayırt edici fark yok
+(Külçe Kolye ×3 aynı uç, farklı zincir; Li İnci Kolye ×2; Li Simli Kolye ×2;
+Erkek Kolye ×2 yakın örgü). Bunlara ad UYDURULMADI; BB kararı gerekiyor.
+
+## Uygulanırsa
+
+- Yazılacak kolonlar: `override_title`, `note = 'auto-title-v2'`
+- **`trendyol_title` HİÇ değiştirilmez** (v1 kuralı aynen sürer)
+- Slug/URL değişmez → feed, sitemap ve mevcut bağlantılar etkilenmez
+
+## Geri almak gerekirse
+
+v2 kendi damgasını taşır, v1'e dokunmadan geri alınabilir:
+
+```sql
+-- v2'nin yazdığı adları v1'in bıraktığı hâle DÖNDÜRMEZ; boşaltır.
+-- v1 adını korumak için önce v2 öncesi override_title yedeği alınmalıdır.
+UPDATE public.products
+SET note = 'auto-title-v1'
+WHERE note = 'auto-title-v2';
+```
+
+Bu yüzden uygulama sırasında **v2 öncesi `id;override_title` yedeği CSV olarak
+alınır** (`docs/isim-kampanyasi-v2-yedek.csv`) ve geri alma o dosyadan yapılır.
