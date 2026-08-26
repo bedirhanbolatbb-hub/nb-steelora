@@ -83,13 +83,15 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
       >
         {slides.map((s, i) => (
           <div key={s.id} className="w-full shrink-0" aria-hidden={i !== aktif}>
-            {/* Ölçüyle ayarlandı (1440×900): 1.15fr/74vh oranı 1.006 veriyordu,
-                yani fotoğraf yine kareye yakındı. 1.4fr/82vh ile sütun ~600×738
-                = 0.81 — istenen 4:5'e (0.800) oturuyor, kaynak 3:4 olduğu için
-                kırpım dikeyde birkaç yüzde kalıyor. */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] lg:min-h-[82vh]">
+            {/* Fotoğrafın boyu SABİT vh değil, kendi oranından gelir:
+                vh'ye bağlıyken oran ekran genişliğiyle kayıyordu (ölçüm:
+                1024px'de 0.58, 1920px'de 1.08). Artık 4:5 sütunun kendi
+                oranı; yalnız çok geniş ekranlarda yükseklik sınırı devreye
+                girer. Satırın yüksekliğini fotoğraf belirler, yazı sütunu
+                ona göre uzar. */}
+            <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr]">
               {/* ── Yazı: fildişi zemin, fotoğrafın üstünde DEĞİL ── */}
-              <div className="order-1 flex items-center bg-bg px-5 py-10 sm:px-8 lg:px-16 lg:py-20">
+              <div className="order-1 flex items-center bg-bg px-5 py-10 sm:px-8 md:px-10 md:py-14 lg:px-16 lg:py-20">
                 <div className="max-w-lg">
                   {s.eyebrow && (
                     <p className="eyebrow hero-line" style={{ '--hero-delay': '0ms' } as React.CSSProperties}>
@@ -124,7 +126,7 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
               </div>
 
               {/* ── Fotoğraf: kendi alanı, dikey oran ── */}
-              <div className="relative order-2 aspect-[3/4] w-full sm:aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[82vh]">
+              <div className="relative order-2 aspect-[3/4] w-full sm:aspect-[4/3] md:aspect-[4/5] md:max-h-[min(900px,86vh)]">
                 {s.href ? (
                   <Link
                     href={s.href}
@@ -200,7 +202,7 @@ function Gorsel({ slayt, ilk }: { slayt: Slayt; ilk: boolean }) {
       priority={ilk}
       quality={IMAGE_QUALITY}
       // Fotoğraf artık tam genişlik değil: masaüstünde sütunun payı kadar.
-      sizes="(max-width: 1024px) 100vw, 48vw"
+      sizes="(max-width: 767px) 100vw, 42vw"
       placeholder="blur"
       blurDataURL={slayt.image_blur || BLUR_PLACEHOLDER}
       className={ilk ? 'object-cover object-center hero-media' : 'object-cover object-center'}
