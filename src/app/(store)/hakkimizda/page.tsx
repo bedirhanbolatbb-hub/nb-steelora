@@ -29,18 +29,26 @@ export default function HakkimizdaPage() {
         </h2>
         <p>
           Kaliteden ödün vermeden, herkesin ulaşabileceği zarif takılar sunmak en temel
-          hedefimizdir. Sertifikalı malzemeler kullanıyor, her ürünümüzü titizlikle kontrol
-          ediyoruz. Tasarımlarımız trendlerin ötesinde, zamansız bir zarafet taşır.
+          hedefimizdir. Her ürünün malzemesini kendi sayfasında açıkça yazıyor, gelen her
+          parçayı titizlikle kontrol ediyoruz. Tasarımlarımız trendlerin ötesinde, zamansız
+          bir zarafet taşır.
         </p>
 
         <h2 className="font-heading text-[22px] lg:text-[26px] font-medium text-ink mt-12 mb-4 pt-8 border-t border-line">
           Neden NB Steelora®?
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+          {/* Faz 11A kapanış: burada "Sertifikalı Ürünler — tüm ürünlerimiz
+              orijinallik sertifikası ile gönderilir" yazıyordu. Sertifika
+              gönderilmiyor (BB kararı), yani karşılığı olmayan bir vaatti.
+              Yerine ürünün gerçekten taşıdığı malzeme bilgisi kondu; "tüm
+              ürünler" denmiyor çünkü katalogda kaplama ve boncuk parçalar da
+              var — malzeme her ürünün kendi sayfasında yazılı. */}
           <div className="bg-surface-muted/30 p-6">
-            <p className="text-[14px] font-heading text-ink mb-2">Sertifikalı Ürünler</p>
+            <p className="text-[14px] font-heading text-ink mb-2">316L Paslanmaz Çelik</p>
             <p className="text-[12px] text-muted">
-              Tüm ürünlerimiz orijinallik sertifikası ile gönderilir.
+              Çelik koleksiyonumuz 316L paslanmaz çeliktir; her ürünün malzemesi kendi
+              sayfasında yazar.
             </p>
           </div>
           <div className="bg-surface-muted/30 p-6">

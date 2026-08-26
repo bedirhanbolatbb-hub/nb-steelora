@@ -46,9 +46,9 @@ uzun Trendyol başlıklarına döner. Slug/URL, feed ve sitemap etkilenmez.
 
 ---
 
-# İsim kampanyası v2 — ÖNERİ (25 Ağu, Faz 11A · **UYGULANMADI**)
+# İsim kampanyası v2 — UYGULANDI (26 Ağu, Faz 11A kapanış)
 
-Bu bölüm de kayıt amaçlıdır; **hiçbir satır yazılmadı**. Onay bekliyor.
+BB 26 Ağustos'ta onayladı ve uygulandı. Aşağısı geri alma için gereken her şeyi taşır.
 
 ## Sorun
 
@@ -71,23 +71,56 @@ Tür tek başına ad olarak KULLANILMADI. `Erkek` ve motif kelimesi düşürülm
 (Külçe Kolye ×3 aynı uç, farklı zincir; Li İnci Kolye ×2; Li Simli Kolye ×2;
 Erkek Kolye ×2 yakın örgü). Bunlara ad UYDURULMADI; BB kararı gerekiyor.
 
-## Uygulanırsa
+## Ne yazıldı
 
-- Yazılacak kolonlar: `override_title`, `note = 'auto-title-v2'`
-- **`trendyol_title` HİÇ değiştirilmez** (v1 kuralı aynen sürer)
-- Slug/URL değişmez → feed, sitemap ve mevcut bağlantılar etkilenmez
+- **128 ürün satırı** (77 kart + 4 "Li" düzeltmesi) → `override_title` ve `note = 'auto-title-v2'`
+- **`trendyol_title` HİÇ değiştirilmedi.** Kanıt: 128 satırın tamamında `trendyol_title`,
+  Trendyol API'sinin o barkod için döndürdüğü başlıkla **birebir aynı** (26 Ağu, 513 ürün tarandı).
+- Slug/URL değişmedi → feed, sitemap ve mevcut bağlantılar etkilenmedi.
+- Kart sayısı değişmedi: **281 → 281**. (Ad grubun TÜM üyelerine yazıldı; yalnız kapağa
+  yazılsaydı `getGroupKey` başlığa baktığı için gruplar bölünür ve kart sayısı artardı.)
+
+Sonuç: adı çakışan kart grubu **30 → 3**, etkilenen kart **70 → 7**.
+
+## Uygulanmayan 7 kart
+
+Külçe Kolye ×3 · İnci Kolye ×2 · Simli Kolye ×2. Üç grup da üç bağımsız görsel
+incelemesinden (zincir · ton · uç) geçti, 9/9 "ayırt edilemez" dedi. Dahası:
+
+- `K175-1` ile `NBK071`'in iki fotoğrafı **bayt düzeyinde aynı dosya**.
+- `NBK082` ile `NBK182` aynı üç fotoğrafı farklı sırayla kullanıyor.
+- Külçe üçlüsünde uç aynı plaka ("FINE GOLD 999.9 1000g"), zincir aynı tip.
+
+Bunlar "adlandırılması zor ürünler" değil, büyük olasılıkla **aynı ürünün
+tedarikçide birden çok kez listelenmiş hâli** (yalnız fiyat farklı). Ad
+uydurulmadı; eski adlar korundu, yalnız tedarikçi başlığından bozulan
+"Li" öneki ("2'li"den) düşürüldü. Liste: `docs/isim-kampanyasi-v2-kalanlar.csv`
+(panel düzenleme + mağaza bağlantılarıyla).
 
 ## Geri almak gerekirse
 
-v2 kendi damgasını taşır, v1'e dokunmadan geri alınabilir:
+v2 kendi damgasını taşır; yedek dosyası v2 ÖNCESİ adları tutar:
+`docs/isim-kampanyasi-v2-yedek.csv` (`id;slug;kod;override_title_onceki;note_onceki;yeni_ad`).
 
 ```sql
--- v2'nin yazdığı adları v1'in bıraktığı hâle DÖNDÜRMEZ; boşaltır.
--- v1 adını korumak için önce v2 öncesi override_title yedeği alınmalıdır.
-UPDATE public.products
-SET note = 'auto-title-v1'
-WHERE note = 'auto-title-v2';
+-- Tek satırlık geri alma YOK: v2 öncesi adlar v1'den geliyordu, NULL'a çekmek
+-- adları uzun Trendyol başlıklarına düşürürdü. Doğru yol yedekten geri yazmak.
+-- Hızlı kontrol — kaç satır etkilenmiş:
+SELECT count(*) FROM public.products WHERE note = 'auto-title-v2';   -- 128
 ```
 
-Bu yüzden uygulama sırasında **v2 öncesi `id;override_title` yedeği CSV olarak
-alınır** (`docs/isim-kampanyasi-v2-yedek.csv`) ve geri alma o dosyadan yapılır.
+Yedekten geri yazma (servis anahtarıyla, satır satır):
+
+```bash
+# docs/isim-kampanyasi-v2-yedek.csv → id;slug;kod;override_title_onceki;...
+tail -n +2 docs/isim-kampanyasi-v2-yedek.csv | while IFS=';' read -r id slug kod onceki rest; do
+  curl -s -X PATCH "$SUPABASE_URL/rest/v1/products?id=eq.$id" \
+    -H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+    -H "Content-Type: application/json" \
+    -d "{\"override_title\": \"$onceki\", \"note\": \"auto-title-v1\"}" > /dev/null
+done
+```
+
+Geri alma sonrası beklenen durum: adı çakışan kart grubu yeniden 30, kart sayısı
+yine 281 (kart sayısı addan bağımsız değil ama grup üyeleri birlikte döndüğü için
+bölünme olmaz).

@@ -15,9 +15,9 @@ NBK104;Kolye 45 cm — Gold;Kolye 45 cm — Gold;Zirkon Yuvarlak Madalyon Kolye;
 NBK093;Kolye 45 cm;Kolye 45 cm;İşlemeli Damla Kolye;görsel: işlemeli büyük damla uç
 NBK107;Kolye 45 cm;Kolye 45 cm;Tek İnci Kolye;görsel: tek inci + yan taşlar
 NBK018;Kolye 45 cm;Kolye 45 cm;Kalp Formlu Kolye;görsel: içi boş kalp konturu
-NBK043;Külçe Kolye;Külçe Kolye;AYIRT EDİLEMEDİ — BB kararı;üç kart aynı külçe ucu; yalnız zincir/fiyat farklı
-NBK042;Külçe Kolye;Külçe Kolye;AYIRT EDİLEMEDİ — BB kararı;üç kart aynı külçe ucu; yalnız zincir/fiyat farklı
-NBK041;Külçe Kolye;Külçe Kolye;AYIRT EDİLEMEDİ — BB kararı;üç kart aynı külçe ucu; yalnız zincir/fiyat farklı
+NBK043;Külçe Kolye;Külçe Kolye;UYGULANMADI (eski ad korundu);26 Ağu: 3 bağımsız görsel incelemesi ayırt edemedi — aynı plaka, aynı zincir
+NBK042;Külçe Kolye;Külçe Kolye;UYGULANMADI (eski ad korundu);26 Ağu: 3 bağımsız görsel incelemesi ayırt edemedi — aynı plaka, aynı zincir
+NBK041;Külçe Kolye;Külçe Kolye;UYGULANMADI (eski ad korundu);26 Ağu: 3 bağımsız görsel incelemesi ayırt edemedi — aynı plaka, aynı zincir
 BKP087;Vintage Küpe;Vintage Küpe;İnci Vintage Küpe;görsel: beyaz inci + gold halka
 BKP085;Vintage Küpe;Vintage Küpe;Siyah Taşlı Vintage Küpe;görsel: siyah oval taş + gold halka
 BKP053;Vintage Küpe;Vintage Küpe;Burgu Vintage Küpe;görsel: sade gold burgu form
@@ -37,8 +37,8 @@ BKP030;Küpe — Gold;Küpe — Gold;Siyah Taşlı Düğme Küpe;görsel: yuvarl
 BKP072;Küpe — Gold;Küpe — Gold;Kalın Halka Küpe;görsel: kalın gold halka
 BKP080;Üçlü Küpe;Üçlü Küpe;Üç Sıra Halka Küpe;görsel: üç sıra kalın halka
 BKP007;Üçlü Küpe;Üçlü Küpe;Dal Formlu Küpe;görsel: dal/yaprak figürü
-NBK182;Li İnci Kolye;Li İnci Kolye;AYIRT EDİLEMEDİ — BB kararı;NBK082 ile aynı düzen (inci + renkli taş)
-NBK082;Li İnci Kolye;Li İnci Kolye;AYIRT EDİLEMEDİ — BB kararı;NBK182 ile aynı düzen (inci + renkli taş)
+NBK182;Li İnci Kolye;Li İnci Kolye;UYGULANMADI (İnci Kolye);26 Ağu: NBK082 ile AYNI üç fotoğraf, sıra farklı
+NBK082;Li İnci Kolye;Li İnci Kolye;UYGULANMADI (İnci Kolye);26 Ağu: NBK182 ile AYNI üç fotoğraf, sıra farklı
 NBK143;Erkek Kolye;Erkek Kolye;Erkek Burgu Zincir Kolye;görsel: burgu/halat örgü — NBK037 ile yakın, teyit iyi olur
 NBK037;Erkek Kolye;Erkek Kolye;Erkek Örgü Zincir Kolye;görsel: yassı örgü — NBK143 ile yakın, teyit iyi olur
 BKP073;Küpe — Silver;Küpe — Silver;Zirkon Halka Küpe;görsel: taşlı huggie halka
@@ -63,8 +63,8 @@ NBK020;Tarot Kolye;Tarot Kolye;Silver Tarot Kart Kolye;görsel: silver dikdörtg
 NBK013;Tarot Kolye;Tarot Kolye;Gold Tarot Kart Kolye;görsel: gold dikdörtgen tarot kartı
 BKP033;Çivi Küpe Set;Çivi Küpe Set;Zirkon Taşlı Çivi Küpe Seti;görsel: gold + berrak zirkon
 BKP031;Çivi Küpe Set;Çivi Küpe Set;Siyah Taşlı Çivi Küpe Seti;görsel: gold + siyah taş
-K175-1;Li Simli Kolye;Li Simli Kolye;AYIRT EDİLEMEDİ — BB kararı;NBK071 ile aynı kelebek çift sıra düzeni
-NBK071;Li Simli Kolye;Li Simli Kolye;AYIRT EDİLEMEDİ — BB kararı;K175-1 ile aynı kelebek çift sıra düzeni
+K175-1;Li Simli Kolye;Li Simli Kolye;UYGULANMADI (Simli Kolye);26 Ağu: NBK071 ile iki fotoğraf BAYT DÜZEYİNDE aynı
+NBK071;Li Simli Kolye;Li Simli Kolye;UYGULANMADI (Simli Kolye);26 Ağu: K175-1 ile iki fotoğraf BAYT DÜZEYİNDE aynı
 BKP045;Damla Küpe;Damla Küpe;Dolgun Damla Küpe;görsel: düz dolgun damla
 BKP029;Damla Küpe;Damla Küpe;Zirkon Taşlı Damla Küpe;görsel: damla + zirkon taş
 NBB080;İnce İtalyan Bileklik;İnce İtalyan Bileklik;Gold İnce İtalyan Bileklik;görsel: gold yassı zincir
