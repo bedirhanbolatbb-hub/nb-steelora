@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useSepetPaneli } from '@/hooks/useSepetPaneli'
+import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
 import { useLinkStatus } from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { Search, Heart, User, ShoppingBag, Menu, X } from 'lucide-react'
@@ -110,11 +111,13 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
     if (open) document.body.dataset.overlay = 'open'
     else delete document.body.dataset.overlay
     // Faz 11B: mobil menü tam ekran kaplıyor; altındaki sayfanın kaymaya
-    // devam etmesi menüyü "yarı açık" gösteriyordu.
-    if (mobileOpen) document.body.style.overflow = 'hidden'
-    else if (!cartOpen && !searchOpen) document.body.style.overflow = ''
+    // devam etmesi menüyü "yarı açık" gösteriyordu. Kilit ortak yardımcıdan
+    // geliyor — body'ye tek başına konan kilit bu sitede İŞLEMİYOR
+    // (lib/ui/kaydirmaKilidi.ts'teki ölçüme bakınız).
+    const birak = kaydirmaKilidi(mobileOpen)
     return () => {
       delete document.body.dataset.overlay
+      birak()
     }
   }, [mobileOpen, cartOpen, searchOpen])
 
@@ -149,16 +152,25 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
   )
 
   return (
-    <header
-      className="sticky top-0 z-50 w-full border-b border-line bg-bg motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.22,0.61,0.36,1)]"
-      style={
-        // Yoğuşunca duyuru şeridi kadar yukarı kayar: ekranda yalnız tek satır
-        // kalır, akıştaki kutu değişmediği için içerik yerinde durur.
-        condensed && seritYuksekligi > 0 && !mobileOpen
-          ? { transform: `translateY(-${Math.round(seritYuksekligi)}px)` }
-          : undefined
-      }
-    >
+    // ÖTELEME <header>'ın KENDİSİNE UYGULANMAZ. Denetimde ölçüldü: transform'lu
+    // bir ata, içindeki `position: fixed` ögelerin kapsayıcı bloğu olur —
+    // sepet paneli 390×844 yerine başlığın kutusuna (390×102) hapsoluyor,
+    // kapatma düğmesi ekran dışında kalıyor ve panelin ortasına dokunmak
+    // arkadaki sayfayı açıyordu. Öteleme içerideki kabuğa taşındı; paneller
+    // ve tam ekran menü başlığın doğrudan çocuğu olarak transform'suz kalıyor.
+    //
+    // pointer-events: başlık kutusu 103px yer kaplamayı sürdürüyor ama üst
+    // 46px'i yoğuşunca boş kalıyor; orada tıklamaları yutmasın diye başlık
+    // geçirgen, kabuk ve paneller tıklanabilir.
+    <header className="pointer-events-none sticky top-0 z-50 w-full">
+      <div
+        className="pointer-events-auto border-b border-line bg-bg motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.22,0.61,0.36,1)]"
+        style={
+          condensed && seritYuksekligi > 0 && !mobileOpen
+            ? { transform: `translateY(-${Math.round(seritYuksekligi)}px)` }
+            : undefined
+        }
+      >
       {/* Duyuru şeridi */}
       <div ref={seritRef} className="text-center py-2 px-4" style={{ backgroundColor: bannerColor || '#2A1E1E' }}>
         <p className="text-accent-deep text-[10px] tracking-[0.2em] uppercase font-body">
@@ -177,7 +189,14 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
       {/* ── Mobil tek sıra ── */}
       <div className="lg:hidden max-w-[1400px] mx-auto px-4">
         <div className="grid grid-cols-[auto_1fr_auto] items-center h-14">
-          <button className="text-ink p-1 -ml-1" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menü">
+          {/* Dokunma hedefi 30×30'du (ölçüldü) — 44'e tamamlandı, negatif
+              margin ile görsel hizalama bozulmuyor. */}
+          <button
+            className="-ml-2.5 flex h-11 w-11 items-center justify-center text-ink"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Menü"
+            aria-expanded={mobileOpen}
+          >
             {mobileOpen ? <X size={22} strokeWidth={1.6} /> : <Menu size={22} strokeWidth={1.6} />}
           </button>
           {/* Tıklama alanı yazının kutusundan geniş: py/px ile 44px'e tamamlanır
@@ -273,13 +292,17 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
         </div>
       </nav>
 
+      </div>
+      {/* ↑ öteleyen kabuk burada biter; aşağıdaki katmanlar transform'un
+          DIŞINDA kalır, böylece ekranın tamamını kaplayabilirler. */}
+
       {/* ── Mobil menü — TAM EKRAN (Faz 11B) ──
           Eskiden başlığın altına açılan bir şeritti: altındaki sayfa görünmeye
           devam ediyor, menü yarı açık bir çekmece gibi duruyordu. Artık
           ekranın tamamını kaplıyor ve arka plan kaydırması kilitli. */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-50 flex flex-col bg-bg lg:hidden"
+          className="pointer-events-auto fixed inset-0 z-50 flex flex-col bg-bg lg:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Menü"
@@ -330,8 +353,10 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
         </div>
       )}
 
-      <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} coupon={coupon} />
-      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <div className="pointer-events-auto">
+        <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} coupon={coupon} />
+        <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      </div>
     </header>
   )
 }

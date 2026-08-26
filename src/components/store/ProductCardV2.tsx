@@ -180,7 +180,9 @@ export default function ProductCardV2({
         <div className="mt-1.5 flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1">
           {kampanyaliFiyat != null ? (
             <>
-              <span className={`price text-accent-deep ${buyuk ? 'text-[16px]' : 'text-[14px]'}`}>
+              <span className={`price text-accent-deep ${// Faz 11B: mobilde büyük kart artık 2 sütunda; fiyat büyütmesi de
+            // başlık gibi yalnız masaüstünde geçerli (kart boyları eşitlensin).
+            buyuk ? 'text-[14px] sm:text-[16px]' : 'text-[14px]'}`}>
                 {formatPrice(kampanyaliFiyat)}
               </span>
               <span className="price text-[12px] font-normal text-muted line-through">
@@ -192,7 +194,7 @@ export default function ProductCardV2({
             </>
           ) : (
             <>
-              <span className={`price text-ink ${buyuk ? 'text-[16px]' : 'text-[14px]'}`}>
+              <span className={`price text-ink ${buyuk ? 'text-[14px] sm:text-[16px]' : 'text-[14px]'}`}>
                 {formatPrice(listeFiyati)}
               </span>
               {(product as any).override_price &&

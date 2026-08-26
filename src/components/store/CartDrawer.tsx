@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import Image from 'next/image'
 import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
@@ -7,6 +8,7 @@ import { markaKategorisi } from '@/lib/catalog/categories'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { isRemoteMedia } from '@/lib/images'
+import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
 import Link from 'next/link'
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -24,6 +26,8 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps) {
+  // Faz 11B: panel açıkken arka sayfa kayıyordu (kilit hiç konmamıştı).
+  useEffect(() => kaydirmaKilidi(isOpen), [isOpen])
   const { items, removeItem, updateQuantity, totalPrice } = useCart()
   // Faz 11A: fiyat gösterimi vitrin kampanyasından türer (tek kaynak).
   const kampanyaIndirimi = useVitrinIndirimi()

@@ -6,8 +6,16 @@ import { WHATSAPP_URL } from '@/lib/contact'
 /**
  * Faz 11B — ölçülen üç kusur:
  *  1) Mobilde 56px balon kart fiyatlarının ve ürün sayfasındaki akordeon
- *     oklarının üstüne biniyordu. Mobilde 48px'e iniyor ve sağ kenardan
- *     daha içeri çekiliyor (dokunma hedefi yine ≥44px).
+ *     oklarının üstüne biniyordu. Mobilde 48px'e indi (dokunma hedefi yine
+ *     ≥44px) ve fiyatlarla kesişimi ölçümle sıfırlandı.
+ *
+ *     ÜRÜN SAYFASINDA MOBİLDE HİÇ BASILMIYOR: küçültmek yetmedi — akordeon
+ *     satırları tam genişlikte ve okları tam sağda; balon nereye konursa
+ *     konsun bir satırın dokunma alanını çalıyordu. Ölçüm: "Malzeme & Bakım"
+ *     okunun merkezine dokunmak akordeonu açmıyor, WhatsApp'ı açıyordu.
+ *     Ürün sayfasının satın alma sütununda zaten "Sorunuz mu var?
+ *     WhatsApp'tan yazın" düğmesi var, yani kanal kapanmıyor. Masaüstünde
+ *     yer sorunu yok, balon orada duruyor.
  *  2) Yapışkan satın alma çubuğu görünürken çubuğun ÜSTÜNE konumlanır —
  *     bu zaten globals.css'te vardı, ölçü çubuk yüksekliğine göre düzeltildi.
  *     Hem çubuk hem çerez bandı ötelemesi artık TRANSFORM ile: `bottom`
@@ -19,6 +27,7 @@ import { WHATSAPP_URL } from '@/lib/contact'
 export default function FloatingWhatsApp() {
   const yol = usePathname()
   if (yol?.startsWith('/odeme')) return null
+  const urunSayfasi = yol?.startsWith('/urun/') ?? false
 
   return (
     // whatsapp-fab: yapışkan satın alma çubuğu göründüğünde buton yukarı kayar
@@ -27,7 +36,9 @@ export default function FloatingWhatsApp() {
       href={WHATSAPP_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className="whatsapp-fab fixed bottom-5 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-green-500 text-white shadow-lg transition-colors hover:bg-green-600 hover:shadow-xl sm:bottom-6 sm:right-6 sm:h-14 sm:w-14 sm:hover:scale-110"
+      className={`whatsapp-fab fixed bottom-5 right-4 z-40 h-12 w-12 items-center justify-center rounded-full bg-green-500 text-white shadow-lg transition-colors hover:bg-green-600 hover:shadow-xl sm:bottom-6 sm:right-6 sm:flex sm:h-14 sm:w-14 sm:hover:scale-110 ${
+        urunSayfasi ? 'hidden' : 'flex'
+      }`}
       aria-label="WhatsApp ile iletişim"
     >
       <svg viewBox="0 0 24 24" className="h-6 w-6 fill-current sm:h-7 sm:w-7">

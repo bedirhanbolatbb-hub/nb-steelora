@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
+import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
 import { markaKategorisi } from '@/lib/catalog/categories'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
@@ -27,12 +28,13 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100)
-      document.body.style.overflow = 'hidden'
     } else {
-      document.body.style.overflow = ''
       setQuery('')
       setResults([])
     }
+    // Faz 11B: kilit yalnız body'ye konuyordu ve hiç işlemiyordu
+    // (bkz. lib/ui/kaydirmaKilidi.ts — html{overflow-x:clip} yayılımı kesiyor).
+    return kaydirmaKilidi(isOpen)
   }, [isOpen])
 
   // 300 ms debounce korunur (harf başına istek atmaz); ek olarak önceki istek
