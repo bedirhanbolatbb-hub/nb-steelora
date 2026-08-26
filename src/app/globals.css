@@ -382,7 +382,14 @@ body[data-overlay='open'] .whatsapp-fab {
   display: none;
 }
 
-/* Çubuk görünürken WhatsApp düğmesi yukarı kayar; yoksa Sepete Ekle'yi örtüyor. */
+/* WhatsApp düğmesinin dikey yeri TEK bir transform'da toplanır: çerez bandı
+   yüksekliği + yapışkan çubuk payı. Eskiden çerez bandı `bottom` değerini
+   değiştiriyordu; düğme 139px sıçrıyor ve bu düzen kayması olarak sayılıyordu
+   (ölçüm: sayfa yükleme CLS'inin tamamı, 0.0070). Transform kaymaya girmez. */
+.whatsapp-fab {
+  transform: translateY(calc(-1 * var(--nb-consent-h, 0px) - var(--nb-fab-lift, 0px)));
+}
+
 @media (max-width: 639px) {
   .whatsapp-fab {
     transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -391,7 +398,7 @@ body[data-overlay='open'] .whatsapp-fab {
   /* Faz 11B: çubuk 68px + 12px boşluk. Eski -62px çubuğun içine denk
      geliyordu, balon Sepete Ekle düğmesinin köşesini örtüyordu. */
   body:has(.sticky-buy[data-show='true']) .whatsapp-fab {
-    transform: translateY(-80px);
+    --nb-fab-lift: 80px;
   }
 }
 
