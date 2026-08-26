@@ -59,7 +59,11 @@ export default async function HomePage() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+          {/* Faz 11B: mobilde bu iki kart tek sütundu ve 5:4 oranıyla neredeyse
+              tam ekran kaplıyordu — iki ürün için iki ekran kaydırmak
+              gerekiyordu. Mobilde normal 2'li ızgaraya ve standart kart boyuna
+              (4:5) iniyor; masaüstü editorial düzeni aynen duruyor. */}
+          <div className="grid grid-cols-2 gap-4 lg:gap-6">
             {buyukler.map((product: any, i: number) => (
               <div key={product.id} data-reveal style={{ '--reveal-delay': `${i * 60}ms` } as React.CSSProperties}>
                 <ProductCardV2 product={product} priority buyuk />

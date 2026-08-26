@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useSepetPaneli } from '@/hooks/useSepetPaneli'
 import { useLinkStatus } from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Search, Heart, User, ShoppingBag, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
@@ -57,6 +57,15 @@ interface NavbarProps {
 export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, ilkSiparisSeridi }: NavbarProps) {
   const [condensed, setCondensed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  // Faz 11B: mobil üst bant kaydırınca tek satıra iner. Duyuru şeridinin
+  // GERÇEK yüksekliği ölçülür (390px'de metin iki satıra sarıyor, sabit sayı
+  // yanlış olurdu) ve başlık o kadar yukarı ÖTELENİR.
+  //
+  // Neden transform: sticky başlığın akıştaki kutusu aynı kalır, dolayısıyla
+  // altındaki içerik ZIPLAMAZ (CLS 0). Yükseklik animasyonu ya da şeridi
+  // DOM'dan çıkarmak, sayfanın tamamını yukarı çeker — ölçülen sorun buydu.
+  const seritRef = useRef<HTMLDivElement>(null)
+  const [seritYuksekligi, setSeritYuksekligi] = useState(0)
   // Faz 11A: sepet paneli durumu ORTAK store'a taşındı; ürün sayfası ve
   // kartlar da paneli açabilsin diye (eskiden yalnız Navbar açabiliyordu).
   const cartOpen = useSepetPaneli((s) => s.acik)
@@ -84,11 +93,26 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
     }
   }, [])
 
+  // Duyuru şeridi yüksekliği: metin uzunluğu ve ekran genişliğiyle değişir.
+  useEffect(() => {
+    const el = seritRef.current
+    if (!el) return
+    const olc = () => setSeritYuksekligi(el.getBoundingClientRect().height)
+    olc()
+    const go = new ResizeObserver(olc)
+    go.observe(el)
+    return () => go.disconnect()
+  }, [])
+
   // Açık katman işareti — PDP'deki yapışkan çubuk ve WhatsApp düğmesi okur.
   useEffect(() => {
     const open = mobileOpen || cartOpen || searchOpen
     if (open) document.body.dataset.overlay = 'open'
     else delete document.body.dataset.overlay
+    // Faz 11B: mobil menü tam ekran kaplıyor; altındaki sayfanın kaymaya
+    // devam etmesi menüyü "yarı açık" gösteriyordu.
+    if (mobileOpen) document.body.style.overflow = 'hidden'
+    else if (!cartOpen && !searchOpen) document.body.style.overflow = ''
     return () => {
       delete document.body.dataset.overlay
     }
@@ -125,9 +149,18 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
   )
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-bg border-b border-line">
+    <header
+      className="sticky top-0 z-50 w-full border-b border-line bg-bg motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.22,0.61,0.36,1)]"
+      style={
+        // Yoğuşunca duyuru şeridi kadar yukarı kayar: ekranda yalnız tek satır
+        // kalır, akıştaki kutu değişmediği için içerik yerinde durur.
+        condensed && seritYuksekligi > 0 && !mobileOpen
+          ? { transform: `translateY(-${Math.round(seritYuksekligi)}px)` }
+          : undefined
+      }
+    >
       {/* Duyuru şeridi */}
-      <div className="text-center py-2 px-4" style={{ backgroundColor: bannerColor || '#2A1E1E' }}>
+      <div ref={seritRef} className="text-center py-2 px-4" style={{ backgroundColor: bannerColor || '#2A1E1E' }}>
         <p className="text-accent-deep text-[10px] tracking-[0.2em] uppercase font-body">
           {/* Öncelik: panelden tanımlı banner kampanyası > ilk sipariş kuponu
               duyurusu > varsayılan satır. Kupon duyurusu YALNIZ otomatik bir
@@ -240,28 +273,59 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
         </div>
       </nav>
 
-      {/* ── Mobil menü ── */}
+      {/* ── Mobil menü — TAM EKRAN (Faz 11B) ──
+          Eskiden başlığın altına açılan bir şeritti: altındaki sayfa görünmeye
+          devam ediyor, menü yarı açık bir çekmece gibi duruyordu. Artık
+          ekranın tamamını kaplıyor ve arka plan kaydırması kilitli. */}
       {mobileOpen && (
-        <div className="lg:hidden bg-bg border-t border-line">
-          <div className="px-4 py-4 space-y-1">
+        <div
+          className="fixed inset-0 z-50 flex flex-col bg-bg lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menü"
+        >
+          {/* Kendi başlık satırı: kapatma düğmesi hep aynı yerde */}
+          <div className="flex h-14 shrink-0 items-center justify-between border-b border-line px-4">
+            <span className="font-heading text-[17px] font-light tracking-[0.16em] text-ink">
+              NB STEELORA
+            </span>
+            <button
+              onClick={() => setMobileOpen(false)}
+              aria-label="Menüyü kapat"
+              className="-mr-2 flex h-11 w-11 items-center justify-center text-ink"
+            >
+              <X size={22} strokeWidth={1.6} />
+            </button>
+          </div>
+
+          <nav className="flex-1 overflow-y-auto px-5 py-6" aria-label="Kategoriler">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="block text-[12px] uppercase tracking-[0.16em] font-body text-ink-soft hover:text-ink py-2.5 transition-colors"
+                className="flex min-h-[48px] items-center border-b border-line/60 font-body text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-accent-deep"
                 onClick={() => setMobileOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
-            <div className="flex items-center gap-5 pt-3 border-t border-line">
-              <Link href="/favorilerim" className="text-ink-soft hover:text-accent-deep transition-colors py-2" aria-label="Favoriler" onClick={() => setMobileOpen(false)}>
-                <Heart size={18} strokeWidth={1.6} />
-              </Link>
-              <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="text-ink-soft hover:text-accent-deep transition-colors py-2" aria-label="Hesap" onClick={() => setMobileOpen(false)}>
-                <User size={18} strokeWidth={1.6} />
-              </Link>
-            </div>
+          </nav>
+
+          <div className="flex shrink-0 items-center gap-6 border-t border-line px-5 py-4">
+            <Link
+              href="/favorilerim"
+              className="flex min-h-[44px] items-center gap-2 font-body text-[12px] text-ink-soft transition-colors hover:text-accent-deep"
+              onClick={() => setMobileOpen(false)}
+            >
+              <Heart size={18} strokeWidth={1.6} /> Favorilerim
+            </Link>
+            <Link
+              href={isLoggedIn ? '/hesabim' : '/giris'}
+              className="flex min-h-[44px] items-center gap-2 font-body text-[12px] text-ink-soft transition-colors hover:text-accent-deep"
+              onClick={() => setMobileOpen(false)}
+            >
+              <User size={18} strokeWidth={1.6} /> {isLoggedIn ? 'Hesabım' : 'Giriş yap'}
+            </Link>
           </div>
         </div>
       )}

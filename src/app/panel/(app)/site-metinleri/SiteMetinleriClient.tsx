@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { PButton, PInput, PTextarea, PSayfaNotu } from '../_components/ui'
 import { useToast } from '../_components/overlays'
 import MetinOner from '../_components/MetinOner'
+import MediaUpload from '../_components/MediaUpload'
 import { kategoriTanitimi } from '@/lib/metin/kategoriMetni'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import HeroCinema from '@/components/home/HeroCinema'
@@ -41,6 +42,8 @@ type Alan = {
   yardim: string
   ornek?: string
   cokSatir?: boolean
+  /** 'gorsel' → metin kutusu yerine yükleyici + önizleme (Faz 11B). */
+  tur?: 'metin' | 'gorsel'
 }
 
 type Grup = {
@@ -199,6 +202,25 @@ const GRUPLAR: Grup[] = [
     ],
   },
   {
+    baslik: 'Hakkımızda — fotoğraflar',
+    neyiEtkiler:
+      'Hakkımızda sayfasındaki iki fotoğraf. Boş bırakırsanız o bölüm fotoğrafsız ama dengeli görünür; yer tutucu bir görsel basılmaz.',
+    alanlar: [
+      {
+        anahtar: 'hakkimizda_gorsel_atolye',
+        etiket: 'Atölye / kurucu fotoğrafı',
+        yardim: 'Marka anlatısının yanında, dikey durur. Dikey (4:5) kareler en iyi oturur.',
+        tur: 'gorsel',
+      },
+      {
+        anahtar: 'hakkimizda_gorsel_paket',
+        etiket: 'Hediye paketi fotoğrafı',
+        yardim: '"Kutusundan çıktığı an" bölümünde yatay durur. Yatay (4:3) kareler en iyi oturur.',
+        tur: 'gorsel',
+      },
+    ],
+  },
+  {
     baslik: 'Panel notları',
     neyiEtkiler: 'Yalnız sizin göreceğiniz not; vitrinde görünmez.',
     alanlar: [{ anahtar: 'analiz_notu', etiket: 'Analiz notu', yardim: 'Analiz ekranının başında görünür.', cokSatir: true }],
@@ -229,7 +251,36 @@ function AlanKutusu({
         {alan.etiket}
         {degisti && <span className="ml-2 text-[10px] font-normal text-[var(--p-accent-deep)]">kaydedilmedi</span>}
       </label>
-      {alan.cokSatir ? (
+      {alan.tur === 'gorsel' ? (
+        // Görsel alanı: mevcut medya yükleme düzeni (MediaUpload) kullanılır —
+        // dosya istemcide küçültülür, URL site_content'e METİN olarak yazılır.
+        // Kaydetme akışı diğer alanlarla aynı: tek "Kaydet" düğmesi.
+        <div className="space-y-2">
+          {deger ? (
+            <div className="flex items-start gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={deger}
+                alt=""
+                className="h-24 w-24 rounded-[4px] border border-[var(--p-line)] object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => onDegis(alan.anahtar, '')}
+                className="text-[12px] text-[var(--p-muted)] underline underline-offset-4 hover:text-[var(--p-ink)]"
+              >
+                Kaldır
+              </button>
+            </div>
+          ) : (
+            <p className="text-[12px] text-[var(--p-muted)]">Fotoğraf yok — bölüm fotoğrafsız görünür.</p>
+          )}
+          <MediaUpload
+            onUploaded={(url) => onDegis(alan.anahtar, url)}
+            etiket={deger ? 'Fotoğrafı değiştir' : 'Fotoğraf yükle'}
+          />
+        </div>
+      ) : alan.cokSatir ? (
         <PTextarea id={`alan-${alan.anahtar}`} rows={2} value={deger} onChange={(e) => onDegis(alan.anahtar, e.target.value)} />
       ) : (
         <PInput id={`alan-${alan.anahtar}`} value={deger} onChange={(e) => onDegis(alan.anahtar, e.target.value)} />

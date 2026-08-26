@@ -11,11 +11,27 @@ import type { HeroSlide } from '@/lib/home/homeData'
 type Slayt = HeroSlide & { href: string | null }
 
 /**
- * Hero v3 — kampanya bandı (Faz 9A).
- * 1-4 slayt; tek slayt statik, çoklu slayt ok + nokta göstergeli MANUEL
- * kaydırma. OTOMATİK DÖNME YOK (bilinçli karar). Klavye (←/→) ve dokunmatik
- * swipe destekli; geçiş yalnız transform, reduced-motion'da anlık.
- * Görsel tıklaması ve CTA aynı hedefe gider; hedef geçersizse link üretilmez.
+ * Hero v4 — BÖLÜNMÜŞ DÜZEN (Faz 11B).
+ *
+ * ÖLÇÜLEN KUSUR: fotoğraf yazının ALTINDA tam kaplama zemindi. Kürasyondan
+ * gelen 1800×2400 dikey kare 1506×533 yatay banda `object-cover` ile
+ * oturtuluyordu — karenin ~%75'i atılıyordu, ürün çoğu zaman kadraj dışında
+ * kalıyordu. Mobilde ise yazı doğrudan ürünün üstüne biniyor, açık saten
+ * zeminde açık altın üst etiket okunmuyordu.
+ *
+ * YENİ DÜZEN — yazı ile fotoğraf AYRI ALANLAR:
+ *   · Masaüstü: yazı solda fildişi zeminde, fotoğraf sağda tam boy dikey.
+ *   · Mobil: alt alta — önce yazı bloğu, altında fotoğraf. Yazı ürünün
+ *     üstüne HİÇ binmez.
+ *
+ * Üst etiket artık AÇIK zeminde duruyor: `.eyebrow` varsayılanı olan koyu
+ * altın (--accent-deep) kullanılır. `.eyebrow-acik` istisnası (koyu fotoğraf
+ * üzerinde açık altın) burada KALDIRILDI — zemin artık koyu değil.
+ *
+ * Değişmeyenler: fotoğraf kaynağı (Kürasyon → homepage_settings.hero_slides),
+ * 1-4 slayt, otomatik dönme YOK, manuel ok/nokta/swipe/klavye, geçişte yalnız
+ * transform, reduced-motion'da anlık. Slayt yoksa sayfa zaten HeroCinema
+ * tipografi düzenine düşüyor (page.tsx) — o davranış korundu.
  */
 export default function HeroSlider({ slides }: { slides: Slayt[] }) {
   const [aktif, setAktif] = useState(0)
@@ -55,106 +71,114 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
   return (
     <section
       id="hero-slider"
-      className="relative min-h-[85vh] lg:min-h-[75vh] overflow-hidden bg-ink"
+      className="relative overflow-hidden bg-bg"
       onTouchStart={coklu ? onTouchStart : undefined}
       onTouchEnd={coklu ? onTouchEnd : undefined}
       aria-roledescription={coklu ? 'carousel' : undefined}
     >
       {/* Slayt rayı — yalnız transform anime edilir */}
       <div
-        className="flex h-full min-h-[85vh] lg:min-h-[75vh] motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.22,0.61,0.36,1)]"
+        className="flex motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.22,0.61,0.36,1)]"
         style={{ transform: `translateX(-${aktif * 100}%)` }}
       >
-        {slides.map((s, i) => {
-          const govde = (
-            <>
-              <Image
-                src={s.image_url}
-                unoptimized={isRemoteMedia(s.image_url)}
-                alt={s.title || ''}
-                fill
-                priority={i === 0}
-                quality={IMAGE_QUALITY}
-                sizes="100vw"
-                placeholder="blur"
-                blurDataURL={s.image_blur || BLUR_PLACEHOLDER}
-                className={i === 0 ? 'object-cover hero-media' : 'object-cover'}
-              />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/35 to-ink/10" />
-            </>
-          )
-          return (
-            <div key={s.id} className="relative w-full shrink-0 flex items-end lg:items-center" aria-hidden={i !== aktif}>
-              {s.href ? (
-                <Link href={s.href} className="absolute inset-0" tabIndex={i === aktif ? 0 : -1} aria-label={s.title}>
-                  {govde}
-                </Link>
-              ) : (
-                <div className="absolute inset-0">{govde}</div>
-              )}
-
-              <div className="relative w-full pb-24 pt-40 lg:py-24 pointer-events-none">
-                <div className="max-w-[1400px] mx-auto px-4 lg:px-8 w-full">
-                  <div className="max-w-xl">
-                    {/* Hero fotoğrafı KOYU: eyebrow açık altın kalır (Faz 24). */}
-                    {s.eyebrow && <p className="eyebrow eyebrow-acik">{s.eyebrow}</p>}
-                    <h2 className="font-heading text-[40px] sm:text-[54px] lg:text-[64px] font-medium leading-[1.05] mt-3 text-white">
-                      {s.title}
-                    </h2>
-                    {s.subtitle && (
-                      <p className="text-[13px] lg:text-[14px] font-body leading-relaxed mt-4 max-w-md text-white/85">
-                        {s.subtitle}
-                      </p>
-                    )}
-                    {s.href && s.cta_label && (
-                      <Link
-                        href={s.href}
-                        tabIndex={i === aktif ? 0 : -1}
-                        className="pointer-events-auto inline-flex items-center mt-7 bg-bg text-ink text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep hover:text-white transition-colors"
-                      >
-                        {s.cta_label}
-                      </Link>
-                    )}
-                  </div>
+        {slides.map((s, i) => (
+          <div key={s.id} className="w-full shrink-0" aria-hidden={i !== aktif}>
+            {/* Ölçüyle ayarlandı (1440×900): 1.15fr/74vh oranı 1.006 veriyordu,
+                yani fotoğraf yine kareye yakındı. 1.4fr/82vh ile sütun ~600×738
+                = 0.81 — istenen 4:5'e (0.800) oturuyor, kaynak 3:4 olduğu için
+                kırpım dikeyde birkaç yüzde kalıyor. */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] lg:min-h-[82vh]">
+              {/* ── Yazı: fildişi zemin, fotoğrafın üstünde DEĞİL ── */}
+              <div className="order-1 flex items-center bg-bg px-5 py-10 sm:px-8 lg:px-16 lg:py-20">
+                <div className="max-w-lg">
+                  {s.eyebrow && (
+                    <p className="eyebrow hero-line" style={{ '--hero-delay': '0ms' } as React.CSSProperties}>
+                      {s.eyebrow}
+                    </p>
+                  )}
+                  <h2
+                    className="hero-line mt-3 font-heading text-[34px] font-medium leading-[1.08] text-ink sm:text-[44px] lg:text-[58px]"
+                    style={{ '--hero-delay': '70ms' } as React.CSSProperties}
+                  >
+                    {s.title}
+                  </h2>
+                  {s.subtitle && (
+                    <p
+                      className="hero-line mt-4 max-w-md font-body text-[13px] leading-relaxed text-ink-soft lg:text-[14px]"
+                      style={{ '--hero-delay': '140ms' } as React.CSSProperties}
+                    >
+                      {s.subtitle}
+                    </p>
+                  )}
+                  {s.href && s.cta_label && (
+                    <Link
+                      href={s.href}
+                      tabIndex={i === aktif ? 0 : -1}
+                      className="hero-line mt-7 inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.18em] text-bg transition-colors hover:bg-accent-deep"
+                      style={{ '--hero-delay': '210ms' } as React.CSSProperties}
+                    >
+                      {s.cta_label}
+                    </Link>
+                  )}
                 </div>
               </div>
+
+              {/* ── Fotoğraf: kendi alanı, dikey oran ── */}
+              <div className="relative order-2 aspect-[3/4] w-full sm:aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[82vh]">
+                {s.href ? (
+                  <Link
+                    href={s.href}
+                    className="absolute inset-0"
+                    tabIndex={i === aktif ? 0 : -1}
+                    aria-label={s.title}
+                  >
+                    <Gorsel slayt={s} ilk={i === 0} />
+                  </Link>
+                ) : (
+                  <div className="absolute inset-0">
+                    <Gorsel slayt={s} ilk={i === 0} />
+                  </div>
+                )}
+              </div>
             </div>
-          )
-        })}
+          </div>
+        ))}
       </div>
 
       {coklu && (
         <>
-          {/* Oklar */}
+          {/* Oklar — fotoğraf sütununun üzerinde durur */}
           <button
             onClick={() => git(aktif - 1)}
             aria-label="Önceki slayt"
-            className="absolute left-3 lg:left-6 top-1/2 -translate-y-1/2 hidden sm:flex h-11 w-11 items-center justify-center rounded-full border border-white/25 text-white/80 hover:text-white hover:border-white/60 transition-colors"
+            className="absolute left-3 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-ink/15 bg-bg/80 text-ink/70 transition-colors hover:border-ink/40 hover:text-ink sm:flex lg:left-6"
           >
             <ChevronLeft size={20} strokeWidth={1.5} />
           </button>
           <button
             onClick={() => git(aktif + 1)}
             aria-label="Sonraki slayt"
-            className="absolute right-3 lg:right-6 top-1/2 -translate-y-1/2 hidden sm:flex h-11 w-11 items-center justify-center rounded-full border border-white/25 text-white/80 hover:text-white hover:border-white/60 transition-colors"
+            className="absolute right-3 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-ink/15 bg-bg/80 text-ink/70 transition-colors hover:border-ink/40 hover:text-ink sm:flex lg:right-6"
           >
             <ChevronRight size={20} strokeWidth={1.5} />
           </button>
 
-          {/* Noktalar */}
-          <div className="absolute inset-x-0 bottom-6 flex items-center justify-center gap-2">
+          {/* Noktalar rayın ALTINDA kendi satırında: fotoğrafın üstünde
+              dururken zemine göre renk değiştirmek gerekiyordu, artık zemin
+              her zaman fildişi. */}
+          <div className="flex items-center justify-center gap-2 bg-bg pb-2">
             {slides.map((s, i) => (
               <button
                 key={s.id}
                 onClick={() => git(i)}
                 aria-label={`Slayt ${i + 1}`}
                 aria-current={i === aktif}
-                className="flex h-8 w-8 items-center justify-center"
+                className="flex h-11 w-11 items-center justify-center"
               >
                 <span
                   className={cn(
                     'h-1.5 rounded-full motion-safe:transition-all motion-safe:duration-300',
-                    i === aktif ? 'w-6 bg-bg' : 'w-1.5 bg-bg/40'
+                    i === aktif ? 'w-6 bg-ink' : 'w-1.5 bg-ink/25'
                   )}
                 />
               </button>
@@ -163,5 +187,23 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
         </>
       )}
     </section>
+  )
+}
+
+function Gorsel({ slayt, ilk }: { slayt: Slayt; ilk: boolean }) {
+  return (
+    <Image
+      src={slayt.image_url}
+      unoptimized={isRemoteMedia(slayt.image_url)}
+      alt={slayt.title || ''}
+      fill
+      priority={ilk}
+      quality={IMAGE_QUALITY}
+      // Fotoğraf artık tam genişlik değil: masaüstünde sütunun payı kadar.
+      sizes="(max-width: 1024px) 100vw, 48vw"
+      placeholder="blur"
+      blurDataURL={slayt.image_blur || BLUR_PLACEHOLDER}
+      className={ilk ? 'object-cover object-center hero-media' : 'object-cover object-center'}
+    />
   )
 }

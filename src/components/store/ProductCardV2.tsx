@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { Check, ShoppingBag } from 'lucide-react'
 import { useSepetPaneli } from '@/hooks/useSepetPaneli'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import Link from 'next/link'
@@ -87,7 +88,7 @@ export default function ProductCardV2({
           <ProductImage
             src={primaryImage}
             alt={product.display_title}
-            sizes={buyuk ? '(max-width: 640px) 100vw, 50vw' : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 340px'}
+            sizes={buyuk ? '(max-width: 640px) 50vw, 50vw' : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 340px'}
             priority={priority}
             className={`object-cover transition-all duration-700 ${
               hoverImage ? 'group-hover:opacity-0' : 'group-hover:scale-[1.04]'
@@ -102,7 +103,7 @@ export default function ProductCardV2({
             alt=""
             aria-hidden
             fill
-            sizes={buyuk ? '50vw' : '(max-width: 640px) 50vw, 340px'}
+            sizes={buyuk ? '(max-width: 640px) 50vw, 50vw' : '(max-width: 640px) 50vw, 340px'}
             quality={IMAGE_QUALITY}
             className="object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100"
             onError={() => setHoverFailed(true)}
@@ -117,7 +118,9 @@ export default function ProductCardV2({
         )}
 
         {optionCount > 0 && (
-          <span className="absolute bottom-3 right-3 bg-bg/95 text-ink text-[9px] px-2 py-0.5 font-body tracking-[0.08em] rounded-[2px]">
+          // Mobilde sağ alt köşeyi çanta düğmesi tutuyor: seçenek rozeti
+          // orada üst üste binerdi, sağ üste alınıyor. Masaüstünde yeri aynı.
+          <span className="absolute right-3 top-3 bg-bg/95 text-ink text-[9px] px-2 py-0.5 font-body tracking-[0.08em] rounded-[2px] sm:bottom-3 sm:top-auto">
             +{optionCount} seçenek
           </span>
         )}
@@ -128,12 +131,36 @@ export default function ProductCardV2({
           </span>
         )}
 
-        {/* Hızlı ekleme — mobilde görünür, masaüstünde hover */}
+        {/* ── Hızlı ekleme ──
+            Faz 11B: mobilde kartın altında KALICI siyah bant vardı; sekiz
+            kartlık ızgarada sekiz siyah çubuk, ürünün kendisinden çok yer
+            kaplıyordu. Bant kaldırıldı ama SATIŞ KANALI DURUYOR: ilk gerçek
+            müşteri dört eklemenin üçünü kart üzerinden yaptı.
+
+            Mobil: köşede küçük çanta düğmesi (44×44 dokunma hedefi, görsel
+            daire 36px). Masaüstü: eski davranış — hover'da alttan çıkan
+            "Sepete Ekle" bandı aynen kalır. */}
+        {!outOfStock && (
+          <button
+            onClick={handleQuickAdd}
+            aria-label={added ? 'Sepete eklendi' : 'Sepete ekle'}
+            className="absolute bottom-1 right-1 flex h-11 w-11 items-center justify-center sm:hidden"
+          >
+            <span
+              className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm transition-colors ${
+                added ? 'bg-accent-deep text-white' : 'bg-bg/95 text-ink'
+              }`}
+            >
+              {added ? <Check size={16} strokeWidth={2} /> : <ShoppingBag size={16} strokeWidth={1.6} />}
+            </span>
+          </button>
+        )}
+
         <button
           onClick={handleQuickAdd}
           disabled={outOfStock}
-          className="absolute bottom-0 left-0 right-0 py-3 bg-ink/90 text-bg text-[10px] tracking-[0.18em] uppercase font-body font-medium text-center backdrop-blur-[2px]
-            opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300
+          className="absolute bottom-0 left-0 right-0 hidden py-3 bg-ink/90 text-bg text-[10px] tracking-[0.18em] uppercase font-body font-medium text-center backdrop-blur-[2px]
+            sm:block sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300
             disabled:bg-line disabled:text-muted disabled:cursor-not-allowed"
         >
           {outOfStock ? 'Tükendi' : added ? 'Eklendi ✓' : 'Sepete Ekle'}
@@ -143,7 +170,9 @@ export default function ProductCardV2({
       <div className="pt-3.5 pb-1 text-center">
         <h3
           className={`font-body text-ink clamp-2 leading-snug transition-colors group-hover:text-accent-deep ${
-            buyuk ? 'text-[15px] font-medium' : 'text-[13px] font-medium min-h-[2.6em]'
+            // Faz 11B: büyük kart mobilde 2 sütuna indi; tipografi büyütmesi
+            // yalnız masaüstünde geçerli, yoksa dar sütunda başlık taşıyor.
+            buyuk ? 'text-[13px] sm:text-[15px] font-medium min-h-[2.6em] sm:min-h-0' : 'text-[13px] font-medium min-h-[2.6em]'
           }`}
         >
           {product.display_title}

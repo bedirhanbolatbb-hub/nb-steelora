@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { firstSentence, type CollectionCard } from '@/lib/collections'
+import type { CollectionCard } from '@/lib/collections'
 import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
 
 /**
@@ -48,9 +48,16 @@ export default function CollectionsBand({ collections }: { collections: Collecti
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/15 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
                   <h3 className="font-heading text-[22px] font-medium text-bg">{collection.name}</h3>
-                  <p className="mt-1 text-[12px] font-body text-line/85 leading-relaxed">
-                    {firstSentence(collection.description)}
-                  </p>
+                  {/* Faz 11B: burada firstSentence() vardı ve açıklamanın ilk
+                      cümlesini basıyordu. "İddialı Parçalar" kartında bu
+                      "Sessiz geçmek istemiyorsanız." oluyordu — tek başına
+                      yarım kalan, altı boş bir cümle. Açıklamanın tamamı
+                      basılıyor, uzun olursa iki satırda kırpılıyor. */}
+                  {collection.description && (
+                    <p className="clamp-2 mt-1 text-[12px] font-body text-line/85 leading-relaxed">
+                      {collection.description}
+                    </p>
+                  )}
                   <span className="mt-3 inline-block text-[10px] uppercase tracking-[0.18em] font-body text-[#E5C990] border-b border-[#E5C990]/50 pb-0.5">
                     Keşfet →
                   </span>
