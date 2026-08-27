@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
+import { useKatmanKlavyesi } from '@/hooks/useKatmanKlavyesi'
 import { markaKategorisi } from '@/lib/catalog/categories'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
@@ -23,6 +24,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const kapRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -81,11 +83,21 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     onClose()
   }
 
+  // Faz 11B denetimi: Escape hiç çalışmıyordu, Tab perdenin arkasına
+  // kaçıyordu — klavye kullanıcısının katmanı kapatma yolu yoktu (KRİTİK).
+  // Kancanın kendi ilk-odak taşıması kapalı: giriş kutusuna odak zaten
+  // yukarıdaki efektte veriliyor.
+  useKatmanKlavyesi(isOpen, onClose, kapRef, { ilkOdak: false })
+
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-[60] bg-ink/80 backdrop-blur-sm" onClick={onClose}>
       <div
+        ref={kapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Ürün arama"
         className="bg-bg max-w-2xl mx-auto mt-16 sm:mt-24 rounded-[6px] overflow-hidden border border-line shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
@@ -102,7 +114,8 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
           />
           <button
             onClick={onClose}
-            className="text-muted hover:text-ink transition-colors"
+            aria-label="Aramayı kapat"
+            className="-m-3 flex h-11 w-11 items-center justify-center text-muted hover:text-ink transition-colors"
           >
             <X size={18} />
           </button>

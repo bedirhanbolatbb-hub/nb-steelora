@@ -111,7 +111,7 @@ export default function Footer({
                   <Link
                     href={cat.href}
                     prefetch={false}
-                    className="text-[12px] font-body text-line/70 hover:text-accent transition-colors"
+                    className="inline-block py-1.5 -my-1.5 text-[12px] font-body text-line/70 hover:text-accent transition-colors"
                   >
                     {cat.label}
                   </Link>
@@ -131,7 +131,7 @@ export default function Footer({
                       <Link
                         href={`/koleksiyon/${collection.slug}`}
                         prefetch={false}
-                        className="text-[12px] font-body text-line/70 hover:text-accent transition-colors"
+                        className="inline-block py-1.5 -my-1.5 text-[12px] font-body text-line/70 hover:text-accent transition-colors"
                       >
                         {collection.name}
                       </Link>
@@ -153,7 +153,7 @@ export default function Footer({
                   <Link
                     href={link.href}
                     prefetch={false}
-                    className="text-[12px] font-body text-line/70 hover:text-accent transition-colors"
+                    className="inline-block py-1.5 -my-1.5 text-[12px] font-body text-line/70 hover:text-accent transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -164,7 +164,7 @@ export default function Footer({
                   <Link
                     href={link.href}
                     prefetch={false}
-                    className="text-[12px] font-body text-line/70 hover:text-accent transition-colors"
+                    className="inline-block py-1.5 -my-1.5 text-[12px] font-body text-line/70 hover:text-accent transition-colors"
                   >
                     {link.label}
                   </Link>

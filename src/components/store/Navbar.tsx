@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useSepetPaneli } from '@/hooks/useSepetPaneli'
 import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
+import { useKatmanKlavyesi } from '@/hooks/useKatmanKlavyesi'
 import { useLinkStatus } from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { Search, Heart, User, ShoppingBag, Menu, X } from 'lucide-react'
@@ -67,6 +68,9 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
   // DOM'dan çıkarmak, sayfanın tamamını yukarı çeker — ölçülen sorun buydu.
   const seritRef = useRef<HTMLDivElement>(null)
   const [seritYuksekligi, setSeritYuksekligi] = useState(0)
+  // Denetim (Faz 11B): menü Escape ile kapanmıyordu, odak menüye taşınmıyor
+  // ve Tab arkadaki sayfaya kaçıp sayfayı klavyeyle kaydırıyordu.
+  const menuRef = useRef<HTMLDivElement>(null)
   // Faz 11A: sepet paneli durumu ORTAK store'a taşındı; ürün sayfası ve
   // kartlar da paneli açabilsin diye (eskiden yalnız Navbar açabiliyordu).
   const cartOpen = useSepetPaneli((s) => s.acik)
@@ -75,6 +79,8 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
   const [searchOpen, setSearchOpen] = useState(false)
   const totalItems = useCart((s) => s.totalItems())
   const wishlistCount = useWishlist((s) => s.items.length)
+
+  useKatmanKlavyesi(mobileOpen, () => setMobileOpen(false), menuRef)
 
   useEffect(() => {
     let raf = 0
@@ -279,8 +285,12 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
           </div>
 
           {/* İkonlar — yalnız kompakt hâlde bu sırada görünür */}
+          {/* Denetim: aria-hidden + opacity-0 idi ama içindeki 4 düğme Tab
+              sırasında kalıyordu — klavye 4 basış boyunca görünmez ögelerde
+              geziyordu. inert odağı da kapatır. */}
           <div
             aria-hidden={!condensed}
+            inert={!condensed}
             className={cn(
               'justify-self-end',
               'motion-safe:transition-all motion-safe:duration-300',
@@ -302,6 +312,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
           ekranın tamamını kaplıyor ve arka plan kaydırması kilitli. */}
       {mobileOpen && (
         <div
+          ref={menuRef}
           className="pointer-events-auto fixed inset-0 z-50 flex flex-col bg-bg lg:hidden"
           role="dialog"
           aria-modal="true"

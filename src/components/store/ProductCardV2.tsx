@@ -160,7 +160,7 @@ export default function ProductCardV2({
           onClick={handleQuickAdd}
           disabled={outOfStock}
           className="absolute bottom-0 left-0 right-0 hidden py-3 bg-ink/90 text-bg text-[10px] tracking-[0.18em] uppercase font-body font-medium text-center backdrop-blur-[2px]
-            sm:block sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300
+            sm:block sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-accent-deep transition-opacity duration-300
             disabled:bg-line disabled:text-muted disabled:cursor-not-allowed"
         >
           {outOfStock ? 'Tükendi' : added ? 'Eklendi ✓' : 'Sepete Ekle'}

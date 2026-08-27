@@ -400,6 +400,20 @@ body[data-overlay='open'] .whatsapp-fab {
   body:has(.sticky-buy[data-show='true']) .whatsapp-fab {
     --nb-fab-lift: 80px;
   }
+
+  /* Denetim: sabit çubuk, sayfa SONUNA kadar kaydırınca footer'ın son
+     bandını (Instagram, çerez tercihleri) kalıcı örtüyordu — o bağlantılara
+     dokunmak imkânsızdı. Belge sonuna çubuk + nefes payı eklenir; görünür
+     içeriği oynatmadığı için düzen kaymasına girmez.
+
+     Pay FOOTER'a konur, gövdeye değil: gövdenin alt payı bu düzende kaydırma
+     alanına eklenmiyor (ölçüldü — html yükseklik kısıtı; 110px pay verildi,
+     scrollY tavanı değişmedi). Footer'ın kendi iç payı kesin olarak düzene
+     dahil. Çerez bandı payını ConsentBanner zaten gövdede yönetiyor. */
+  body:has(.sticky-buy[data-show='true']) footer {
+    /* çubuk 58px + 18px nefes payı; en derin öge (Instagram) 37px istiyordu */
+    padding-bottom: 76px;
+  }
 }
 
 /* Beden seçimine dikkat çekme — çubuktan basıldığında bir kez yanıp söner. */

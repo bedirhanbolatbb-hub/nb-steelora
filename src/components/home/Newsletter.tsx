@@ -102,7 +102,7 @@ export default function Newsletter() {
           <span className="text-[11px] font-body text-muted leading-relaxed">
             Kampanya ve yeni koleksiyon duyuruları için tarafıma ticari elektronik ileti
             gönderilmesine onay veriyorum.{' '}
-            <Link href="/kvkk" className="text-accent-deep underline underline-offset-2">
+            <Link href="/kvkk" className="inline-block py-1.5 -my-1.5 text-accent-deep underline underline-offset-2">
               Aydınlatma Metni
             </Link>
           </span>

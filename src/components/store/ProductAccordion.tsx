@@ -32,7 +32,10 @@ export default function ProductAccordion({ sections }: { sections: Section[] }) 
             </button>
             {/* İçerik her zaman DOM'da: yükseklik yerine grid satırı anime edilir,
                 böylece layout sıçraması olmaz ve JS'siz de okunabilir kalır. */}
-            <div className="accordion-panel" data-open={isOpen} aria-hidden={!isOpen}>
+            {/* Denetim (Faz 11B): kapalı panel aria-hidden'dı ama içindeki
+                bağlantılar Tab ile odak alabiliyordu (yükseklik 0, görünmez).
+                inert odağı ve tıklamayı birlikte kapatır. */}
+            <div className="accordion-panel" data-open={isOpen} aria-hidden={!isOpen} inert={!isOpen}>
               <div>
                 <div className="pb-5 text-[13px] font-body text-ink-soft leading-relaxed">
                   {section.content}

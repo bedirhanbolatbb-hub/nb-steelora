@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
@@ -9,6 +9,7 @@ import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { isRemoteMedia } from '@/lib/images'
 import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
+import { useKatmanKlavyesi } from '@/hooks/useKatmanKlavyesi'
 import Link from 'next/link'
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -28,6 +29,10 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps) {
   // Faz 11B: panel açıkken arka sayfa kayıyordu (kilit hiç konmamıştı).
   useEffect(() => kaydirmaKilidi(isOpen), [isOpen])
+  // Denetim: Escape kapatmıyordu; kapalıyken ekran DIŞINDAKİ düğmeler Tab
+  // sırasındaydı (odak görünmez ögelere gidiyordu) — inert ile çözülüyor.
+  const kapRef = useRef<HTMLDivElement>(null)
+  useKatmanKlavyesi(isOpen, onClose, kapRef)
   const { items, removeItem, updateQuantity, totalPrice } = useCart()
   // Faz 11A: fiyat gösterimi vitrin kampanyasından türer (tek kaynak).
   const kampanyaIndirimi = useVitrinIndirimi()
@@ -53,6 +58,12 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
 
       {/* Drawer */}
       <div
+        ref={kapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Sepetiniz"
+        inert={!isOpen}
+        aria-hidden={!isOpen}
         className={cn(
           'fixed top-0 right-0 h-full w-full max-w-md bg-bg z-50 transform transition-transform duration-300 flex flex-col',
           isOpen ? 'translate-x-0' : 'translate-x-full'
