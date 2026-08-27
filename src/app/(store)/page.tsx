@@ -33,7 +33,16 @@ export default async function HomePage() {
 
   return (
     <>
-      <JsonLd data={organizationJsonLd([c.instagram_url, c.facebook_url, c.x_url])} />
+      <JsonLd
+        data={organizationJsonLd([c.instagram_url, c.facebook_url, c.x_url], {
+          // Künye /iletisim'de zaten yayında ve panelden yönetiliyor; aynı
+          // site_content kaydından okunuyor, ek sorgu yok (Faz 11F denetimi).
+          unvan: c.veri_sorumlusu_unvan,
+          adres: c.veri_sorumlusu_adres,
+          telefon: c.veri_sorumlusu_telefon,
+          vergi: c.veri_sorumlusu_vergi,
+        })}
+      />
       <JsonLd data={websiteJsonLd()} />
 
       {/* 1 · Hero — kampanya bandı (slayt yoksa tipografik fallback) */}

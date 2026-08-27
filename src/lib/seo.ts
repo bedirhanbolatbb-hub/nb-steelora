@@ -38,7 +38,18 @@ export function truncate(text: string, max = 200): string {
   return `${(son > 40 ? kesik.slice(0, son) : kesik).trim()}…`
 }
 
-export function organizationJsonLd(sameAs: (string | null | undefined)[] = []) {
+/** Yalnız künyede YAZAN alanlar basılır; boş anahtar hiç eklenmez. */
+export type OrganizationKunyesi = {
+  unvan?: string
+  adres?: string
+  telefon?: string
+  vergi?: string
+}
+
+export function organizationJsonLd(
+  sameAs: (string | null | undefined)[] = [],
+  kunye: OrganizationKunyesi = {}
+) {
   // sameAs yalnız DOLU sosyal adreslerle basılır (site_content'ten gelir);
   // hiç yoksa alan hiç eklenmez.
   const data: Record<string, unknown> = {
@@ -55,6 +66,44 @@ export function organizationJsonLd(sameAs: (string | null | undefined)[] = []) {
       availableLanguage: 'Turkish',
     },
   }
+
+  // ── Künye (Faz 11F denetimi) ──
+  //
+  // Unvan, adres, telefon ve vergi no /iletisim sayfasında "Yasal Satıcı
+  // Bilgileri" başlığıyla ZATEN yayında; Google'ın Organization belgelerinde de
+  // önerilen alanlar. Uydurma yok: hepsi panelden doldurulan site_content
+  // anahtarlarından okunur, boş olan alan HİÇ BASILMAZ.
+  const unvan = (kunye.unvan ?? '').trim()
+  if (unvan) data.legalName = unvan
+
+  const adres = (kunye.adres ?? '').trim()
+  if (adres) {
+    // Adres tek satır serbest metin olarak tutuluyor. Mahalle/ilçe/il ayrıştırma
+    // kalıbı başka bir adreste sessizce yanlış parçalayabilir; yayınlanan metin
+    // olduğu gibi streetAddress'e yazılır, ülke sabit TR.
+    data.address = { '@type': 'PostalAddress', streetAddress: adres, addressCountry: 'TR' }
+  }
+
+  // "0505 198 46 46" → "+905051984646". Yalnız biçim değişir, numara aynı.
+  const rakam = (kunye.telefon ?? '').replace(/\D/g, '')
+  const telefon =
+    rakam.length === 11 && rakam.startsWith('0')
+      ? `+90${rakam.slice(1)}`
+      : rakam.length === 10
+        ? `+90${rakam}`
+        : rakam.length === 12 && rakam.startsWith('90')
+          ? `+${rakam}`
+          : ''
+  if (telefon) {
+    data.telephone = telefon
+    ;(data.contactPoint as Record<string, unknown>).telephone = telefon
+  }
+
+  // vatID yalnız SALT RAKAM bir vergi/MERSİS numarasıysa basılır; "İstiklal
+  // V.D. 239…" gibi birleşik metin yazılmaz.
+  const vergi = (kunye.vergi ?? '').trim()
+  if (/^\d{10,16}$/.test(vergi)) data.vatID = vergi
+
   const dolu = sameAs.map((s) => (s ?? '').trim()).filter(Boolean)
   if (dolu.length > 0) data.sameAs = dolu
   return data

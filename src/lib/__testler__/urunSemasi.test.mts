@@ -1,5 +1,5 @@
 import { strict as assert } from 'node:assert'
-import { productJsonLd } from '../seo.ts'
+import { organizationJsonLd, productJsonLd } from '../seo.ts'
 
 const taban = {
   slug: 'test-urun', title: 'Test Ürün', description: 'Açıklama', images: ['https://x/1.jpg'],
@@ -113,6 +113,38 @@ const kontrol = (ad: string, kosul: boolean, deger: unknown) => {
     ps?.priceType === 'https://schema.org/ListPrice' && ps?.price === '450.00',
     ps
   )
+}
+
+// ── Organization künyesi (Faz 11F denetimi) ──
+
+// 12) Yayınlanan künye alanları basılır, telefon E.164'e çevrilir
+{
+  const o = organizationJsonLd([], {
+    unvan: 'Nalan Bolat — NB Steelora',
+    adres: 'Akdeniz Mah. 39823 Sok. No:3 Mezitli / Mersin',
+    telefon: '0505 198 46 46',
+    vergi: '2391094302',
+  }) as any
+  kontrol('legalName basılır', o.legalName === 'Nalan Bolat — NB Steelora', o.legalName)
+  kontrol('telefon +90 biçimine çevrilir', o.telephone === '+905051984646', o.telephone)
+  kontrol('vatID salt rakamsa basılır', o.vatID === '2391094302', o.vatID)
+  kontrol('adres yayınlanan metinle basılır',
+    o.address?.streetAddress === 'Akdeniz Mah. 39823 Sok. No:3 Mezitli / Mersin' &&
+    o.address?.addressCountry === 'TR', o.address)
+}
+
+// 13) Künye boşsa HİÇBİR alan uydurulmaz
+{
+  const o = organizationJsonLd([], {}) as any
+  kontrol('boş künyede alan basılmaz',
+    !('legalName' in o) && !('address' in o) && !('telephone' in o) && !('vatID' in o),
+    Object.keys(o))
+}
+
+// 14) Vergi alanı birleşik metinse vatID basılmaz (rakam değil, metin)
+{
+  const o = organizationJsonLd([], { vergi: 'İstiklal V.D. 2391094302' }) as any
+  kontrol('metin karışmış vergi alanı vatID olarak basılmaz', !('vatID' in o), o.vatID)
 }
 
 console.log(`✓ ${sonuc.length}/${sonuc.length} ürün şeması testi geçti`)
