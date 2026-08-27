@@ -9,6 +9,7 @@ import {
   SOZLESME_YOLLARI,
 } from '@/lib/legal/sozlesme'
 import { ORG_EMAIL } from '@/lib/seo'
+import { HAZIRLIK_LABEL, TASIMA_LABEL } from '@/lib/shipping'
 import SaticiKunyesi from '@/components/store/SaticiKunyesi'
 import { kunyeGetir } from '@/lib/legal/veriSorumlusu'
 import { createServiceClient } from '@/lib/supabase/service'
@@ -71,8 +72,15 @@ export default async function MesafeliSatisSozlesmesiPage() {
 
       <h2>5. Teslimat</h2>
       <ul>
-        <li>Teslimat süresi: Sipariş onayından itibaren 1-5 iş günü</li>
-        <li>Kargoya verme: Onaydan sonra 1-2 iş günü içinde</li>
+        {/* "Sipariş onayından itibaren 1-5 iş günü" 1–5'i TOPLAM gibi sunuyordu;
+            oysa 1–5 taşıyıcının süresidir ve hazırlığın ARDINDAN başlar. Aynı
+            listede "kargoya verme 1-2 iş günü" yazdığı için metin kendi içinde
+            de çelişiyordu. Sayılar değişmedi, sıra netleşti (Faz 11F kapanış). */}
+        <li>Kargoya verme (hazırlık): Ödeme onayından sonra {HAZIRLIK_LABEL} içinde</li>
+        <li>
+          Kargo taşıma süresi: Kargoya verildikten sonra {TASIMA_LABEL} (kargo firmasının
+          teslim süresine bağlıdır)
+        </li>
         <li>Tüm siparişlerde kargo ücreti SATICI tarafından karşılanır; ALICI'dan kargo bedeli tahsil edilmez</li>
         <li>Teslimat, ALICI'nın sipariş sırasında belirttiği adrese yapılır</li>
         <li>Kargo takip numarası e-posta ile bildirilir</li>

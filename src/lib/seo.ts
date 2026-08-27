@@ -167,7 +167,10 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
       '@type': 'ListItem',
       position: i + 1,
       name: item.name,
-      item: `${SITE_URL}${item.path}`,
+      // '/' için SITE_URL'e eğik çizgi EKLENMEZ: Organization.url, WebSite.url ve
+      // ana sayfa canonical'ı çizgisiz; aynı sayfanın iki yazımı şemada birlikte
+      // geçmesin (Faz 11F kapanış denetimi).
+      item: item.path === '/' ? SITE_URL : `${SITE_URL}${item.path}`,
     })),
   }
 }

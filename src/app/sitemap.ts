@@ -23,8 +23,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/kvkk`, lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
     { url: `${baseUrl}/gizlilik-politikasi`, lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
     { url: `${baseUrl}/mesafeli-satis-sozlesmesi`, lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
-    { url: `${baseUrl}/giris`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${baseUrl}/kayit`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    // Faz 11F kapanış: indekslenebilir ama haritada olmayan sayfalar eklendi.
+    // /sss özellikle önemli — 9 soruluk geçerli FAQPage şeması taşıyor.
+    { url: `${baseUrl}/sss`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/on-bilgilendirme-formu`, lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${baseUrl}/cayma-formu`, lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${baseUrl}/cerez-politikasi`, lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${baseUrl}/kargo-takip`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    // /giris ve /kayit ÇIKARILDI: içerikleri yok, başlıkları ana sayfanın
+    // kopyası ve artık noindex. Haritada bildirmek Search Console'da
+    // "yinelenen içerik" uyarısı üretiyordu.
   ]
 
   const categoryPages: MetadataRoute.Sitemap = CATEGORIES.map((c) => ({

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import JsonLd from '@/components/seo/JsonLd'
 import { SSS_TAMAMI } from '@/lib/legal/sss'
+import { ORG_NAME, SITE_URL } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Sık Sorulan Sorular',
@@ -28,6 +29,14 @@ export default function SssPage() {
         data={{
           '@context': 'https://schema.org',
           '@type': 'FAQPage',
+          // FAQPage bir WebPage türüdür; diğer dokuz belge sayfasının taşıdığı
+          // kimlik alanları burada da bulunmalı (Faz 11F kapanış denetimi).
+          '@id': `${SITE_URL}/sss`,
+          url: `${SITE_URL}/sss`,
+          name: 'Sık Sorulan Sorular',
+          inLanguage: 'tr-TR',
+          isPartOf: { '@type': 'WebSite', name: ORG_NAME, url: SITE_URL },
+          publisher: { '@type': 'Organization', name: ORG_NAME, url: SITE_URL },
           mainEntity: SSS_TAMAMI.map((s) => ({
             '@type': 'Question',
             name: s.soru,

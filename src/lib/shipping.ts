@@ -48,8 +48,9 @@ export function shippingCostFor(_subtotal?: number): number {
 // ve yapısal veri de kendi kopyasını taşıyordu. Kargo vaadinin geri kalanı gibi
 // artık buradan okunur; hiçbir bileşende gün sayısı elle yazılmaz.
 
-// ⚠ BU SAYILARI DEĞİŞTİRİRSENİZ: /on-bilgilendirme-formu ve /kargo-ve-iade
-// metinleri buradan okuyor, yani hukuki metin de değişir. Mesafeli satış
+// ⚠ BU SAYILARI DEĞİŞTİRİRSENİZ: /kargo-ve-iade, /on-bilgilendirme-formu,
+// /mesafeli-satis-sozlesmesi ve /hakkimizda metinleri buradan okuyor — yani
+// hukuki metin de değişir. Mesafeli satış
 // sözleşmesi ile ön bilgilendirme formunun sürüm/yürürlük tarihini
 // (lib/legal/surum.ts) gözden geçirin — esasa ilişkin değişikliktir.
 

@@ -3,7 +3,7 @@ import JsonLd from '@/components/seo/JsonLd'
 import KirintiYolu from '@/components/seo/KirintiYolu'
 import { webPageJsonLd } from '@/lib/seo'
 import Image from 'next/image'
-import { FREE_SHIPPING_LABEL, TASIMA_LABEL } from '@/lib/shipping'
+import { FREE_SHIPPING_LABEL, HAZIRLIK_LABEL, TASIMA_LABEL } from '@/lib/shipping'
 import { getSiteContent } from '@/lib/supabase/content'
 import { isRemoteMedia, IMAGE_QUALITY } from '@/lib/images'
 
@@ -123,7 +123,9 @@ export default async function HakkimizdaPage() {
         </div>
         <div className="bg-surface-muted/30 p-6">
           <p className="text-[14px] font-heading text-ink mb-2">Hızlı Kargo</p>
-          <p className="text-[12px] text-muted">{TASIMA_LABEL} teslimat, {FREE_SHIPPING_LABEL}.</p>
+          <p className="text-[12px] text-muted">
+            {HAZIRLIK_LABEL} hazırlık, {TASIMA_LABEL} kargo taşıma. {FREE_SHIPPING_LABEL}.
+          </p>
         </div>
         <div className="bg-surface-muted/30 p-6">
           <p className="text-[14px] font-heading text-ink mb-2">14 Gün İade</p>

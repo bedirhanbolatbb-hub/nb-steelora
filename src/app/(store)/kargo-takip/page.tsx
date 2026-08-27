@@ -5,6 +5,9 @@ import SiparisleriniBul from '@/components/store/SiparisleriniBul'
 export const metadata: Metadata = {
   title: 'Kargo Takip',
   description: 'Sipariş numaranız ve e-postanızla ya da takip kodunuzla kargonuzun durumunu görün.',
+  // Sorgu parametreleriyle (?siparis=…&kod=…) çağrılabiliyor; kanonik adres
+  // parametresiz sayfadır (Faz 11F kapanış denetimi).
+  alternates: { canonical: '/kargo-takip' },
 }
 
 export default async function KargoTakipPage({
