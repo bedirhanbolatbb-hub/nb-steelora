@@ -52,8 +52,43 @@ export default function YeniGelenlerRayi({ children }: { children: React.ReactNo
   const kaydir = (yon: -1 | 1) => {
     const ray = rayRef.current
     if (!ray) return
+    // scrollBy(±0.9×genişlik) DEĞİL: hedef iki snap noktası arasına düşüyor
+    // ve kap `snap-mandatory` olduğu için WebKit programatik kaydırmayı en
+    // yakın snap noktasına GERİ yaylandırabiliyor — Safari'de ok tıklaması
+    // hiç kaydırmıyor görünüyordu (Chromium ileri noktaya oturttuğu için
+    // orada fark edilmedi). Hedef artık bir KARTIN kendi başlangıcı: snap
+    // noktasına birebir oturur, geri yaylanacak ara konum kalmaz.
+    const kartlar = [...(ray.firstElementChild?.children ?? [])] as HTMLElement[]
+    if (!kartlar.length) return
+    const rayKutu = ray.getBoundingClientRect()
+    // kartın scroll koordinatındaki sol kenarı
+    const konum = (k: HTMLElement) => k.getBoundingClientRect().left - rayKutu.left + ray.scrollLeft
+    const istenen = ray.scrollLeft + yon * ray.clientWidth * 0.9
+    const adaylar = kartlar
+      .map(konum)
+      .filter((x) => (yon === 1 ? x > ray.scrollLeft + 8 : x < ray.scrollLeft - 8))
+    const maks = ray.scrollWidth - ray.clientWidth
+    const hedef = adaylar.length
+      ? adaylar.reduce((a, b) => (Math.abs(b - istenen) < Math.abs(a - istenen) ? b : a))
+      : yon === 1
+        ? maks
+        : 0
+    const nihai = Math.max(0, Math.min(maks, hedef))
     const azaltilmis = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ray.scrollBy({ left: yon * ray.clientWidth * 0.9, behavior: azaltilmis ? 'auto' : 'smooth' })
+    const baslangic = ray.scrollLeft
+    ray.scrollTo({ left: nihai, behavior: azaltilmis ? 'auto' : 'smooth' })
+    // Sigorta: BB canlıda "tık kaydırmıyor (0→0)" ölçtü; Chromium ve Playwright
+    // WebKit'te yeniden üretilemedi ama gerçek Safari'nin snap-mandatory kapta
+    // programatik yumuşak kaydırmayı iptal ettiği biliniyor. Hangi motor olursa
+    // olsun: yarım saniyede kıpırdama yoksa animasyonsuz zorla — düğme HER
+    // tarayıcıda kaydırır.
+    if (!azaltilmis) {
+      window.setTimeout(() => {
+        if (rayRef.current === ray && Math.abs(ray.scrollLeft - baslangic) < 2 && baslangic !== nihai) {
+          ray.scrollTo({ left: nihai, behavior: 'auto' })
+        }
+      }, 450)
+    }
   }
 
   const coklu = sayfaSayisi > 1
