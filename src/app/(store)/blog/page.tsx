@@ -5,8 +5,11 @@ import { createServiceClient } from '@/lib/supabase/service'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Blog | NB Steelora',
+  // absolute: kök layout'un '%s | NB Steelora' şablonu marka adını bir kez daha
+  // ekliyordu — başlık "Blog | NB Steelora | NB Steelora" çıkıyordu.
+  title: { absolute: 'Blog | NB Steelora' },
   description: 'Takı dünyasından ipuçları, bakım rehberleri ve ilhamlar. Paslanmaz çelik takılar hakkında bilmeniz gereken her şey.',
+  alternates: { canonical: '/blog' },
 }
 
 export const revalidate = 0

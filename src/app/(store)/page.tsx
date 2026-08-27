@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getHomeData } from '@/lib/home/homeData'
 import HeroSlider from '@/components/home/HeroSlider'
@@ -24,6 +25,15 @@ import { organizationJsonLd, websiteJsonLd } from '@/lib/seo'
  * hiç aktif slayt yoksa ivory tipografik fallback.
  * Tekilleştirme: featured > new_arrivals (grup kardeşi dahil) aynen sürer.
  */
+/**
+ * Ana sayfanın kendi canonical'ı: apex→www yönlendirmesi ve ?utm_* gibi izleme
+ * parametreleri aynı sayfayı çoğaltıyordu (Faz 11F kapanış denetimi).
+ *
+ * Kök layout'a KONULMAZ: alternates miras alınır ve canonical'ı olmayan her
+ * sayfa (/giris, /sepet, /favorilerim …) kendini ana sayfa ilan ederdi.
+ */
+export const metadata: Metadata = { alternates: { canonical: '/' } }
+
 export default async function HomePage() {
   const veri = await getHomeData()
   const c = veri.content

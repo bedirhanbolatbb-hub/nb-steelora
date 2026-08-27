@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { filtreIcinTemizle } from '@/lib/guvenlik/girdi'
 import { FILTRE_KATEGORILERI, filtreDesenleri } from '@/lib/catalog/categories'
@@ -5,6 +6,19 @@ import { fiyatKovalari } from '@/lib/catalog/fiyatKovalari'
 import ProductsClient from '@/components/store/ProductsClient'
 import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
 import { getSiteContent } from '@/lib/supabase/content'
+
+/**
+ * Katalog sayfasının KENDİ metadata'sı yoktu: başlığı da açıklaması da kök
+ * layout'tan geliyordu, yani arama sonucunda ana sayfayla birebir aynı metni
+ * gösteriyordu (Faz 11F kapanış denetimi). Filtre/sayfa parametreleri de
+ * kanonik adresi çoğaltıyordu; canonical filtresiz katalogu işaret eder.
+ */
+export const metadata: Metadata = {
+  title: 'Tüm Ürünler',
+  description:
+    'NB Steelora kataloğunun tamamı: 316L paslanmaz çelik kolye, küpe, bileklik, yüzük, piercing ve setler. Kategori, fiyat ve renge göre süzün.',
+  alternates: { canonical: '/urunler' },
+}
 
 export default async function UrunlerPage({
   searchParams,

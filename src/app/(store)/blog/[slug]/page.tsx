@@ -33,6 +33,7 @@ export async function generateMetadata({
   return {
     title: data.meta_title || `${data.title} | NB Steelora Blog`,
     description: data.meta_description || data.excerpt || '',
+    alternates: { canonical: `/blog/${slug}` },
   }
 }
 
