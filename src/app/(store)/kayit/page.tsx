@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import UyelikTesvikSatiri from '@/components/store/UyelikTesvikSatiri'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Input from '@/components/ui/Input'
@@ -97,7 +98,13 @@ export default function KayitPage() {
         <h1 className="font-heading text-[36px] font-light text-ink mb-2 text-center">
           Üye Ol
         </h1>
-        <div className="w-16 h-px bg-accent mx-auto mb-10" />
+        <div className="w-16 h-px bg-accent mx-auto mb-6" />
+
+        {/* Faz 11E: üyelere özel kampanya varsa burada görünür; yoksa hiç
+            basılmaz (olmayan indirim vaat edilmez). */}
+        <div className="mb-6">
+          <UyelikTesvikSatiri baglam="kayit" />
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input

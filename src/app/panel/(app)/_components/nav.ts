@@ -31,6 +31,7 @@ export const PANEL_GROUPS: PanelGroup[] = [
     title: 'Pazarlama',
     links: [
       { href: '/panel/kampanyalar', label: 'Kampanyalar' },
+      { href: '/panel/kuponlar', label: 'Kuponlar' },
       { href: '/panel/bulten', label: 'Bülten' },
     ],
   },

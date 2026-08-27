@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import UyelikTesvikSatiri from '@/components/store/UyelikTesvikSatiri'
 import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
@@ -521,6 +522,10 @@ export default function OdemePage() {
               </div>
             </div>
           </section>
+
+          {/* Faz 11E: misafir ödemede nazik hatırlatma — akışı KESMEZ, tek
+              satır; üye girişi yapılmışsa (userId dolu) hiç basılmaz. */}
+          <UyelikTesvikSatiri baglam="odeme" gizliyseGosterme={Boolean(userId)} />
 
           {/* Hediye Notu */}
           <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">

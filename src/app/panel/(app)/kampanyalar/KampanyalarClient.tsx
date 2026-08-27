@@ -376,6 +376,16 @@ export default function KampanyalarClient({
             <span className="text-[13px] font-medium">{c.name}</span>
             <PBadge tone="neutral">{TIP_ETIKET[c.type] ?? c.type}</PBadge>
             {c.code && <PBadge tone="accent">{c.code}</PBadge>}
+            {/* Faz 11E: kod gerektiren kampanya vitrinde HİÇBİR yerde
+                duyurulmaz (kural korunuyor) — panelde bunu rozetle söylüyoruz
+                ki BB "neden bantta görünmüyor" diye aramasın. Kodu olmayan
+                kod-gerektiren kampanya = yalnız kişiye özel kuponlarla
+                kullanılır (Kuponlar ekranı). */}
+            {c.type === 'discount_code' && (
+              <PBadge tone="warning">{c.code ? 'gizli · kodla' : 'gizli · kişiye özel kupon'}</PBadge>
+            )}
+            {c.membersOnly && <PBadge tone="neutral">yalnız üyeler</PBadge>}
+            {c.firstOrderOnly && <PBadge tone="neutral">ilk sipariş</PBadge>}
             {c.discountValue != null && (
               <span className="text-[12px] text-[var(--p-ink-soft)]">
                 {c.discountType === 'percent' ? `%${c.discountValue}` : formatPrice(c.discountValue)}
@@ -819,22 +829,29 @@ export default function KampanyalarClient({
               />
             </div>
             <div>
-              <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Kişi başı kullanım</label>
+              <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Kişi başı hak</label>
               <PInput
                 inputMode="numeric"
                 value={form.per_user_limit}
                 onChange={(e) => setForm({ ...form, per_user_limit: e.target.value })}
                 placeholder="boş = sınırsız"
               />
+              <p className="mt-1 text-[11px] leading-relaxed text-[var(--p-muted)]">
+                Aynı kişi bu kampanyadan kaç kez yararlanabilir. Örn: 1 → herkes bir kez.
+              </p>
             </div>
             <div>
-              <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Maks. kullanım</label>
+              <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Toplam kullanım hakkı</label>
               <PInput
                 inputMode="numeric"
                 value={form.max_uses}
                 onChange={(e) => setForm({ ...form, max_uses: e.target.value })}
                 placeholder="sınırsız"
               />
+              <p className="mt-1 text-[11px] leading-relaxed text-[var(--p-muted)]">
+                Kampanyanın tüm müşterilerde toplam kaç kez kullanılabileceği. Örn: 50 → 50
+                siparişte geçerli, sonra kendiliğinden durur.
+              </p>
             </div>
             <div>
               <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Başlangıç</label>
@@ -847,32 +864,51 @@ export default function KampanyalarClient({
           </div>
 
           {/* Koşul anahtarları (Faz 17) */}
-          <div className="flex flex-wrap items-center gap-3 rounded-[4px] border border-[var(--p-line)] p-3 text-[12px]">
-            <label className="flex items-center gap-1.5">
+          <div className="space-y-2.5 rounded-[4px] border border-[var(--p-line)] p-3 text-[12px]">
+            <label className="flex items-start gap-1.5">
               <input
                 type="checkbox"
+                className="mt-0.5"
                 checked={form.first_order_only}
                 onChange={(e) => setForm({ ...form, first_order_only: e.target.checked })}
               />
-              Yalnız ilk alışverişte
+              <span>
+                Yalnız ilk alışverişte
+                <span className="block text-[11px] text-[var(--p-muted)]">
+                  Daha önce siparişi olmayan müşteride geçerli. Örn: hoş geldin indirimi.
+                </span>
+              </span>
             </label>
-            <label className="flex items-center gap-1.5">
+            <label className="flex items-start gap-1.5">
               <input
                 type="checkbox"
+                className="mt-0.5"
                 checked={form.members_only}
                 onChange={(e) => setForm({ ...form, members_only: e.target.checked })}
               />
-              Yalnız üyelere
+              <span>
+                Yalnız üyelere
+                <span className="block text-[11px] text-[var(--p-muted)]">
+                  Giriş yapmış üyelerde geçerli; misafir ödemede uygulanmaz. Açıkken kayıt ve
+                  sepet ekranlarında &quot;üye olursanız %X&quot; satırı otomatik görünür.
+                </span>
+              </span>
             </label>
-            <label className="flex items-center gap-1.5">
+            <label className="flex items-start gap-1.5">
               <input
                 type="checkbox"
+                className="mt-0.5"
                 checked={form.combinable}
                 onChange={(e) => setForm({ ...form, combinable: e.target.checked })}
               />
-              Diğer kampanyalarla birleşebilir
+              <span>
+                Diğer kampanyalarla birleşebilir
+                <span className="block text-[11px] text-[var(--p-muted)]">
+                  Kapalıysa yalnız en yüksek indirim uygulanır. Birleşenlerin toplamı sepetin
+                  %35&apos;ini aşamaz.
+                </span>
+              </span>
             </label>
-            <span className="text-[var(--p-muted)]">Birleşenlerin toplamı sepetin %35'ini aşamaz.</span>
           </div>
 
           {/* Canlı önizleme — kaydetmeden etkisini gör */}

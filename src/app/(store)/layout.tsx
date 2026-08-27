@@ -8,6 +8,8 @@ import { getLayoutData } from '@/lib/layoutData'
 import { sunucuOlayi } from '@/lib/analytics/server'
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import { KampanyaSaglayici } from '@/components/store/KampanyaContext'
+import { UyelikTesvikSaglayici } from '@/components/store/UyelikTesvikContext'
+import { uyelikTesvikiGetir } from '@/lib/campaigns/uyelikTesviki'
 
 export default async function StoreLayout({
   children,
@@ -16,7 +18,11 @@ export default async function StoreLayout({
 }) {
   // Ortak vitrin verisi (banner + kupon + footer koleksiyon/sosyal) süreç içi
   // önbellekten gelir (Faz 9A) — istek yolunda kişiye özel tek iş auth kalır.
-  const [veri, vitrinIndirimi] = await Promise.all([getLayoutData(), vitrinIndirimiGetir()])
+  const [veri, vitrinIndirimi, uyelikTesviki] = await Promise.all([
+    getLayoutData(),
+    vitrinIndirimiGetir(),
+    uyelikTesvikiGetir(),
+  ])
 
   // Sayfa görüntüleme sunucuda ölçülür (Faz 12): engelleyicilerden etkilenmez,
   // istemciye JS eklemez ve after() sayesinde yanıtı geciktirmez.
@@ -40,6 +46,7 @@ export default async function StoreLayout({
     // kampanyayı hiç göremiyor, satırda liste fiyatını basıyordu — ürün
     // sayfası ₺314,93 derken panel ₺449,90 diyordu. Kabuğun tamamı sarıldı.
     <KampanyaSaglayici indirim={vitrinIndirimi}>
+      <UyelikTesvikSaglayici tesvik={uyelikTesviki}>
       <Navbar
         bannerText={veri.bannerText}
         bannerColor={veri.bannerColor}
@@ -52,6 +59,7 @@ export default async function StoreLayout({
       <FloatingWhatsApp />
       <RevealController />
       <ConsentGate />
+      </UyelikTesvikSaglayici>
     </KampanyaSaglayici>
   )
 }

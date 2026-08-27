@@ -466,6 +466,68 @@ export function adminNewReviewEmail(params: { urun: string; puan: number; govde:
  * kullanımlık kod. Değerlendirme davetinden AYRI gönderilir: kupon içeren
  * ileti ticari nitelik taşır ve kendi abonelik satırını gerektirir.
  */
+/**
+ * Panelden elle üretilen kişiye özel kupon maili (Faz 11E).
+ *
+ * Metin BB'nin panelde yazdığı/seçtiği başlık+gövdeden gelir (Faz 21
+ * kütüphanesi, "Başka öner" destekli); kupon kuralları burada sabittir çünkü
+ * motorun gerçek davranışını anlatır — pazarlama metni değil, doğru bilgi:
+ * kod kişiye tanımlıdır, N kez kullanılabilir, tarihe kadar geçerlidir ve
+ * daha yüksek bir otomatik indirim varsa harcanmadan kalır (çakışma kuralı).
+ */
+export function kisiselKuponEmail(params: {
+  baslik: string
+  govde: string
+  kod: string
+  oran: number
+  tip: 'percent' | 'fixed'
+  sonKullanim: Date | null
+  kullanimHakki: number
+}) {
+  const tarih = params.sonKullanim
+    ? params.sonKullanim.toLocaleDateString('tr-TR', {
+        day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Istanbul',
+      })
+    : null
+  const deger = params.tip === 'fixed' ? formatPrice(params.oran) : `%${params.oran}`
+  return {
+    subject: `${deger} indirim kodunuz — NB Steelora`,
+    html: shell(
+      htmlKacir(params.baslik),
+      `<p style="color:#7A5048;line-height:1.8;margin:0 0 20px;">${htmlKacir(params.govde)}</p>
+
+      <div style="background:#2A1E1E;padding:24px;text-align:center;margin-bottom:24px;">
+        <p style="margin:0 0 8px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#C89080;">
+          Kişiye özel indirim kodunuz
+        </p>
+        <p style="margin:0;font-size:24px;letter-spacing:.18em;color:#FFF8F6;font-weight:600;">
+          ${htmlKacir(params.kod)}
+        </p>
+        <p style="margin:8px 0 0;font-size:18px;color:#FFF8F6;">${deger}</p>
+      </div>
+
+      <p style="color:#7A5048;line-height:1.8;margin:0 0 8px;">
+        Kodu ödeme adımındaki <strong>"İndirim Kodu"</strong> alanına yazmanız yeterli.
+      </p>
+      <ul style="color:#A88070;font-size:13px;line-height:1.8;padding-left:18px;margin:0 0 24px;">
+        <li>Yalnızca bu e-postanın gönderildiği adrese tanımlıdır.</li>
+        <li>${params.kullanimHakki > 1 ? `${params.kullanimHakki} kez kullanılabilir.` : 'Bir kez kullanılabilir.'}</li>
+        ${tarih ? `<li><strong>${tarih}</strong> tarihine kadar geçerlidir.</li>` : ''}
+        <li>
+          Diğer kampanyalarla birleştirilemez. Sepetinizde daha yüksek bir indirim varsa o
+          uygulanır — kodunuz harcanmadan sizde kalır.
+        </li>
+      </ul>
+
+      <p style="text-align:center;margin:0;">
+        <a href="${SITE}/urunler" style="display:inline-block;background:#2A1E1E;color:#FFF8F6;padding:16px 40px;text-decoration:none;font-size:12px;letter-spacing:.15em;text-transform:uppercase;">
+          Ürünleri keşfet
+        </a>
+      </p>`
+    ),
+  }
+}
+
 export function secondOrderCouponEmail(params: {
   orderNumber: string
   kod: string

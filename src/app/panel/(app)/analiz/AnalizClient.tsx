@@ -160,12 +160,24 @@ export default function AnalizClient({
   secili,
   adlar,
   olcumNotu,
+  kampanyalar = [],
 }: {
   rapor: Rapor
   secili: string
   adlar: Record<string, { ad: string; slug: string }>
   /** Panelden düzenlenebilir tek satırlık ölçüm notu; boşsa hiç basılmaz. */
   olcumNotu?: string
+  /** Kampanya bazlı kullanım özeti (Faz 11E); dönemde kullanım yoksa boş. */
+  kampanyalar?: {
+    id: string
+    ad: string
+    aktif: boolean
+    gizli: boolean
+    kullanim: number
+    toplamIndirim: number
+    toplamCiro: number
+    ortalamaSepet: number
+  }[]
 }) {
   const router = useRouter()
   const sp = useSearchParams()
@@ -498,6 +510,34 @@ export default function AnalizClient({
             ))}
           </ul>
         </PCard>
+
+        {/* Kampanya kullanımı (Faz 11E) — dönemde hiç kullanım yoksa kart
+            basılmaz; sıfırla dolu bir tablo bilgi vermez. */}
+        {kampanyalar.length > 0 && (
+          <PCard title="Kampanya kullanımı">
+            <ul className="space-y-1.5">
+              {kampanyalar.map((k) => (
+                <li key={k.id} className="flex flex-wrap items-center gap-2 border-b border-[var(--p-line)] pb-2 last:border-0">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] text-[var(--p-ink)]">{k.ad}</span>
+                    <span className="text-[11px] text-[var(--p-muted)]">
+                      {k.kullanim} sipariş · {formatPrice(k.toplamIndirim)} indirim ·
+                      {' '}ort. sepet {formatPrice(k.ortalamaSepet)}
+                    </span>
+                  </span>
+                  {k.gizli && <PBadge tone="warning">gizli</PBadge>}
+                  {!k.aktif && <PBadge tone="neutral">pasif</PBadge>}
+                  <span className="text-[13px] tabular-nums text-[var(--p-ink)]">
+                    {formatPrice(k.toplamCiro)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-[11px] leading-relaxed text-[var(--p-muted)]">
+              Seçili dönemde tamamlanan siparişlerden sayılır; iptal ve iade edilenler dışarıdadır.
+            </p>
+          </PCard>
+        )}
       </div>
     </div>
   )

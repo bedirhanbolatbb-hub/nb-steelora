@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import UyelikTesvikSatiri from '@/components/store/UyelikTesvikSatiri'
 import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
@@ -47,6 +48,11 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
         <p className="eyebrow">Sipariş</p>
         <h1 className="font-heading text-[38px] lg:text-[48px] font-medium text-ink mt-2">Sepetiniz</h1>
       </header>
+
+      {/* Faz 11E: üyelere özel kampanya varsa sepette hatırlatılır. */}
+      <div className="mb-6">
+        <UyelikTesvikSatiri baglam="sepet" />
+      </div>
 
       {!hydrated ? (
         <p className="text-muted font-body text-sm">Sepet yükleniyor…</p>
