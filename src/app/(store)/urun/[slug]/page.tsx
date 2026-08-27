@@ -15,6 +15,7 @@ import { materialCare, materialLabel } from '@/lib/catalog/material'
 import { SSS_URUN } from '@/lib/legal/sss'
 import { urunOlcusu } from '@/lib/catalog/olculer'
 import { markaKategorisi } from '@/lib/catalog/categories'
+import { getSiteContent } from '@/lib/supabase/content'
 import WishlistButton from '@/components/store/WishlistButton'
 import { resolveBadge } from '@/lib/catalog/badge'
 import ProductImageGallery from '@/components/store/ProductImageGallery'
@@ -116,6 +117,9 @@ export default async function UrunDetayPage({
   const material = materialLabel(product.material_type)
 
   const olcu = urunOlcusu(product)
+  // Faz 11D: hediye kutusu görseli panelden (Hakkımızda ile aynı tek kaynak).
+  const icerik = await getSiteContent()
+  const hediyeGorseli = (icerik.hakkimizda_gorsel_paket || '').trim() || '/hediye-paketi.jpg'
   const stock = Number(product.trendyol_stock) || 0
   // Vitrin kampanyası (kart ile aynı kaynak).
   const vitrinIndirimi = await vitrinIndirimiGetir()
@@ -287,7 +291,7 @@ export default async function UrunDetayPage({
             {[
               { Icon: Truck, metin: FREE_SHIPPING_LABEL },
               { Icon: RotateCcw, metin: '14 gün iade' },
-              { Icon: Gift, metin: 'Hediye paketi' },
+              { Icon: Gift, metin: 'Hediye kutusu' },
               { Icon: ShieldCheck, metin: 'iyzico güvencesi' },
             ].map(({ Icon, metin }) => (
               <li key={metin} className="flex items-center gap-1.5 whitespace-nowrap">
@@ -297,19 +301,20 @@ export default async function UrunDetayPage({
             ))}
           </ul>
 
-          {/* Hediye satırı */}
+          {/* Hediye satırı — görsel panelden (Faz 11D), boşsa eski dosya */}
           <div className="mt-5 flex items-center gap-3.5 rounded-[4px] bg-surface-muted/60 p-3.5">
             <div className="relative w-14 h-14 shrink-0 overflow-hidden rounded-[2px]">
               <Image
-                src="/hediye-paketi.jpg"
-                alt="NB Steelora hediye paketi"
+                src={hediyeGorseli}
+                unoptimized
+                alt="NB Steelora hediye kutusu"
                 fill
                 className="object-cover"
                 sizes="56px"
               />
             </div>
             <p className="text-[12px] font-body text-ink-soft">
-              Ücretsiz premium hediye kutusunda gönderilir.
+              Her sipariş ücretsiz hediye kutusunda gönderilir.
             </p>
           </div>
 

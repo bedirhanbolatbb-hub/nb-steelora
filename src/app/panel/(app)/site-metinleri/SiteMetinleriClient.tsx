@@ -7,6 +7,7 @@ import { useToast } from '../_components/overlays'
 import MetinOner from '../_components/MetinOner'
 import MediaUpload from '../_components/MediaUpload'
 import { kategoriTanitimi } from '@/lib/metin/kategoriMetni'
+import { hediyeMetinleri, HEDIYE_VARSAYILAN } from '@/lib/metin/hediyeMetni'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import HeroCinema from '@/components/home/HeroCinema'
 import {
@@ -202,20 +203,39 @@ const GRUPLAR: Grup[] = [
     ],
   },
   {
+    baslik: 'Hediye kutusu',
+    neyiEtkiler:
+      'Ana sayfadaki hediye kutusu bandı, ürün sayfasındaki hediye satırı ve Hakkımızda\'daki "Kutusundan çıktığı an" bölümü — üçü de buradaki TEK fotoğrafı kullanır.',
+    alanlar: [
+      {
+        anahtar: 'hakkimizda_gorsel_paket',
+        etiket: 'Hediye kutusu fotoğrafı',
+        yardim:
+          'Kutunuzun kendi fotoğrafı. Boşsa stüdyo çekimi (varsayılan dosya) basılır. Yatay (4:3) kareler en iyi oturur.',
+        tur: 'gorsel',
+      },
+      {
+        anahtar: 'hediye_baslik',
+        etiket: 'Bölüm başlığı',
+        yardim: `Ana sayfadaki hediye kutusu bandının başlığı. Boşsa: "${HEDIYE_VARSAYILAN.baslik}"`,
+      },
+      {
+        anahtar: 'hediye_metin',
+        etiket: 'Bölüm metni',
+        yardim: 'Başlığın altındaki açıklama. Tek mesaj: her sipariş ücretsiz hediye kutusunda gelir.',
+        cokSatir: true,
+      },
+    ],
+  },
+  {
     baslik: 'Hakkımızda — fotoğraflar',
     neyiEtkiler:
-      'Hakkımızda sayfasındaki iki fotoğraf. Boş bırakırsanız o bölüm fotoğrafsız ama dengeli görünür; yer tutucu bir görsel basılmaz.',
+      'Hakkımızda sayfasındaki atölye fotoğrafı. Boş bırakılırsa bölüm fotoğrafsız ama dengeli görünür; yer tutucu basılmaz.',
     alanlar: [
       {
         anahtar: 'hakkimizda_gorsel_atolye',
         etiket: 'Atölye / kurucu fotoğrafı',
         yardim: 'Marka anlatısının yanında, dikey durur. Dikey (4:5) kareler en iyi oturur.',
-        tur: 'gorsel',
-      },
-      {
-        anahtar: 'hakkimizda_gorsel_paket',
-        etiket: 'Hediye paketi fotoğrafı',
-        yardim: '"Kutusundan çıktığı an" bölümünde yatay durur. Yatay (4:3) kareler en iyi oturur.',
         tur: 'gorsel',
       },
     ],
@@ -287,6 +307,12 @@ function AlanKutusu({
       )}
       {alan.yardim && <p className="mt-1 text-[11px] leading-relaxed text-[var(--p-muted)]">{alan.yardim}</p>}
 
+      {alan.anahtar === 'hediye_metin' && (
+        <MetinOner uret={() => hediyeMetinleri().map((v) => v.metin)} onSec={(m) => onDegis(alan.anahtar, m)} />
+      )}
+      {alan.anahtar === 'hediye_baslik' && (
+        <MetinOner uret={() => hediyeMetinleri().map((v) => v.baslik)} onSec={(m) => onDegis(alan.anahtar, m)} />
+      )}
       {kategoriSlug && (
         <MetinOner
           uret={() =>

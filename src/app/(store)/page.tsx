@@ -122,8 +122,12 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* 7 · Hediye */}
-      <GiftSplit />
+      {/* 7 · Hediye kutusu — görsel ve metin panelden (Faz 11D) */}
+      <GiftSplit
+        gorsel={c.hakkimizda_gorsel_paket}
+        baslik={c.hediye_baslik}
+        metin={c.hediye_metin}
+      />
 
       {/* 8 · Neden NB Steelora */}
       <WhyUs />

@@ -40,7 +40,7 @@ export const SSS_URUN: SssSorusu[] = [
   {
     soru: 'Hediye paketi var mı?',
     cevap:
-      'Her sipariş ücretsiz premium hediye kutusunda özenle paketlenir; ayrıca ücret ya da seçim gerekmez. Ödeme adımındaki "Hediye Notu" alanına 300 karaktere kadar not bırakabilirsiniz, notunuz paketin içine konur.',
+      'Her sipariş ücretsiz hediye kutusunda özenle paketlenir; ayrıca ücret ya da seçim gerekmez. Ödeme adımındaki "Hediye Notu" alanına 300 karaktere kadar not bırakabilirsiniz, notunuz paketin içine konur.',
   },
   {
     soru: 'İade ve değişim nasıl işliyor?',

@@ -100,7 +100,7 @@ export default async function HakkimizdaPage() {
         </div>
         <div className="bg-surface-muted/30 p-6">
           <p className="text-[14px] font-heading text-ink mb-2">14 Gün İade</p>
-          <p className="text-[12px] text-muted">Koşulsuz 14 gün iade hakkı ve özel hediye paketi.</p>
+          <p className="text-[12px] text-muted">Koşulsuz 14 gün iade hakkı; her sipariş hediye kutusunda gönderilir.</p>
         </div>
       </div>
 
