@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import { kunyeGetir, kunyeHtml } from '@/lib/legal/veriSorumlusu'
 import { HAKLAR_HTML, YURTDISI_HTML, basvuruHtml } from '@/lib/legal/metinler'
@@ -5,7 +6,12 @@ import { hesapSilmeMetniGetir } from '@/lib/legal/hesapSilmeMetni'
 import { createServiceClient } from '@/lib/supabase/service'
 import { KVKK_SURUMU, surumBloguHtml } from '@/lib/legal/surum'
 
-export const metadata = { title: 'KVKK Aydınlatma Metni' }
+export const metadata: Metadata = {
+  title: 'KVKK Aydınlatma Metni',
+  description:
+    '6698 sayılı Kanun kapsamında kişisel verilerin hangi amaçla işlendiği, kimlere aktarıldığı, saklama süreleri ve veri sahibinin başvuru yolları.',
+  alternates: { canonical: '/kvkk' },
+}
 export const dynamic = 'force-dynamic'
 
 /**
@@ -111,7 +117,7 @@ Süre sonunda verileriniz silinir, yok edilir veya anonim hâle getirilir.
   ].join('\n')
 
   return (
-    <LegalPageLayout eyebrow="Hukuk" title="KVKK Aydınlatma Metni">
+    <LegalPageLayout eyebrow="Hukuk" title="KVKK Aydınlatma Metni" path="/kvkk" aciklama="6698 sayılı Kanun kapsamında kişisel verilerin hangi amaçla işlendiği, kimlere aktarıldığı, saklama süreleri ve veri sahibinin başvuru yolları.">
       <div dangerouslySetInnerHTML={{ __html: govde }} />
     </LegalPageLayout>
   )

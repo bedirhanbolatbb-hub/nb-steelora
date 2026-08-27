@@ -1,3 +1,7 @@
+import JsonLd from '@/components/seo/JsonLd'
+import KirintiYolu from '@/components/seo/KirintiYolu'
+import { webPageJsonLd, type SayfaSemaTipi } from '@/lib/seo'
+
 /**
  * Belge sayfası şablonu v2 ("Sessiz Atölye") — kargo/iade, KVKK, gizlilik,
  * mesafeli satış ve diğer metin sayfaları bu tek şablonla giydirilir.
@@ -6,14 +10,38 @@
 export default function LegalPageLayout({
   title,
   eyebrow = 'Bilgi',
+  path,
+  semaTipi = 'WebPage',
+  aciklama,
   children,
 }: {
   title: string
   eyebrow?: string
+  /**
+   * Sayfanın kendi yolu (ör. '/kvkk'). Verilirse kırıntı yolu ve sayfa şeması
+   * basılır; verilmezse sayfa eskisi gibi çıplak kalır (Faz 11F kapanış).
+   */
+  path?: string
+  /** null ise sayfa şeması basılmaz — sayfanın kendi bloğu vardır (ör. /sss → FAQPage). */
+  semaTipi?: SayfaSemaTipi | null
+  /** Sayfaya özel açıklama; metadata'daki description ile aynı cümle. */
+  aciklama?: string
   children: React.ReactNode
 }) {
   return (
     <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-14 lg:py-20">
+      {path && semaTipi && (
+        <JsonLd data={webPageJsonLd({ tip: semaTipi, ad: title, aciklama, path })} />
+      )}
+      {path && (
+        <KirintiYolu
+          adimlar={[
+            { ad: 'Ana Sayfa', path: '/' },
+            { ad: title, path },
+          ]}
+          className="mb-8"
+        />
+      )}
       <header className="max-w-[68ch] border-b border-line pb-8 mb-10">
         <p className="eyebrow">{eyebrow}</p>
         <h1 className="font-heading text-[38px] lg:text-[48px] font-medium text-ink leading-tight mt-2">

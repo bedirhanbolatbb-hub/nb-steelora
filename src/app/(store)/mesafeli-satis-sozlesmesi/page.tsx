@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import Link from 'next/link'
 import {
@@ -13,7 +14,12 @@ import { kunyeGetir } from '@/lib/legal/veriSorumlusu'
 import { createServiceClient } from '@/lib/supabase/service'
 import { MESAFELI_SURUMU, surumBloguHtml } from '@/lib/legal/surum'
 
-export const metadata = { title: 'Mesafeli Satış Sözleşmesi' }
+export const metadata: Metadata = {
+  title: 'Mesafeli Satış Sözleşmesi',
+  description:
+    'Satıcı ve alıcı bilgileri, sipariş konusu, ödeme, teslimat ve cayma hakkı koşullarını içeren mesafeli satış sözleşmesi.',
+  alternates: { canonical: '/mesafeli-satis-sozlesmesi' },
+}
 export const dynamic = 'force-dynamic'
 
 export default async function MesafeliSatisSozlesmesiPage() {
@@ -31,7 +37,7 @@ export default async function MesafeliSatisSozlesmesiPage() {
       .then(({ data }) => Object.fromEntries((data || []).map((r: any) => [r.key, (r.value || '').trim()]))),
   ])
   return (
-    <LegalPageLayout eyebrow="Hukuk" title="Mesafeli Satış Sözleşmesi">
+    <LegalPageLayout eyebrow="Hukuk" title="Mesafeli Satış Sözleşmesi" path="/mesafeli-satis-sozlesmesi" aciklama="Satıcı ve alıcı bilgileri, sipariş konusu, ödeme, teslimat ve cayma hakkı koşullarını içeren mesafeli satış sözleşmesi.">
       <h2>1. Taraflar</h2>
       <p><strong>SATICI:</strong></p>
       <SaticiKunyesi kunye={kunye} baslikYok />

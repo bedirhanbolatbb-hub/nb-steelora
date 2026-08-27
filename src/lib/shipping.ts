@@ -36,3 +36,39 @@ export function qualifiesForFreeShipping(_subtotal?: number): boolean {
 export function shippingCostFor(_subtotal?: number): number {
   return SHIPPING_COST
 }
+
+// ── Teslim süresi: hazırlık ve taşıma AYRI (Faz 11F kapanış) ──
+//
+// Karar (BB, 27 Ağustos 2026): "1–5 iş günü" TAŞIYICI süresidir, toplam değil.
+// Süreç sıralıdır: ödeme onayı → 1–2 iş günü hazırlık/kargoya verme →
+// 1–5 iş günü kargo taşıması. Gerçek siparişte de doğrulandı (24 Ağustos'ta
+// kargoya verildi, 27 Ağustos'ta teslim: 3 iş günü taşıma).
+//
+// Bu iki aralık altı ayrı sayfada elle yazılıydı (bazısı "1-2", bazısı "1–2")
+// ve yapısal veri de kendi kopyasını taşıyordu. Kargo vaadinin geri kalanı gibi
+// artık buradan okunur; hiçbir bileşende gün sayısı elle yazılmaz.
+
+// ⚠ BU SAYILARI DEĞİŞTİRİRSENİZ: /on-bilgilendirme-formu ve /kargo-ve-iade
+// metinleri buradan okuyor, yani hukuki metin de değişir. Mesafeli satış
+// sözleşmesi ile ön bilgilendirme formunun sürüm/yürürlük tarihini
+// (lib/legal/surum.ts) gözden geçirin — esasa ilişkin değişikliktir.
+
+/** Ödeme onayından kargoya verilene kadar — İŞ GÜNÜ. */
+export const HAZIRLIK_IS_GUNU = { min: 1, max: 2 } as const
+
+/** Kargoya verildikten sonra taşıyıcının teslim süresi — İŞ GÜNÜ. */
+export const TASIMA_IS_GUNU = { min: 1, max: 5 } as const
+
+const araligi = (a: { min: number; max: number }) => `${a.min}–${a.max} iş günü`
+
+/** "1–2 iş günü" */
+export const HAZIRLIK_LABEL = araligi(HAZIRLIK_IS_GUNU)
+
+/** "1–5 iş günü" */
+export const TASIMA_LABEL = araligi(TASIMA_IS_GUNU)
+
+/**
+ * Tek cümlelik net vaat — iki süreyi ayrı ayrı ve SIRALI söyler.
+ * Yeni bir vaat değil, yayında olan vaadin toplamla karıştırılmayacak hâli.
+ */
+export const TESLIM_CUMLESI = `Siparişiniz ${HAZIRLIK_LABEL} içinde kargoya verilir, kargo ${TASIMA_LABEL} içinde teslim eder.`

@@ -1,5 +1,7 @@
 import { strict as assert } from 'node:assert'
-import { organizationJsonLd, productJsonLd } from '../seo.ts'
+import { organizationJsonLd, productJsonLd, webPageJsonLd } from '../seo.ts'
+
+import { HAZIRLIK_IS_GUNU, HAZIRLIK_LABEL, TASIMA_IS_GUNU, TASIMA_LABEL, TESLIM_CUMLESI } from '../shipping.ts'
 
 const taban = {
   slug: 'test-urun', title: 'Test Ürün', description: 'Açıklama', images: ['https://x/1.jpg'],
@@ -91,14 +93,44 @@ const kontrol = (ad: string, kosul: boolean, deger: unknown) => {
   )
 }
 
-// 10) transitTime UYDURULMAZ — yayında taşıma süresi ayrışmadığı sürece basılmaz
+// 10) transitTime AYRI basılır ve hazırlık süresine eşit değildir
 {
-  const o = offers(productJsonLd({ ...taban, price: 100 }))
+  const dt = (offers(productJsonLd({ ...taban, price: 100 })).shippingDetails as any).deliveryTime
   kontrol(
-    'transitTime basılmaz (yayınlanmış taşıma süresi yok)',
-    !('transitTime' in ((o.shippingDetails as any)?.deliveryTime ?? {})),
-    Object.keys((o.shippingDetails as any)?.deliveryTime ?? {})
+    'transitTime 1–5 iş günü olarak basılır',
+    dt.transitTime?.minValue === TASIMA_IS_GUNU.min &&
+      dt.transitTime?.maxValue === TASIMA_IS_GUNU.max &&
+      dt.transitTime?.unitCode === 'DAY',
+    dt.transitTime
   )
+  kontrol(
+    'handlingTime taşımadan AYRI (1–2 ≠ 1–5)',
+    dt.handlingTime?.maxValue === HAZIRLIK_IS_GUNU.max && dt.handlingTime.maxValue !== dt.transitTime.maxValue,
+    `${dt.handlingTime?.minValue}–${dt.handlingTime?.maxValue} / ${dt.transitTime?.minValue}–${dt.transitTime?.maxValue}`
+  )
+  kontrol('businessDays deliveryTime düzeyinde, ikisini de kapsar',
+    dt.businessDays?.dayOfWeek?.length === 5, dt.businessDays?.dayOfWeek?.length)
+}
+
+// 10b) Sayfa metni ile şema AYNI kaynaktan — kopya sayı kalmadı
+{
+  kontrol('kargo cümlesi iki süreyi ayrı söyler',
+    TESLIM_CUMLESI.includes(HAZIRLIK_LABEL) && TESLIM_CUMLESI.includes(TASIMA_LABEL) &&
+    HAZIRLIK_LABEL !== TASIMA_LABEL, TESLIM_CUMLESI)
+}
+
+// 10c) Belge sayfası şeması
+{
+  const w = webPageJsonLd({ tip: 'AboutPage', ad: 'Hakkımızda', aciklama: 'Marka hikâyesi.', path: '/hakkimizda' }) as any
+  kontrol('AboutPage kendi adresini bildirir',
+    w['@type'] === 'AboutPage' && w.url.endsWith('/hakkimizda') && w['@id'] === w.url, w.url)
+  kontrol('açıklama yoksa alan basılmaz',
+    !('description' in (webPageJsonLd({ tip: 'WebPage', ad: 'X', path: '/x' }) as any)), 'ok')
+  const c = webPageJsonLd({ tip: 'ContactPage', ad: 'İletişim', path: '/iletisim',
+    kunye: { unvan: 'Nalan Bolat — NB Steelora', telefon: '0505 198 46 46' } }) as any
+  kontrol('ContactPage.mainEntity künyeden türer, @context tekrar etmez',
+    c.mainEntity?.['@type'] === 'Organization' && c.mainEntity.telephone === '+905051984646' &&
+    !('@context' in c.mainEntity), Object.keys(c.mainEntity ?? {}))
 }
 
 // 11) Kampanyasız ama liste fiyatı yüksekse ListPrice yine basılır

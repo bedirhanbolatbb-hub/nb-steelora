@@ -8,12 +8,35 @@
  *
  * Tüm çıktı sunucuda üretilir; istemciye tek satır JS eklemez.
  */
+import { HAZIRLIK_IS_GUNU, TASIMA_IS_GUNU } from './shipping'
+
+/**
+ * Pazartesi–Cuma. schema.org'da hem handlingTime hem transitTime bu pencerede
+ * sayılır; bildirilmezse unitCode DAY takvim günü olarak yorumlanır.
+ */
+const IS_GUNLERI = {
+  '@type': 'OpeningHoursSpecification',
+  dayOfWeek: [
+    'https://schema.org/Monday',
+    'https://schema.org/Tuesday',
+    'https://schema.org/Wednesday',
+    'https://schema.org/Thursday',
+    'https://schema.org/Friday',
+  ],
+} as const
+
 export const SITE_URL = 'https://www.nbsteelora.com'
 export const ORG_NAME = 'NB Steelora'
 export const ORG_EMAIL = 'info@nbsteelora.com'
 
-/** Marka görseli: statik logo dosyası yok, Next'in ürettiği OG görseli kullanılır. */
-export const ORG_LOGO = `${SITE_URL}/opengraph-image`
+/**
+ * Marka logosu — KARE (512×512), app/logo/route.tsx üretir.
+ *
+ * Önceden /opengraph-image (1200×630 paylaşım kartı) kullanılıyordu; kare logo
+ * yuvalarında kırpılıp boş zemin ya da kesik yazı veriyordu. Panelden gerçek
+ * bir logo yüklenirse organizationJsonLd onu tercih eder.
+ */
+export const ORG_LOGO = `${SITE_URL}/logo`
 
 /** HTML etiketlerini ve fazla boşluğu atıp düz metne indirger. */
 export function plainText(html: string | null | undefined): string {
@@ -44,20 +67,33 @@ export type OrganizationKunyesi = {
   adres?: string
   telefon?: string
   vergi?: string
+  /** Panelden yüklenen kare logo; boşsa üretilen ORG_LOGO kullanılır. */
+  logo?: string
 }
 
 export function organizationJsonLd(
   sameAs: (string | null | undefined)[] = [],
   kunye: OrganizationKunyesi = {}
 ) {
+  return { '@context': 'https://schema.org', ...organizationVarligi(sameAs, kunye) }
+}
+
+/**
+ * Aynı kurum nesnesi ama '@context' YOK — başka bir şemanın içine gömülmek
+ * için (ör. ContactPage.mainEntity). İç içe bloklarda @context tekrarı
+ * geçersiz değil ama gereksiz; tek bağlam kök blokta bildirilir.
+ */
+function organizationVarligi(
+  sameAs: (string | null | undefined)[] = [],
+  kunye: OrganizationKunyesi = {}
+) {
   // sameAs yalnız DOLU sosyal adreslerle basılır (site_content'ten gelir);
   // hiç yoksa alan hiç eklenmez.
   const data: Record<string, unknown> = {
-    '@context': 'https://schema.org',
     '@type': 'Organization',
     name: ORG_NAME,
     url: SITE_URL,
-    logo: ORG_LOGO,
+    logo: (kunye.logo ?? '').trim() || ORG_LOGO,
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
@@ -134,6 +170,47 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
       item: `${SITE_URL}${item.path}`,
     })),
   }
+}
+
+/**
+ * Belge / bilgi sayfaları için sayfa kimliği (Faz 11F kapanış).
+ *
+ * /hakkimizda, /iletisim, /kargo-ve-iade ve hukuki metinlerin hiçbiri yapısal
+ * veri taşımıyordu: arama motoru bu sayfaların ne olduğunu yalnız metinden
+ * çıkarmak zorundaydı. AboutPage/ContactPage/WebPage bunu açıkça söyler.
+ *
+ * Uydurma yok: ad ve açıklama sayfanın kendi başlığı ve kendi metninden gelir,
+ * boş açıklama basılmaz.
+ */
+export type SayfaSemaTipi = 'WebPage' | 'AboutPage' | 'ContactPage'
+
+export function webPageJsonLd(s: {
+  tip: SayfaSemaTipi
+  ad: string
+  aciklama?: string | null
+  path: string
+  /** ContactPage'de künyeden türeyen kurum bilgisi. */
+  kunye?: OrganizationKunyesi | null
+  sameAs?: (string | null | undefined)[]
+}) {
+  const url = `${SITE_URL}${s.path}`
+  const data: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': s.tip,
+    '@id': url,
+    url,
+    name: s.ad,
+    inLanguage: 'tr-TR',
+    isPartOf: { '@type': 'WebSite', name: ORG_NAME, url: SITE_URL },
+    publisher: { '@type': 'Organization', name: ORG_NAME, url: SITE_URL },
+  }
+  const aciklama = (s.aciklama ?? '').trim()
+  if (aciklama) data.description = truncate(aciklama, 300)
+
+  // İletişim sayfasında kurumun kendisi sayfanın konusudur; künye zaten
+  // ekranda basılıyor (SaticiKunyesi), şema onu tekrar etmez, işaret eder.
+  if (s.kunye) data.mainEntity = organizationVarligi(s.sameAs ?? [], s.kunye)
+  return data
 }
 
 export type ProductSeoInput = {
@@ -213,33 +290,29 @@ export function productJsonLd(p: ProductSeoInput) {
       '@type': 'OfferShippingDetails',
       shippingRate: { '@type': 'MonetaryAmount', value: '0.00', currency: 'TRY' },
       shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'TR' },
-      // Faz 11F: yalnız YAYINDA YAZAN süre bildirilir — "1–2 iş günü içinde
-      // kargoya verilir" (ürün sayfası + mesafeli satış sözleşmesi).
-      //
-      // transitTime BASILMAZ: /kargo-ve-iade "Tahmini teslim 1–5 iş günü"
-      // yazıyor ama bunun taşıyıcı süresi mi yoksa sipariş→teslim toplamı mı
-      // olduğu yayında ayrışmıyor. Toplamsa taşıma 0–3 gündür ve 1–5 basmak
-      // uydurma olur. İşletme netleştirene kadar alan eklenmez.
+      // Faz 11F kapanış: iki süre AYRI bildirilir ve ikisi de lib/shipping'in
+      // tek kaynağından okunur — sayfa metniyle şema ayrışamaz.
+      //   · handlingTime → ödeme onayından kargoya verilene kadar (1–2 iş günü)
+      //   · transitTime  → taşıyıcının teslim süresi (1–5 iş günü)
+      // "1–5 iş günü"nün toplam değil TAŞIMA süresi olduğu işletme tarafından
+      // doğrulandı; toplamdan çıkarımla üretilmiş bir sayı değil.
       deliveryTime: {
         '@type': 'ShippingDeliveryTime',
         handlingTime: {
           '@type': 'QuantitativeValue',
-          minValue: 1,
-          maxValue: 2,
+          minValue: HAZIRLIK_IS_GUNU.min,
+          maxValue: HAZIRLIK_IS_GUNU.max,
           unitCode: 'DAY',
         },
-        // Sitede "1–2 İŞ GÜNÜ" yazıyor; unitCode DAY tek başına takvim günü
-        // sayılır ve vaat edilenden dar bir süre bildirilmiş olur.
-        businessDays: {
-          '@type': 'OpeningHoursSpecification',
-          dayOfWeek: [
-            'https://schema.org/Monday',
-            'https://schema.org/Tuesday',
-            'https://schema.org/Wednesday',
-            'https://schema.org/Thursday',
-            'https://schema.org/Friday',
-          ],
+        transitTime: {
+          '@type': 'QuantitativeValue',
+          minValue: TASIMA_IS_GUNU.min,
+          maxValue: TASIMA_IS_GUNU.max,
+          unitCode: 'DAY',
         },
+        // İkisi de İŞ GÜNÜ; unitCode DAY tek başına takvim günü sayılır ve
+        // vaat edilenden dar bir süre bildirilmiş olurdu.
+        businessDays: IS_GUNLERI,
       },
     },
     hasMerchantReturnPolicy: {

@@ -41,6 +41,7 @@ export default async function HomePage() {
           adres: c.veri_sorumlusu_adres,
           telefon: c.veri_sorumlusu_telefon,
           vergi: c.veri_sorumlusu_vergi,
+          logo: c.logo_kare_url,
         })}
       />
       <JsonLd data={websiteJsonLd()} />

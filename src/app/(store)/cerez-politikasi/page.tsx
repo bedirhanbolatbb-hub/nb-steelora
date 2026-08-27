@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import { createServiceClient } from '@/lib/supabase/service'
 import { kunyeGetir, kunyeHtml } from '@/lib/legal/veriSorumlusu'
@@ -12,7 +13,12 @@ import {
 import { CEREZ_SURUMU, surumBloguHtml } from '@/lib/legal/surum'
 import { hesapSilmeMetniGetir } from '@/lib/legal/hesapSilmeMetni'
 
-export const metadata = { title: 'Çerez Politikası' }
+export const metadata: Metadata = {
+  title: 'Çerez Politikası',
+  description:
+    'Sitede kullanılan çerezlerin envanteri, amaçları ve saklama süreleri; rıza tercihinizi dilediğiniz an değiştirme yolu.',
+  alternates: { canonical: '/cerez-politikasi' },
+}
 export const dynamic = 'force-dynamic'
 
 /**
@@ -85,7 +91,7 @@ sorulur.`
   ].filter(Boolean)
 
   return (
-    <LegalPageLayout eyebrow="Gizlilik" title="Çerez Politikası">
+    <LegalPageLayout eyebrow="Gizlilik" title="Çerez Politikası" path="/cerez-politikasi" aciklama="Sitede kullanılan çerezlerin envanteri, amaçları ve saklama süreleri; rıza tercihinizi dilediğiniz an değiştirme yolu.">
       <div dangerouslySetInnerHTML={{ __html: bolumler.join('\n') }} />
     </LegalPageLayout>
   )

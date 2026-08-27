@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import SaticiKunyesi from '@/components/store/SaticiKunyesi'
 import { kunyeGetir } from '@/lib/legal/veriSorumlusu'
@@ -6,7 +7,12 @@ import { ORG_EMAIL } from '@/lib/seo'
 import CaymaFormuAraclar from './CaymaFormuAraclar'
 import Link from 'next/link'
 
-export const metadata = { title: 'Örnek Cayma Formu' }
+export const metadata: Metadata = {
+  title: 'Örnek Cayma Formu',
+  description:
+    'Mesafeli Sözleşmeler Yönetmeliği ekindeki örnek cayma formu. Doldurmak zorunlu değildir; cayma kararını bildiren açık bir beyan yeterlidir.',
+  alternates: { canonical: '/cayma-formu' },
+}
 export const dynamic = 'force-dynamic'
 
 /**
@@ -36,7 +42,7 @@ export default async function CaymaFormuPage() {
   ]
 
   return (
-    <LegalPageLayout eyebrow="Hukuk" title="Örnek Cayma Formu">
+    <LegalPageLayout eyebrow="Hukuk" title="Örnek Cayma Formu" path="/cayma-formu" aciklama="Mesafeli Sözleşmeler Yönetmeliği ekindeki örnek cayma formu. Doldurmak zorunlu değildir; cayma kararını bildiren açık bir beyan yeterlidir.">
       <p>
         Bu form, Mesafeli Sözleşmeler Yönetmeliği ekinde yer alan örnek cayma formudur.
         <strong> Doldurmak zorunlu değildir:</strong> cayma kararınızı bildiren açık bir

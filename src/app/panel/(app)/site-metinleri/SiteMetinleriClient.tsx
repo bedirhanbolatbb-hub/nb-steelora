@@ -241,6 +241,20 @@ const GRUPLAR: Grup[] = [
     ],
   },
   {
+    baslik: 'Marka logosu',
+    neyiEtkiler:
+      'Google bilgi panelinde ve arama sonucunda markanın yanında görünen KARE logo. Boş bırakılırsa site kendi ürettiği "NB STEELORA" işaretini kullanır — yer tutucu ya da bozuk görsel çıkmaz.',
+    alanlar: [
+      {
+        anahtar: 'logo_kare_url',
+        etiket: 'Kare logo (512×512)',
+        yardim:
+          'KARE olmalı: en az 112×112, önerilen 512×512 PNG. Logo tuvalin ortasında ve kenarlarda az boşlukla dursun; geniş (yatay) bir görsel yüklerseniz Google kırpar. Vitrinde hiçbir yerde basılmaz, yalnız yapısal veriye girer.',
+        tur: 'gorsel',
+      },
+    ],
+  },
+  {
     baslik: 'Panel notları',
     neyiEtkiler: 'Yalnız sizin göreceğiniz not; vitrinde görünmez.',
     alanlar: [{ anahtar: 'analiz_notu', etiket: 'Analiz notu', yardim: 'Analiz ekranının başında görünür.', cokSatir: true }],

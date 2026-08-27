@@ -1,10 +1,16 @@
+import type { Metadata } from 'next'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 
-export const metadata = { title: 'Gizlilik Politikası' }
+export const metadata: Metadata = {
+  title: 'Gizlilik Politikası',
+  description:
+    'nbsteelora.com üzerinden toplanan kişisel bilgilerin nasıl toplandığı, ne için kullanıldığı ve nasıl korunduğu.',
+  alternates: { canonical: '/gizlilik-politikasi' },
+}
 
 export default function GizlilikPolitikasiPage() {
   return (
-    <LegalPageLayout eyebrow="Hukuk" title="Gizlilik Politikası">
+    <LegalPageLayout eyebrow="Hukuk" title="Gizlilik Politikası" path="/gizlilik-politikasi" aciklama="nbsteelora.com üzerinden toplanan kişisel bilgilerin nasıl toplandığı, ne için kullanıldığı ve nasıl korunduğu.">
       <h2>1. Giriş</h2>
       <p>
         NB Steelora olarak müşterilerimizin gizliliğine büyük önem veriyoruz. Bu politika,

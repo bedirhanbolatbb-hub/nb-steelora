@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import { getSiteContent } from '@/lib/supabase/content'
@@ -13,10 +14,15 @@ import {
   ONARIM_DEGISIM_IS_GUNU,
   SOZLESME_YOLLARI,
 } from '@/lib/legal/sozlesme'
-import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
+import { FREE_SHIPPING_LABEL, HAZIRLIK_LABEL, TASIMA_LABEL, TESLIM_CUMLESI } from '@/lib/shipping'
 import { ORG_EMAIL } from '@/lib/seo'
 
-export const metadata = { title: 'Kargo, İade ve Değişim' }
+export const metadata: Metadata = {
+  title: 'Kargo, İade ve Değişim',
+  description:
+    'Ücretsiz kargo, hazırlık ve taşıma süreleri, 14 gün koşulsuz cayma hakkı, iade ve değişim adımları.',
+  alternates: { canonical: '/kargo-ve-iade' },
+}
 export const dynamic = 'force-dynamic'
 
 /**
@@ -39,16 +45,27 @@ export default async function KargoVeIadePage() {
   const iadeFirmasi = (icerik.iade_kargo_firmasi ?? '').trim()
 
   return (
-    <LegalPageLayout eyebrow="Yardım" title="Kargo, İade ve Değişim">
+    <LegalPageLayout eyebrow="Yardım" title="Kargo, İade ve Değişim" path="/kargo-ve-iade" aciklama="Ücretsiz kargo, hazırlık ve taşıma süreleri, 14 gün koşulsuz cayma hakkı, iade ve değişim adımları.">
       <h2>Kargo</h2>
+
+      {/* İki süre ART ARDA işler; tek bir toplam gibi okunmasın diye tablodan
+          önce açıkça yazılır (Faz 11F kapanış — yeni vaat değil, netleşme). */}
+      <p>
+        <strong>{TESLIM_CUMLESI}</strong> İki süre art arda işler: hazırlık biter, kargo
+        oradan devralır.
+      </p>
 
       <div className="not-prose my-6 overflow-x-auto">
         <table className="w-full border-collapse text-[13px] font-body">
           <tbody>
             {[
               ['Kargo ücreti', <strong key="k">{FREE_SHIPPING_LABEL}</strong>, 'Alt sınır yoktur.'],
-              ['Hazırlık süresi', '1–2 iş günü', 'Ödeme onayından sonra kargoya verilir.'],
-              ['Tahmini teslim', '1–5 iş günü', 'Kargo firmasının teslim süresine bağlıdır.'],
+              ['Hazırlık süresi', HAZIRLIK_LABEL, 'Ödeme onayından sonra kargoya verilir.'],
+              [
+                'Kargo taşıma süresi',
+                TASIMA_LABEL,
+                'Kargoya verildikten SONRA başlar; hazırlık süresine eklenir.',
+              ],
               ['Yasal azami süre', `${AZAMI_TESLIM_GUN} gün`, 'Aşılırsa sözleşmeyi feshedebilirsiniz.'],
               ['Takip', 'E-posta ile', 'Takip numarası hazır olunca gönderilir.'],
             ].map(([ad, deger, not]) => (

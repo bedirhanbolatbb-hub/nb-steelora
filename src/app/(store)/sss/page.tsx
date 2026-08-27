@@ -35,7 +35,7 @@ export default function SssPage() {
           })),
         }}
       />
-      <LegalPageLayout eyebrow="Yardım" title="Sık Sorulan Sorular">
+      <LegalPageLayout eyebrow="Yardım" title="Sık Sorulan Sorular" path="/sss" semaTipi={null}>
         <div className="space-y-8">
           {SSS_TAMAMI.map((s) => (
             <section key={s.soru}>

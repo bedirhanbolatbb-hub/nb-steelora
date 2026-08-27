@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import SaticiKunyesi from '@/components/store/SaticiKunyesi'
 import { kunyeGetir } from '@/lib/legal/veriSorumlusu'
@@ -16,11 +17,16 @@ import {
   SOZLESME_YOLLARI,
   URUN_TOLERANS_KISA,
 } from '@/lib/legal/sozlesme'
-import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
+import { FREE_SHIPPING_LABEL, HAZIRLIK_LABEL, TASIMA_LABEL } from '@/lib/shipping'
 import { ORG_EMAIL } from '@/lib/seo'
 import Link from 'next/link'
 
-export const metadata = { title: 'Ön Bilgilendirme Formu' }
+export const metadata: Metadata = {
+  title: 'Ön Bilgilendirme Formu',
+  description:
+    'Sipariş öncesi zorunlu ön bilgilendirme: satıcı künyesi, ürün bedeli, ödeme ve teslimat koşulları, cayma hakkının kullanımı.',
+  alternates: { canonical: '/on-bilgilendirme-formu' },
+}
 export const dynamic = 'force-dynamic'
 
 /**
@@ -42,7 +48,7 @@ export default async function OnBilgilendirmeFormuPage() {
   const iadeKodu = (icerik.iade_kargo_kodu ?? '').trim()
 
   return (
-    <LegalPageLayout eyebrow="Hukuk" title="Ön Bilgilendirme Formu">
+    <LegalPageLayout eyebrow="Hukuk" title="Ön Bilgilendirme Formu" path="/on-bilgilendirme-formu" aciklama="Sipariş öncesi zorunlu ön bilgilendirme: satıcı künyesi, ürün bedeli, ödeme ve teslimat koşulları, cayma hakkının kullanımı.">
       <p>
         Bu form, 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler
         Yönetmeliği uyarınca, siparişinizi tamamlamadan önce bilmeniz gereken hususları
@@ -83,10 +89,10 @@ export default async function OnBilgilendirmeFormuPage() {
 
       <h2>4. Teslimat</h2>
       <p>
-        Siparişler, ödeme onayının ardından <strong>1–2 iş günü</strong> içinde hazırlanıp
-        anlaşmalı kargo firmasına teslim edilir; tahmini teslim süresi{' '}
-        <strong>1–5 iş günüdür</strong>. Kargo takip numarası hazır olduğunda e-posta ile
-        bildirilir.
+        Siparişler, ödeme onayının ardından <strong>{HAZIRLIK_LABEL}</strong> içinde hazırlanıp
+        anlaşmalı kargo firmasına teslim edilir; kargo firmasının teslim süresi{' '}
+        <strong>{TASIMA_LABEL}dür</strong> ve bu süre kargoya verildikten sonra başlar. Kargo
+        takip numarası hazır olduğunda e-posta ile bildirilir.
       </p>
       <p>
         Mesafeli Sözleşmeler Yönetmeliği m.16 uyarınca yasal azami teslim süresi{' '}

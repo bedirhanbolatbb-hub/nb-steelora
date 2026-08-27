@@ -9,7 +9,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
-import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
+import { FREE_SHIPPING_LABEL, TESLIM_CUMLESI } from '@/lib/shipping'
 import { cleanDescription, hasContent } from '@/lib/catalog/description'
 import { materialCare, materialLabel } from '@/lib/catalog/material'
 import { SSS_URUN } from '@/lib/legal/sss'
@@ -419,8 +419,7 @@ export default async function UrunDetayPage({
                   <div className="space-y-2">
                     <p>{FREE_SHIPPING_LABEL} — alt sınır yoktur.</p>
                     <p>
-                      Siparişler 1–2 iş günü içinde kargoya verilir; tahmini teslim süresi
-                      1–5 iş günüdür.
+                      {TESLIM_CUMLESI}
                     </p>
                     <p>
                       Teslimattan itibaren {CAYMA_SURESI_GUN} gün içinde koşulsuz iade

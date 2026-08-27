@@ -1,9 +1,21 @@
+import type { Metadata } from 'next'
+import JsonLd from '@/components/seo/JsonLd'
+import KirintiYolu from '@/components/seo/KirintiYolu'
+import { webPageJsonLd } from '@/lib/seo'
 import Image from 'next/image'
-import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
+import { FREE_SHIPPING_LABEL, TASIMA_LABEL } from '@/lib/shipping'
 import { getSiteContent } from '@/lib/supabase/content'
 import { isRemoteMedia, IMAGE_QUALITY } from '@/lib/images'
 
-export const metadata = { title: 'Hakkımızda' }
+/** Sayfa açıklaması tek yerde: meta description ile şema aynı cümleyi taşır. */
+const HAKKIMIZDA_ACIKLAMA =
+  "NB Steelora'nın hikâyesi: 316L paslanmaz çelik takıları neden seçtiğimiz, nasıl hazırlayıp gönderdiğimiz ve markanın arkasındaki atölye."
+
+export const metadata: Metadata = {
+  title: 'Hakkımızda',
+  description: HAKKIMIZDA_ACIKLAMA,
+  alternates: { canonical: '/hakkimizda' },
+}
 
 /**
  * Hakkımızda — fotoğraf slotlu şablon (Faz 11B).
@@ -26,6 +38,21 @@ export default async function HakkimizdaPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-14 lg:py-20">
+      <JsonLd
+        data={webPageJsonLd({
+          tip: 'AboutPage',
+          ad: 'Hakkımızda',
+          aciklama: HAKKIMIZDA_ACIKLAMA,
+          path: '/hakkimizda',
+        })}
+      />
+      <KirintiYolu
+        adimlar={[
+          { ad: 'Ana Sayfa', path: '/' },
+          { ad: 'Hakkımızda', path: '/hakkimizda' },
+        ]}
+        className="mb-8"
+      />
       <header className="max-w-[68ch] border-b border-line pb-8 mb-10">
         <p className="eyebrow">Marka</p>
         <h1 className="font-heading text-[38px] lg:text-[48px] font-medium text-ink leading-tight mt-2">
@@ -96,7 +123,7 @@ export default async function HakkimizdaPage() {
         </div>
         <div className="bg-surface-muted/30 p-6">
           <p className="text-[14px] font-heading text-ink mb-2">Hızlı Kargo</p>
-          <p className="text-[12px] text-muted">1-5 iş günü teslimat, {FREE_SHIPPING_LABEL}.</p>
+          <p className="text-[12px] text-muted">{TASIMA_LABEL} teslimat, {FREE_SHIPPING_LABEL}.</p>
         </div>
         <div className="bg-surface-muted/30 p-6">
           <p className="text-[14px] font-heading text-ink mb-2">14 Gün İade</p>
