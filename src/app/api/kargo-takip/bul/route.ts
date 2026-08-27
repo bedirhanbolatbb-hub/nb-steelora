@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     try {
       const supabase = createServiceClient()
       let hedefEposta = eposta
-      let sorgu = supabase
+      const sorgu = supabase
         .from('orders')
         .select('order_number, status, created_at, tracking_number, guest_email')
         .order('created_at', { ascending: false })
