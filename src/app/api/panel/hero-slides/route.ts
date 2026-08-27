@@ -98,11 +98,11 @@ export async function POST(request: Request) {
   const { error } = mevcutRow
     ? await supabase
         .from('homepage_settings')
-        .update({ payload: { slides } })
+        .update({ payload: { slides }, updated_at: new Date().toISOString() })
         .eq('id', mevcutRow.id)
     : await supabase
         .from('homepage_settings')
-        .insert({ section: 'hero_slides', product_ids: [], payload: { slides } })
+        .insert({ section: 'hero_slides', product_ids: [], payload: { slides }, updated_at: new Date().toISOString() })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true, uyarilar })

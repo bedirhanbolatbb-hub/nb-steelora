@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { ShownProducts, MAX_SECTION_ITEMS, TARGET_SECTION_ITEMS } from './sections'
+import { MAX_SECTION_ITEMS } from './sections'
 import { LISTING_COLUMNS } from '@/lib/catalog/listing'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import { firstSentence, type CollectionCard } from '@/lib/collections'
@@ -46,7 +46,7 @@ export type HomeData = {
 
 const TTL_MS = 5 * 60_000
 
-type CacheBox = { at: number; veri: HomeData } | null
+type CacheBox = { at: number; veri: HomeData; surum: string } | null
 const g = globalThis as unknown as { __nbHomeCache?: CacheBox }
 
 /** Kategori tanımını üründe yerelde uygular (tek sorguluk kapak çözümü için). */
@@ -128,30 +128,23 @@ async function yukle(): Promise<HomeData> {
     })
   }
 
-  // ── Küratörlü bölümler: sıra korunur, grup tekilleştirmesi aynı kurallarla ──
-  const shown = new ShownProducts()
+  // ── Küratörlü bölümler: TEK KAYNAK panel (Faz 11B-ek, BB kararı) ──
+  //
+  // ESKİSİ: liste 8'den kısaysa havuzdan (en yeni) SESSİZCE tamamlanıyor,
+  // bölümler arası grup tekilleştirmesi de uygulanıyordu. Canlıda ölçülen
+  // sonuç: BB 4 ürün seçti, vitrinde 8 çıktı — 4'ü BB'nin hiç seçmediği
+  // ürünler ("Leopar Desenli Küpe", "Mektup Tüy Kolye"); üstelik dolgu
+  // Yeni Gelenler'deki seçili bir ürünün grubunu çaldığı için BB'nin
+  // seçtiği ürün oradan da düştü. Panelde başka, sitede başka liste.
+  //
+  // YENİ KURAL: panel ne diyorsa vitrin onu basar. Dolgu yok, bölümler
+  // arası eleme yok; BB aynı ürünü iki bölüme bilerek koyarsa ikisinde de
+  // çıkar. Havuzda olmayan (pasife düşmüş) ürün basılmaz — panel o ürünü
+  // zaten uyarı rozetiyle gösteriyor. Liste boşsa bölüm vitrinde çıkmaz
+  // (page.tsx length > 0 koşuluyla zaten gizliyor).
   const bolumSec = (section: string): any[] => {
     const curated = (settings.get(section)?.product_ids || []).slice(0, MAX_SECTION_ITEMS)
-    const secilen: any[] = []
-    const local = new ShownProducts()
-    for (const id of curated) {
-      const p = poolById.get(id)
-      if (!p) continue
-      if (shown.has(p) || local.has(p)) continue
-      secilen.push(p)
-      local.add([p])
-    }
-    if (secilen.length < TARGET_SECTION_ITEMS) {
-      for (const p of pool) {
-        if (secilen.length >= TARGET_SECTION_ITEMS) break
-        if (shown.has(p) || local.has(p)) continue
-        secilen.push(p)
-        local.add([p])
-      }
-    }
-    const sonuc = secilen.slice(0, MAX_SECTION_ITEMS)
-    shown.add(sonuc)
-    return sonuc
+    return curated.map((id) => poolById.get(id)).filter(Boolean)
   }
 
   const featured = bolumSec('featured')
@@ -223,11 +216,49 @@ async function yukle(): Promise<HomeData> {
   }
 }
 
+/**
+ * Vitrin sürümü: panel kaydetmelerinin damgası (Faz 11B-ek).
+ *
+ * KUSUR: önbellek yalnız 5 dakikalık TTL'e bakıyordu; BB panelden kürasyonu
+ * kaydedip siteyi açtığında eski listeyi görüyor, "panelle site uyuşmuyor"
+ * oluyordu. Her sunucu kopyasının kendi süreç içi önbelleği olduğu için
+ * kaydetme ucundan süreç içi temizlik de İŞE YARAMAZDI (farklı süreçler).
+ *
+ * Çözüm: iki ucuz sorguyla (en yeni updated_at) bir sürüm imzası üretilir.
+ * Önbellek 15 saniyeden gençse doğrudan servis edilir (ard arda isteklerde
+ * sorgu maliyeti yok); daha yaşlıysa sürüm karşılaştırılır — panel bir şey
+ * kaydettiyse imza değişmiştir ve veri yeniden yüklenir. Ürün/stok değişimi
+ * bu damgaları oynatmaz; onlar için 5 dakikalık TTL yedek olarak duruyor.
+ */
+const SURUM_ESIGI_MS = 15_000
+
+async function vitrinSurumu(): Promise<string> {
+  const supabase = createServiceClient()
+  const [ayar, icerik] = await Promise.all([
+    supabase
+      .from('homepage_settings')
+      .select('updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(1),
+    supabase
+      .from('site_content')
+      .select('updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(1),
+  ])
+  return `${ayar.data?.[0]?.updated_at ?? ''}|${icerik.data?.[0]?.updated_at ?? ''}`
+}
+
 export async function getHomeData(): Promise<HomeData> {
   const cached = g.__nbHomeCache
-  if (cached && Date.now() - cached.at < TTL_MS) return cached.veri
-  const veri = await yukle()
-  g.__nbHomeCache = { at: Date.now(), veri }
+  const yas = cached ? Date.now() - cached.at : Infinity
+  if (cached && yas < SURUM_ESIGI_MS) return cached.veri
+  if (cached && yas < TTL_MS) {
+    const surum = await vitrinSurumu().catch(() => null)
+    if (surum !== null && surum === cached.surum) return cached.veri
+  }
+  const [veri, surum] = await Promise.all([yukle(), vitrinSurumu().catch(() => '')])
+  g.__nbHomeCache = { at: Date.now(), veri, surum }
   return veri
 }
 

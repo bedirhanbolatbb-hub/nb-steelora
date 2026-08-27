@@ -46,27 +46,30 @@ const KATEGORILER = [
 ] as const
 
 /**
- * Anasayfa gerçeği (Faz 11) — src/lib/home/sections.ts ile birebir aynı.
- * Panel kaç öğenin basıldığını göstermezken 4 ürün seçili bölüm "4 slotluk"
- * sanılıyordu; artık hedef/tavan ve dolgu davranışı panelde yazılı.
+ * Anasayfa gerçeği (Faz 11B-ek) — src/lib/home/sections.ts ile birebir aynı.
+ *
+ * TEK KAYNAK KURALI (BB kararı): panelde kaç ürün seçiliyse vitrinde o kadar
+ * kart basılır; boş slot kart üretmez, hiç ürün seçilmezse bölüm vitrinde
+ * GÖRÜNMEZ. Eski "eksik slotlar en yeni ürünlerle otomatik doldurulur"
+ * davranışı kaldırıldı — BB'nin haberi olmadan vitrine ürün girmişti
+ * (Leopar Desenli Küpe olayı, 27 Ağu).
  */
-const HEDEF_SLOT = 8
-const TAVAN_SLOT = 12
+const TAVAN_SLOT = 8
 
 const COKLU = [
   {
     key: 'featured',
     label: 'Öne Çıkanlar',
     aciklama:
-      `Anasayfada ${HEDEF_SLOT} ürün basılır — ilk 2'si büyük editorial kart. ` +
-      `Seçtikleriniz sırayla gelir; eksik kalan slotlar en yeni ürünlerle otomatik doldurulur. Tavan ${TAVAN_SLOT}.`,
+      `Vitrinde SEÇTİĞİNİZ KADAR kart basılır (en fazla ${TAVAN_SLOT}) — ilk 2'si büyük ` +
+      `editorial kart. Hiç ürün seçmezseniz bölüm vitrinde görünmez.`,
   },
   {
     key: 'new_arrivals',
     label: 'Yeni Gelenler',
     aciklama:
-      `Anasayfada ${HEDEF_SLOT} ürün basılır. Seçtikleriniz sırayla gelir; eksik kalan slotlar ` +
-      `en yeni ürünlerle otomatik doldurulur. Öne Çıkanlar'da basılan ürün burada tekrar etmez. Tavan ${TAVAN_SLOT}.`,
+      `Vitrinde SEÇTİĞİNİZ KADAR kart basılır (en fazla ${TAVAN_SLOT}), kaydırmalı şeritte — ` +
+      `masaüstünde ok düğmeleri, mobilde parmakla kaydırma. Hiç ürün seçmezseniz bölüm görünmez.`,
   },
 ] as const
 
@@ -164,7 +167,7 @@ export default function KurasyonClient({
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Kaydedilemedi')
-      toast('Kaydedildi — vitrin birkaç dakika içinde güncellenir (önbellek).', 'success')
+      toast('Kaydedildi — vitrin en geç ~15 saniye içinde güncellenir.', 'success')
       router.refresh()
     } catch (e: any) {
       toast(e.message, 'danger')
@@ -399,11 +402,10 @@ export default function KurasyonClient({
       {/* ── Sıralı çoklu listeler ── */}
       {COKLU.map((c) => {
         const secili = state[c.key]?.length ?? 0
-        const dolgu = Math.max(0, HEDEF_SLOT - secili)
         return (
         <PCard
           key={c.key}
-          title={`${c.label} (${secili}/${HEDEF_SLOT})`}
+          title={`${c.label} (${secili}/${TAVAN_SLOT})`}
           action={
             <PButton
               variant="ghost"
@@ -417,10 +419,8 @@ export default function KurasyonClient({
           {/* Anasayfa gerçeği panelde yazılı — kaç öğe basılıyor, eksikse ne oluyor. */}
           <p className="mb-3 text-[12px] leading-relaxed text-[var(--p-muted)]">
             {c.aciklama}
-            {dolgu > 0 && (
-              <span className="text-[var(--p-ink-soft)]">
-                {' '}Şu an {secili} seçili, kalan {dolgu} slot otomatik dolduruluyor.
-              </span>
+            {secili > 0 && (
+              <span className="text-[var(--p-ink-soft)]"> Vitrinde şu an {secili} kart basılıyor.</span>
             )}
             {secili >= TAVAN_SLOT && (
               <span className="text-[var(--p-warning)]"> Tavana ulaşıldı ({TAVAN_SLOT}).</span>
@@ -428,7 +428,7 @@ export default function KurasyonClient({
           </p>
           {(state[c.key] || []).length === 0 ? (
             <p className="rounded-[4px] border border-dashed border-[var(--p-line)] px-3 py-6 text-center text-[12px] text-[var(--p-muted)]">
-              Ürün seçilmedi — {HEDEF_SLOT} slotun tamamı en yeni ürünlerle otomatik doldurulur.
+              Ürün seçilmedi — bu bölüm vitrinde GÖRÜNMEZ. Göstermek için ürün ekleyin.
             </p>
           ) : (
             <ul className="space-y-1.5">

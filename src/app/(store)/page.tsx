@@ -6,6 +6,7 @@ import PromoStrip from '@/components/home/PromoStrip'
 import CategoryRail from '@/components/home/CategoryRail'
 import CollectionsBand from '@/components/home/CollectionsBand'
 import GiftSplit from '@/components/home/GiftSplit'
+import YeniGelenlerRayi from '@/components/home/YeniGelenlerRayi'
 import WhyUs from '@/components/home/WhyUs'
 import BlogPreview from '@/components/home/BlogPreview'
 import Newsletter from '@/components/home/Newsletter'
@@ -104,20 +105,20 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="-mx-4 px-4 lg:mx-0 lg:px-0 overflow-x-auto pb-3" style={{ scrollbarWidth: 'thin' }}>
-            <div className="flex gap-4 lg:gap-5 snap-x snap-mandatory">
-              {veri.newArrivals.map((product: any, i: number) => (
-                <div
-                  key={product.id}
-                  className="w-[68vw] sm:w-[280px] shrink-0 snap-start"
-                  data-reveal
-                  style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}
-                >
-                  <ProductCardV2 product={product} />
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Faz 11B-ek: düz şerit masaüstünde ok/gösterge olmadan duruyordu —
+              ~4,6 kart görünüyor, kalan 8'e ulaşmanın görünür yolu yoktu. */}
+          <YeniGelenlerRayi>
+            {veri.newArrivals.map((product: any, i: number) => (
+              <div
+                key={product.id}
+                className="w-[68vw] sm:w-[280px] shrink-0 snap-start"
+                data-reveal
+                style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}
+              >
+                <ProductCardV2 product={product} />
+              </div>
+            ))}
+          </YeniGelenlerRayi>
         </section>
       )}
 

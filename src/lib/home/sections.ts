@@ -1,10 +1,8 @@
 import { getGroupKey, type GroupableProduct } from '@/lib/catalog/variants'
 
-// Anasayfadaki hiçbir bölüm bu sayıdan fazla kart basmaz.
-export const MAX_SECTION_ITEMS = 12
-
-// Küratörlü liste kısa kaldığında bölümün tamamlanacağı ürün sayısı.
-export const TARGET_SECTION_ITEMS = 8
+// Anasayfadaki hiçbir bölüm bu sayıdan fazla kart basmaz. Panel de aynı
+// tavanı kullanır (api/panel/curation): panelde N seçiliyse vitrinde N kart.
+export const MAX_SECTION_ITEMS = 8
 
 /**
  * Bölümler arası tekilleştirme kümesi. Bir ürün üst bölümde basıldıysa
