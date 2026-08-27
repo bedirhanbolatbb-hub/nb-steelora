@@ -52,13 +52,16 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('products_display')
-    .select(
-      'slug, trendyol_title, display_title, display_images, trendyol_category, display_price, gender, trendyol_stock, created_at'
-    )
-    .eq('slug', slug)
-    .maybeSingle()
+  const [{ data }, { data: priceRow }] = await Promise.all([
+    supabase
+      .from('products_display')
+      .select(
+        'slug, trendyol_title, display_title, display_images, trendyol_category, display_price, gender, trendyol_stock, created_at'
+      )
+      .eq('slug', slug)
+      .maybeSingle(),
+    createServiceClient().from('products').select('override_price').eq('slug', slug).maybeSingle(),
+  ])
 
   if (!data) return {}
 
@@ -66,9 +69,20 @@ export async function generateMetadata({
   // canonical grubun kapağını gösterir (Faz 18). Sayfalar erişilebilir kalır.
   const canonicalSlug = await getGroupCanonicalSlug(data)
 
+  // Faz 11F: açıklamadaki fiyat sayfa gövdesiyle AYNI hesaptan gelir. Önceden
+  // ham display_price basılıyordu; ne özel fiyat (override_price) ne de vitrin
+  // kampanyası hesaba katıldığı için katalogda %30 kampanya açıkken arama
+  // sonucunda 479,90 ₺ görünüp sayfada 335,93 ₺ yazıyordu.
+  const vitrinIndirimi = await vitrinIndirimiGetir()
+  const listeFiyati = Number(priceRow?.override_price ?? data.display_price) || 0
+  const odenecekFiyat =
+    vitrinIndirimi?.fiyatGoster && vitrinIndirimi.oran
+      ? Math.round(listeFiyati * (1 - vitrinIndirimi.oran / 100) * 100) / 100
+      : listeFiyati
+
   const seoTitle = data.trendyol_title || data.display_title
   const description = `${seoTitle} — ${data.trendyol_category ?? 'NB Steelora'}. ${formatPrice(
-    data.display_price
+    odenecekFiyat
   )}. ${FREE_SHIPPING_LABEL}, ${CAYMA_SURESI_GUN} gün koşulsuz iade.`
 
   return {
@@ -134,9 +148,10 @@ export default async function UrunDetayPage({
   // değilse galerinin altında küçük resim şeridi olarak basılır.
   const { members: variantMembers, useLabels } = await getVariantGroup(product)
 
-  // Yapısal verinin adresi de canonical'ı izler; aksi halde sayfa "beni
-  // indeksleme, kapağı indeksle" derken JSON-LD kendini işaret ederdi.
-  const canonicalSlug = await getGroupCanonicalSlug(product)
+  // Faz 11F denetimi: yapısal veri BULUNDUĞU sayfayı anlatır. Adres canonical'ı
+  // izlerken sku/name/image/breadcrumb sayfanın kendisini gösteriyordu — aynı
+  // sayfadaki iki blok farklı adres bildiriyor, kimlik (sku NBK200) adresiyle
+  // (…/NBK201) çelişiyordu. Birleştirmeyi rel=canonical zaten yapıyor.
 
   // Elle yazılmış açıklama varsa ham hâli gösterilir; pazaryeri metni temizlenir.
   const hasOverrideDescription = Boolean(product.override_description)
@@ -154,7 +169,7 @@ export default async function UrunDetayPage({
     <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8 lg:py-12">
       <JsonLd
         data={productJsonLd({
-          slug: canonicalSlug,
+          slug: product.slug,
           title: product.display_title,
           description: seoDescription,
           images: (product.display_images as string[] | null) ?? [],
@@ -162,7 +177,14 @@ export default async function UrunDetayPage({
           // Center'ın "fiyat uyuşmazlığı" ret sebebi tam olarak budur.
           // Basılan fiyat müşterinin GERÇEKTEN ödediği fiyattır.
           price: kampanyaliFiyat ?? listeFiyati,
-          listPrice: kampanyaliFiyat ? listeFiyati : null,
+          // Sayfada üstü çizili ne yazıyorsa yapısal veride de o basılır.
+          // Kampanya kapalıyken özel fiyatlı üründe display_price üstü çizili
+          // görünüyor ama ListPrice hiç basılmıyordu (Faz 11F denetimi).
+          listPrice: kampanyaliFiyat
+            ? listeFiyati
+            : mergedProduct.override_price && mergedProduct.override_price < product.display_price
+              ? product.display_price
+              : null,
           stock,
           barcode: product.trendyol_barcode ?? null,
           category: product.trendyol_category ?? null,

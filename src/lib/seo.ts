@@ -165,9 +165,12 @@ export function productJsonLd(p: ProductSeoInput) {
       shippingRate: { '@type': 'MonetaryAmount', value: '0.00', currency: 'TRY' },
       shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'TR' },
       // Faz 11F: yalnız YAYINDA YAZAN süre bildirilir — "1–2 iş günü içinde
-      // kargoya verilir" (ürün sayfası + mesafeli satış sözleşmesi). Taşıma
-      // süresi ayrıca yayınlanmadığı için transitTime BASILMAZ; toplam
-      // süreden çıkarımla üretmek uydurma olurdu.
+      // kargoya verilir" (ürün sayfası + mesafeli satış sözleşmesi).
+      //
+      // transitTime BASILMAZ: /kargo-ve-iade "Tahmini teslim 1–5 iş günü"
+      // yazıyor ama bunun taşıyıcı süresi mi yoksa sipariş→teslim toplamı mı
+      // olduğu yayında ayrışmıyor. Toplamsa taşıma 0–3 gündür ve 1–5 basmak
+      // uydurma olur. İşletme netleştirene kadar alan eklenmez.
       deliveryTime: {
         '@type': 'ShippingDeliveryTime',
         handlingTime: {
@@ -175,6 +178,18 @@ export function productJsonLd(p: ProductSeoInput) {
           minValue: 1,
           maxValue: 2,
           unitCode: 'DAY',
+        },
+        // Sitede "1–2 İŞ GÜNÜ" yazıyor; unitCode DAY tek başına takvim günü
+        // sayılır ve vaat edilenden dar bir süre bildirilmiş olur.
+        businessDays: {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: [
+            'https://schema.org/Monday',
+            'https://schema.org/Tuesday',
+            'https://schema.org/Wednesday',
+            'https://schema.org/Thursday',
+            'https://schema.org/Friday',
+          ],
         },
       },
     },
@@ -210,7 +225,9 @@ export function productJsonLd(p: ProductSeoInput) {
 
   if (p.description) data.description = truncate(p.description)
   if (p.images.length > 0) data.image = p.images
-  if (p.barcode) data.sku = p.barcode
+  // sku bir kimlik alanı: 'Nbgp001' ile 'NBGP001' farklı ürün gibi eşleşir.
+  // Kaynak trendyol_barcode'a DOKUNULMAZ, yalnız basılırken tek yazıma getirilir.
+  if (p.barcode) data.sku = p.barcode.trim().toUpperCase()
   if (p.category) data.category = p.category
   if (p.material) data.material = p.material
 

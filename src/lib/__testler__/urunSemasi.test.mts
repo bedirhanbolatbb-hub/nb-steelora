@@ -72,5 +72,48 @@ const kontrol = (ad: string, kosul: boolean, deger: unknown) => {
   kontrol('yorum yokken aggregateRating basılmaz', !('aggregateRating' in d), Object.keys(d))
 }
 
+// ── Faz 11F denetim turu bulguları ──
+
+// 8) sku tek yazımda basılır (kaynak barkod küçük harfliyse bile)
+{
+  const d = productJsonLd({ ...taban, price: 100, barcode: 'Nbgp001' })
+  kontrol('sku büyük harfe normalize edilir', d.sku === 'NBGP001', d.sku)
+}
+
+// 9) "iş günü" makineye de bildirilir — DAY tek başına takvim günü sayılır
+{
+  const o = offers(productJsonLd({ ...taban, price: 100 }))
+  const gunler = (o.shippingDetails as any)?.deliveryTime?.businessDays?.dayOfWeek
+  kontrol(
+    'handlingTime iş günü olarak işaretlenir (Pzt–Cum)',
+    Array.isArray(gunler) && gunler.length === 5 && gunler[0].endsWith('/Monday'),
+    gunler
+  )
+}
+
+// 10) transitTime UYDURULMAZ — yayında taşıma süresi ayrışmadığı sürece basılmaz
+{
+  const o = offers(productJsonLd({ ...taban, price: 100 }))
+  kontrol(
+    'transitTime basılmaz (yayınlanmış taşıma süresi yok)',
+    !('transitTime' in ((o.shippingDetails as any)?.deliveryTime ?? {})),
+    Object.keys((o.shippingDetails as any)?.deliveryTime ?? {})
+  )
+}
+
+// 11) Kampanyasız ama liste fiyatı yüksekse ListPrice yine basılır
+//     (özel fiyatlı üründe sayfada üstü çizili fiyat görünüyor)
+{
+  const o = offers(productJsonLd({
+    ...taban, price: 300, listPrice: 450, campaignEndsAt: null,
+  }))
+  const ps = o.priceSpecification as any
+  kontrol(
+    'kampanyasız özel fiyatta ListPrice basılır',
+    ps?.priceType === 'https://schema.org/ListPrice' && ps?.price === '450.00',
+    ps
+  )
+}
+
 console.log(`✓ ${sonuc.length}/${sonuc.length} ürün şeması testi geçti`)
 sonuc.forEach((s) => console.log('   ' + s))
