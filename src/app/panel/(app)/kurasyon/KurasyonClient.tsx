@@ -134,8 +134,8 @@ export default function KurasyonClient({
       if (!res.ok) throw new Error(d.error || 'Kaydedilemedi')
       toast('Kaydedildi — vitrin en geç ~15 saniye içinde güncellenir.', 'success')
       router.refresh()
-    } catch (e: any) {
-      toast(e.message, 'danger')
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Kaydedilemedi', 'danger')
     }
     setIgKaydediliyor(false)
   }

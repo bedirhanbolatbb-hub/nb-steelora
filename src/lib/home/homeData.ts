@@ -228,7 +228,8 @@ async function yukle(): Promise<HomeData> {
   // UYDURMA YOK: yorum şeridi yalnız gerçek, onaylı yorum 3'ü bulunca; Çok
   // Beğenilenler yalnız onaylı yorumu olan ürün 8'i bulunca basılır. Eşik
   // altında bölümler hiç render edilmez — boş bölüm de sahte doluluk da yok.
-  const hamYorumlar: VitrinYorumu[] = ((yorumRes.data as any[]) || []).map((r) => ({
+  type HamYorum = { id: string; guest_name?: string | null; rating?: number | null; title?: string | null; body?: string | null; is_verified_purchase?: boolean | null; products?: { slug?: string | null; override_title?: string | null; trendyol_title?: string | null } | null }
+  const hamYorumlar: VitrinYorumu[] = (((yorumRes.data ?? []) as unknown) as HamYorum[]).map((r) => ({
     id: r.id,
     ad: String(r.guest_name ?? '').trim() || 'Müşteri',
     puan: Number(r.rating) || 0,
@@ -253,11 +254,14 @@ async function yukle(): Promise<HomeData> {
   const igHam = settings.get('instagram')?.payload?.items
   const instagram = (Array.isArray(igHam) ? igHam : [])
     .filter(
-      (x: any) =>
-        x && typeof x.image_url === 'string' && x.image_url && typeof x.link === 'string'
+      (x: unknown): x is { image_url: string; link: string } =>
+        typeof x === 'object' && x !== null &&
+        typeof (x as { image_url?: unknown }).image_url === 'string' &&
+        Boolean((x as { image_url: string }).image_url) &&
+        typeof (x as { link?: unknown }).link === 'string'
     )
     .slice(0, 9)
-    .map((x: any) => ({ image_url: String(x.image_url), link: String(x.link) }))
+    .map((x) => ({ image_url: x.image_url, link: x.link }))
 
   return {
     content,
