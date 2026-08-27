@@ -27,6 +27,12 @@ export type VitrinIndirimi = {
   hedef: string
   /** "… tarihine kadar" satırı için. */
   bitis: string | null
+  /**
+   * Kampanyanın yürürlüğe girdiği an (Faz 11F).
+   * Ürün yapısal verisinde `offers.validFrom` bundan türer: indirimli fiyat
+   * bu tarihte geçerli oldu. Kampanyanın başlangıcı yoksa null.
+   */
+  baslangic: string | null
 }
 
 /**
@@ -61,13 +67,14 @@ export async function vitrinIndirimiGetir(simdi?: Date): Promise<VitrinIndirimi 
     const suslu = async (k: HesapKampanyasi) => {
       const { data } = await supabase
         .from('campaigns')
-        .select('banner_text, ends_at')
+        .select('banner_text, ends_at, starts_at')
         .eq('id', k.id)
         .maybeSingle()
       return {
         metin: vitrinMetni(k, data?.banner_text, kategoriAdi),
         hedef: vitrinHedefi(k),
         bitis: data?.ends_at ?? null,
+        baslangic: data?.starts_at ?? null,
       }
     }
 

@@ -169,6 +169,14 @@ export default async function UrunDetayPage({
           material,
           rating: product.avg_rating ?? null,
           reviewCount: product.review_count ?? null,
+          // Faz 11F: fiyatın gerçekten o hâle geldiği an — kampanyalıysa
+          // kampanyanın başlangıcı, değilse son senkron (fiyat orada
+          // doğrulandı), o da yoksa ürünün eklendiği tarih.
+          priceValidFrom: kampanyaliFiyat
+            ? (vitrinIndirimi?.baslangic ?? product.last_synced_at ?? product.created_at ?? null)
+            : (product.last_synced_at ?? product.created_at ?? null),
+          // İndirimli fiyat kampanya bitince geçersizdir.
+          campaignEndsAt: kampanyaliFiyat ? (vitrinIndirimi?.bitis ?? null) : null,
         })}
       />
       <JsonLd

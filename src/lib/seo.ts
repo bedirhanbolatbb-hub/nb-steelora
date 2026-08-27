@@ -102,14 +102,47 @@ export type ProductSeoInput = {
   material: string | null
   rating: number | null
   reviewCount: number | null
+  /**
+   * Fiyatın bu hâle geldiği GERÇEK an (Faz 11F — Search Console uyarısı).
+   * Kampanyasız üründe son senkron (fiyat oradan doğrulanır), yoksa ürünün
+   * eklendiği tarih. Kampanyalı üründe kampanyanın başlangıcı.
+   */
+  priceValidFrom?: string | null
+  /**
+   * Kampanya bitişi — indirimli fiyat bu tarihten sonra geçerli değildir.
+   * Doluysa priceValidUntil bunu AŞMAZ.
+   */
+  campaignEndsAt?: string | null
 }
 
 export function productJsonLd(p: ProductSeoInput) {
   const url = `${SITE_URL}/urun/${p.slug}`
 
-  // Fiyat geçerlilik tarihi: bugünden bir yıl sonrası.
-  const gecerlilik = new Date()
-  gecerlilik.setFullYear(gecerlilik.getFullYear() + 1)
+  // ── Fiyatın geçerlilik penceresi (Faz 11F) ──
+  //
+  // Search Console "validFrom eksik" uyarısı verdi. Uydurma tarih basmak
+  // yerine fiyatın GERÇEKTEN o hâle geldiği an kullanılır:
+  //   · kampanyalı ürün → kampanyanın başlangıcı
+  //   · kampanyasız ürün → son senkron (fiyat Trendyol'dan orada doğrulandı),
+  //     o da yoksa ürünün eklendiği tarih
+  // Kaynak yoksa alan HİÇ BASILMAZ — boş ya da tahmini tarih yazılmaz.
+  const gunu = (d: string | null | undefined): string | null => {
+    if (!d) return null
+    const t = new Date(d)
+    return Number.isNaN(t.getTime()) ? null : t.toISOString().slice(0, 10)
+  }
+  const validFrom = gunu(p.priceValidFrom)
+
+  // Bitiş: varsayılan bir yıl. Kampanyalı üründe kampanyanın bitişini AŞAMAZ —
+  // indirimli fiyatı kampanya bittikten sonra da geçerliymiş gibi bildirmek
+  // Merchant Center'da fiyat uyuşmazlığı doğurur.
+  const birYilSonra = new Date()
+  birYilSonra.setFullYear(birYilSonra.getFullYear() + 1)
+  const kampanyaBitisi = p.campaignEndsAt ? new Date(p.campaignEndsAt) : null
+  const gecerlilik =
+    kampanyaBitisi && !Number.isNaN(kampanyaBitisi.getTime()) && kampanyaBitisi < birYilSonra
+      ? kampanyaBitisi
+      : birYilSonra
 
   // Vitrin kampanyası açıkken sayfada indirimli fiyat yazıyor. Yapısal veri
   // liste fiyatını basarsa arama motoru ile sayfa çelişir; Merchant Center bunu
@@ -121,6 +154,7 @@ export function productJsonLd(p: ProductSeoInput) {
     priceCurrency: 'TRY',
     price: Number(p.price).toFixed(2),
     priceValidUntil: gecerlilik.toISOString().slice(0, 10),
+    ...(validFrom ? { validFrom } : {}),
     availability:
       p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
     itemCondition: 'https://schema.org/NewCondition',
@@ -130,6 +164,19 @@ export function productJsonLd(p: ProductSeoInput) {
       '@type': 'OfferShippingDetails',
       shippingRate: { '@type': 'MonetaryAmount', value: '0.00', currency: 'TRY' },
       shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'TR' },
+      // Faz 11F: yalnız YAYINDA YAZAN süre bildirilir — "1–2 iş günü içinde
+      // kargoya verilir" (ürün sayfası + mesafeli satış sözleşmesi). Taşıma
+      // süresi ayrıca yayınlanmadığı için transitTime BASILMAZ; toplam
+      // süreden çıkarımla üretmek uydurma olurdu.
+      deliveryTime: {
+        '@type': 'ShippingDeliveryTime',
+        handlingTime: {
+          '@type': 'QuantitativeValue',
+          minValue: 1,
+          maxValue: 2,
+          unitCode: 'DAY',
+        },
+      },
     },
     hasMerchantReturnPolicy: {
       '@type': 'MerchantReturnPolicy',
@@ -138,6 +185,8 @@ export function productJsonLd(p: ProductSeoInput) {
       merchantReturnDays: 14,
       returnMethod: 'https://schema.org/ReturnByMail',
       returnFees: 'https://schema.org/FreeReturn',
+      // Koşulların tamamının yayınlandığı sayfa.
+      merchantReturnLink: `${SITE_URL}/kargo-ve-iade`,
     },
   }
 
