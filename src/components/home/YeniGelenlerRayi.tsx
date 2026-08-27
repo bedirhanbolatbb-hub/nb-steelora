@@ -21,6 +21,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
  */
 export default function YeniGelenlerRayi({ children }: { children: React.ReactNode }) {
   const rayRef = useRef<HTMLDivElement>(null)
+  const solOkRef = useRef<HTMLButtonElement>(null)
+  const sagOkRef = useRef<HTMLButtonElement>(null)
   const [sayfaSayisi, setSayfaSayisi] = useState(1)
   const [aktifSayfa, setAktifSayfa] = useState(0)
   const [bas, setBas] = useState(true)
@@ -35,6 +37,16 @@ export default function YeniGelenlerRayi({ children }: { children: React.ReactNo
     setBas(ray.scrollLeft <= 4)
     setSon(ray.scrollLeft + ray.clientWidth >= ray.scrollWidth - 4)
   }, [])
+
+  // Denetim (Faz 11D): uca gelince düğme disabled olunca odak BODY'ye
+  // düşüyordu — klavye kullanıcısı Tab konumunu kaybediyordu. Odaklı düğme
+  // pasifleşirse odak karşı düğmeye taşınır.
+  useEffect(() => {
+    if (son && document.activeElement === sagOkRef.current) solOkRef.current?.focus()
+  }, [son])
+  useEffect(() => {
+    if (bas && document.activeElement === solOkRef.current) sagOkRef.current?.focus()
+  }, [bas])
 
   useEffect(() => {
     const ray = rayRef.current
@@ -107,6 +119,7 @@ export default function YeniGelenlerRayi({ children }: { children: React.ReactNo
         <>
           {/* Oklar — yalnız masaüstü; mobil zaten parmakla kayıyor */}
           <button
+            ref={solOkRef}
             onClick={() => kaydir(-1)}
             disabled={bas}
             aria-label="Önceki ürünler"
@@ -115,6 +128,7 @@ export default function YeniGelenlerRayi({ children }: { children: React.ReactNo
             <ChevronLeft size={18} strokeWidth={1.5} />
           </button>
           <button
+            ref={sagOkRef}
             onClick={() => kaydir(1)}
             disabled={son}
             aria-label="Sonraki ürünler"

@@ -123,6 +123,8 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
               onClick={() => setRating(star)}
               onMouseEnter={() => setHoverRating(star)}
               onMouseLeave={() => setHoverRating(0)}
+              aria-label={`${star} yıldız`}
+              aria-pressed={rating === star}
               className="transition-transform hover:scale-110"
             >
               <svg

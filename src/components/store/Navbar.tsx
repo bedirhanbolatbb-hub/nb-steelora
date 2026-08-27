@@ -129,7 +129,9 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
 
   const ikonlar = (
     <div className="flex items-center gap-4">
-      <button className="text-ink-soft hover:text-accent-deep transition-colors" aria-label="Ara" onClick={() => setSearchOpen(true)}>
+      {/* Denetim (Faz 11D): dokunma hedefi ikon boyutuydu (18×18). 44×44'e
+          tamamlandı; negatif marj görsel yerleşimi korur. */}
+      <button className="-m-3 flex h-11 w-11 items-center justify-center text-ink-soft hover:text-accent-deep transition-colors" aria-label="Ara" onClick={() => setSearchOpen(true)}>
         <Search size={18} strokeWidth={1.6} />
       </button>
       <Link href="/favorilerim" className="hidden sm:block relative text-ink-soft hover:text-accent-deep transition-colors" aria-label="Favoriler">
@@ -143,7 +145,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
       <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="hidden sm:block text-ink-soft hover:text-accent-deep transition-colors" aria-label="Hesap">
         <User size={18} strokeWidth={1.6} />
       </Link>
-      <button className="relative text-ink-soft hover:text-accent-deep transition-colors" aria-label="Sepet" onClick={() => setCartOpen(true)}>
+      <button className="relative -m-3 flex h-11 w-11 items-center justify-center text-ink-soft hover:text-accent-deep transition-colors" aria-label="Sepet" onClick={() => setCartOpen(true)}>
         <ShoppingBag size={18} strokeWidth={1.6} />
         {totalItems > 0 && (
           <span

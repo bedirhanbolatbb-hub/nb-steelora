@@ -39,7 +39,10 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
 
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-14 lg:py-20">
+    // Denetim (Faz 11D): sepet durumu istemcide (localStorage) şekillendiği
+    // için boş-durum bloğu hidrasyon SONRASI büyüyüp footer'ı itiyordu
+    // (CLS 0.058). Asgari yükseklik yeri baştan tutar.
+    <div className="min-h-[480px] max-w-[1400px] mx-auto px-4 lg:px-8 py-14 lg:py-20">
       <header className="mb-10 border-b border-line pb-6">
         <p className="eyebrow">Sipariş</p>
         <h1 className="font-heading text-[38px] lg:text-[48px] font-medium text-ink mt-2">Sepetiniz</h1>

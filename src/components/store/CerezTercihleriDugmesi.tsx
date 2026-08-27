@@ -11,7 +11,7 @@ export default function CerezTercihleriDugmesi() {
     <button
       type="button"
       onClick={() => window.dispatchEvent(new Event('nb:consent-ac'))}
-      className="underline underline-offset-2 transition-colors hover:text-accent"
+      className="inline-block py-2.5 -my-2.5 underline underline-offset-2 transition-colors hover:text-accent"
     >
       Çerez tercihleri
     </button>

@@ -434,9 +434,39 @@ function ProductsInner({
   )
 }
 
+/**
+ * Yükleme iskeleti (Faz 11D denetimi).
+ *
+ * ÖLÇÜLEN KUSUR: Suspense fallback'i BOŞTU. Yavaş ağda kabuk (başlık+footer)
+ * önce boyanıyor, liste stream edilince footer neredeyse tam sayfa boyu
+ * aşağı itiliyordu — soğuk yüklemede CLS 0.83 (390px'te 0.88; "kötü" eşiği
+ * 0.25). İskelet, gelecek içeriğin yerini baştan tutar; kayma sıfırlanır.
+ */
+function ListeIskeleti() {
+  return (
+    <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-12 lg:py-16" aria-hidden>
+      <div className="animate-pulse">
+        <div className="mb-8 border-b border-line pb-6">
+          <div className="h-10 w-56 rounded bg-line/60" />
+          <div className="mt-3 h-3 w-24 rounded bg-line/40" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+          {Array.from({ length: 8 }, (_, i) => (
+            <div key={i}>
+              <div className="aspect-[4/5] rounded-[4px] bg-line/40" />
+              <div className="mx-auto mt-3.5 h-3 w-3/4 rounded bg-line/40" />
+              <div className="mx-auto mt-2 h-3 w-1/3 rounded bg-line/30" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ProductsClient(props: ProductsClientProps) {
   return (
-    <Suspense>
+    <Suspense fallback={<ListeIskeleti />}>
       <ProductsInner {...props} />
     </Suspense>
   )

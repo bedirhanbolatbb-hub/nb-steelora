@@ -79,7 +79,7 @@ export async function POST(request: Request) {
   let payloadGuncelle: { payload: any } | {} = {}
   if ('image_url' in (body ?? {})) {
     const img = body.image_url
-    if (img !== null && (typeof img !== 'string' || !/^https?:\/\//.test(img))) {
+    if (img !== null && (typeof img !== 'string' || !/^https:\/\//.test(img))) {
       return NextResponse.json({ error: 'Geçersiz görsel adresi' }, { status: 400 })
     }
     payloadGuncelle = { payload: img ? { image_url: img } : null }
