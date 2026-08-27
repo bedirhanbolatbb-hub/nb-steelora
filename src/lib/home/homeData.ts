@@ -236,7 +236,7 @@ async function yukle(): Promise<HomeData> {
     baslik: r.title ?? null,
     metin: String(r.body ?? ''),
     dogrulanmis: Boolean(r.is_verified_purchase),
-    urunAd: r.products ? r.products.override_title || r.products.trendyol_title : '',
+    urunAd: (r.products ? r.products.override_title || r.products.trendyol_title : '') ?? '',
     urunSlug: r.products?.slug ?? null,
   }))
   const yorumlar = hamYorumlar.length >= 3 ? hamYorumlar : []
