@@ -20,6 +20,10 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
     website: '', // honeypot
   })
   const [loading, setLoading] = useState(false)
+  // Faz 11D: isteğe bağlı müşteri fotoğrafı — sunucuda yeniden kodlanır,
+  // onaylanana kadar hiçbir sayfada görünmez.
+  const [foto, setFoto] = useState<File | null>(null)
+  const [fotoHata, setFotoHata] = useState('')
   const [error, setError] = useState('')
   const [isUser, setIsUser] = useState(false)
   const supabase = createClient()
@@ -50,6 +54,23 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
 
     setLoading(true)
 
+    // Fotoğraf önce kendi ucumuza yüklenir (sunucu yeniden kodlar); dönen URL
+    // yorumla birlikte gider. Yükleme başarısızsa yorum FOTOĞRAFSIZ da gitsin —
+    // metin fotoğrafa kurban edilmez.
+    let photoUrl: string | null = null
+    if (foto) {
+      try {
+        const fd = new FormData()
+        fd.append('foto', foto)
+        const fr = await fetch('/api/reviews/foto', { method: 'POST', body: fd })
+        const fj = await fr.json()
+        if (fr.ok && fj.url) photoUrl = fj.url
+        else setFotoHata(fj.error || 'Fotoğraf yüklenemedi — yorum fotoğrafsız gönderildi')
+      } catch {
+        setFotoHata('Fotoğraf yüklenemedi — yorum fotoğrafsız gönderildi')
+      }
+    }
+
     // Kayıt /api/reviews üzerinden geçer: reviews tablosuna doğrudan yazım
     // RLS ile kapalı ve her yorum onay bekler.
     try {
@@ -64,6 +85,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
           name: form.guest_name,
           email: form.guest_email,
           website: form.website, // honeypot — dolu gelirse sunucu sessizce yok sayar
+          photoUrl,
         }),
       })
       const data = await res.json()
@@ -212,7 +234,34 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
 
       {error && <p className="text-accent-deep text-[12px] font-body">{error}</p>}
 
-      <button
+            {/* Fotoğraf (isteğe bağlı) — Faz 11D */}
+      <div className="mb-4">
+        <label className="block text-[11px] uppercase tracking-[0.14em] font-body text-muted mb-2">
+          Fotoğraf (isteğe bağlı)
+        </label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const f = e.target.files?.[0] ?? null
+            setFotoHata('')
+            if (f && f.size > 6 * 1024 * 1024) {
+              setFotoHata('Fotoğraf en fazla 6 MB olabilir')
+              setFoto(null)
+              e.target.value = ''
+              return
+            }
+            setFoto(f)
+          }}
+          className="block w-full text-[12px] font-body text-ink-soft file:mr-3 file:rounded-[4px] file:border file:border-line file:bg-bg file:px-4 file:py-2 file:font-body file:text-[11px] file:uppercase file:tracking-[0.12em] file:text-ink"
+        />
+        <p className="mt-1 text-[11px] font-body text-muted">
+          Ürünün sizdeki hâli — onaylandıktan sonra yorumunuzla birlikte görünür.
+        </p>
+        {fotoHata && <p className="mt-1 text-[11px] font-body text-red-600">{fotoHata}</p>}
+      </div>
+
+<button
         type="submit"
         disabled={loading}
         className="py-3 px-8 bg-ink text-bg text-[11px] tracking-[0.15em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-50"

@@ -16,13 +16,26 @@ function maskele(email: string | null): string {
 export default async function PanelYorumlarPage() {
   const supabase = createServiceClient()
 
-  const { data } = await supabase
-    .from('reviews')
-    .select(
-      'id, product_id, guest_name, guest_email, rating, title, body, is_approved, is_verified_purchase, created_at, products(slug, override_title, trendyol_title, override_images, trendyol_images)'
-    )
-    .order('created_at', { ascending: false })
-    .limit(300)
+  // photo_url kolonu DDL'i BB çalıştırana kadar var olmayabilir — kolonlu
+  // seçim hata verirse kolonsuz tekrar denenir, ekran kırılmaz (Faz 11D).
+  const SECIM_TABANI =
+    'id, product_id, guest_name, guest_email, rating, title, body, is_approved, is_verified_purchase, created_at, products(slug, override_title, trendyol_title, override_images, trendyol_images)'
+  let data: any[] | null = (
+    await supabase
+      .from('reviews')
+      .select(`${SECIM_TABANI}, photo_url`)
+      .order('created_at', { ascending: false })
+      .limit(300)
+  ).data
+  if (!data) {
+    data = (
+      await supabase
+        .from('reviews')
+        .select(SECIM_TABANI)
+        .order('created_at', { ascending: false })
+        .limit(300)
+    ).data
+  }
 
   const satirlar: YorumSatiri[] = (data || []).map((r: any) => {
     const p = r.products
@@ -35,6 +48,7 @@ export default async function PanelYorumlarPage() {
         (p?.trendyol_images as string[] | null)?.[0] ??
         null,
       puan: r.rating ?? 0,
+      foto: (r as any).photo_url ?? null,
       baslik: r.title,
       metin: r.body ?? '',
       gonderen: r.guest_name ?? '—',

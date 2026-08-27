@@ -98,12 +98,14 @@ export default function KurasyonClient({
   slaytlar,
   kategoriGorselleri,
   koleksiyonlar,
+  instagramKareleri,
 }: {
   bolumler: Record<string, string[]>
   urunler: Record<string, KurasyonUrun>
   slaytlar: PanelSlayt[]
   kategoriGorselleri: Record<string, string | null>
   koleksiyonlar: { slug: string; name: string }[]
+  instagramKareleri: { image_url: string; link: string }[]
 }) {
   const router = useRouter()
   const { push: toast } = useToast()
@@ -111,6 +113,32 @@ export default function KurasyonClient({
   const [state, setState] = useState<Record<string, string[]>>(bolumler)
   const [cache, setCache] = useState<Record<string, KurasyonUrun>>(urunler)
   const [katGorsel, setKatGorsel] = useState<Record<string, string | null>>(kategoriGorselleri)
+  // Instagram duvarı (Faz 11D)
+  const [igKareler, setIgKareler] = useState<{ image_url: string; link: string }[]>(instagramKareleri)
+  const [igKaydediliyor, setIgKaydediliyor] = useState(false)
+  const igDegisti = JSON.stringify(igKareler) !== JSON.stringify(instagramKareleri)
+  const igKaydet = async () => {
+    const eksik = igKareler.find((k) => !k.image_url || !/^https:\/\//.test(k.link))
+    if (eksik) {
+      toast('Her karede görsel ve https ile başlayan gönderi bağlantısı olmalı', 'danger')
+      return
+    }
+    setIgKaydediliyor(true)
+    try {
+      const res = await fetch('/api/panel/curation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section: 'instagram', product_ids: [], items: igKareler }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Kaydedilemedi')
+      toast('Kaydedildi — vitrin en geç ~15 saniye içinde güncellenir.', 'success')
+      router.refresh()
+    } catch (e: any) {
+      toast(e.message, 'danger')
+    }
+    setIgKaydediliyor(false)
+  }
   const [pickerFor, setPickerFor] = useState<string | null>(null)
   const [kaydedilen, setKaydedilen] = useState<string | null>(null)
 
@@ -459,6 +487,57 @@ export default function KurasyonClient({
         </PCard>
         )
       })}
+
+      {/* ── Instagram duvarı (Faz 11D) ── */}
+      <PCard
+        title={`Instagram duvarı (${igKareler.length}/9)`}
+        action={
+          <PButton variant="ghost" onClick={() => setIgKareler((k) => [...k, { image_url: '', link: '' }])} disabled={igKareler.length >= 9}>
+            <Plus size={14} /> Kare ekle
+          </PButton>
+        }
+      >
+        <p className="mb-3 text-[12px] leading-relaxed text-[var(--p-muted)]">
+          Ana sayfadaki Instagram bölümü. Kare = paylaşım görseli + gönderi bağlantısı.
+          Hiç kare yoksa bölüm vitrinde görünmez. En iyi sonuç: kare (1:1) görseller.
+        </p>
+        {igKareler.length === 0 ? (
+          <p className="rounded-[4px] border border-dashed border-[var(--p-line)] px-3 py-6 text-center text-[12px] text-[var(--p-muted)]">
+            Kare yok — bölüm vitrinde görünmüyor.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {igKareler.map((kare, i) => (
+              <li key={i} className="flex flex-wrap items-center gap-3 rounded-[4px] border border-[var(--p-line)] p-2">
+                <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
+                  {kare.image_url && (
+                    <Image src={kare.image_url} unoptimized={isRemoteMedia(kare.image_url)} alt="" width={48} height={48} sizes="48px" className="h-12 w-12 object-cover" />
+                  )}
+                </span>
+                <span className="min-w-[200px] flex-1 space-y-1.5">
+                  <MediaUpload etiket={kare.image_url ? 'Görseli değiştir' : 'Görsel yükle'} onUploaded={(url) => setIgKareler((k) => k.map((x, j) => (j === i ? { ...x, image_url: url } : x)))} />
+                  <PInput
+                    value={kare.link}
+                    onChange={(e) => setIgKareler((k) => k.map((x, j) => (j === i ? { ...x, link: e.target.value } : x)))}
+                    placeholder="https://www.instagram.com/p/…"
+                  />
+                </span>
+                <span className="flex shrink-0 items-center gap-1">
+                  <button onClick={() => setIgKareler((k) => { const n=[...k]; if(i>0){[n[i-1],n[i]]=[n[i],n[i-1]]} return n })} disabled={i===0} aria-label="Yukarı" className="flex h-9 w-9 items-center justify-center rounded-[4px] border border-[var(--p-line)] disabled:opacity-30 hover:border-[var(--p-ink)]"><ArrowUp size={14} /></button>
+                  <button onClick={() => setIgKareler((k) => { const n=[...k]; if(i<n.length-1){[n[i+1],n[i]]=[n[i],n[i+1]]} return n })} disabled={i===igKareler.length-1} aria-label="Aşağı" className="flex h-9 w-9 items-center justify-center rounded-[4px] border border-[var(--p-line)] disabled:opacity-30 hover:border-[var(--p-ink)]"><ArrowDown size={14} /></button>
+                  <button onClick={() => setIgKareler((k) => k.filter((_, j) => j !== i))} aria-label="Kaldır" className="flex h-9 w-9 items-center justify-center rounded-[4px] border border-[var(--p-danger)]/30 text-[var(--p-danger)] hover:border-[var(--p-danger)]"><Trash2 size={14} /></button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="mt-3 flex items-center gap-3">
+          <PButton onClick={igKaydet} disabled={igKaydediliyor || !igDegisti}>
+            {igKaydediliyor ? 'Kaydediliyor…' : 'Kaydet'}
+          </PButton>
+          {!igDegisti && <span className="text-[11px] text-[var(--p-muted)]">Kaydedilmemiş değişiklik yok</span>}
+        </div>
+      </PCard>
 
       {/* ── Kategori kartı görselleri ── */}
       <div className="pt-2">

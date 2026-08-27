@@ -184,6 +184,10 @@ export default async function PanelSiparisDetayPage({
         iptalEdilenKalemler: ((o.metadata as any)?.iptal_kalemler ?? []) as any[],
         // Faz 30: hangi mail ne zaman gitti — panelde görünür olsun.
         mailGecmisi: ((o.metadata as any)?.bildirim ?? {}) as Record<string, string>,
+        // Faz 11D: iç notlar — müşteriye görünmez, panel-yalnız.
+        icNotlar: (Array.isArray((o.metadata as any)?.panel_notlari)
+          ? (o.metadata as any).panel_notlari
+          : []) as { t: string; m: string }[],
         // Faz 11C: gönderildi ≠ ulaştı. Damgada saklanan Resend id'siyle son
         // olay sorgulanır (delivered / bounced / complained). Anahtar
         // yalnız-gönderim yetkiliyse panel bunu açıkça söyler.

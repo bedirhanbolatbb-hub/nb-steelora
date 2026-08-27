@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { Check, ShoppingBag } from 'lucide-react'
+import { Check, ShoppingBag, Star } from 'lucide-react'
 import { useSepetPaneli } from '@/hooks/useSepetPaneli'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import Link from 'next/link'
@@ -177,6 +177,16 @@ export default function ProductCardV2({
         >
           {product.display_title}
         </h3>
+
+        {/* Sosyal kanıt (Faz 11D): yalnız ONAYLI yorumu olan üründe yıldız +
+            sayı; yorum yoksa hiçbir şey basılmaz — sahte doluluk yok. */}
+        {Number((product as any).review_count) > 0 && (
+          <p className="mt-1 flex items-center justify-center gap-1 font-body text-[11px] text-ink-soft">
+            <Star size={11} className="fill-accent-deep text-accent-deep" aria-hidden />
+            <span className="tabular-nums">{Number((product as any).avg_rating ?? 0).toFixed(1)}</span>
+            <span className="text-muted">({Number((product as any).review_count)})</span>
+          </p>
+        )}
         <div className="mt-1.5 flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1">
           {kampanyaliFiyat != null ? (
             <>

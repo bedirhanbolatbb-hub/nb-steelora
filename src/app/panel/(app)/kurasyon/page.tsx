@@ -20,10 +20,11 @@ const BOLUMLER = [
 export default async function PanelKurasyonPage() {
   const supabase = createServiceClient()
 
-  const [{ data: settings }, { data: slidesRow }, { data: koleksiyonlar }] = await Promise.all([
+  const [{ data: settings }, { data: slidesRow }, { data: koleksiyonlar }, { data: igRow }] = await Promise.all([
     supabase.from('homepage_settings').select('section, product_ids, payload').in('section', BOLUMLER),
     supabase.from('homepage_settings').select('payload').eq('section', 'hero_slides').maybeSingle(),
     supabase.from('collections').select('slug, name').eq('is_active', true).order('sort_order'),
+    supabase.from('homepage_settings').select('payload').eq('section', 'instagram').maybeSingle(),
   ])
 
   const bolumler: Record<string, string[]> = Object.fromEntries(BOLUMLER.map((b) => [b, []]))
@@ -72,6 +73,7 @@ export default async function PanelKurasyonPage() {
       slaytlar={slaytlar}
       kategoriGorselleri={kategoriGorselleri}
       koleksiyonlar={(koleksiyonlar || []).map((k: any) => ({ slug: k.slug, name: k.name }))}
+      instagramKareleri={Array.isArray(igRow?.payload?.items) ? igRow!.payload.items : []}
     />
   )
 }

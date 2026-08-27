@@ -237,6 +237,19 @@ export default function ReviewList({ productId }: { productId: string }) {
               <p className="text-ink-soft text-[13px] font-body leading-relaxed mb-2">
                 {review.body}
               </p>
+              {/* Müşteri fotoğrafı (Faz 11D) — yalnız onaylı yorumda; kolon
+                  select('*') ile geldiği için DDL öncesinde de kırılmaz. */}
+              {review.photo_url && (
+                <a href={review.photo_url} target="_blank" rel="noopener noreferrer" className="mb-2 inline-block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={review.photo_url}
+                    alt="Müşteri fotoğrafı"
+                    loading="lazy"
+                    className="h-24 w-24 rounded-[4px] border border-line object-cover"
+                  />
+                </a>
+              )}
               <p className="text-[11px] font-body text-muted">
                 {maskName(review.guest_name)}
               </p>

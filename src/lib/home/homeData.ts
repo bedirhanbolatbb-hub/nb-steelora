@@ -42,6 +42,23 @@ export type HomeData = {
   bant: { metin: string; hedef: string; bitis: string | null } | null
   categoryImages: Record<string, string | null>
   blogPosts: any[]
+  /** Onaylı gerçek yorumlar (Faz 11D) — 3'ten azsa vitrin bölümü basılmaz. */
+  yorumlar: VitrinYorumu[]
+  /** Onaylı yorumu olan ürün 8'i bulunca dolar; azsa boş (bölüm görünmez). */
+  cokBegenilenler: any[]
+  /** Panelden yönetilen Instagram kareleri; boşsa bölüm görünmez. */
+  instagram: { image_url: string; link: string }[]
+}
+
+export type VitrinYorumu = {
+  id: string
+  ad: string
+  puan: number
+  baslik: string | null
+  metin: string
+  dogrulanmis: boolean
+  urunAd: string
+  urunSlug: string | null
 }
 
 const TTL_MS = 5 * 60_000
@@ -94,6 +111,7 @@ async function yukle(): Promise<HomeData> {
     poolRes,
     collectionsRes,
     blogRes,
+    yorumRes,
   ] = await Promise.all([
     supabase.from('site_content').select('key, value'),
     supabase.from('homepage_settings').select('section, product_ids, payload'),
@@ -114,6 +132,12 @@ async function yukle(): Promise<HomeData> {
       .eq('published', true)
       .order('published_at', { ascending: false })
       .limit(3),
+    supabase
+      .from('reviews')
+      .select('id, guest_name, rating, title, body, is_verified_purchase, created_at, products(slug, override_title, trendyol_title)')
+      .eq('is_approved', true)
+      .order('created_at', { ascending: false })
+      .limit(9),
   ])
 
   const content = Object.fromEntries((contentRes.data || []).map((r: any) => [r.key, r.value ?? '']))
@@ -200,6 +224,41 @@ async function yukle(): Promise<HomeData> {
     .slice(0, 4)
     .map((s) => ({ ...s, href: hedefHref(s, aktifKoleksiyonlar, aktifUrunSluglari) }))
 
+  // ── Sosyal kanıt (Faz 11D) ──
+  // UYDURMA YOK: yorum şeridi yalnız gerçek, onaylı yorum 3'ü bulunca; Çok
+  // Beğenilenler yalnız onaylı yorumu olan ürün 8'i bulunca basılır. Eşik
+  // altında bölümler hiç render edilmez — boş bölüm de sahte doluluk da yok.
+  const hamYorumlar: VitrinYorumu[] = ((yorumRes.data as any[]) || []).map((r) => ({
+    id: r.id,
+    ad: String(r.guest_name ?? '').trim() || 'Müşteri',
+    puan: Number(r.rating) || 0,
+    baslik: r.title ?? null,
+    metin: String(r.body ?? ''),
+    dogrulanmis: Boolean(r.is_verified_purchase),
+    urunAd: r.products ? r.products.override_title || r.products.trendyol_title : '',
+    urunSlug: r.products?.slug ?? null,
+  }))
+  const yorumlar = hamYorumlar.length >= 3 ? hamYorumlar : []
+
+  const puanlilar = pool
+    .filter((p) => Number(p.review_count) > 0)
+    .sort(
+      (a, b) =>
+        Number(b.avg_rating ?? 0) - Number(a.avg_rating ?? 0) ||
+        Number(b.review_count ?? 0) - Number(a.review_count ?? 0)
+    )
+  const cokBegenilenler = puanlilar.length >= 8 ? puanlilar.slice(0, 8) : []
+
+  // ── Instagram duvarı: panelden (homepage_settings.instagram.payload.items) ──
+  const igHam = settings.get('instagram')?.payload?.items
+  const instagram = (Array.isArray(igHam) ? igHam : [])
+    .filter(
+      (x: any) =>
+        x && typeof x.image_url === 'string' && x.image_url && typeof x.link === 'string'
+    )
+    .slice(0, 9)
+    .map((x: any) => ({ image_url: String(x.image_url), link: String(x.link) }))
+
   return {
     content,
     slides,
@@ -213,6 +272,9 @@ async function yukle(): Promise<HomeData> {
     bant: vitrin ? { metin: vitrin.metin, hedef: vitrin.hedef, bitis: vitrin.bitis } : null,
     categoryImages,
     blogPosts: blogRes.data || [],
+    yorumlar,
+    cokBegenilenler,
+    instagram,
   }
 }
 

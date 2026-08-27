@@ -21,6 +21,7 @@ export type YorumSatiri = {
   email: string
   dogrulanmis: boolean
   onayli: boolean
+  foto?: string | null
   tarih: string
 }
 
@@ -156,6 +157,14 @@ export default function YorumlarClient({ satirlar }: { satirlar: YorumSatiri[] }
                 </div>
                 {y.baslik && <p className="mt-1 text-[13px] font-medium">{y.baslik}</p>}
                 <p className="mt-0.5 text-[13px] leading-relaxed text-[var(--p-ink-soft)]">{y.metin}</p>
+                {/* Müşteri fotoğrafı (Faz 11D): onaylamadan önce panelde görülür;
+                    uygunsuzsa "Sil" akışı yorumu ve dosyayı birlikte kaldırır. */}
+                {y.foto && (
+                  <a href={y.foto} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-block">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={y.foto} alt="Müşteri fotoğrafı" className="h-16 w-16 rounded-[4px] border border-[var(--p-line)] object-cover" />
+                  </a>
+                )}
                 <p className="mt-1.5 text-[11px] text-[var(--p-muted)]">
                   {y.gonderen} · {y.email} ·{' '}
                   {new Date(y.tarih).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Istanbul' })}

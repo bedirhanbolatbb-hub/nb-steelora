@@ -4,10 +4,14 @@ import { useRef, useState } from 'react'
 import { ImagePlus } from 'lucide-react'
 import { useToast } from './overlays'
 
-const MAX_KENAR = 2400
+const MAX_KENAR = 1600
 const MAX_BAYT = 10 * 1024 * 1024
+// Vitrin görsel bütçesi (Faz 11D): hiçbir yüklenen görsel 300 KB'yi aşmasın.
+// BB'nin kutu fotoğrafı eski ayarlarla (2400px, sabit 0.85) 937 KB çıkmıştı.
+const HEDEF_BAYT = 300 * 1024
 
-/** Görseli canvas'ta uzun kenarı ≤2400px olacak şekilde webp'ye (olmadı jpeg) çevirir. */
+/** Görseli uzun kenar ≤1600px'e indirir ve kalite 300 KB hedefine inene
+ *  kadar kademeli düşürülerek webp'ye (olmadı jpeg) çevrilir. */
 async function kucult(dosya: File): Promise<Blob> {
   const bitmap = await createImageBitmap(dosya)
   const oran = Math.min(1, MAX_KENAR / Math.max(bitmap.width, bitmap.height))
@@ -23,7 +27,12 @@ async function kucult(dosya: File): Promise<Blob> {
   const blobla = (tip: string, kalite: number) =>
     new Promise<Blob | null>((cozumle) => canvas.toBlob(cozumle, tip, kalite))
 
-  return (await blobla('image/webp', 0.85)) ?? (await blobla('image/jpeg', 0.85))!
+  for (let kalite = 0.8; kalite >= 0.5; kalite -= 0.1) {
+    const b = (await blobla('image/webp', kalite)) ?? (await blobla('image/jpeg', kalite))
+    if (b && b.size <= HEDEF_BAYT) return b
+    if (kalite < 0.55 && b) return b // taban: daha fazla düşürmek görüntüyü bozar
+  }
+  return (await blobla('image/webp', 0.5)) ?? (await blobla('image/jpeg', 0.5))!
 }
 
 /**
@@ -41,6 +50,9 @@ export default function MediaUpload({
   const { push: toast } = useToast()
   const [yuzde, setYuzde] = useState<number | null>(null)
   const [onizleme, setOnizleme] = useState<string | null>(null)
+  // Yükleme sonrası boyut panelde görünür (Faz 11D) — BB 937 KB'lik dosyanın
+  // sessizce geçtiğini ancak Lighthouse'ta fark etmişti.
+  const [sonBoyutKB, setSonBoyutKB] = useState<number | null>(null)
 
   const yukle = async (dosya: File) => {
     if (dosya.size > MAX_BAYT) {
@@ -77,7 +89,9 @@ export default function MediaUpload({
 
       URL.revokeObjectURL(url)
       if (!sonuc.url) throw new Error(sonuc.error || 'Yükleme başarısız')
-      toast('Görsel yüklendi', 'success')
+      const kb = Math.round(kucuk.size / 1024)
+      setSonBoyutKB(kb)
+      toast(`Görsel yüklendi (${kb} KB)`, 'success')
       onUploaded(sonuc.url)
     } catch (e: any) {
       toast(e.message || 'Yükleme başarısız', 'danger')
@@ -108,6 +122,11 @@ export default function MediaUpload({
         <ImagePlus size={14} />
         {yuzde === null ? etiket : `Yükleniyor… %${yuzde}`}
       </button>
+      {sonBoyutKB !== null && yuzde === null && (
+        <p className="mt-1 text-[11px] text-[var(--p-muted)]">
+          Yüklenen boyut: {sonBoyutKB} KB{sonBoyutKB > 300 ? ' — 300 KB hedefinin üstünde' : ''}
+        </p>
+      )}
       {yuzde !== null && (
         <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[var(--p-line)]">
           <div

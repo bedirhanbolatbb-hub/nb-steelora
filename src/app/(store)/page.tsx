@@ -7,6 +7,8 @@ import CategoryRail from '@/components/home/CategoryRail'
 import CollectionsBand from '@/components/home/CollectionsBand'
 import GiftSplit from '@/components/home/GiftSplit'
 import YeniGelenlerRayi from '@/components/home/YeniGelenlerRayi'
+import YorumSeridi from '@/components/home/YorumSeridi'
+import InstagramDuvari from '@/components/home/InstagramDuvari'
 import WhyUs from '@/components/home/WhyUs'
 import BlogPreview from '@/components/home/BlogPreview'
 import Newsletter from '@/components/home/Newsletter'
@@ -122,6 +124,26 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* 6b · Çok Beğenilenler (Faz 11D) — yalnız onaylı yorumu olan ürün
+          sayısı 8'i bulunca; azsa bölüm HİÇ basılmaz. */}
+      {veri.cokBegenilenler.length >= 8 && (
+        <section className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-16 lg:pb-20">
+          <div className="mb-8 text-center" data-reveal>
+            <p className="eyebrow">Beğenilenler</p>
+            <h2 className="font-heading text-[30px] lg:text-[36px] font-medium text-ink mt-2">
+              Çok Beğenilenler
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+            {veri.cokBegenilenler.map((product: any, i: number) => (
+              <div key={product.id} data-reveal style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}>
+                <ProductCardV2 product={product} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* 7 · Hediye kutusu — görsel ve metin panelden (Faz 11D) */}
       <GiftSplit
         gorsel={c.hakkimizda_gorsel_paket}
@@ -131,6 +153,12 @@ export default async function HomePage() {
 
       {/* 8 · Neden NB Steelora */}
       <WhyUs />
+
+      {/* 8b · Gerçek yorumlar (Faz 11D) — en az 3 onaylı yorum şartı bileşende */}
+      <YorumSeridi yorumlar={veri.yorumlar} />
+
+      {/* 8c · Instagram duvarı (Faz 11D) — kareler panelden; boşsa görünmez */}
+      <InstagramDuvari kareler={veri.instagram} profil={c.instagram_url} />
 
       {/* 9 · Blog önizleme */}
       <BlogPreview posts={veri.blogPosts} />

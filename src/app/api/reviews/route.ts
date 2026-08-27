@@ -47,6 +47,15 @@ export async function POST(request: Request) {
   const rating = Number(body.rating)
   const title = String(body.title ?? '').trim().slice(0, 120) || null
   const text = String(body.body ?? '').trim().slice(0, MAX_BODY)
+  // Fotoğraf yalnız KENDİ yükleme ucumuzdan gelen adresle kabul edilir —
+  // rastgele bir URL enjekte edilip sitemizde barındırılıyormuş gibi
+  // gösterilemesin (Faz 11D).
+  const hamFoto = String(body.photoUrl ?? '').trim()
+  const photoUrl =
+    hamFoto &&
+    hamFoto.startsWith(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/yorumlar/`)
+      ? hamFoto
+      : null
 
   if (!productId || !name || !text) {
     return NextResponse.json({ error: 'Ad, puan ve yorum metni zorunludur' }, { status: 400 })
@@ -74,21 +83,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Ürün bulunamadı' }, { status: 404 })
     }
 
-    // Doğrulanmış alışveriş: aynı e-postayla teslim edilmiş/tamamlanmış sipariş
-    // var mı? (orders tablosunda müşteri e-postası yalnız guest_email kolonunda.)
+    // Doğrulanmış alışveriş (Faz 11D sıkılaştırması): aynı e-postanın teslim
+    // edilmiş bir siparişi olması yetmez — sipariş kalemleri arasında BU ÜRÜN
+    // olmalı. (Faz 27'de ilike jokeri kapatılmıştı; şimdi kapsam da daraldı.)
     const { data: orders } = await supabase
       .from('orders')
       .select('id')
       .in('status', ['delivered', 'completed'])
-      // Faz 27: `ilike` joker kabul ediyordu — `%@%` gibi bir değerle
-      // herhangi bir siparişe eşleşip sahte "doğrulanmış alışveriş" rozeti
-      // alınabiliyordu. Tam eşleşme.
       .eq('guest_email', email.toLowerCase())
+      .contains('items', JSON.stringify([{ productId }]))
       .limit(1)
 
     const isVerifiedPurchase = Boolean(orders && orders.length > 0)
 
-    const { error } = await supabase.from('reviews').insert({
+    const satir: Record<string, unknown> = {
       product_id: productId,
       guest_name: name,
       guest_email: email,
@@ -97,7 +105,16 @@ export async function POST(request: Request) {
       body: text,
       is_approved: false, // moderasyon: kolon varsayılanı true, burada bilerek eziliyor
       is_verified_purchase: isVerifiedPurchase,
-    })
+      ...(photoUrl ? { photo_url: photoUrl } : {}),
+    }
+    let { error } = await supabase.from('reviews').insert(satir)
+    // photo_url kolonu henüz açılmadıysa (DDL'i BB çalıştırır) yorum
+    // fotoğrafsız da olsa KAYBOLMASIN.
+    if (error && photoUrl && /photo_url/.test(error.message)) {
+      console.error('[reviews] photo_url kolonu yok — DDL bekleniyor, fotoğrafsız kaydedildi')
+      delete satir.photo_url
+      ;({ error } = await supabase.from('reviews').insert(satir))
+    }
 
     if (error) {
       console.error('Review insert error:', error.message)

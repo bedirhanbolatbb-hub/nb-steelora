@@ -63,14 +63,33 @@ export async function DELETE(
   const supabase = createServiceClient()
 
   if (type === 'review') {
-    const { data: existing } = await supabase
+    // Faz 11D: fotoğraflı yorum silinirken depo dosyası da temizlenir —
+    // reddedilen (uygunsuz) görsel herkese açık kovada kalmasın. Kolon
+    // henüz yoksa kolonsuz seçime düşülür.
+    let { data: existing } = await supabase
       .from('reviews')
-      .select('product_id')
+      .select('product_id, photo_url')
       .eq('id', id)
       .maybeSingle()
+    if (!existing) {
+      ;({ data: existing } = await supabase
+        .from('reviews')
+        .select('product_id')
+        .eq('id', id)
+        .maybeSingle())
+    }
 
     const { error } = await supabase.from('reviews').delete().eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    const foto = (existing as { photo_url?: string | null } | null)?.photo_url
+    if (foto) {
+      const yol = foto.split('/storage/v1/object/public/media/')[1]
+      if (yol?.startsWith('yorumlar/')) {
+        const { error: depoHata } = await supabase.storage.from('media').remove([yol])
+        if (depoHata) console.error('[yorum-sil] foto silinemedi:', depoHata.message)
+      }
+    }
 
     if (existing?.product_id) await recalcProductReviewStats(supabase, existing.product_id)
     return NextResponse.json({ success: true })

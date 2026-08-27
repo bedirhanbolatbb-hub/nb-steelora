@@ -19,6 +19,8 @@ const SECTIONS: Record<string, { max: number }> = {
   category_piercing: { max: 1 },
   category_erkek: { max: 1 },
   category_setler: { max: 1 },
+  // Faz 11D: Instagram duvarı — ürün değil, payload.items taşır (görsel+bağlantı).
+  instagram: { max: 0 },
 }
 
 export async function POST(request: Request) {
@@ -32,6 +34,34 @@ export async function POST(request: Request) {
 
   if (typeof section !== 'string' || !(section in SECTIONS)) {
     return NextResponse.json({ error: 'Geçersiz bölüm' }, { status: 400 })
+  }
+
+  // ── Instagram duvarı (Faz 11D): görsel+bağlantı listesi, en çok 9 ──
+  if (section === 'instagram') {
+    const ham = Array.isArray(body?.items) ? body.items : null
+    if (!ham) return NextResponse.json({ error: 'Geçersiz kare listesi' }, { status: 400 })
+    if (ham.length > 9) return NextResponse.json({ error: 'En fazla 9 kare eklenebilir' }, { status: 400 })
+    const items: { image_url: string; link: string }[] = []
+    for (const x of ham) {
+      const img = String(x?.image_url ?? '').trim()
+      const link = String(x?.link ?? '').trim()
+      if (!/^https:\/\//.test(img) || !/^https:\/\//.test(link)) {
+        return NextResponse.json({ error: 'Kare görseli ve bağlantısı https olmalı' }, { status: 400 })
+      }
+      items.push({ image_url: img, link })
+    }
+    const supabase = createServiceClient()
+    const { data: mevcut } = await supabase
+      .from('homepage_settings')
+      .select('id')
+      .eq('section', 'instagram')
+      .maybeSingle()
+    const kayit = { product_ids: [], payload: { items }, updated_at: new Date().toISOString() }
+    const { error } = mevcut
+      ? await supabase.from('homepage_settings').update(kayit).eq('section', 'instagram')
+      : await supabase.from('homepage_settings').insert({ section: 'instagram', ...kayit })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
   }
   if (!Array.isArray(ids) || !ids.every((x) => typeof x === 'string')) {
     return NextResponse.json({ error: 'Geçersiz ürün listesi' }, { status: 400 })
