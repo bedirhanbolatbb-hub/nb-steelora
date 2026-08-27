@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     label: `Yeniden gönderim (${tur})`,
   })
 
-  if (gonderim.gonderildi) await bildirimDamgala(orderId, tur)
+  if (gonderim.gonderildi) await bildirimDamgala(orderId, tur, (gonderim as any).id ?? null)
 
   return NextResponse.json({
     ok: gonderim.gonderildi,

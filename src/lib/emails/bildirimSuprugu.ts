@@ -37,15 +37,29 @@ export async function bildirimDamgasi(orderId: string, tur: string): Promise<str
 }
 
 /** Gönderim damgası — orders.metadata.bildirim.<tur> = ISO zaman. */
-export async function bildirimDamgala(orderId: string, tur: string): Promise<void> {
+export async function bildirimDamgala(
+  orderId: string,
+  tur: string,
+  resendId?: string | null
+): Promise<void> {
   try {
     const supabase = createServiceClient()
     const { data } = await supabase.from('orders').select('metadata').eq('id', orderId).maybeSingle()
     const mevcut = (data?.metadata as Record<string, unknown>) ?? {}
     const bildirim = (mevcut.bildirim as Record<string, unknown>) ?? {}
+    // Faz 11C: Resend mesaj id'si de saklanır — teslim edildi mi sorusunun
+    // cevabı ancak bu id ile sorgulanabiliyor. Eski damgalar (yalnız zaman)
+    // olduğu gibi kalır; id ayrı haritada durur, hiçbir okuyucu kırılmaz.
+    const idler = (mevcut.bildirim_id as Record<string, unknown>) ?? {}
     await supabase
       .from('orders')
-      .update({ metadata: { ...mevcut, bildirim: { ...bildirim, [tur]: new Date().toISOString() } } })
+      .update({
+        metadata: {
+          ...mevcut,
+          bildirim: { ...bildirim, [tur]: new Date().toISOString() },
+          ...(resendId ? { bildirim_id: { ...idler, [tur]: resendId } } : {}),
+        },
+      })
       .eq('id', orderId)
   } catch (e: any) {
     // Damga konamazsa süpürge aynı siparişi tekrar gönderebilir. İki bildirim,

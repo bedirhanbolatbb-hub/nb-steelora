@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import KargoTakipClient from './KargoTakipClient'
+import SiparisleriniBul from '@/components/store/SiparisleriniBul'
 
 export const metadata: Metadata = {
   title: 'Kargo Takip',
@@ -26,6 +27,12 @@ export default async function KargoTakipPage({
       </header>
 
       <KargoTakipClient onTakipKodu={sp.kod ?? ''} onSiparisNo={sp.no ?? ''} />
+
+      {/* Faz 11C: mail ulaşmayan müşteri sipariş numarasını da bilmiyor —
+          kısır döngüyü yalnız e-postayla kıran yol. */}
+      <div className="mx-auto max-w-[560px]">
+        <SiparisleriniBul />
+      </div>
     </div>
   )
 }

@@ -119,7 +119,7 @@ export async function siparisiKargodanIlerlet(
         label: 'Shipping notification',
       })
       if (gonderim.gonderildi) {
-        await bildirimDamgala(orderId, 'kargo')
+        await bildirimDamgala(orderId, 'kargo', (gonderim as any).id ?? null)
         sonuc.mailGonderildi.push('kargo')
       }
     }
@@ -156,7 +156,7 @@ export async function siparisiKargodanIlerlet(
         label: 'Review invite',
       })
       if (gonderim.gonderildi) {
-        await bildirimDamgala(orderId, 'teslimat')
+        await bildirimDamgala(orderId, 'teslimat', (gonderim as any).id ?? null)
         // Eski alan da korunuyor: panel ve cron onu okuyor.
         await supabase
           .from('orders')

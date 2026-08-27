@@ -36,9 +36,14 @@ const zamanYaz = (iso: string) =>
 export default function MailGecmisi({
   siparisId,
   gecmis,
+  durumlar = {},
+  durumKisitli = false,
 }: {
   siparisId: string
   gecmis: Record<string, string>
+  /** Resend son olayı (Faz 11C): teslim edildi / bounce / şikâyet. */
+  durumlar?: Record<string, { etiket: string; olay: string }>
+  durumKisitli?: boolean
 }) {
   const router = useRouter()
   const { push: toast } = useToast()
@@ -78,7 +83,16 @@ export default function MailGecmisi({
               <span className="ml-auto flex items-center gap-2">
                 {damga ? (
                   <>
-                    <PBadge tone="success">gönderildi</PBadge>
+                    {(() => {
+                      const d = durumlar[t.anahtar]
+                      if (!d) return <PBadge tone="success">gönderildi</PBadge>
+                      const kotu = ['bounced', 'complained', 'failed'].includes(d.olay)
+                      return (
+                        <PBadge tone={kotu ? 'danger' : d.olay === 'delivered' ? 'success' : 'neutral'}>
+                          {d.etiket}
+                        </PBadge>
+                      )
+                    })()}
                     <span className="text-[11px] tabular-nums text-[var(--p-muted)]">
                       {zamanYaz(damga)}
                     </span>

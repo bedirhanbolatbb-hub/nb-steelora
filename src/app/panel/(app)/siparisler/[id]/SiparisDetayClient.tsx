@@ -42,6 +42,8 @@ export type SiparisDetay = {
   iptalEdilenKalemler: { ad: string | null; adet: number; iadeTutari: number; zaman: string; sebep?: string | null }[]
   /** Gönderilen müşteri maillerinin damgaları (tür → ISO zaman). */
   mailGecmisi: Record<string, string>
+  mailDurumlari?: Record<string, { etiket: string; olay: string }>
+  mailDurumuKisitli?: boolean
   /** Kurumsal fatura — yalnız müşteri istediyse dolu (Faz 28). */
   fatura: { firma: string; vergiDairesi: string; vergiNo: string } | null
   /** Aynı gün aynı müşteriye 5.000 TL (KDV hariç) üzeri satış yapıldıysa. */
@@ -275,7 +277,12 @@ export default function SiparisDetayClient({
       {/* Faz 30 · müşteri mail geçmişi.
           "Bildirimler çok çok önemli" — hangisinin gittiği görünmüyordu ve
           ilk gerçek siparişte iki mailin gitmediği ancak sonradan anlaşıldı. */}
-      <MailGecmisi siparisId={siparis.id} gecmis={siparis.mailGecmisi} />
+      <MailGecmisi
+        siparisId={siparis.id}
+        gecmis={siparis.mailGecmisi}
+        durumlar={siparis.mailDurumlari ?? {}}
+        durumKisitli={Boolean(siparis.mailDurumuKisitli)}
+      />
 
       {/* Kurumsal fatura bilgisi — yalnız müşteri istediyse (Faz 28). */}
       {siparis.fatura && (

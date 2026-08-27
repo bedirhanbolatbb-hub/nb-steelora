@@ -53,6 +53,62 @@ export type OrderLike = {
   metadata?: { sozlesme_onayi?: { surum?: string; onaylandiginda?: string } | null } | null
 }
 
+/**
+ * "Siparişlerimi bul" maili (Faz 11C).
+ *
+ * GERÇEK OLAY: müşteri onay/kargo mailini alamayınca sipariş numarasını da
+ * bilmiyor; takip sayfası numara + e-posta istediği için kısır döngü. Bu mail
+ * o döngüyü kırar: adres sahibine kendi siparişlerinin numarası, durumu ve
+ * takip bağlantısı gönderilir. Bilgi EKRANDA gösterilmez — yalnız kayıtlı
+ * adrese gider, sızıntı olmaz.
+ */
+export function siparisOzetiMaili(siparisler: {
+  order_number: string
+  status: string
+  created_at: string
+  tracking_code?: string | null
+}[]) {
+  const durumTr: Record<string, string> = {
+    paid: 'Ödeme alındı', preparing: 'Hazırlanıyor', shipped: 'Kargoda',
+    delivered: 'Teslim edildi', cancelled: 'İptal edildi', refunded: 'İade edildi',
+  }
+  const satirlar = siparisler
+    .map((o) => {
+      const takip = o.tracking_code
+        ? `${SITE}/kargo-takip?kod=${encodeURIComponent(o.tracking_code)}`
+        : `${SITE}/kargo-takip`
+      const tarih = new Date(o.created_at).toLocaleDateString('tr-TR', {
+        day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Europe/Istanbul',
+      })
+      return `<tr>
+        <td style="padding: 10px 8px; border-bottom: 1px solid #E8D8D0; font-weight: 600;">${htmlKacir(o.order_number)}</td>
+        <td style="padding: 10px 8px; border-bottom: 1px solid #E8D8D0;">${tarih}</td>
+        <td style="padding: 10px 8px; border-bottom: 1px solid #E8D8D0;">${durumTr[o.status] ?? htmlKacir(o.status)}</td>
+        <td style="padding: 10px 8px; border-bottom: 1px solid #E8D8D0;"><a href="${takip}" style="color: #C89080;">Takip et</a></td>
+      </tr>`
+    })
+    .join('')
+  return {
+    subject: 'Siparişleriniz — NB Steelora',
+    html: shell(
+      'Siparişleriniz',
+      `<p style="font-size: 14px; line-height: 1.7;">Bu adrese kayıtlı siparişleriniz aşağıda. Takip bağlantısına
+        tıklayarak güncel kargo durumunu görebilirsiniz.</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0;">
+        <tr>
+          <th style="text-align: left; padding: 8px; font-size: 11px; color: #C89080; text-transform: uppercase; letter-spacing: 0.1em;">Sipariş</th>
+          <th style="text-align: left; padding: 8px; font-size: 11px; color: #C89080; text-transform: uppercase; letter-spacing: 0.1em;">Tarih</th>
+          <th style="text-align: left; padding: 8px; font-size: 11px; color: #C89080; text-transform: uppercase; letter-spacing: 0.1em;">Durum</th>
+          <th style="text-align: left; padding: 8px; font-size: 11px; color: #C89080; text-transform: uppercase; letter-spacing: 0.1em;"></th>
+        </tr>
+        ${satirlar}
+      </table>
+      <p style="font-size: 13px; line-height: 1.7; color: #A88070;">Bu maili siz istemediyseniz görmezden gelebilirsiniz;
+        adresinize kayıtlı siparişler yalnız bu adrese gönderilir.</p>`
+    ),
+  }
+}
+
 export function orderConfirmationEmail(order: OrderLike) {
   const items = Array.isArray(order.items) ? order.items : []
   const lines = items

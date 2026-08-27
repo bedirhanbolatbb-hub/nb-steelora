@@ -357,20 +357,23 @@ export async function POST(request: Request) {
         const alici = await bildirimAdresi()
         const bildirim = adminNewOrderEmail(order)
         const sonuc = await sendMail({ to: alici, ...bildirim, label: 'Admin new order' })
-        if (!sonuc.error) await bildirimDamgala(order.id, 'yeni_siparis')
+        if (!sonuc.error) await bildirimDamgala(order.id, 'yeni_siparis', sonuc.id)
       } catch (bildirimHata: any) {
         console.error('[callback] yönetici bildirimi gönderilemedi:', bildirimHata?.message)
       }
 
       try {
         const { subject, html } = orderConfirmationEmail(order as any)
-        await musteriMailiGonder({
+        const onay = await musteriMailiGonder({
           eposta: order.guest_email,
           orderNumber: order.order_number,
           subject,
           html,
           label: 'Order confirmation',
         })
+        // Faz 11C: onay maili damgalanmıyordu — panelde "Sipariş onayı"
+        // satırı gerçek siparişte bile boş görünüyordu. Damga + Resend id.
+        if (onay.gonderildi) await bildirimDamgala(order.id, 'onay', onay.id ?? null)
       } catch (e: any) {
         console.error('[callback] sipariş onayı gönderilemedi:', e?.message)
       }

@@ -7,6 +7,7 @@ import { getCarrierProvider } from '@/lib/shipping/providers'
 import { gonderiGetir, olaylariGetir } from '@/lib/shipping/shipments'
 import { bolgeEslestir, bolgeleriSenkronla, illeriGetir } from '@/lib/shipping/geo'
 import SiparisDetayClient from './SiparisDetayClient'
+import { mailTeslimDurumu, olayTurkce } from '@/lib/emails/teslimDurumu'
 import type { PanelGonderi } from './KargoBlogu'
 import { musteriMailiEngeli } from '@/lib/emails/musteriMaili'
 import { bildirimAdresi } from '@/lib/emails/bildirim'
@@ -183,6 +184,24 @@ export default async function PanelSiparisDetayPage({
         iptalEdilenKalemler: ((o.metadata as any)?.iptal_kalemler ?? []) as any[],
         // Faz 30: hangi mail ne zaman gitti — panelde görünür olsun.
         mailGecmisi: ((o.metadata as any)?.bildirim ?? {}) as Record<string, string>,
+        // Faz 11C: gönderildi ≠ ulaştı. Damgada saklanan Resend id'siyle son
+        // olay sorgulanır (delivered / bounced / complained). Anahtar
+        // yalnız-gönderim yetkiliyse panel bunu açıkça söyler.
+        ...(await (async () => {
+          const idler = ((o.metadata as any)?.bildirim_id ?? {}) as Record<string, string>
+          const girisler = Object.entries(idler)
+          if (!girisler.length) return { mailDurumlari: {}, mailDurumuKisitli: false }
+          const sonuclar = await Promise.all(
+            girisler.map(async ([tur, id]) => [tur, await mailTeslimDurumu(id)] as const)
+          )
+          const durumlar: Record<string, { etiket: string; olay: string }> = {}
+          let kisitli = false
+          for (const [tur, d] of sonuclar) {
+            if (d.durum === 'ok') durumlar[tur] = { etiket: olayTurkce(d.sonOlay), olay: d.sonOlay }
+            else if (d.durum === 'kisitli') kisitli = true
+          }
+          return { mailDurumlari: durumlar, mailDurumuKisitli: kisitli }
+        })()),
         // Kurumsal fatura yalnız müşteri istediyse dolu (Faz 28).
         fatura: (o.metadata as any)?.fatura ?? null,
         bsUyarisi: bs?.asildi

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import GiftBoxAnimation from '@/components/store/GiftBoxAnimation'
+import SiparisNoKarti from '@/components/store/SiparisNoKarti'
 
 export default async function SiparisTamamlandiPage({
   searchParams,
@@ -19,16 +20,13 @@ export default async function SiparisTamamlandiPage({
       <p className="text-[13px] font-body text-ink-soft mb-4 leading-relaxed">
         Ödemeniz başarıyla tamamlandı. Siparişinizi en kısa sürede hazırlayıp kargoya vereceğiz.
       </p>
-      {orderNumber && (
-        <div className="bg-surface border border-line rounded-[4px] px-6 py-4 mb-8">
-          <p className="text-[10px] uppercase tracking-[0.2em] font-body text-muted mb-1">
-            Sipariş Numarası
-          </p>
-          <p className="price text-[18px] text-ink">{orderNumber}</p>
-        </div>
-      )}
+      {/* Faz 11C: onay maili ulaşmazsa müşterinin elindeki tek kayıt bu
+          ekran — numara büyük, kopyalanabilir, "not alın" uyarılı ve mail
+          gelmezse tekrar gönderme düğmeli. */}
+      {orderNumber && <SiparisNoKarti orderNumber={orderNumber} />}
       <p className="text-[12px] font-body text-muted mb-8">
-        Sipariş onay e-postası kayıtlı adresinize gönderildi.
+        Sipariş onay e-postası kayıtlı adresinize gönderildi — birkaç dakika içinde
+        gelmezse gereksiz (spam) klasörünü kontrol edin.
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
         <Link
