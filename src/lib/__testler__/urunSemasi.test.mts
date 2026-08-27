@@ -3,6 +3,8 @@ import { organizationJsonLd, productJsonLd, webPageJsonLd } from '../seo.ts'
 
 import { HAZIRLIK_IS_GUNU, HAZIRLIK_LABEL, TASIMA_IS_GUNU, TASIMA_LABEL, TESLIM_CUMLESI } from '../shipping.ts'
 
+import { BANKA_YANSIMA_IS_GUNU, BANKA_YANSIMA_LABEL, SOZLESME_SURUMU } from '../legal/sozlesme.ts'
+
 const taban = {
   slug: 'test-urun', title: 'Test Ürün', description: 'Açıklama', images: ['https://x/1.jpg'],
   stock: 5, barcode: 'NBB999', category: 'Çelik Bileklik', material: '316L Paslanmaz Çelik',
@@ -177,6 +179,21 @@ const kontrol = (ad: string, kosul: boolean, deger: unknown) => {
 {
   const o = organizationJsonLd([], { vergi: 'İstiklal V.D. 2391094302' }) as any
   kontrol('metin karışmış vergi alanı vatID olarak basılmaz', !('vatID' in o), o.vatID)
+}
+
+// ── Faz 11F son: banka yansıma süresi tek sabitte ──
+{
+  kontrol('banka yansıma süresi 3–7 iş günü',
+    BANKA_YANSIMA_IS_GUNU.min === 3 && BANKA_YANSIMA_IS_GUNU.max === 7 &&
+    BANKA_YANSIMA_LABEL === '3–7 iş günü', BANKA_YANSIMA_LABEL)
+  kontrol('etiket uzun tire kullanır (kısa tire kalmadı)',
+    !BANKA_YANSIMA_LABEL.includes('-'), BANKA_YANSIMA_LABEL)
+}
+
+// Sözleşme sürümü metin değişince ilerlemeli
+{
+  kontrol('sözleşme sürümü 2026-08-23.2 değil (teslimat maddesi değişti)',
+    SOZLESME_SURUMU !== '2026-08-23.2' && SOZLESME_SURUMU >= '2026-08-27', SOZLESME_SURUMU)
 }
 
 console.log(`✓ ${sonuc.length}/${sonuc.length} ürün şeması testi geçti`)

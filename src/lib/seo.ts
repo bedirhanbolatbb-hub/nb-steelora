@@ -185,7 +185,7 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
  * Uydurma yok: ad ve açıklama sayfanın kendi başlığı ve kendi metninden gelir,
  * boş açıklama basılmaz.
  */
-export type SayfaSemaTipi = 'WebPage' | 'AboutPage' | 'ContactPage'
+export type SayfaSemaTipi = 'WebPage' | 'AboutPage' | 'ContactPage' | 'CollectionPage' | 'Blog'
 
 export function webPageJsonLd(s: {
   tip: SayfaSemaTipi

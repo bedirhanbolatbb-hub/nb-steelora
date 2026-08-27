@@ -2,7 +2,7 @@ import { formatPrice } from '@/lib/utils'
 import { htmlKacir } from '@/lib/guvenlik/girdi'
 import { WHATSAPP_URL } from '@/lib/contact'
 import { SHIPPING_LINE_LABEL } from '@/lib/shipping'
-import { CAYMA_SURESI_GUN } from '@/lib/legal/sozlesme'
+import { BANKA_YANSIMA_LABEL, CAYMA_SURESI_GUN } from '@/lib/legal/sozlesme'
 import { ORG_EMAIL } from '@/lib/seo'
 import { subeIfadesi } from '@/lib/shipping/firmalar'
 
@@ -366,7 +366,7 @@ export function orderCancelledEmail(
         ${
           iadeEdildi
             ? `Ödemeniz (<strong>${formatPrice(Number(order.total) || 0)}</strong>) bankanıza iade edildi.
-               Kartınıza yansıması bankanıza göre <strong>1–7 iş günü</strong> sürebilir.`
+               Kartınıza yansıması bankanıza göre <strong>${BANKA_YANSIMA_LABEL}</strong> sürebilir.`
             : tahsilatVardi
               ? `Ödemenizin (<strong>${formatPrice(Number(order.total) || 0)}</strong>) iadesi işleme alındı;
                  sonucu ayrıca bildireceğiz.`
@@ -827,7 +827,7 @@ export function iadeTamamlandiEmail(params: {
         <p style="margin:0;color:#166534;font-size:13px;line-height:1.8;">
           Kredi kartıyla ödeme yaptıysanız bankanız, bize ulaşan tutarı kullanılabilir
           limitinize <strong>tek seferde</strong> eklemekle yükümlüdür. Kartınıza
-          yansıması bankanıza bağlı olarak <strong>3–7 iş günü</strong> sürebilir; bu süre
+          yansıması bankanıza bağlı olarak <strong>${BANKA_YANSIMA_LABEL}</strong> sürebilir; bu süre
           bizim kontrolümüzde değildir.
         </p>
       </div>
@@ -873,7 +873,7 @@ export function kalemIptalEmail(
           : ''
       }
       <p style="color:#7A5048;font-size:14px;line-height:1.8;margin:0 0 20px;">
-        İade, kartınızı veren bankaya göre <strong>1-7 iş günü</strong> içinde hesabınıza yansır.
+        İade, kartınızı veren bankaya göre <strong>${BANKA_YANSIMA_LABEL}</strong> içinde hesabınıza yansır.
         Siparişinizin kalan ürünleri hazırlanmaya devam ediyor; kargoya verildiğinde ayrıca
         haber vereceğiz.
       </p>

@@ -3,20 +3,7 @@ import LegalPageLayout from '@/components/store/LegalPageLayout'
 import SaticiKunyesi from '@/components/store/SaticiKunyesi'
 import { kunyeGetir } from '@/lib/legal/veriSorumlusu'
 import { getSiteContent } from '@/lib/supabase/content'
-import {
-  AYIP_ISPAT_AY,
-  AYIP_ZAMANASIMI_YIL,
-  AZAMI_TESLIM_GUN,
-  CAYMA_SURESI_GUN,
-  GERI_GONDERME_GUN,
-  GERI_ODEME_GUN,
-  HAKEM_HEYETI_SINIRI_TL,
-  HAKEM_HEYETI_YILI,
-  ONARIM_DEGISIM_IS_GUNU,
-  SOZLESME_SURUMU,
-  SOZLESME_YOLLARI,
-  URUN_TOLERANS_KISA,
-} from '@/lib/legal/sozlesme'
+import { AYIP_ISPAT_AY, AYIP_ZAMANASIMI_YIL, AZAMI_TESLIM_GUN, BANKA_YANSIMA_LABEL, CAYMA_SURESI_GUN, GERI_GONDERME_GUN, GERI_ODEME_GUN, HAKEM_HEYETI_SINIRI_TL, HAKEM_HEYETI_YILI, ONARIM_DEGISIM_IS_GUNU, SOZLESME_SURUMU, SOZLESME_YOLLARI, URUN_TOLERANS_KISA } from '@/lib/legal/sozlesme'
 import { FREE_SHIPPING_LABEL, HAZIRLIK_LABEL, TASIMA_LABEL } from '@/lib/shipping'
 import { ORG_EMAIL } from '@/lib/seo'
 import Link from 'next/link'
@@ -162,7 +149,7 @@ export default async function OnBilgilendirmeFormuPage() {
         seferde iade edilir. Ödemeniz kredi kartıyla yapılmışsa, kart çıkaran kuruluş
         tarafımızca aktarılan tutarı kendisine ulaşmasını takiben kullanılabilir limitinize{' '}
         <strong>tek seferde</strong> ilave etmekle yükümlüdür; bankanın hesabınıza yansıtma
-        süresi (genellikle 3–7 iş günü) bizim kontrolümüzde değildir.
+        süresi (genellikle {BANKA_YANSIMA_LABEL}) bizim kontrolümüzde değildir.
       </p>
 
       <h2>6. Cayma Hakkının Kullanılamayacağı Haller</h2>

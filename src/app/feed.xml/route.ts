@@ -1,3 +1,4 @@
+import { HAZIRLIK_IS_GUNU, TASIMA_IS_GUNU } from '@/lib/shipping'
 import { createServiceClient } from '@/lib/supabase/service'
 import { groupProducts } from '@/lib/catalog/variants'
 import { cleanDescription } from '@/lib/catalog/description'
@@ -153,9 +154,18 @@ export async function GET() {
       x += etiket('g:material', materialLabel(p.material_type))
       x += etiket('g:size', p.variant_label)
       // Kargo her siparişte ücretsiz (lib/shipping.ts tek kaynak).
+      //
+      // Süre alanları Merchant Center ürün veri şartnamesinde g:shipping'in
+      // ALT ALANLARI olarak tanımlı ve değerleri İŞ GÜNÜ tamsayısıdır. Sayfa
+      // metni ve JSON-LD handlingTime/transitTime ile aynı sabitten okunur;
+      // besleme ile vitrin ayrışamaz.
       x += '    <g:shipping>\n'
       x += '      <g:country>TR</g:country>\n'
       x += '      <g:price>0.00 TRY</g:price>\n'
+      x += `      <g:min_handling_time>${HAZIRLIK_IS_GUNU.min}</g:min_handling_time>\n`
+      x += `      <g:max_handling_time>${HAZIRLIK_IS_GUNU.max}</g:max_handling_time>\n`
+      x += `      <g:min_transit_time>${TASIMA_IS_GUNU.min}</g:min_transit_time>\n`
+      x += `      <g:max_transit_time>${TASIMA_IS_GUNU.max}</g:max_transit_time>\n`
       x += '    </g:shipping>\n'
       x += '  </item>\n'
       return x

@@ -2,18 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import { getSiteContent } from '@/lib/supabase/content'
-import {
-  AYIP_ISPAT_AY,
-  AYIP_ZAMANASIMI_YIL,
-  AZAMI_TESLIM_GUN,
-  CAYMA_SURESI_GUN,
-  GERI_GONDERME_GUN,
-  GERI_ODEME_GUN,
-  HAKEM_HEYETI_SINIRI_TL,
-  HAKEM_HEYETI_YILI,
-  ONARIM_DEGISIM_IS_GUNU,
-  SOZLESME_YOLLARI,
-} from '@/lib/legal/sozlesme'
+import { AYIP_ISPAT_AY, AYIP_ZAMANASIMI_YIL, AZAMI_TESLIM_GUN, BANKA_YANSIMA_LABEL, CAYMA_SURESI_GUN, GERI_GONDERME_GUN, GERI_ODEME_GUN, HAKEM_HEYETI_SINIRI_TL, HAKEM_HEYETI_YILI, ONARIM_DEGISIM_IS_GUNU, SOZLESME_YOLLARI } from '@/lib/legal/sozlesme'
 import { FREE_SHIPPING_LABEL, HAZIRLIK_LABEL, TASIMA_LABEL, TESLIM_CUMLESI } from '@/lib/shipping'
 import { ORG_EMAIL } from '@/lib/seo'
 
@@ -120,7 +109,7 @@ export default async function KargoVeIadePage() {
         teslimat masrafları dâhil tahsil edilen tüm tutar, ödeme yaptığınız yönteme tek
         seferde iade edilir. Kredi kartı ile ödediyseniz bankanız, bize ulaşan tutarı
         kullanılabilir limitinize tek seferde eklemekle yükümlüdür;{' '}
-        <strong>kartınıza yansıması bankanıza bağlı olarak 3–7 iş günü sürebilir</strong> ve
+        <strong>kartınıza yansıması bankanıza bağlı olarak {BANKA_YANSIMA_LABEL} sürebilir</strong> ve
         bu süre bizim kontrolümüzde değildir.
       </p>
 

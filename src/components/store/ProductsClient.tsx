@@ -33,6 +33,11 @@ interface ProductsClientProps {
   tanitim?: string
   /** Liste üstünde gösterilen daraltma çipleri (ör. Bileklik sayfasında Halhal) */
   chips?: { value: string; label: string }[]
+  /**
+   * Listenin üstüne basılacak sunucu içeriği — kırıntı yolu için.
+   * Sunucuda üretilir çünkü JsonLd headers() okuyor; buraya prop olarak gelir.
+   */
+  ustSerit?: React.ReactNode
 }
 
 function ProductsInner({
@@ -46,6 +51,7 @@ function ProductsInner({
   title = 'Tüm Ürünler',
   tanitim,
   chips,
+  ustSerit,
 }: ProductsClientProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -224,6 +230,10 @@ function ProductsInner({
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-12 lg:py-16">
+      {/* Kırıntı yolu sunucuda üretilip buraya geçirilir: JsonLd bir SUNUCU
+          bileşeni (headers() ile nonce okuyor), istemci bileşeninin içinde
+          çağrılamaz — ama prop olarak taşınabilir (Faz 11F son). */}
+      {ustSerit}
       {/* Editorial sayfa başı — Sessiz Atölye */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4 border-b border-line pb-6">
         <div className="max-w-2xl">

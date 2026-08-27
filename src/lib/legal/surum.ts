@@ -41,7 +41,10 @@ export const KVKK_SURUMU: MetinSurumu = {
 /** Mesafeli satış sözleşmesi ve ön bilgilendirme formu. */
 export const MESAFELI_SURUMU: MetinSurumu = {
   surum: SOZLESME_SURUMU,
-  yururluk: '2026-08-23',
+  // Faz 11F: teslimat maddesindeki hazırlık/taşıma ayrımı esasa ilişkin
+  // değişiklik sayıldı (BB kararı). Damga sipariş anında orders.metadata'ya
+  // YAZILDIĞI için eski siparişlerin onay kaydı olduğu gibi kalır.
+  yururluk: '2026-08-27',
 }
 
 /** ISO tarihi GG.AA.YYYY biçimine çevirir. Geçersizse olduğu gibi döner. */

@@ -3,12 +3,19 @@ import { isRemoteMedia } from '@/lib/images'
 import Image from 'next/image'
 import { createServiceClient } from '@/lib/supabase/service'
 import type { Metadata } from 'next'
+import JsonLd from '@/components/seo/JsonLd'
+import KirintiYolu from '@/components/seo/KirintiYolu'
+import { webPageJsonLd } from '@/lib/seo'
+
+/** Meta açıklaması ile Blog şeması aynı cümleyi taşır. */
+const BLOG_ACIKLAMA =
+  'Takı dünyasından ipuçları, bakım rehberleri ve ilhamlar. Paslanmaz çelik takılar hakkında bilmeniz gereken her şey.'
 
 export const metadata: Metadata = {
   // absolute: kök layout'un '%s | NB Steelora' şablonu marka adını bir kez daha
   // ekliyordu — başlık "Blog | NB Steelora | NB Steelora" çıkıyordu.
   title: { absolute: 'Blog | NB Steelora' },
-  description: 'Takı dünyasından ipuçları, bakım rehberleri ve ilhamlar. Paslanmaz çelik takılar hakkında bilmeniz gereken her şey.',
+  description: BLOG_ACIKLAMA,
   alternates: { canonical: '/blog' },
 }
 
@@ -24,6 +31,16 @@ export default async function BlogPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 lg:px-8 py-16">
+      <JsonLd
+        data={webPageJsonLd({ tip: 'Blog', ad: 'Blog', aciklama: BLOG_ACIKLAMA, path: '/blog' })}
+      />
+      <KirintiYolu
+        adimlar={[
+          { ad: 'Ana Sayfa', path: '/' },
+          { ad: 'Blog', path: '/blog' },
+        ]}
+        className="mb-8"
+      />
       <div className="mb-10" data-reveal>
         <p className="eyebrow">Günlük</p>
         <h1 className="font-heading text-[38px] lg:text-[48px] font-medium text-ink mt-2">

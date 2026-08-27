@@ -4,6 +4,9 @@ import { filtreIcinTemizle } from '@/lib/guvenlik/girdi'
 import { FILTRE_KATEGORILERI, filtreDesenleri } from '@/lib/catalog/categories'
 import { fiyatKovalari } from '@/lib/catalog/fiyatKovalari'
 import ProductsClient from '@/components/store/ProductsClient'
+import JsonLd from '@/components/seo/JsonLd'
+import KirintiYolu from '@/components/seo/KirintiYolu'
+import { webPageJsonLd } from '@/lib/seo'
 import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
 import { getSiteContent } from '@/lib/supabase/content'
 
@@ -13,10 +16,13 @@ import { getSiteContent } from '@/lib/supabase/content'
  * gösteriyordu (Faz 11F kapanış denetimi). Filtre/sayfa parametreleri de
  * kanonik adresi çoğaltıyordu; canonical filtresiz katalogu işaret eder.
  */
+/** Meta açıklaması ile CollectionPage şeması aynı cümleyi taşır. */
+const KATALOG_ACIKLAMA =
+  'NB Steelora kataloğunun tamamı: 316L paslanmaz çelik kolye, küpe, bileklik, yüzük, piercing ve setler. Kategori, fiyat ve renge göre süzün.'
+
 export const metadata: Metadata = {
   title: 'Tüm Ürünler',
-  description:
-    'NB Steelora kataloğunun tamamı: 316L paslanmaz çelik kolye, küpe, bileklik, yüzük, piercing ve setler. Kategori, fiyat ve renge göre süzün.',
+  description: KATALOG_ACIKLAMA,
   alternates: { canonical: '/urunler' },
 }
 
@@ -98,7 +104,24 @@ export default async function UrunlerPage({
   const fiyatAraliklari = fiyatKovalari(tumFiyatlar)
 
   return (
-    <ProductsClient
+    <>
+      <JsonLd
+        data={webPageJsonLd({
+          tip: 'CollectionPage',
+          ad: 'Tüm Ürünler',
+          aciklama: KATALOG_ACIKLAMA,
+          path: '/urunler',
+        })}
+      />
+      <ProductsClient
+      ustSerit={
+        <KirintiYolu
+          adimlar={[
+            { ad: 'Ana Sayfa', path: '/' },
+            { ad: 'Tüm Ürünler', path: '/urunler' },
+          ]}
+        />
+      }
       cards={cards}
       total={total}
       categories={categories}
@@ -112,7 +135,8 @@ export default async function UrunlerPage({
         max_fiyat: params.max_fiyat || '',
         stok: params.stok || '',
       }}
-      tanitim={icerik['kategori_tanitim_tum-urunler'] || undefined}
-    />
+        tanitim={icerik['kategori_tanitim_tum-urunler'] || undefined}
+      />
+    </>
   )
 }

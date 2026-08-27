@@ -11,7 +11,11 @@
  * metinlerinde ESASA ilişkin bir değişiklik yapıldığında bu tarih güncellenir.
  * Yazım düzeltmesi için değiştirmeye gerek yok.
  */
-export const SOZLESME_SURUMU = '2026-08-23.2'
+// 27.08.2026 — ESASA İLİŞKİN: "5. Teslimat" maddesi. Eski metin "Teslimat
+// süresi: Sipariş onayından itibaren 1-5 iş günü" diyerek taşıma süresini
+// toplam gibi sunuyordu; hazırlık (1–2 iş günü) ve taşıma (1–5 iş günü) ayrı
+// ve sıralı yazıldı. Banka yansıma süresi de tek değere (3–7) oturtuldu.
+export const SOZLESME_SURUMU = '2026-08-27.1'
 
 /**
  * Yasal süreler ve eşikler — TEK KAYNAK (Faz 20'de mevzuattan doğrulandı).
@@ -43,6 +47,20 @@ export const AYIP_ZAMANASIMI_YIL = 2
 
 /** Ayıbın teslim anında var sayıldığı süre — 6502 s.K. m.10/1. */
 export const AYIP_ISPAT_AY = 6
+
+/**
+ * Kart iadesinin bankada yansıma süresi — TEK KAYNAK (BB kararı, 27 Ağustos 2026).
+ *
+ * Beş yerde elle yazılıydı ve İKİ FARKLI değer dolaşıyordu: sayfalar "3–7 iş
+ * günü", e-postalar "1–7 iş günü" diyordu. Doğru değer 3–7'dir.
+ *
+ * Bu bizim taahhüdümüz DEĞİL, bankanın süresi: metinler "bizim kontrolümüzde
+ * değildir" diyerek bunu açıkça söyler. Değer değişirse burada değişir.
+ */
+export const BANKA_YANSIMA_IS_GUNU = { min: 3, max: 7 } as const
+
+/** "3–7 iş günü" — uzun tire, aralık sabitten türer. */
+export const BANKA_YANSIMA_LABEL = `${BANKA_YANSIMA_IS_GUNU.min}–${BANKA_YANSIMA_IS_GUNU.max} iş günü`
 
 /** Onarım/değişim taleplerinin karşılanma süresi — 6502 s.K. m.11/4. */
 export const ONARIM_DEGISIM_IS_GUNU = 30
