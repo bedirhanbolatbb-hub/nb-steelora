@@ -101,7 +101,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       .eq('id', id)
       .maybeSingle()
 
-    const buGrup = bu ? getGroupKey(bu as any) : null
+    // Kaydettikten SONRAKİ grup anahtarı: ad değişince ürün grup da değiştirir.
+    // Eski anahtara bakmak, bir ürünü var olan bir gruba KATMAYI da engellerdi
+    // (renk varyantı eklemek gibi meşru bir iş).
+    const yeniGrup = bu ? getGroupKey({ ...(bu as any), display_title: yeniAd }) : null
 
     const { data: adaylar } = await supabase
       .from('products_display')
@@ -114,7 +117,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       (a: any) =>
         a.id !== id &&
         adAnahtari(a.display_title) === anahtar &&
-        (!buGrup || getGroupKey(a) !== buGrup)
+        (!yeniGrup || getGroupKey(a) !== yeniGrup)
     )
 
     if (carpisan) {

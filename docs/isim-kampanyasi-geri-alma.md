@@ -192,3 +192,28 @@ adlandıracak.
 - **Tarama ucu:** `GET /api/panel/products/ad-taramasi` aktif ürünleri
   gruplayıp aynı ada düşen kartları döndürür. İkisi de aynı karşılaştırmayı
   (`lib/catalog/adAnahtari.ts`) kullanır.
+
+## Ek bulgu — üçüncü ürün (aynı gün)
+
+Ayrımdan sonra NBB094'ün sayfasında hâlâ "Diğer seçenekler (2)" duruyordu:
+`NBB120` de aynı adı taşıyordu (₺499,90 · Bijuteri Bileklik · women).
+Yani çakışma ikili değil ÜÇLÜYDÜ — 094, 120, 121.
+
+Görsellere bakıldığında doğru eşleşme şu:
+
+- `NBB120` ile `NBB121` **aynı tasarımın gümüş ve gold hâli** (kalp + zirkon
+  yıldız + çiçek charm'lar birebir aynı). Bunlar gerçekten birbirinin varyantı.
+- `NBB094` ayrı bir ürün (sade metal yıldız charm'lar, taşsız).
+
+Bu yüzden `NBB120` de `Kalp Yıldız Çiçek Charm Bileklik` adına alındı; ikisi tek
+kartta birleşti, NBB094 kendi kartında kaldı.
+
+| ürün | önceki ad | önceki note | yeni ad |
+|---|---|---|---|
+| `NBB120` (id `42265e24-f6f5-4b9f-a62a-0401e7c0ecbf`) | Yıldız Charm Bileklik | auto-title-v1 | Kalp Yıldız Çiçek Charm Bileklik |
+
+Bekçi de bu iş sırasında düzeltildi: eskiden ürünün ESKİ grup anahtarına
+bakıyordu, bu yüzden bir ürünü var olan bir gruba katmayı (renk varyantı
+eklemek) da engelliyordu. Artık kaydettikten SONRAKİ anahtara bakıyor —
+aynı ad + aynı kategori + aynı fiyat + aynı gender ise geçer, biri bile
+farklıysa 409.
