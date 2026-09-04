@@ -124,3 +124,71 @@ done
 Geri alma sonrası beklenen durum: adı çakışan kart grubu yeniden 30, kart sayısı
 yine 281 (kart sayısı addan bağımsız değil ama grup üyeleri birlikte döndüğü için
 bölünme olmaz).
+
+---
+
+# Ad ayrımı — 4 Eylül 2026 (Faz 11A-FIX · F3)
+
+## Ne bulundu
+
+`NBB094` ile `NBB121`'in görünen adı da (Yıldız Charm Bileklik), kategorisi de
+(Bijuteri Bileklik), fiyatı da (₺499,90) ve gender'ı da (women) aynıydı. Dördü
+birden grup anahtarının kendisi olduğu için ikisi TEK KART sayıldı:
+
+- `/urunler`'de yalnız NBB094 görünüyordu, NBB121 listede hiç yoktu,
+- NBB121 yalnız ürün sayfasındaki "Diğer seçenekler" küçük resminden erişiliyordu,
+- NBB121'in canonical'ı NBB094'ü gösteriyordu — arama motoruna "bu sayfa onun
+  kopyası" deniyordu. Stoğu 12 olan ₺499,90'lık bir ürün fiilen görünmezdi.
+
+İki ürün birbirinin varyantı DEĞİL: NBB094'te sade metal yıldız charm'lar
+(dolu yıldız, içi boş yıldız, baget taş), NBB121'de tamamı zirkon taşlı kalp,
+yıldız ve çiçek charm'lar var.
+
+## Ne yazıldı
+
+| | |
+|---|---|
+| ürün | `NBB121` — id `939b7f3e-6ed8-44a5-a263-6d1e5f716252` |
+| önceki `override_title` | `Yıldız Charm Bileklik` |
+| önceki `note` | `auto-title-v1` |
+| yeni `override_title` | `Kalp Yıldız Çiçek Charm Bileklik` |
+| yeni `note` | `auto-title-v2` |
+
+Ad ürünün KENDİ görselinden türetildi (v2 kuralı: motif/biçim + tür, 2–5 kelime).
+`NBB094`'e dokunulmadı — "Yıldız Charm Bileklik" onun fotoğrafını doğru anlatıyor.
+`trendyol_title` değişmedi, slug değişmedi; feed, sitemap ve mevcut bağlantılar
+etkilenmedi.
+
+Ölçülen sonuç: kart sayısı **279 → 280**, NBB121 kendi kartıyla listeye girdi ve
+kendi canonical'ına kavuştu.
+
+## Geri almak gerekirse
+
+```sql
+UPDATE public.products
+SET override_title = 'Yıldız Charm Bileklik', note = 'auto-title-v1'
+WHERE id = '939b7f3e-6ed8-44a5-a263-6d1e5f716252';
+```
+
+## Kalan çakışma — BB kararı bekliyor
+
+4 Eylül taraması (280 kartın tamamı, canlı vitrinden):
+
+| ad | kartlar |
+|---|---|
+| Külçe Kolye | NBK041 · NBK042 · NBK043 |
+| İnci Kolye | NBK082 · NBK182 |
+| Simli Kolye | NBK071 · K175-1 |
+
+Üçü de v2'de "AYIRT EDİLEMEDİ" işaretliydi; büyük olasılıkla aynı ürünün
+tedarikçide birden çok kez listelenmiş hâli. Ad uydurulmaz — BB panelden
+adlandıracak.
+
+## Bir daha olmasın diye
+
+- **Panelde bekçi:** `PATCH /api/panel/products/[id]` çakışan `override_title`'ı
+  409 ile reddediyor. Aynı varyant grubunun üyeleri hariç — orada aynı ad
+  bilerek kullanılıyor.
+- **Tarama ucu:** `GET /api/panel/products/ad-taramasi` aktif ürünleri
+  gruplayıp aynı ada düşen kartları döndürür. İkisi de aynı karşılaştırmayı
+  (`lib/catalog/adAnahtari.ts`) kullanır.
