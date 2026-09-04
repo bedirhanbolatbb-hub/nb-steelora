@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { createServiceClient } from '@/lib/supabase/service'
 import { sendMail } from '@/lib/emails/send'
 import { bildirimAdresi } from '@/lib/emails/bildirim'
@@ -21,6 +22,22 @@ import { kritikUyariEmail } from '@/lib/emails/templates'
  */
 
 export type UyariTipi = 'odeme_baslatma' | 'sync_basarisiz' | 'webhook_imza' | 'stok_yazimi'
+
+/**
+ * Uyarıyı Sentry'ye taşır. Sentry kurulu değilse (DSN yok) hiçbir şey yapmaz;
+ * bu çağrı ASLA çağıranı düşürmez — ödeme akışının içinden çalışıyor.
+ */
+function sentryeBildir(params: { tip: UyariTipi; baslik: string; mesaj: string; detay?: Record<string, unknown> }) {
+  try {
+    Sentry.captureException(new Error(`[${params.tip}] ${params.baslik}: ${params.mesaj}`), {
+      level: 'error',
+      tags: { uyari_tipi: params.tip },
+      extra: params.detay,
+    })
+  } catch {
+    // Yut: hata gözcüsünün kendisi akışı kesemez.
+  }
+}
 
 const PENCERE_MS = 60 * 60 * 1000
 
@@ -107,6 +124,15 @@ export async function kritikUyari(params: {
   mesaj: string
   detay?: Record<string, unknown>
 }): Promise<{ gonderildi: boolean; sebep?: string }> {
+  // Sentry'ye HER SEFERİNDE bildirilir — mail penceresine takılmadan.
+  // İkisi farklı iş görür: mail "şu an bir şey bozuk" der ve saatte bir gelir;
+  // Sentry sayıyı, yığın izini ve ilk görülme zamanını tutar. Bastırılan
+  // tekrarları yalnız Sentry sayabilir.
+  //
+  // Olay lib/izleme/gizlilik.ts süzgecinden geçer; buradaki `detay` sipariş
+  // numarası ve tutar taşıyabilir, e-posta/adres taşısa bile silinir.
+  sentryeBildir(params)
+
   try {
     const parmakIzi = parmakIziUret(params.mesaj)
     const karar = await pencereKarari(params.tip, parmakIzi, {

@@ -83,8 +83,30 @@ export const GIZLI_YOL_BASLIKLARI = [
  * ve bankaya form gönderimi gerektirir, katı politika ödemeyi kırardı.
  * O uç kendi imza doğrulamasıyla korunur (lib/iyzico/redirectImza.ts).
  */
+/**
+ * Sentry olaylarının gideceği kaynak — DSN'den TÜRETİLİR, elle yazılmaz.
+ *
+ * DSN "https://<anahtar>@o123.ingest.de.sentry.io/456" biçimindedir; CSP'ye
+ * yalnız origin'i (şema + konak) girer. DSN tanımlı değilse ya da bozuksa
+ * hiçbir şey eklenmez — CSP'yi bir ortam değişkeni yüzünden gevşetmeyiz.
+ *
+ * NONCE DÜZENİ DEĞİŞMEDİ: eklenen tek şey connect-src'ye bir kaynak.
+ * script-src'ye dokunulmadı; Sentry kendi SDK'sını bizim paketimizden yükler,
+ * dışarıdan script çekmez.
+ */
+function sentryKaynagi(): string {
+  const dsn = (process.env.NEXT_PUBLIC_SENTRY_DSN ?? '').trim()
+  if (!dsn) return ''
+  try {
+    return new URL(dsn).origin
+  } catch {
+    return ''
+  }
+}
+
 export function cspUret(nonce: string, gelistirme: boolean): string {
   const supabase = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').trim()
+  const sentry = sentryKaynagi()
   const kurallar: string[] = [
     "default-src 'self'",
     // Geliştirmede Next hot-reload için eval kullanır; üretimde yok.
@@ -92,7 +114,7 @@ export function cspUret(nonce: string, gelistirme: boolean): string {
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
     "img-src 'self' data: blob: https:",
-    `connect-src 'self'${supabase ? ` ${supabase}` : ''}${gelistirme ? ' ws: wss:' : ''}`,
+    `connect-src 'self'${supabase ? ` ${supabase}` : ''}${sentry ? ` ${sentry}` : ''}${gelistirme ? ' ws: wss:' : ''}`,
     "media-src 'self' https:",
     "object-src 'none'",
     "base-uri 'self'",

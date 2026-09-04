@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs/config";
 import { SABIT_GUVENLIK_BASLIKLARI } from "./src/lib/security/basliklar";
 
 const nextConfig: NextConfig = {
@@ -43,4 +44,29 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * Sentry sarmalayıcı (Faz 11F sonrası — hata gözcüsü).
+ *
+ * KAYNAK HARİTALARI: SENTRY_AUTH_TOKEN Vercel'de tanımlıysa derleme sırasında
+ * yüklenir ve Sentry'de yığın izi okunabilir satırları gösterir; tanımlı
+ * değilse derleme yine BAŞARILI olur, yalnız izler küçültülmüş kalır. Yani
+ * anahtar eksikken dağıtım kırılmaz.
+ *
+ * hideSourceMaps: haritalar Sentry'ye yüklenir ama tarayıcıya SUNULMAZ —
+ * aksi hâlde kaynak kodumuz herkese açık olurdu.
+ *
+ * TÜNEL AÇILMADI: olaylar doğrudan Sentry'ye gider ve CSP'ye yalnız DSN'in
+ * kendi kaynağı eklenir (lib/security/basliklar.ts). Tünel her hatayı bir
+ * Vercel işlev çağrısına çevirirdi; Hobby planında bu kotayı yer.
+ *
+ * `automaticVercelMonitors` ve `disableLogger` VERİLMEDİ: ikisi de kullanımdan
+ * kaldırıldı ve yalnız webpack derlemesinde çalışıyor — bu proje Turbopack ile
+ * derleniyor, verilseler sessizce yok sayılırlardı.
+ */
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  sourcemaps: { deleteSourcemapsAfterUpload: true },
+});
