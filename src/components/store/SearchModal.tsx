@@ -8,6 +8,7 @@ import { markaKategorisi } from '@/lib/catalog/categories'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { useRouter } from 'next/navigation'
+import { gorselBoyutu } from '@/lib/images'
 import { Search, X } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { izle } from '@/lib/analytics/izle'
@@ -158,7 +159,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   // Yüklenene kadar boş kutu görünmesin: zemin dururken görsel
                   // yerine oturunca yumuşak belirir.
                   <img
-                    src={product.display_images[0]}
+                    src={gorselBoyutu(product.display_images[0], 128) as string}
                     alt={product.display_title}
                     loading="lazy"
                     decoding="async"

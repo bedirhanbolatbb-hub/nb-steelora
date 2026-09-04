@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY, gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import { CATEGORIES } from '@/lib/catalog/categories'
 
 /**
@@ -36,7 +36,7 @@ export default function CategoryRail({
                 <div className="aspect-[3/4] relative overflow-hidden rounded-[4px] bg-surface-muted">
                   {imageUrl ? (
                     <Image
-                      src={imageUrl}
+                      src={gorselBoyutu(imageUrl, 380)}
                       unoptimized={isRemoteMedia(imageUrl)}
                       alt={cat.title}
                       fill
