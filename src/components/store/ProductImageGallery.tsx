@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY, gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import ProductImage from './ProductImage'
 
 interface ProductImageGalleryProps {
@@ -87,6 +87,8 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
                 src={img}
                 alt={`${title} ${i + 1}`}
                 sizes="100vw"
+                enBoy={900}
+                bulanik
                 priority={i === 0}
                 className="object-cover"
               />
@@ -118,6 +120,8 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
             src={currentImage}
             alt={title}
             sizes="(max-width: 1024px) 100vw, 640px"
+            enBoy={1200}
+            bulanik
             priority
             className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
           />
@@ -138,7 +142,7 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
                 )}
               >
                 <Image
-                  src={img}
+                  src={gorselBoyutu(img, 128)}
                   unoptimized={isRemoteMedia(img)}
                   alt=""
                   fill

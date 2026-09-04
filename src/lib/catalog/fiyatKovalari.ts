@@ -53,3 +53,27 @@ export function fiyatKovalari(fiyatlar: number[], kovaSayisi = 3): FiyatKovasi[]
 
   return kovalar.length > 1 ? kovalar : [hepsi]
 }
+
+/**
+ * Gösterilen fiyattan LİSTE fiyatına döner (Faz 11A-FIX · F5).
+ *
+ * KUSUR: kovalar liste fiyatından türüyordu ("200 — 350 ₺") ama kartta yazan
+ * fiyat kampanyalı hâliydi (%30 indirimle 195 ₺). Müşteri 195 ₺'lik ürünü
+ * "200 — 350" kovasında arıyordu. Artık kovalar GÖSTERİLEN fiyattan türer;
+ * sorgu hâlâ liste fiyatı kolonunda çalıştığı için sınırlar burada geri
+ * çevrilir.
+ */
+export function listeFiyatina(gosterilen: number, oran: number | null | undefined): number {
+  const o = Number(oran) || 0
+  if (!Number.isFinite(gosterilen)) return gosterilen
+  if (o <= 0 || o >= 100) return gosterilen
+  return gosterilen / (1 - o / 100)
+}
+
+/** Kampanya oranı uygulanmış gösterim fiyatı — vitrinFiyat.ts ile aynı kural. */
+export function gosterilenFiyat(liste: number, oran: number | null | undefined): number {
+  const o = Number(oran) || 0
+  const l = Number(liste) || 0
+  if (o <= 0 || o >= 100) return l
+  return Math.round(l * (1 - o / 100) * 100) / 100
+}

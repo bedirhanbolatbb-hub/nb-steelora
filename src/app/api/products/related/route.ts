@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { filtreIcinTemizle } from '@/lib/guvenlik/girdi'
 import { getGroupKey } from '@/lib/catalog/variants'
+import { adAnahtari } from '@/lib/catalog/adAnahtari'
 import { sayiAlani } from '@/lib/guvenlik/girdi'
 import { createClient } from '@/lib/supabase/server'
 
@@ -42,13 +43,23 @@ export async function GET(request: Request) {
    * BİR temsilci alınır, yoksa 5 harf varyantı listeyi doldurur.
    */
   const buGrup = buUrun ? getGroupKey(buUrun as any) : null
+  // Faz 11A-FIX (F4): grup anahtarı yetmiyordu. Ad çakışması yüzünden aynı ada
+  // sahip AYRI gruplar da vardı; müşteri "Bunları da beğenebilirsiniz"de yan
+  // yana iki "Yıldız Charm Bileklik" görüyordu. Artık ad da eleniyor —
+  // baktığı ürünle aynı ad ve kendi içinde tekrar eden ad listeye girmiyor.
+  const buAd = buUrun ? adAnahtari((buUrun as any).display_title) : ''
   const gorulen = new Set<string>()
+  const gorulenAd = new Set<string>()
   const secilen: any[] = []
   for (const p of havuz) {
     const k = getGroupKey(p as any)
+    const ad = adAnahtari((p as any).display_title)
     if (buGrup && k === buGrup) continue
+    if (buAd && ad === buAd) continue
     if (gorulen.has(k)) continue
+    if (ad && gorulenAd.has(ad)) continue
     gorulen.add(k)
+    if (ad) gorulenAd.add(ad)
     secilen.push(p)
   }
 

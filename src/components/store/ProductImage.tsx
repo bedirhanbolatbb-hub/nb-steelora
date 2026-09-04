@@ -2,7 +2,13 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
+import {
+  BLUR_PLACEHOLDER,
+  IMAGE_QUALITY,
+  bulanikOnizleme,
+  gorselBoyutu,
+  isRemoteMedia,
+} from '@/lib/images'
 
 type Props = {
   src?: string | null
@@ -10,15 +16,37 @@ type Props = {
   sizes?: string
   priority?: boolean
   className?: string
+  /**
+   * Görselin isteneceği EN (kutu genişliği × ekran yoğunluğu).
+   * Verilmezse kaynak dosya olduğu gibi istenir — yalnız gerçekten tam boy
+   * gereken yerlerde (büyütme camı) böyle bırakılır.
+   */
+  enBoy?: number
+  /** Yüklenene kadar görselin bulanık küçük hâli basılsın mı (F6). */
+  bulanik?: boolean
 }
 
 /**
  * Ürün görseli + marka placeholder'ı.
  * Görsel yoksa ya da yüklenemezse (onError) ivory zeminli NB monogramı basılır;
  * kırık görsel ikonu hiçbir zaman görünmez.
+ *
+ * Faz 11A-FIX: iki ekleme var.
+ *  · `enBoy` — dosya artık kutusuna göre isteniyor (bkz. lib/images/gorselBoyutu).
+ *  · `bulanik` — inene kadar görselin kendi bulanık hâli basılıyor; boş fildişi
+ *    kare yanıp sönmüyor.
  */
-export default function ProductImage({ src, alt, sizes, priority, className }: Props) {
+export default function ProductImage({
+  src,
+  alt,
+  sizes,
+  priority,
+  className,
+  enBoy,
+  bulanik,
+}: Props) {
   const [failed, setFailed] = useState(false)
+  const [yuklendi, setYuklendi] = useState(false)
 
   if (!src || failed) {
     return (
@@ -30,19 +58,41 @@ export default function ProductImage({ src, alt, sizes, priority, className }: P
     )
   }
 
+  const kaynak = (enBoy ? gorselBoyutu(src, enBoy) : src) as string
+  const onizleme = bulanik ? bulanikOnizleme(src) : null
+
   return (
-    <Image
-      src={src}
-      unoptimized={isRemoteMedia(src)}
-      alt={alt}
-      fill
-      sizes={sizes}
-      quality={IMAGE_QUALITY}
-      placeholder="blur"
-      blurDataURL={BLUR_PLACEHOLDER}
-      priority={priority}
-      className={className}
-      onError={() => setFailed(true)}
-    />
+    <>
+      {onizleme && (
+        /* Dış katman kırpar: blur kenardan taşarsa kutunun dışına sızıyordu.
+           İç katmanda yalnız opacity animasyonu var; blur ve ölçek sabit. */
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <span
+            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-300 ${
+              yuklendi ? 'opacity-0' : 'opacity-100'
+            }`}
+            style={{
+              backgroundImage: `url("${onizleme}")`,
+              filter: 'blur(12px)',
+              transform: 'scale(1.06)',
+            }}
+          />
+        </span>
+      )}
+      <Image
+        src={kaynak}
+        unoptimized={isRemoteMedia(kaynak)}
+        alt={alt}
+        fill
+        sizes={sizes}
+        quality={IMAGE_QUALITY}
+        placeholder="blur"
+        blurDataURL={BLUR_PLACEHOLDER}
+        priority={priority}
+        className={className}
+        onLoad={() => setYuklendi(true)}
+        onError={() => setFailed(true)}
+      />
+    </>
   )
 }

@@ -87,7 +87,6 @@ function ProductsInner({
   const qsTip = sp.get('tip') || ''
   const qsMin = sp.get('min_fiyat') || ''
   const qsMax = sp.get('max_fiyat') || ''
-  const qsStok = sp.get('stok') || ''
 
   const priceLabel = (() => {
     if (qsMin && qsMax) return `${qsMin} — ${qsMax} ₺`
@@ -109,9 +108,6 @@ function ProductsInner({
       : []),
     ...(priceLabel
       ? [{ key: 'fiyat', label: priceLabel, clear: { min_fiyat: '', max_fiyat: '' } }]
-      : []),
-    ...(qsStok === '1'
-      ? [{ key: 'stok', label: 'Sadece stokta olanlar', clear: { stok: '' } }]
       : []),
   ]
 
@@ -178,7 +174,9 @@ function ProductsInner({
         </div>
       </div>
 
-      {/* Price range */}
+      {/* Fiyat aralığı — kovalar GÖSTERİLEN fiyattan türer (Faz 11A-FIX · F5).
+          Kampanya varken liste fiyatından türeyen kovalar kartta yazan rakamla
+          uyuşmuyordu; sınırlar sunucuda liste fiyatına geri çevriliyor. */}
       <div className="mb-8">
         <h3 className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-4">
           Fiyat Aralığı
@@ -210,21 +208,10 @@ function ProductsInner({
         </div>
       </div>
 
-      {/* Stock filter */}
-      <div className="mb-8">
-        <h3 className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-4">
-          Stok
-        </h3>
-        <label className="flex items-center gap-2 text-[12px] font-body text-ink-soft cursor-pointer hover:text-ink">
-          <input
-            type="checkbox"
-            checked={currentParams.stok === '1'}
-            onChange={(e) => updateParams({ stok: e.target.checked ? '1' : '' })}
-            className="accent-accent"
-          />
-          Sadece stokta olanlar
-        </label>
-      </div>
+      {/* Faz 11A-FIX (F5): "Sadece stokta olanlar" kutusu KALDIRILDI.
+          Stok sıfıra düşen ürünü senkron zaten pasife çekiyor; kutu her zaman
+          aynı listeyi veriyordu — müşteriye iş çıkarıp hiçbir şey değiştirmeyen
+          bir filtreydi. */}
     </>
   )
 

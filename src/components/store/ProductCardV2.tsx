@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { formatPrice } from '@/lib/utils'
 import { resolveBadge } from '@/lib/catalog/badge'
 import ProductImage from './ProductImage'
-import { IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
+import { IMAGE_QUALITY, gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import { useCart } from '@/hooks/useCart'
 import type { Product } from '@/types'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
@@ -89,6 +89,10 @@ export default function ProductCardV2({
             src={primaryImage}
             alt={product.display_title}
             sizes={buyuk ? '(max-width: 640px) 50vw, 50vw' : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 340px'}
+            // Faz 11A-FIX: kart kutusu masaüstünde 340, mobilde ~190 piksel.
+            // Orijinal 1200×1800 dosya yerine kutunun iki katı isteniyor.
+            enBoy={buyuk ? 1100 : 680}
+            bulanik
             priority={priority}
             className={`object-cover transition-all duration-700 ${
               hoverImage ? 'group-hover:opacity-0' : 'group-hover:scale-[1.04]'
@@ -98,7 +102,7 @@ export default function ProductCardV2({
 
         {hoverImage && (
           <Image
-            src={hoverImage}
+            src={gorselBoyutu(hoverImage, buyuk ? 1100 : 680)}
             unoptimized={isRemoteMedia(hoverImage)}
             alt=""
             aria-hidden

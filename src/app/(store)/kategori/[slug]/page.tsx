@@ -5,7 +5,8 @@ import ProductsClient from '@/components/store/ProductsClient'
 import { notFound } from 'next/navigation'
 import { buildCategoryFilter, getCategory } from '@/lib/catalog/categories'
 import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
-import { fiyatKovalari } from '@/lib/catalog/fiyatKovalari'
+import { fiyatKovalari, gosterilenFiyat, listeFiyatina } from '@/lib/catalog/fiyatKovalari'
+import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import JsonLd from '@/components/seo/JsonLd'
 import { getSiteContent } from '@/lib/supabase/content'
 import { breadcrumbJsonLd } from '@/lib/seo'
@@ -74,6 +75,9 @@ export default async function KategoriPage({
   const kategori = def.title
   const supabase = await createClient()
   const icerik = await getSiteContent()
+  // Faz 11A-FIX (F5): filtre müşterinin gördüğü fiyatla konuşur.
+  const vitrin = await vitrinIndirimiGetir()
+  const kampanyaOrani = vitrin?.fiyatGoster ? vitrin.oran : null
 
   const filter = buildCategoryFilter(def, sp.tip)
 
@@ -85,17 +89,12 @@ export default async function KategoriPage({
       ? query.eq(filter.column, filter.value)
       : query.or(filter.expression)
 
-  // Fiyat aralığı
+  // Fiyat aralığı — sınırlar gösterilen fiyattan liste fiyatına çevrilir.
   if (sp.min_fiyat) {
-    query = query.gte('display_price', parseFloat(sp.min_fiyat))
+    query = query.gte('display_price', listeFiyatina(parseFloat(sp.min_fiyat), kampanyaOrani) - 0.01)
   }
   if (sp.max_fiyat) {
-    query = query.lte('display_price', parseFloat(sp.max_fiyat))
-  }
-
-  // Stok filtresi
-  if (sp.stok === '1') {
-    query = query.gt('trendyol_stock', 0)
+    query = query.lte('display_price', listeFiyatina(parseFloat(sp.max_fiyat), kampanyaOrani) + 0.01)
   }
 
   // Sıralama
@@ -119,7 +118,7 @@ export default async function KategoriPage({
 
   // Faz 11A: fiyat kovaları bu kategorinin gerçek fiyatlarından türer.
   const fiyatAraliklari = fiyatKovalari(
-    (products || []).map((p: any) => Number(p.display_price) || 0)
+    (products || []).map((p: any) => gosterilenFiyat(Number(p.display_price) || 0, kampanyaOrani))
   )
 
   return (
@@ -143,7 +142,6 @@ export default async function KategoriPage({
         siralama: sp.siralama || '',
         min_fiyat: sp.min_fiyat || '',
         max_fiyat: sp.max_fiyat || '',
-        stok: sp.stok || '',
         tip: sp.tip || '',
       }}
       title={kategori}

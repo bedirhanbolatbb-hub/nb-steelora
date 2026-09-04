@@ -94,3 +94,12 @@ export function tarih(d: Date | string, yil = false): string {
     ...(yil ? { year: 'numeric' } : {}),
   })
 }
+
+/**
+ * "30 Eylül'e kadar" — kesme işaretinden sonraki ek AY ADININ son ünlüsünden
+ * üretilir ("31 Ağustos'a", "30 Eylül'e"). Faz 11A-FIX · F2.
+ */
+export function tariheKadar(d: Date | string): string {
+  const t = tarih(d)
+  return `${t}${sonUnluKalinMi(t) ? "'a" : "'e"} kadar`
+}

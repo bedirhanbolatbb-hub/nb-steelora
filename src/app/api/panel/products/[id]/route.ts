@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
+import { adAnahtari } from '@/lib/catalog/adAnahtari'
+import { getGroupKey } from '@/lib/catalog/variants'
 
 /**
  * Panelden ürün düzenleme.
@@ -78,6 +80,52 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   patch.updated_at = new Date().toISOString()
 
   const supabase = createServiceClient()
+
+  /**
+   * Ad benzersizlik bekçisi (Faz 11A-FIX · F3).
+   *
+   * İki kart aynı ada düştüğünde müşteri listede ayırt edemiyor — NBB094 ile
+   * NBB121 ikisi de "Yıldız Charm Bileklik" olmuştu. Artık çakışan ad
+   * KAYDEDİLEMEZ.
+   *
+   * Aynı varyant grubunun üyeleri BİLEREK aynı adı taşır (ad grubu birarada
+   * tutan anahtarın parçası); bu yüzden kontrol yalnız BAŞKA gruplara bakar.
+   */
+  if (typeof patch.override_title === 'string' && patch.override_title) {
+    const yeniAd = patch.override_title as string
+    const anahtar = adAnahtari(yeniAd)
+
+    const { data: bu } = await supabase
+      .from('products_display')
+      .select('id, display_title, display_price, trendyol_category, gender')
+      .eq('id', id)
+      .maybeSingle()
+
+    const buGrup = bu ? getGroupKey(bu as any) : null
+
+    const { data: adaylar } = await supabase
+      .from('products_display')
+      .select('id, slug, display_title, display_price, trendyol_category, gender, trendyol_barcode, is_active')
+      .eq('is_active', true)
+      .ilike('display_title', yeniAd)
+      .limit(50)
+
+    const carpisan = (adaylar || []).find(
+      (a: any) =>
+        a.id !== id &&
+        adAnahtari(a.display_title) === anahtar &&
+        (!buGrup || getGroupKey(a) !== buGrup)
+    )
+
+    if (carpisan) {
+      return NextResponse.json(
+        {
+          error: `Bu ad zaten kullanılıyor: ${(carpisan as any).trendyol_barcode ?? (carpisan as any).slug}. İki kart aynı adla listelenemez.`,
+        },
+        { status: 409 }
+      )
+    }
+  }
   const { data, error } = await supabase
     .from('products')
     .update(patch)

@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
+import { IMAGE_QUALITY, gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import type { VariantMember } from '@/lib/catalog/variantGroup'
 
 type Props = {
@@ -73,7 +73,7 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
               >
                 {image && (
                   <Image
-                    src={image}
+                    src={gorselBoyutu(image, 128)}
                     unoptimized={isRemoteMedia(image)}
                     alt={member.display_title}
                     fill

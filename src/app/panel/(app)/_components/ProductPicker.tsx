@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { isRemoteMedia } from '@/lib/images'
+import { gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import { useEffect, useRef, useState } from 'react'
 import { PBadge, PInput } from './ui'
 import { PDialog } from './overlays'
@@ -94,7 +94,7 @@ export default function ProductPicker({
             >
               <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
                 {u.image && (
-                  <Image src={u.image} unoptimized={isRemoteMedia(u.image)} alt="" width={40} height={40} sizes="40px" className="h-10 w-10 object-cover" />
+                  <Image src={gorselBoyutu(u.image, 96)} unoptimized={isRemoteMedia(u.image)} alt="" width={40} height={40} sizes="40px" className="h-10 w-10 object-cover" />
                 )}
               </span>
               <span className="min-w-0 flex-1">

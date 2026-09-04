@@ -35,10 +35,15 @@ export default function WishlistButton({
       aria-pressed={inWishlist}
     >
       <svg
+        /* Faz 11A-FIX (F8): sınıf `stroke-text-muted` yazılmıştı — palette
+           böyle bir ad yok, Tailwind hiçbir kural üretmedi. SVG'nin varsayılan
+           çizgisi "none" olduğu için kalp fill'siz VE stroke'suz kalıyordu:
+           ürün sayfasında 58 piksellik boş bir kutu görünüyordu. Doğru ad
+           `stroke-muted` (--color-muted). */
         className={`w-5 h-5 transition-colors ${
           inWishlist
             ? 'fill-accent-line stroke-accent-line'
-            : 'fill-none stroke-text-muted hover:stroke-accent-line'
+            : 'fill-none stroke-muted hover:stroke-accent-line'
         }`}
         viewBox="0 0 24 24"
         strokeWidth={1.5}

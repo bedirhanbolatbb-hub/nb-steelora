@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { filtreIcinTemizle } from '@/lib/guvenlik/girdi'
 import { FILTRE_KATEGORILERI, filtreDesenleri } from '@/lib/catalog/categories'
-import { fiyatKovalari } from '@/lib/catalog/fiyatKovalari'
+import { fiyatKovalari, gosterilenFiyat, listeFiyatina } from '@/lib/catalog/fiyatKovalari'
+import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import ProductsClient from '@/components/store/ProductsClient'
 import JsonLd from '@/components/seo/JsonLd'
 import KirintiYolu from '@/components/seo/KirintiYolu'
@@ -34,6 +35,10 @@ export default async function UrunlerPage({
   const params = await searchParams
   const supabase = await createClient()
   const icerik = await getSiteContent()
+  // Faz 11A-FIX (F5): fiyat filtresi MÜŞTERİNİN GÖRDÜĞÜ fiyatla konuşur.
+  // Kampanya oranı buradan gelir; kovalar da sınırlar da ona göre çevrilir.
+  const vitrin = await vitrinIndirimiGetir()
+  const kampanyaOrani = vitrin?.fiyatGoster ? vitrin.oran : null
 
   // Sayfalama gruplandıktan sonra uygulanır — bkz. lib/catalog/listing.ts
   let query = supabase
@@ -51,17 +56,12 @@ export default async function UrunlerPage({
     )
   }
 
-  // Fiyat aralığı
+  // Fiyat aralığı — sınırlar gösterilen fiyattan liste fiyatına çevrilir.
   if (params.min_fiyat) {
-    query = query.gte('display_price', parseFloat(params.min_fiyat))
+    query = query.gte('display_price', listeFiyatina(parseFloat(params.min_fiyat), kampanyaOrani) - 0.01)
   }
   if (params.max_fiyat) {
-    query = query.lte('display_price', parseFloat(params.max_fiyat))
-  }
-
-  // Stok filtresi
-  if (params.stok === '1') {
-    query = query.gt('trendyol_stock', 0)
+    query = query.lte('display_price', listeFiyatina(parseFloat(params.max_fiyat), kampanyaOrani) + 0.01)
   }
 
   // Sıralama
@@ -99,7 +99,7 @@ export default async function UrunlerPage({
    * 279-649 ₺ bandında. Kampanya bitince de kendiliğinden doğru kalır.
    */
   const tumFiyatlar = (products || [])
-    .map((p: any) => Number(p.display_price) || 0)
+    .map((p: any) => gosterilenFiyat(Number(p.display_price) || 0, kampanyaOrani))
     .filter((n) => n > 0)
   const fiyatAraliklari = fiyatKovalari(tumFiyatlar)
 
@@ -133,7 +133,6 @@ export default async function UrunlerPage({
         siralama: params.siralama || '',
         min_fiyat: params.min_fiyat || '',
         max_fiyat: params.max_fiyat || '',
-        stok: params.stok || '',
       }}
         tanitim={icerik['kategori_tanitim_tum-urunler'] || undefined}
       />

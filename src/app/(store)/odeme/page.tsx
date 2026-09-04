@@ -5,7 +5,7 @@ import UyelikTesvikSatiri from '@/components/store/UyelikTesvikSatiri'
 import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
-import { isRemoteMedia } from '@/lib/images'
+import { gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import Image from 'next/image'
 import { useCart } from '@/hooks/useCart'
 import { createClient } from '@/lib/supabase/client'
@@ -728,7 +728,7 @@ export default function OdemePage() {
                 <div className="relative w-12 h-14 bg-surface-muted shrink-0 overflow-hidden rounded-[2px]">
                   {item.product.display_images?.[0] && (
                     <Image
-                      src={item.product.display_images[0]}
+                      src={gorselBoyutu(item.product.display_images[0], 96)}
                       unoptimized={isRemoteMedia(item.product.display_images[0])}
                       alt={item.product.display_title}
                       fill

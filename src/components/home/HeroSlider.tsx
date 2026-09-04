@@ -89,7 +89,9 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
                 oranı; yalnız çok geniş ekranlarda yükseklik sınırı devreye
                 girer. Satırın yüksekliğini fotoğraf belirler, yazı sütunu
                 ona göre uzar. */}
-            <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr]">
+            {/* Faz 11A-FIX (F7): sütun payı 58/42 idi, fotoğraf yazıdan
+                dardı. Vitrin fotoğrafı satmalı — 40/60'a çevrildi. */}
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr]">
               {/* ── Yazı: fildişi zemin, fotoğrafın üstünde DEĞİL ── */}
               <div className="order-1 flex items-center bg-bg px-5 py-10 sm:px-8 md:px-10 md:py-14 lg:px-16 lg:py-20">
                 <div className="max-w-lg">
@@ -202,10 +204,13 @@ function Gorsel({ slayt, ilk }: { slayt: Slayt; ilk: boolean }) {
       priority={ilk}
       quality={IMAGE_QUALITY}
       // Fotoğraf artık tam genişlik değil: masaüstünde sütunun payı kadar.
-      sizes="(max-width: 767px) 100vw, 42vw"
+      sizes="(max-width: 767px) 100vw, 60vw"
       placeholder="blur"
       blurDataURL={slayt.image_blur || BLUR_PLACEHOLDER}
-      className={ilk ? 'object-cover object-center hero-media' : 'object-cover object-center'}
+      // Faz 11A-FIX (F7): kadraj ORTADAN hizalanıyordu; dikey karede takının
+      // kendisi üstte kalıyor, kırpım onu kesiyordu. Üst öncelikli hizalama
+      // geçici çözüm — kalıcı çözüm yeni çekim (BB listesinde).
+      className={ilk ? 'object-cover object-top hero-media' : 'object-cover object-top'}
     />
   )
 }

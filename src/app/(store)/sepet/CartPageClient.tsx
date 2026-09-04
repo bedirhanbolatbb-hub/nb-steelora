@@ -6,7 +6,7 @@ import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
-import { isRemoteMedia } from '@/lib/images'
+import { gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
 import { useSyncExternalStore } from 'react'
 import { Minus, Plus, Trash2 } from 'lucide-react'
@@ -80,7 +80,7 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
                 <Link href={`/urun/${product.slug}`} className="relative w-24 aspect-[4/5] rounded-[4px] bg-surface-muted shrink-0 overflow-hidden">
                   {product.display_images?.[0] && (
                     <Image
-                      src={product.display_images[0]}
+                      src={gorselBoyutu(product.display_images[0], 160)}
                       unoptimized={isRemoteMedia(product.display_images[0])}
                       alt={product.display_title}
                       fill

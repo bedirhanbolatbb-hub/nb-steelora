@@ -7,7 +7,7 @@ import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { markaKategorisi } from '@/lib/catalog/categories'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
-import { isRemoteMedia } from '@/lib/images'
+import { gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
 import { useKatmanKlavyesi } from '@/hooks/useKatmanKlavyesi'
 import Link from 'next/link'
@@ -97,7 +97,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                   >
                     <div className="relative w-20 h-24 bg-surface-muted shrink-0">
                       <Image
-                        src={imageUrl}
+                        src={gorselBoyutu(imageUrl, 160)}
                         unoptimized={isRemoteMedia(imageUrl)}
                         alt={item.product.display_title}
                         fill
