@@ -15,7 +15,7 @@
 // süresi: Sipariş onayından itibaren 1-5 iş günü" diyerek taşıma süresini
 // toplam gibi sunuyordu; hazırlık (1–2 iş günü) ve taşıma (1–5 iş günü) ayrı
 // ve sıralı yazıldı. Banka yansıma süresi de tek değere (3–7) oturtuldu.
-export const SOZLESME_SURUMU = '2026-08-27.1'
+export const SOZLESME_SURUMU = '2026-09-05.1'
 
 /**
  * Yasal süreler ve eşikler — TEK KAYNAK (Faz 20'de mevzuattan doğrulandı).
@@ -91,7 +91,11 @@ export const SOZLESME_YOLLARI = {
  * (6502 m.5) — bu yüzden iki cümle ayrılmaz.
  */
 export const URUN_TOLERANS_KISA =
-  'Takılarımız el işçiliğiyle tamamlanır; renk tonu, taş yerleşimi ve simetride ürünler arasında küçük farklılıklar olabilir. Bunlar üretimin doğasıdır. Kırık, eksik parça ya da yanlış ürün gibi gerçek bir kusurda ayıplı mal haklarınız saklıdır.'
+  // 5 Eyl 2026: cümle "takılarımız el işçiliğiyle tamamlanır" diye başlıyordu.
+  // Ürünler hazır alınıp kendi markamız altında satılıyor; üretim iddiası doğru
+  // değildi. Hukuki etki aynı — tolerans ayıp sayılmaz, gerçek kusurda haklar
+  // saklı — yalnız dayanak doğru yazıldı. Sürüm bu yüzden yükseltildi.
+  'Bu ürün grubunda renk tonu, taş yerleşimi ve simetride ürünler arasında küçük farklılıklar olabilir; bunlar üretimin doğasıdır. Kırık, eksik parça ya da yanlış ürün gibi gerçek bir kusurda ayıplı mal haklarınız saklıdır.'
 
 /** Siparişe damgalanan onay kaydı. */
 export type SozlesmeOnayi = {

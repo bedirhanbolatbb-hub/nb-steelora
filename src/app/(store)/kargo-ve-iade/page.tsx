@@ -159,10 +159,10 @@ export default async function KargoVeIadePage() {
         sorumluluğumuz <strong>{AYIP_ZAMANASIMI_YIL} yıl</strong> sürer.
       </p>
       <p>
-        <strong>Üretim toleransı ayıp değildir:</strong> takılarımız el işçiliğiyle
-        tamamlandığı için renk tonu, taş yerleşimi ve simetride ürünler arasında küçük
-        farklılıklar olabilir. Kırık, eksik parça veya yanlış ürün gibi gerçek kusurlarda
-        yukarıdaki haklarınız aynen saklıdır.
+        <strong>Üretim toleransı ayıp değildir:</strong> bu ürün grubunda renk tonu,
+        taş yerleşimi ve simetride ürünler arasında küçük farklılıklar olabilir. Kırık,
+        eksik parça veya yanlış ürün gibi gerçek kusurlarda yukarıdaki haklarınız aynen
+        saklıdır.
       </p>
 
       <h2>Uyuşmazlık Çözümü</h2>

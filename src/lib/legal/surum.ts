@@ -44,7 +44,8 @@ export const MESAFELI_SURUMU: MetinSurumu = {
   // Faz 11F: teslimat maddesindeki hazırlık/taşıma ayrımı esasa ilişkin
   // değişiklik sayıldı (BB kararı). Damga sipariş anında orders.metadata'ya
   // YAZILDIĞI için eski siparişlerin onay kaydı olduğu gibi kalır.
-  yururluk: '2026-08-27',
+  // 5 Eyl 2026: üretim toleransı maddesindeki "el işçiliği" dayanağı düzeltildi.
+  yururluk: '2026-09-05',
 }
 
 /** ISO tarihi GG.AA.YYYY biçimine çevirir. Geçersizse olduğu gibi döner. */
