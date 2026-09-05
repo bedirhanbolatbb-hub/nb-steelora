@@ -190,7 +190,11 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
           {bannerText ||
             (ilkSiparisSeridi
               ? `${FREE_SHIPPING_LABEL} • ${ilkSiparisSeridi}`
-              : `${FREE_SHIPPING_LABEL} • Premium Çelik Takılar`)}
+              /* "Premium Çelik Takılar" idi (5 Eyl 2026): katalogda kaplama
+                 pirinç ürünler de var, her sayfanın tepesinde tüm ürünlere
+                 "çelik" demek yanlış beyan. Yerine her ürün için DOĞRU olan
+                 iki vaat yazıyor. */
+              : `${FREE_SHIPPING_LABEL} • Hediye kutusunda gönderilir`)}
         </p>
       </div>
 
