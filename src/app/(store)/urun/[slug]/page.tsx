@@ -126,7 +126,21 @@ export default async function UrunDetayPage({
   // tablosundan al. (Sütun adı 'custom_price' sanılıyordu; gerçek ad
   // override_price — yanlış ad sorguyu patlatıp özel fiyatı sessizce yok
   // sayıyordu, panel ürün sayfası da 404 veriyordu.)
-  const mergedProduct = { ...product, override_price: priceRow?.override_price ?? product.override_price ?? null }
+  /**
+   * İSTEMCİYE GİDEN NESNEDEN ham pazaryeri açıklaması ÇIKARILIR (5 Eyl 2026).
+   *
+   * Ürün nesnesi sepet/yapışkan çubuk gibi istemci bileşenlerine geçiyor ve
+   * Next onu sayfa kaynağına serileştiriyordu. Ekranda görünmese de tedarikçinin
+   * "özel tasarımıyla hazırlanmış" cümlesi sayfa kaynağında duruyordu; açıklama
+   * zaten sunucuda temizlenmiş hâliyle basılıyor, ham metnin istemcide hiçbir
+   * işi yok.
+   */
+  const mergedProduct = {
+    ...product,
+    trendyol_description: null,
+    override_description: null,
+    override_price: priceRow?.override_price ?? product.override_price ?? null,
+  }
 
   const material = materialLabel(product.material_type)
 

@@ -20,7 +20,9 @@ export async function GET(request: Request) {
 
   const { data } = await supabase
     .from('products_display')
-    .select('id, slug, display_title, display_price, display_images, trendyol_category, trendyol_stock, trendyol_barcode, trendyol_id, trendyol_description, trendyol_price, trendyol_images, override_title, override_description, override_price, override_images, collection_id, is_active, is_featured, badge, created_at, updated_at, last_synced_at')
+    // Açıklama kolonları BİLEREK yok: bu yanıt istemciye gidiyor ve kartta
+    // açıklama kullanılmıyor. Ham pazaryeri metni sayfa kaynağına sızmasın.
+    .select('id, slug, display_title, display_price, display_images, trendyol_category, trendyol_stock, trendyol_barcode, trendyol_id, trendyol_price, trendyol_images, override_title, override_price, override_images, collection_id, is_active, is_featured, badge, created_at, updated_at, last_synced_at')
     .ilike('trendyol_category', `%${filtreIcinTemizle(category)}%`)
     .neq('id', productId)
     // Faz 11A: gruplama sonrası eleme yapılacağı için havuz genişletildi.
