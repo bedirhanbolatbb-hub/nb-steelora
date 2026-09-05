@@ -15,6 +15,15 @@ const nextConfig: NextConfig = {
     return [{ source: '/:path*', headers: SABIT_GUVENLIK_BASLIKLARI }]
   },
 
+  /**
+   * /garanti bir dönem yayındaydı, kaldırıldı ve 404 döndürüyordu (5 Eyl 2026
+   * denetimi). Ölü sayfa hem arama motorunda hem Merchant Center incelemesinde
+   * "site tam çalışmıyor" işareti; içerik zaten Kargo & İade sayfasında.
+   */
+  async redirects() {
+    return [{ source: '/garanti', destination: '/kargo-ve-iade', permanent: true }]
+  },
+
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'cdn.dsmcdn.com' },

@@ -51,6 +51,33 @@ const MATERIAL_SENTENCES = [
   /ürün zinciri/i,
 ]
 
+/**
+ * DOĞRULANAMAZ ÜRETİM/TASARIM İDDİALARI (5 Eyl 2026, Merchant Center denetimi).
+ *
+ * Tedarikçiden gelen şablon metin 280 üründen 246'sında "NB Steelora'nın özel
+ * tasarımıyla hazırlanmış" diyordu. Ürünler hazır alınıp kendi markamız altında
+ * satılıyor; tasarım iddiası doğru değil ve Google'ın "yanlış beyan" politikası
+ * tam olarak bunu kapsıyor. İddia cümleden çıkarılır, kalan metin korunur.
+ *
+ * "bu premium çelik kolye" gibi malzeme sıfatları da atılır: malzeme tek
+ * kanonik yerde (başlık altı satır + g:material) yazar ve katalogda kaplama
+ * pirinç ürünler de var — açıklamada "çelik" demek onlarda yanlış olurdu.
+ */
+const IDDIA_DESENLERI: [RegExp, string][] = [
+  [/\s*NB\s*Steelora['’`]?n[ıi]n\s+özel\s+tasarım(ı|ıyla|ımızla)\s+(hazırlanmış|üretilmiş)\s*/gi, ' '],
+  [/\s*özel\s+tasarım(ı|ıyla|ımızla)\s+(hazırlanmış|üretilmiş)\s*/gi, ' '],
+  [/\s*kendi\s+(üretimimiz\w*|atölyemizde\s+üretilen)\s*/gi, ' '],
+  [/\s*el\s+işçiliğiyle\s+üretilen\s*/gi, ' '],
+  [/\s*Her\s+detayında\s+ince\s+işçilik\s+barındıran\s+/gi, ''],
+  [/\bbu\s+premium\s+(çelik|altın|gümüş)\s+/gi, 'bu '],
+]
+
+export function iddiaTemizle(line: string): string {
+  let text = line
+  for (const [desen, yerine] of IDDIA_DESENLERI) text = text.replace(desen, yerine)
+  return text.replace(/\s{2,}/g, ' ').replace(/\s+([,.;:])/g, '$1').trim()
+}
+
 /** Kargo & İade sekmesinin zaten kapsadığı pazaryeri cümleleri. */
 const POLICY_SENTENCES = [
   /hijyenik nedenlerle/i,
@@ -101,6 +128,9 @@ function cleanFragments(line: string): string {
 }
 
 function isJunk(line: string): boolean {
+  // Madde işareti önekini SOY: kalıp desenlerinin çoğu satır başına bağlı ve
+  // "• 316L paslanmaz çelik …" satırı bu yüzden süzgeçten kaçıyordu.
+  line = line.replace(/^[•·*\-–]\s*/, '')
   if (line.length < 3) return true
   // Yalnız noktalama/süs karakterinden ibaret satırlar
   if (!/[a-zçğıöşüA-ZÇĞİÖŞÜ0-9]/.test(line)) return true
@@ -121,7 +151,8 @@ export function cleanDescription(raw: string | null | undefined): CleanDescripti
   const bullets: string[] = []
   let previous = ''
 
-  for (const line of toLines(raw)) {
+  for (const ham of toLines(raw)) {
+    const line = iddiaTemizle(ham)
     if (isJunk(line)) continue
     if (line === previous) continue
     previous = line

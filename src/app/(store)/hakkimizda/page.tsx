@@ -69,18 +69,20 @@ export default async function HakkimizdaPage() {
       <section className={atolyeGorseli ? 'grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:gap-14' : ''}>
         <div className="max-w-[68ch] space-y-6 text-[13px] lg:text-[14px] font-body text-ink-soft leading-relaxed">
           <p>
-            NB Steelora®, Mersin&apos;den tüm Türkiye&apos;ye ulaşan tescilli bir premium çelik takı markasıdır.
-            Modern kadının günlük zarafetini yansıtan, şık ve zamansız parçalar tasarlıyoruz.
-            Her bir ürünümüz, kalite ve estetiğin bir arada sunulduğu özenli bir sürecin ürünüdür.
+            NB Steelora®, Mersin&apos;den tüm Türkiye&apos;ye satış yapan tescilli bir takı markasıdır
+            (TÜRKPATENT tescil no 2025 163503). 316L paslanmaz çelik ve kaplama takıları kendi
+            markamız altında seçip sunuyoruz; gelen her parçayı tek tek kontrol ediyor, hediye
+            kutusunda kendimiz paketleyip gönderiyoruz. Satış, kargo, iade ve satış sonrası
+            sorumluluğun tamamı bize aittir.
           </p>
           <h2 className="font-heading text-[22px] lg:text-[26px] font-medium text-ink pt-2">
             Felsefemiz
           </h2>
           <p>
-            Kaliteden ödün vermeden, herkesin ulaşabileceği zarif takılar sunmak en temel
-            hedefimizdir. Her ürünün malzemesini kendi sayfasında açıkça yazıyor, gelen her
-            parçayı titizlikle kontrol ediyoruz. Tasarımlarımız trendlerin ötesinde, zamansız
-            bir zarafet taşır.
+            Herkesin ulaşabileceği zarif takılar sunmak en temel hedefimizdir. Her ürünün
+            malzemesi kendi sayfasında açıkça yazar — 316L paslanmaz çelik ve premium kaplama
+            pirinç ayrı ayrı belirtilir. Gelen her parçayı titizlikle kontrol eder, kusurlu
+            olanı göndermeyiz.
           </p>
         </div>
 

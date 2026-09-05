@@ -10,7 +10,7 @@ import { notFound, permanentRedirect } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import { FREE_SHIPPING_LABEL, TESLIM_CUMLESI } from '@/lib/shipping'
-import { cleanDescription, hasContent } from '@/lib/catalog/description'
+import { cleanDescription, iddiaTemizle, hasContent } from '@/lib/catalog/description'
 import { materialCare, materialLabel } from '@/lib/catalog/material'
 import { SSS_URUN } from '@/lib/legal/sss'
 import { urunOlcusu } from '@/lib/catalog/olculer'
@@ -162,7 +162,7 @@ export default async function UrunDetayPage({
   // Yapısal veri: açıklama sanitize edilmiş metinden üretilir (pazaryeri
   // kalıpları temizlenmiş hâli), puan yalnız gerçek onaylı yorum varsa basılır.
   const seoDescription = hasOverrideDescription
-    ? plainText(product.override_description)
+    ? iddiaTemizle(plainText(product.override_description))
     : plainText([...cleaned.paragraphs, ...cleaned.bullets].join(' '))
 
   return (
@@ -364,7 +364,7 @@ export default async function UrunDetayPage({
               {
                 title: 'Ürün Açıklaması',
                 content: hasOverrideDescription ? (
-                  <div dangerouslySetInnerHTML={{ __html: product.override_description }} />
+                  <div dangerouslySetInnerHTML={{ __html: iddiaTemizle(product.override_description) }} />
                 ) : hasContent(cleaned) ? (
                   <div className="space-y-3">
                     {cleaned.paragraphs.map((paragraph) => (

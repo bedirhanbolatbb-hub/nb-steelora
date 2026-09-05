@@ -1,7 +1,7 @@
 import { HAZIRLIK_IS_GUNU, TASIMA_IS_GUNU } from '@/lib/shipping'
 import { createServiceClient } from '@/lib/supabase/service'
 import { groupProducts } from '@/lib/catalog/variants'
-import { cleanDescription } from '@/lib/catalog/description'
+import { cleanDescription, iddiaTemizle } from '@/lib/catalog/description'
 import { materialLabel } from '@/lib/catalog/material'
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import { plainText, truncate, ORG_NAME, SITE_URL } from '@/lib/seo'
@@ -69,7 +69,7 @@ function tarihAraligi(baslangic: string | null, bitis: string | null): string | 
 }
 
 function urunAciklamasi(p: any): string {
-  if (p.override_description) return truncate(plainText(p.override_description), 4000)
+  if (p.override_description) return truncate(iddiaTemizle(plainText(p.override_description)), 4000)
   const temiz = cleanDescription(p.trendyol_description)
   const metin = plainText([...temiz.paragraphs, ...temiz.bullets].join(' '))
   // Açıklaması boş 5 ürün var; başlık + malzeme cümlesi uydurma değil, katalogda
@@ -85,7 +85,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('products_display')
     .select(
-      'id, slug, display_title, display_price, display_images, trendyol_description, override_description, trendyol_category, trendyol_stock, gender, created_at, variant_label, material_type'
+      'id, slug, display_title, display_price, display_images, trendyol_description, override_description, trendyol_category, trendyol_stock, trendyol_barcode, gender, created_at, variant_label, material_type'
     )
     .limit(2000)
 
@@ -127,8 +127,20 @@ export async function GET() {
       const stok = Number(p.trendyol_stock) || 0
       const cinsiyet = p.gender === 'men' ? 'male' : p.gender === 'women' ? 'female' : ''
 
+      /**
+       * KİMLİK KISA OLMALI (5 Eyl 2026 ölçümü).
+       *
+       * `g:id` olarak slug gönderiliyordu; Merchant Center'ın sınırı 50 karakter
+       * ve slug'ların çoğu 60-70 karakter. Sonuç: 280 kalemin 131'i "Şu özelliğin
+       * değeri çok uzun: id" ile REDDEDİLİYORDU — katalogun yarısı Google'a hiç
+       * ulaşmadı. Barkod hem kısa hem benzersiz (products.trendyol_barcode üstünde
+       * tekil dizin var) hem de kalıcı; barkodu olmayan üründe slug'ın son 50
+       * karakteri kullanılır.
+       */
+      const kimlik = String(p.trendyol_barcode ?? '').trim() || String(p.slug).slice(-50)
+
       let x = '  <item>\n'
-      x += etiket('g:id', p.slug)
+      x += etiket('g:id', kimlik)
       x += etiket('g:title', truncate(String(p.display_title ?? ''), 150))
       x += etiket('g:description', urunAciklamasi(p))
       x += etiket('g:link', `${SITE_URL}/urun/${p.slug}`)

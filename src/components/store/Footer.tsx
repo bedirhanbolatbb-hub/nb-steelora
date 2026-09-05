@@ -42,6 +42,10 @@ const accountLinks = {
  * Ana menü ve ürün kartları DOKUNULMADI: onlar gerçekten tıklanan yollar,
  * orada prefetch hızın kendisi.
  */
+/** Ticaret Bakanlığı ETBİS kamuya açık site kaydı — nbsteelora.com. */
+const ETBIS_DOGRULAMA =
+  'https://etbis.ticaret.gov.tr/tr/SiteSorgulamaSonuc?siteId=ca30e2bd-074e-48c3-a7d4-5162d95579bd'
+
 export default function Footer({
   isLoggedIn,
   collections,
@@ -93,7 +97,7 @@ export default function Footer({
             </span>
           </Link>
           <p className="text-[12px] leading-relaxed text-line/60 font-body mt-4 max-w-md mx-auto">
-            Premium çelik takı markası. Her parça, zarafeti ve kaliteyi bir arada sunar.
+            316L çelik ve kaplama takı markası. Her ürünün malzemesi kendi sayfasında yazar.
           </p>
         </div>
       </div>
@@ -184,7 +188,16 @@ export default function Footer({
                   info@nbsteelora.com
                 </a>
               </li>
+              <li>
+                {/* Telefon her sayfanın altında ve TIKLANABİLİR olmalı: Merchant
+                    Center "yanlış beyan" denetiminde işletmeye ulaşmanın en az
+                    iki yolu her sayfada aranıyor (5 Eyl 2026). */}
+                <a href="tel:+905051984646" className="inline-block py-2.5 -my-2.5 hover:text-accent transition-colors">
+                  0505 198 46 46
+                </a>
+              </li>
               <li>Mezitli / Mersin / Türkiye</li>
+              <li className="text-line/50">Pazartesi — Cuma: 09:00 — 18:00</li>
               <li>
                 <a
                   href={WHATSAPP_URL}
@@ -232,7 +245,16 @@ export default function Footer({
                     ETBİS kayıt doğrulama
                   </a>
                 ) : (
-                  <>ETBİS: {content.veri_sorumlusu_etbis}</>
+                  /* Numara yazmak yetmiyor: kaydın DOĞRULANABİLİR olması gerekiyor.
+                     Bağlantı Ticaret Bakanlığı'nın kamuya açık site sorgusuna gider. */
+                  <a
+                    href={ETBIS_DOGRULAMA}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:text-accent transition-colors"
+                  >
+                    ETBİS: {content.veri_sorumlusu_etbis} — kaydı doğrula
+                  </a>
                 )}
                 {' · '}
               </>
