@@ -13,7 +13,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={cn(
           // Altın yalnız vurgu rengidir; buton zeminleri ink/ivory.
-          'inline-flex items-center justify-center font-body font-medium uppercase tracking-[0.15em] rounded-[4px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed',
+          'basis inline-flex items-center justify-center font-body font-medium uppercase tracking-[0.15em] rounded-[4px] disabled:opacity-50 disabled:cursor-not-allowed',
           {
             'bg-ink text-bg hover:bg-accent-deep': variant === 'primary',
             'border border-ink text-ink hover:bg-ink hover:text-bg': variant === 'outline',

@@ -53,6 +53,7 @@ export default async function StoreLayout({
         isLoggedIn={isLoggedIn}
         coupon={veri.coupon}
         ilkSiparisSeridi={veri.ilkSiparis?.serit ?? null}
+        koleksiyonlar={veri.collections.map((c) => ({ slug: c.slug, name: c.name }))}
       />
       <main className="flex-1">{children}</main>
       <Footer isLoggedIn={isLoggedIn} collections={veri.collections} content={veri.content} />

@@ -5,11 +5,11 @@ import { Check, ShoppingBag, Star } from 'lucide-react'
 import { useSepetPaneli } from '@/hooks/useSepetPaneli'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import Link from 'next/link'
-import { useState } from 'react'
+import { ViewTransition, useState } from 'react'
 import { formatPrice } from '@/lib/utils'
 import { resolveBadge } from '@/lib/catalog/badge'
 import ProductImage from './ProductImage'
-import { IMAGE_QUALITY, gorselBoyutu, isRemoteMedia } from '@/lib/images'
+import { IMAGE_QUALITY, isRemoteMedia, trendyolCdnMi, trendyolYukleyici } from '@/lib/images'
 import { useCart } from '@/hooks/useCart'
 import type { Product } from '@/types'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
@@ -29,6 +29,12 @@ interface ProductCardV2Props {
   optionCount?: number
   /** Editorial büyük kartlarda tipografi bir kademe büyür. */
   buyuk?: boolean
+  /**
+   * Faz 12: paylaşılan geçiş adı. Aynı ürün bir sayfada iki kez basılıyorsa
+   * (ana sayfada Öne Çıkanlar + Yeni Gelenler) ad çakışır ve tarayıcı geçişi
+   * iptal eder; ikinci yüzey `morph={false}` verir.
+   */
+  morph?: boolean
 }
 
 const ADDED_FEEDBACK_MS = 1200
@@ -38,6 +44,7 @@ export default function ProductCardV2({
   priority = false,
   optionCount = 0,
   buyuk = false,
+  morph = true,
 }: ProductCardV2Props) {
   const images = (product.display_images as string[] | null) ?? []
   const primaryImage = images[0] ?? (product as any).trendyol_images?.[0] ?? null
@@ -45,7 +52,18 @@ export default function ProductCardV2({
   // yerine boş kutu bırakıyordu — yüklenemeyen hover görseli devre dışı kalır
   // ve kart tek görselle çalışmayı sürdürür (Faz 9B).
   const [hoverFailed, setHoverFailed] = useState(false)
-  const hoverImage = hoverFailed ? null : images[1] ?? null
+  // Faz 12 (Lighthouse mobil ölçümü): hover görseli kart ekrana girer girmez
+  // iniyordu — telefonda hover yok, o indirme tamamen boşa; ana sayfada
+  // 8 kart × ~100-210 KB. Artık yalnız imleç karta İLK geldiğinde bağlanır.
+  const [hoverHazir, setHoverHazir] = useState(false)
+  const [hoverIndi, setHoverIndi] = useState(false)
+  const hoverImage = hoverFailed || !hoverHazir ? null : images[1] ?? null
+  const hoverVar = !hoverFailed && Boolean(images[1])
+  const onPointerEnter = () => {
+    if (hoverHazir || !hoverVar) return
+    if (typeof window !== 'undefined' && !window.matchMedia('(hover: hover)').matches) return
+    setHoverHazir(true)
+  }
 
   const addItem = useCart((s) => s.addItem)
   const [added, setAdded] = useState(false)
@@ -76,7 +94,11 @@ export default function ProductCardV2({
   }
 
   return (
-    <Link href={`/urun/${product.slug}`} className="group block">
+    <Link href={`/urun/${product.slug}`} className="group block" onPointerEnter={onPointerEnter}>
+      {/* Faz 12: paylaşılan öğe geçişi — kart görseli ürün sayfasındaki
+          galeriye AKARAK büyür (aynı `name`, ProductImageGallery). Tarayıcı
+          desteklemiyorsa ya da hareket azaltma açıksa normal geçiş. */}
+      <ViewTransition name={morph ? `urun-${product.id}` : undefined} share="morph" default="none">
       <div
         className={`relative overflow-hidden bg-surface-muted rounded-[4px] ${
           // Editorial çift: masaüstünde iki büyük kart tek ekrana sığsın diye
@@ -88,28 +110,30 @@ export default function ProductCardV2({
           <ProductImage
             src={primaryImage}
             alt={product.display_title}
-            sizes={buyuk ? '(max-width: 640px) 50vw, 50vw' : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 340px'}
-            // Faz 11A-FIX: kart kutusu masaüstünde 340, mobilde ~190 piksel.
-            // Orijinal 1200×1800 dosya yerine kutunun iki katı isteniyor.
+            // Faz 12: boyutu artık next/image `sizes`'tan seçer (ProductImage →
+            // trendyolYukleyici). Büyük kart 1400'lük kapta en çok ~680 piksel.
+            sizes={buyuk ? '(max-width: 640px) 50vw, (max-width: 1400px) 48vw, 680px' : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 340px'}
             enBoy={buyuk ? 1100 : 680}
             bulanik
             priority={priority}
             className={`object-cover transition-all duration-700 ${
-              hoverImage ? 'group-hover:opacity-0' : 'group-hover:scale-[1.04]'
+              hoverImage && hoverIndi ? 'group-hover:opacity-0' : 'group-hover:scale-[1.04]'
             }`}
           />
         )}
 
         {hoverImage && (
           <Image
-            src={gorselBoyutu(hoverImage, buyuk ? 1100 : 680)}
-            unoptimized={isRemoteMedia(hoverImage)}
+            src={hoverImage}
+            loader={trendyolCdnMi(hoverImage) ? trendyolYukleyici : undefined}
+            unoptimized={trendyolCdnMi(hoverImage) ? false : isRemoteMedia(hoverImage)}
             alt=""
             aria-hidden
             fill
-            sizes={buyuk ? '(max-width: 640px) 50vw, 50vw' : '(max-width: 640px) 50vw, 340px'}
+            sizes={buyuk ? '(max-width: 640px) 50vw, (max-width: 1400px) 48vw, 680px' : '(max-width: 640px) 50vw, 340px'}
             quality={IMAGE_QUALITY}
-            className="object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+            className={`object-cover transition-opacity duration-700 ${hoverIndi ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'}`}
+            onLoad={() => setHoverIndi(true)}
             onError={() => setHoverFailed(true)}
           />
         )}
@@ -170,13 +194,17 @@ export default function ProductCardV2({
           {outOfStock ? 'Tükendi' : added ? 'Eklendi ✓' : 'Sepete Ekle'}
         </button>
       </div>
+      </ViewTransition>
 
       <div className="pt-3.5 pb-1 text-center">
         <h3
-          className={`font-body text-ink clamp-2 leading-snug transition-colors group-hover:text-accent-deep ${
+          className={`font-heading text-ink clamp-2 leading-snug transition-colors group-hover:text-accent-deep ${
             // Faz 11B: büyük kart mobilde 2 sütuna indi; tipografi büyütmesi
             // yalnız masaüstünde geçerli, yoksa dar sütunda başlık taşıyor.
-            buyuk ? 'text-[13px] sm:text-[15px] font-medium min-h-[2.6em] sm:min-h-0' : 'text-[13px] font-medium min-h-[2.6em]'
+            // Faz 12: kart adı BİLEREK serif (Playfair) — eskiden `font-body`
+            // yazılıydı ama katman hatası yüzünden zaten serif basılıyordu;
+            // artık açıkça seçili ve bir kademe büyük (13 → 14/15 px).
+            buyuk ? 'text-[14px] sm:text-[16px] font-medium min-h-[2.6em] sm:min-h-0' : 'text-[14px] sm:text-[15px] font-medium min-h-[2.6em]'
           }`}
         >
           {product.display_title}

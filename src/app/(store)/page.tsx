@@ -38,8 +38,12 @@ export default async function HomePage() {
   const veri = await getHomeData()
   const c = veri.content
 
-  const buyukler = veri.featured.slice(0, 2)
-  const standartlar = veri.featured.slice(2, 8)
+  // Faz 12: editoryal düzen (2 büyük + 3'lü sıra) en az 5 ürünle anlamlı.
+  // Ölçülen kusur: panelde 3 ürün seçiliyken 2 dev kart + tek başına kalan
+  // üçüncü kartın yanında koca bir boşluk çıkıyordu. 5'ten azsa düz ızgara.
+  const editoryal = veri.featured.length >= 5
+  const buyukler = editoryal ? veri.featured.slice(0, 2) : []
+  const standartlar = editoryal ? veri.featured.slice(2, 8) : veri.featured.slice(0, 8)
 
   return (
     <>
@@ -86,16 +90,30 @@ export default async function HomePage() {
               tam ekran kaplıyordu — iki ürün için iki ekran kaydırmak
               gerekiyordu. Mobilde normal 2'li ızgaraya ve standart kart boyuna
               (4:5) iniyor; masaüstü editorial düzeni aynen duruyor. */}
-          <div className="grid grid-cols-2 gap-4 lg:gap-6">
-            {buyukler.map((product: any, i: number) => (
-              <div key={product.id} data-reveal style={{ '--reveal-delay': `${i * 60}ms` } as React.CSSProperties}>
-                <ProductCardV2 product={product} priority buyuk />
-              </div>
-            ))}
-          </div>
+          {/* Faz 12: `priority` kaldırıldı — iki büyük kart hero ile aynı anda
+              ön yükleniyor, LCP görselinin bant genişliğini paylaşıyordu;
+              üstelik ikisi de ilk ekranın altında (mobil y≈1440, masaüstü
+              y≈1290). */}
+          {buyukler.length > 0 && (
+            <div className="grid grid-cols-2 gap-4 lg:gap-6">
+              {buyukler.map((product: any, i: number) => (
+                <div key={product.id} data-reveal style={{ '--reveal-delay': `${i * 60}ms` } as React.CSSProperties}>
+                  <ProductCardV2 product={product} buyuk />
+                </div>
+              ))}
+            </div>
+          )}
 
           {standartlar.length > 0 && (
-            <div className="mt-4 lg:mt-6 grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+            <div
+              className={`grid grid-cols-2 gap-4 lg:gap-6 ${
+                editoryal
+                  ? 'mt-4 lg:mt-6 lg:grid-cols-3'
+                  : standartlar.length >= 4
+                    ? 'lg:grid-cols-4'
+                    : 'lg:grid-cols-3'
+              }`}
+            >
               {standartlar.map((product: any, i: number) => (
                 <div key={product.id} data-reveal style={{ '--reveal-delay': `${(i % 3) * 50}ms` } as React.CSSProperties}>
                   <ProductCardV2 product={product} />
@@ -137,7 +155,7 @@ export default async function HomePage() {
                 data-reveal
                 style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}
               >
-                <ProductCardV2 product={product} />
+                <ProductCardV2 product={product} morph={false} />
               </div>
             ))}
           </YeniGelenlerRayi>
@@ -157,7 +175,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             {veri.cokBegenilenler.map((product: any, i: number) => (
               <div key={product.id} data-reveal style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}>
-                <ProductCardV2 product={product} />
+                <ProductCardV2 product={product} morph={false} />
               </div>
             ))}
           </div>

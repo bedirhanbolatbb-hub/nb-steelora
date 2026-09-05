@@ -90,6 +90,26 @@ export function gorselBoyutu(url: string | null | undefined, genislik: number) {
 }
 
 /**
+ * next/image için kaynak seçici (Faz 12 · vitrin cilası).
+ *
+ * ÖLÇÜLEN KUSUR (5 Eyl, Lighthouse mobil): her kart TEK boyutta istiyordu —
+ * büyük kart 1100 piksel, mobilde kutusu 182 piksel. Telefona ana sayfada
+ * 1,1 MB fazla görsel iniyordu, LCP 7,2 sn.
+ *
+ * Bu fonksiyon `loader` olarak verildiğinde next/image, `sizes` değerinden
+ * her ekran için doğru genişliği kendisi seçer (360…1600 arası basamaklar,
+ * next.config.ts) ve her basamağı Trendyol CDN'inden ayrı ister. Vercel'in
+ * görsel dönüşüm kotasına yine DOKUNMAZ (Faz 9B kararı korunur).
+ *
+ * Trendyol dışı kaynaklarda (panel medyası) adres olduğu gibi döner.
+ * YALNIZ istemci bileşeninden verilir: sunucu bileşeni next/image'a fonksiyon
+ * geçiremez.
+ */
+export function trendyolYukleyici({ src, width }: { src: string; width: number }): string {
+  return gorselBoyutu(src, width)
+}
+
+/**
  * Yüklenene kadar basılacak bulanık önizleme (Faz 11A-FIX · F6).
  * Görselin 32 pikselik hâli — birkaç kilobayt. Trendyol dışındaki kaynaklarda
  * yoktur; orada marka tonundaki düz zemin kalır.
@@ -97,4 +117,17 @@ export function gorselBoyutu(url: string | null | undefined, genislik: number) {
 export function bulanikOnizleme(url: string | null | undefined): string | null {
   if (!trendyolCdnMi(url)) return null
   return gorselBoyutu(url as string, 32)
+}
+
+/**
+ * Panel medyasının duyarlı varyantları (Faz 12). Üretim sunucuda, kayıt
+ * anında: `lib/gorselVaryant.ts → varyantUret`. Burası yalnız seçim — istemci
+ * bileşeninde next/image `loader`'ı olarak kullanılır.
+ */
+export type GorselVaryanti = { w: number; url: string }
+
+export function varyantSec(varyantlar: GorselVaryanti[] | null | undefined, genislik: number): string | null {
+  if (!varyantlar || !varyantlar.length) return null
+  const uygun = varyantlar.find((v) => v.w >= genislik)
+  return (uygun ?? varyantlar[varyantlar.length - 1]).url
 }

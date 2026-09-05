@@ -23,6 +23,10 @@ export type HeroSlide = {
   id: string
   image_url: string
   image_blur: string | null
+  /** Faz 12: kayıt anında üretilen duyarlı kopyalar (lib/gorselVaryant). */
+  image_varyant?: { w: number; url: string }[] | null
+  /** Faz 12: kadraj odağı — fotoğrafta takının durduğu yer. */
+  odak?: 'ust' | 'orta' | 'alt' | null
   eyebrow: string
   title: string
   subtitle: string

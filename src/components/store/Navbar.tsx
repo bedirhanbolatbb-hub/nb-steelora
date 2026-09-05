@@ -45,6 +45,8 @@ interface NavbarProps {
   coupon?: CouponReminder | null
   /** İlk sipariş kuponu satırı — yalnız otomatik kampanya YOKKEN dolu gelir. */
   ilkSiparisSeridi?: string | null
+  /** Faz 12: mobil menüde koleksiyon bağlantıları (layout verisinden). */
+  koleksiyonlar?: { slug: string; name: string }[]
 }
 
 /**
@@ -56,7 +58,7 @@ interface NavbarProps {
  * eşik çevresinde titremez. prefers-reduced-motion'da geçişler kapalı
  * (motion-safe). Mobil tek sıra: hamburger · logo · arama+sepet.
  */
-export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, ilkSiparisSeridi }: NavbarProps) {
+export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, ilkSiparisSeridi, koleksiyonlar = [] }: NavbarProps) {
   const [condensed, setCondensed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   // Faz 11B: mobil üst bant kaydırınca tek satıra iner. Duyuru şeridinin
@@ -283,7 +285,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-[11px] uppercase tracking-[0.16em] font-body text-ink-soft hover:text-ink border-b border-transparent hover:border-accent-line pb-0.5 transition-colors whitespace-nowrap"
+                className="nav-cizgi text-[11px] uppercase tracking-[0.16em] font-body text-ink-soft hover:text-ink pb-0.5 transition-colors whitespace-nowrap"
               >
                 {link.label}
               </Link>
@@ -338,17 +340,62 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
             </button>
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-5 py-6" aria-label="Kategoriler">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex min-h-[48px] items-center border-b border-line/60 font-body text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-accent-deep"
-                onClick={() => setMobileOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
+          {/* Faz 12: menünün yarısı boştu — yalnız 8 satır. Üste iki ana giriş
+              (Tüm Ürünler, Yeni Gelenler), altta koleksiyonlar eklendi; blog
+              koleksiyonların ardına alındı. Görsel yok: menü hızlı açılmalı. */}
+          <nav className="flex-1 overflow-y-auto px-5 py-5" aria-label="Menü">
+            <Link
+              href="/urunler"
+              className="flex min-h-[52px] items-center justify-between border-b border-line font-heading text-[19px] text-ink transition-colors hover:text-accent-deep"
+              onClick={() => setMobileOpen(false)}
+            >
+              Tüm Ürünler <span aria-hidden className="font-body text-[12px] text-muted">→</span>
+            </Link>
+            <Link
+              href="/urunler?siralama=yeni"
+              className="flex min-h-[52px] items-center justify-between border-b border-line font-heading text-[19px] text-ink transition-colors hover:text-accent-deep"
+              onClick={() => setMobileOpen(false)}
+            >
+              Yeni Gelenler <span aria-hidden className="font-body text-[12px] text-muted">→</span>
+            </Link>
+
+            <p className="eyebrow mt-6 mb-1">Kategoriler</p>
+            {navLinks
+              .filter((l) => l.href !== '/blog')
+              .map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex min-h-[46px] items-center border-b border-line/60 font-body text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-accent-deep"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+            {koleksiyonlar.length > 0 && (
+              <>
+                <p className="eyebrow mt-6 mb-1">Koleksiyonlar</p>
+                {koleksiyonlar.map((k) => (
+                  <Link
+                    key={k.slug}
+                    href={`/koleksiyon/${k.slug}`}
+                    className="flex min-h-[46px] items-center border-b border-line/60 font-heading text-[15px] text-ink transition-colors hover:text-accent-deep"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {k.name}
+                  </Link>
+                ))}
+              </>
+            )}
+
+            <Link
+              href="/blog"
+              className="mt-6 flex min-h-[46px] items-center border-b border-line/60 font-body text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-accent-deep"
+              onClick={() => setMobileOpen(false)}
+            >
+              Blog
+            </Link>
           </nav>
 
           <div className="flex shrink-0 items-center gap-6 border-t border-line px-5 py-4">

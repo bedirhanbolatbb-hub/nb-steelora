@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getBlurDataURL } from '@/lib/blur'
+import { varyantUret } from '@/lib/gorselVaryant'
 import { CATEGORIES } from '@/lib/catalog/categories'
 
 const HEDEF_TIPLERI = new Set(['collection', 'category', 'product', 'url'])
@@ -36,6 +37,12 @@ export async function POST(request: Request) {
     (mevcutRow?.payload?.slides || [])
       .filter((s: any) => s.image_url && s.image_blur)
       .map((s: any) => [s.image_url, s.image_blur])
+  )
+  // Faz 12: duyarlı varyantlar da kayıt anında; değişmeyen görselinki taşınır.
+  const eskiVaryant = new Map<string, any[]>(
+    (mevcutRow?.payload?.slides || [])
+      .filter((s: any) => s.image_url && Array.isArray(s.image_varyant) && s.image_varyant.length)
+      .map((s: any) => [s.image_url, s.image_varyant])
   )
 
   const uyarilar: string[] = []
@@ -80,11 +87,17 @@ export async function POST(request: Request) {
     }
 
     const image_blur = eskiBlur.get(image_url) ?? (await getBlurDataURL(image_url))
+    const image_varyant = eskiVaryant.get(image_url) ?? (await varyantUret(image_url))
+    // Kadraj odağı (Faz 12): fotoğrafta takının durduğu yer. Ölçülen kusur:
+    // "üst" sabitken alt-orta duran ürün dizüstü ekranında kadraj dışıydı.
+    const odak = ['ust', 'orta', 'alt'].includes(s?.odak) ? s.odak : 'orta'
 
     slides.push({
       id: typeof s?.id === 'string' && s.id ? s.id : `sl_${Date.now().toString(36)}_${i}`,
       image_url,
       image_blur,
+      image_varyant,
+      odak,
       eyebrow: typeof s?.eyebrow === 'string' ? s.eyebrow.trim() : '',
       title,
       subtitle: typeof s?.subtitle === 'string' ? s.subtitle.trim() : '',

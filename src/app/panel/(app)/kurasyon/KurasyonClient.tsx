@@ -33,6 +33,10 @@ export type PanelSlayt = {
   target_type: 'collection' | 'category' | 'product' | 'url'
   target_value: string
   is_active: boolean
+  /** Faz 12: kadraj odağı — fotoğrafta takının durduğu yer. */
+  odak?: 'ust' | 'orta' | 'alt'
+  /** Faz 12: kayıt anında sunucuda üretilir; panel yalnız taşır. */
+  image_varyant?: { w: number; url: string }[] | null
 }
 
 const KATEGORILER = [
@@ -90,6 +94,7 @@ const YENI_SLAYT = (): PanelSlayt => ({
   target_type: 'collection',
   target_value: '',
   is_active: true,
+  odak: 'orta',
 })
 
 export default function KurasyonClient({
@@ -340,6 +345,20 @@ export default function KurasyonClient({
                     <div className="sm:col-span-2">
                       <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Alt metin</label>
                       <PInput value={s.subtitle} onChange={(e) => slaytGuncelle(s.id, { subtitle: e.target.value })} />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Kadraj odağı — takı fotoğrafın neresinde?</label>
+                      <PSelect
+                        value={s.odak ?? 'orta'}
+                        onChange={(e) => slaytGuncelle(s.id, { odak: e.target.value as PanelSlayt['odak'] })}
+                      >
+                        <option value="ust">Üstte — geniş ekranda üst kısım görünür</option>
+                        <option value="orta">Ortada — geniş ekranda orta kısım görünür</option>
+                        <option value="alt">Altta — geniş ekranda alt kısım görünür</option>
+                      </PSelect>
+                      <p className="mt-1 text-[11px] text-[var(--p-muted)]">
+                        Dikey fotoğraf geniş ekranda kırpılır; seçtiğiniz bölge kadrajda kalır. Telefonda fotoğrafın tamamı görünür.
+                      </p>
                     </div>
                     <div>
                       <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Hedef tipi</label>

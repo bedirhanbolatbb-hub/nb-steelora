@@ -8,6 +8,8 @@ import {
   bulanikOnizleme,
   gorselBoyutu,
   isRemoteMedia,
+  trendyolCdnMi,
+  trendyolYukleyici,
 } from '@/lib/images'
 
 type Props = {
@@ -18,8 +20,9 @@ type Props = {
   className?: string
   /**
    * Görselin isteneceği EN (kutu genişliği × ekran yoğunluğu).
-   * Verilmezse kaynak dosya olduğu gibi istenir — yalnız gerçekten tam boy
-   * gereken yerlerde (büyütme camı) böyle bırakılır.
+   * Faz 12: Trendyol görsellerinde `sizes` verildiyse boyutu artık next/image
+   * her ekran için kendisi seçer (trendyolYukleyici); `enBoy` o durumda
+   * yalnız `sizes` verilmeyen yerlerde geçerli. Panel medyasında değişmez.
    */
   enBoy?: number
   /** Yüklenene kadar görselin bulanık küçük hâli basılsın mı (F6). */
@@ -58,7 +61,10 @@ export default function ProductImage({
     )
   }
 
-  const kaynak = (enBoy ? gorselBoyutu(src, enBoy) : src) as string
+  // Faz 12: Trendyol görseli + `sizes` → duyarlı yol. next/image her ekran
+  // basamağını CDN'den ayrı ister (trendyolYukleyici); tek sabit boyut yok.
+  const duyarli = trendyolCdnMi(src) && Boolean(sizes)
+  const kaynak = (duyarli ? src : enBoy ? gorselBoyutu(src, enBoy) : src) as string
   const onizleme = bulanik ? bulanikOnizleme(src) : null
 
   return (
@@ -81,7 +87,8 @@ export default function ProductImage({
       )}
       <Image
         src={kaynak}
-        unoptimized={isRemoteMedia(kaynak)}
+        loader={duyarli ? trendyolYukleyici : undefined}
+        unoptimized={duyarli ? false : isRemoteMedia(kaynak)}
         alt={alt}
         fill
         sizes={sizes}

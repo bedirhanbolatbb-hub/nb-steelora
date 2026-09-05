@@ -108,7 +108,7 @@ export default function KuponKutusu({
       </div>
 
       {uygulanan && (
-        <p className="mt-2 font-body text-[11px] text-green-700">
+        <p className="mt-2 font-body text-[11px] text-accent-deep">
           ✓ {uygulanan.ad} — {uygulanan.tutar} indirim
         </p>
       )}

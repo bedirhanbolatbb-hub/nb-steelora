@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { ViewTransition, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -10,6 +10,8 @@ import ProductImage from './ProductImage'
 interface ProductImageGalleryProps {
   images: string[]
   title: string
+  /** Faz 12: kartla paylaşılan geçiş adı (ürün id'si). */
+  morphAd?: string
 }
 
 /**
@@ -17,7 +19,7 @@ interface ProductImageGalleryProps {
  * şeridi (masaüstü); mobilde kaydırmalı şerit + nokta göstergesi.
  * Lightbox davranışları (ESC/ok tuşları/scroll kilidi) aynen korunur.
  */
-export default function ProductImageGallery({ images, title }: ProductImageGalleryProps) {
+export default function ProductImageGallery({ images, title, morphAd }: ProductImageGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [closing, setClosing] = useState(false)
@@ -77,23 +79,33 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
           className="-mx-4 flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
           style={{ scrollbarWidth: 'none' }}
         >
-          {(hasImages ? images : [null]).map((img, i) => (
-            <div
-              key={i}
-              className="relative aspect-[4/5] w-full shrink-0 snap-center bg-surface-muted"
-              onClick={() => hasImages && setLightboxOpen(true)}
-            >
-              <ProductImage
-                src={img}
-                alt={`${title} ${i + 1}`}
-                sizes="100vw"
-                enBoy={900}
-                bulanik
-                priority={i === 0}
-                className="object-cover"
-              />
-            </div>
-          ))}
+          {(hasImages ? images : [null]).map((img, i) => {
+            const kutu = (
+              <div
+                key={i}
+                className="relative aspect-[4/5] w-full shrink-0 snap-center bg-surface-muted"
+                onClick={() => hasImages && setLightboxOpen(true)}
+              >
+                <ProductImage
+                  src={img}
+                  alt={`${title} ${i + 1}`}
+                  sizes="100vw"
+                  enBoy={900}
+                  bulanik
+                  priority={i === 0}
+                  className="object-cover"
+                />
+              </div>
+            )
+            // Faz 12: ilk kare karttan akarak gelir (paylaşılan geçiş).
+            return i === 0 && morphAd ? (
+              <ViewTransition key={i} name={`urun-${morphAd}`} share="morph" default="none">
+                {kutu}
+              </ViewTransition>
+            ) : (
+              kutu
+            )
+          })}
         </div>
         {hasImages && images.length > 1 && (
           <div className="mt-3 flex items-center justify-center gap-1.5" aria-hidden>
@@ -112,6 +124,7 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
 
       {/* ── Masaüstü: geniş çerçevesiz görünüm + ince şerit ── */}
       <div className="hidden sm:block space-y-3">
+        <ViewTransition name={morphAd ? `urun-${morphAd}` : undefined} share="morph" default="none">
         <div
           className="relative aspect-[4/5] overflow-hidden rounded-[4px] bg-surface-muted cursor-zoom-in group"
           onClick={() => hasImages && setLightboxOpen(true)}
@@ -126,6 +139,7 @@ export default function ProductImageGallery({ images, title }: ProductImageGalle
             className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
           />
         </div>
+        </ViewTransition>
 
         {hasImages && images.length > 1 && (
           <div className="flex gap-2.5 overflow-x-auto pb-1">

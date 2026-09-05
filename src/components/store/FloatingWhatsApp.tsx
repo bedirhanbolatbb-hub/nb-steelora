@@ -23,6 +23,11 @@ import { WHATSAPP_URL } from '@/lib/contact'
  *     düğmeydi, çerez bandı açılınca 766 → 627'ye sıçrıyordu).
  *  3) Ödeme sayfasında hiç görünmez: ödeme akışının ortasında sohbete
  *     çağırmak dikkat dağıtıyor.
+ *
+ * Faz 12: balon WhatsApp yeşilindeydi — fildişi/altın paletin içinde tek
+ * yabancı renkti ve her ekranda göze o giriyordu. Marka mürekkebine alındı,
+ * simge beyaz (WhatsApp tek renk kullanıma izin verir). Hover'daki büyüme
+ * kaldırıldı; imza hareket dili yalnız basışta küçülme.
  */
 export default function FloatingWhatsApp() {
   const yol = usePathname()
@@ -36,7 +41,7 @@ export default function FloatingWhatsApp() {
       href={WHATSAPP_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className={`whatsapp-fab fixed bottom-5 right-4 z-40 h-12 w-12 items-center justify-center rounded-full bg-green-500 text-white shadow-lg transition-colors hover:bg-green-600 hover:shadow-xl sm:bottom-6 sm:right-6 sm:flex sm:h-14 sm:w-14 sm:hover:scale-110 ${
+      className={`whatsapp-fab fixed bottom-5 right-4 z-40 h-12 w-12 items-center justify-center rounded-full bg-ink text-bg shadow-lg transition-colors hover:bg-accent-deep hover:shadow-xl sm:bottom-6 sm:right-6 sm:flex sm:h-14 sm:w-14 ${
         urunSayfasi ? 'hidden' : 'flex'
       }`}
       aria-label="WhatsApp ile iletişim"

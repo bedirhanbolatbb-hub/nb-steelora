@@ -41,7 +41,7 @@ export default function RecentlyViewed({ currentSlug }: { currentSlug: string })
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
         {products.map((product) => (
-          <ProductCardV2 key={product.id} product={product} />
+          <ProductCardV2 key={product.id} product={product} morph={false} />
         ))}
       </div>
     </div>

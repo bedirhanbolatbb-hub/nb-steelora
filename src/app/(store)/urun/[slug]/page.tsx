@@ -238,6 +238,7 @@ export default async function UrunDetayPage({
           <ProductImageGallery
             images={product.display_images || []}
             title={product.display_title}
+            morphAd={String(product.id)}
           />
         </div>
 

@@ -161,7 +161,7 @@ export default function IletisimClient() {
           </Button>
 
           {status === 'success' && (
-            <p className="text-[12px] font-body text-green-700 text-center">
+            <p className="text-[12px] font-body text-accent-deep text-center">
               Mesajınız başarıyla gönderildi. En kısa sürede size dönüş yapacağız.
             </p>
           )}

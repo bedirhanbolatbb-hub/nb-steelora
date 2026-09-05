@@ -764,12 +764,12 @@ export default function OdemePage() {
             </div>
             {ozet.uygulananlar.map((u) => (
               <div key={u.kampanyaId} className="flex items-baseline justify-between gap-4">
-                <dt className="text-[12px] font-body text-green-700 min-w-0 truncate">{kampanyaEtiketi(u.ad)}</dt>
-                <dd className="price text-[13px] text-green-700 shrink-0">-{formatPrice(u.tutar)}</dd>
+                <dt className="text-[12px] font-body text-accent-deep min-w-0 truncate">{kampanyaEtiketi(u.ad)}</dt>
+                <dd className="price text-[13px] text-accent-deep shrink-0">-{formatPrice(u.tutar)}</dd>
               </div>
             ))}
             {totalDiscount > 0 && (
-              <p className="text-[11px] font-body text-green-700">
+              <p className="text-[11px] font-body text-accent-deep">
                 {formatPrice(totalDiscount)} kazandınız
                 {ozet.tavanUygulandi && <span className="text-muted"> · indirim tavanı uygulandı</span>}
                 {kod && !kuponUygulandi && (

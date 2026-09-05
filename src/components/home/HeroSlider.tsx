@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
+import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia, varyantSec } from '@/lib/images'
 import type { HeroSlide } from '@/lib/home/homeData'
 
 type Slayt = HeroSlide & { href: string | null }
@@ -118,7 +118,7 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
                     <Link
                       href={s.href}
                       tabIndex={i === aktif ? 0 : -1}
-                      className="hero-line mt-7 inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.18em] text-bg transition-colors hover:bg-accent-deep"
+                      className="hero-line basis mt-7 inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.18em] text-bg hover:bg-accent-deep"
                       style={{ '--hero-delay': '210ms' } as React.CSSProperties}
                     >
                       {s.cta_label}
@@ -194,11 +194,20 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
   )
 }
 
+const ODAK_SINIFI = { ust: 'object-top', orta: 'object-center', alt: 'object-bottom' } as const
+
 function Gorsel({ slayt, ilk }: { slayt: Slayt; ilk: boolean }) {
+  // Faz 12: duyarlı varyantlar kayıt anında üretilmiş olarak gelir; next/image
+  // `sizes`'a göre uygun genişliği loader ile seçer. Varyant yoksa (eski
+  // kayıt) orijinal, eskisi gibi.
+  const varyantlar = slayt.image_varyant ?? null
+  const duyarli = Boolean(varyantlar && varyantlar.length > 1)
+  const odak = ODAK_SINIFI[slayt.odak ?? 'orta']
   return (
     <Image
       src={slayt.image_url}
-      unoptimized={isRemoteMedia(slayt.image_url)}
+      loader={duyarli ? ({ width }) => varyantSec(varyantlar, width) ?? slayt.image_url : undefined}
+      unoptimized={duyarli ? false : isRemoteMedia(slayt.image_url)}
       alt={slayt.title || ''}
       fill
       priority={ilk}
@@ -207,10 +216,11 @@ function Gorsel({ slayt, ilk }: { slayt: Slayt; ilk: boolean }) {
       sizes="(max-width: 767px) 100vw, 60vw"
       placeholder="blur"
       blurDataURL={slayt.image_blur || BLUR_PLACEHOLDER}
-      // Faz 11A-FIX (F7): kadraj ORTADAN hizalanıyordu; dikey karede takının
-      // kendisi üstte kalıyor, kırpım onu kesiyordu. Üst öncelikli hizalama
-      // geçici çözüm — kalıcı çözüm yeni çekim (BB listesinde).
-      className={ilk ? 'object-cover object-top hero-media' : 'object-cover object-top'}
+      // Faz 12: kadraj odağı panelden (üst/orta/alt). F7'nin sabit "üst"
+      // hizası bu fotoğrafta takıyı dizüstü ekranında kadraj dışı bırakıyordu.
+      // `hero-media`: giriş ölçeği + yüklendikten sonra 8 sn'lik sessiz
+      // yakınlaşma (globals.css) — yalnız transform, LCP'ye dokunmaz.
+      className={`object-cover ${odak} ${ilk ? 'hero-media' : ''}`}
     />
   )
 }

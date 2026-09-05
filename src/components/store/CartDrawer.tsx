@@ -236,7 +236,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
               <Link
                 href="/odeme"
                 onClick={onClose}
-                className="block w-full py-3.5 bg-accent text-white text-center text-[11px] uppercase tracking-[0.15em] font-body hover:bg-accent-deep transition-colors"
+                className="basis block w-full py-3.5 bg-ink text-bg text-center text-[11px] uppercase tracking-[0.15em] font-body hover:bg-accent-deep"
               >
                 Ödemeye Geç
               </Link>
