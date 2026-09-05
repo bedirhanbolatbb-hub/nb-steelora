@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import Image from 'next/image'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY, gorselBoyutu, isRemoteMedia } from '@/lib/images'
+import DuyarliGorsel from '@/components/store/DuyarliGorsel'
 import { CATEGORIES } from '@/lib/catalog/categories'
 
 /**
@@ -35,16 +34,11 @@ export default function CategoryRail({
               >
                 <div className="aspect-[3/4] relative overflow-hidden rounded-[4px] bg-surface-muted">
                   {imageUrl ? (
-                    <Image
-                      src={gorselBoyutu(imageUrl, 380)}
-                      unoptimized={isRemoteMedia(imageUrl)}
+                    <DuyarliGorsel
+                      src={imageUrl}
                       alt={cat.title}
-                      fill
                       className="object-cover transition-transform duration-700 group-hover:scale-[1.05]"
                       sizes="164px"
-                      quality={IMAGE_QUALITY}
-                      placeholder="blur"
-                      blurDataURL={BLUR_PLACEHOLDER}
                     />
                   ) : (
                     <span className="absolute inset-0 flex items-center justify-center text-muted/30 text-[10px] font-body tracking-wider uppercase">

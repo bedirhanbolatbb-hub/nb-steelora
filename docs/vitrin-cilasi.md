@@ -116,3 +116,31 @@ Analiz panelindeki üçlü huni (ürün → sepet → ödeme → sipariş) bugü
 değerleriyle karşılaştırma tabanıdır; site 2 siparişle henüz istatistik
 üretmiyor. Tasarımın "dönüşümü artırdığı" iddiası ancak sipariş sayısı
 anlamlı olunca ölçülür; şimdi iddia edilmez.
+
+## Sonuç (5 Eyl 21:50, aynı araç, ana sayfa, mobil)
+
+| ölçüt | önce | sonra |
+|---|---|---|
+| performans | 73 | **87** |
+| LCP | 7,2 sn | **3,8 sn** |
+| FCP | 1,0 sn | 1,7 sn |
+| TBT | 180 ms | 40 ms |
+| CLS | 0 | 0 |
+| Speed Index | 3,4 sn | 3,3 sn |
+| görsel israfı | 1.101 KiB | 304 KiB → koleksiyon kapakları da duyarlı yapıldı (ikinci commit) |
+| hero dosyası (telefon) | 135 KB (1800 px) | 48 KB (960 px) · 23 KB (640 px) |
+
+Not: aynı akşam ara bir ölçüm 54 verdi (JS yürütme 2,1 sn — paylaşımlı
+ölçüm makinesinin gürültüsü; kod tarafında JS eklenmedi, bir sonraki koşu
+87). Lighthouse tek koşuda ±10 oynar; eğilim üç koşuda da aynı yönde.
+
+Canlıda doğrulananlar:
+- kart görseli `srcset` 12 basamak, 390 px'te 480 px'lik dosya iniyor;
+  telefonda hover görseli hiç istenmiyor (0/24 kart);
+- hero: `object-position 50% 50%`, ön yükleme 960 px kopyayı çekiyor,
+  1512×766'da takı kadrajda;
+- kart → ürün sayfası geçişinde `::view-transition-group(urun-<id>)`
+  oluşuyor ve tamamlanıyor (Chrome);
+- WhatsApp balonu `rgb(28,26,23)`; kart adı Playfair 14 px;
+- mobil menü 13 bağlantı, yatay taşma yok;
+- Öne Çıkanlar 3 üründe tek sıra 3 sütun (masaüstü).

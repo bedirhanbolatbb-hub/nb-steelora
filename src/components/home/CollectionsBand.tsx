@@ -1,7 +1,6 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import type { CollectionCard } from '@/lib/collections'
-import { BLUR_PLACEHOLDER, IMAGE_QUALITY, gorselBoyutu, isRemoteMedia } from '@/lib/images'
+import DuyarliGorsel from '@/components/store/DuyarliGorsel'
 
 /**
  * Koleksiyonlar v2 — full-bleed koyu bant, üç büyük görselli hikâye.
@@ -29,16 +28,11 @@ export default function CollectionsBand({ collections }: { collections: Collecti
             >
               <div className="relative aspect-[4/5] overflow-hidden rounded-[4px] bg-ink">
                 {collection.cover ? (
-                  <Image
-                    src={gorselBoyutu(collection.cover, 900)}
-                    unoptimized={isRemoteMedia(collection.cover)}
+                  <DuyarliGorsel
+                    src={collection.cover}
                     alt={collection.name}
-                    fill
                     className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                    sizes="(max-width: 640px) 100vw, 33vw"
-                    quality={IMAGE_QUALITY}
-                    placeholder="blur"
-                    blurDataURL={BLUR_PLACEHOLDER}
+                    sizes="(max-width: 640px) 100vw, (max-width: 1400px) 33vw, 440px"
                   />
                 ) : (
                   <span className="absolute inset-0 flex items-center justify-center font-heading text-[34px] text-line/30">
