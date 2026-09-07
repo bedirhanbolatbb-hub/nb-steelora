@@ -267,14 +267,18 @@ export async function PATCH(
       (icerik.iade_kargo_firmasi ?? '').trim()
     const iadeKodu = (body.iadeKodu ?? '').trim() || (icerik.iade_kargo_kodu ?? '').trim()
 
-    if (!kargoFirmasi || !iadeKodu) {
+    // Faz 30: KOD ARTIK ZORUNLU DEĞİL. Anlaşmalı iade kodu kargo firmasıyla
+    // yapılan anlaşmadan gelir; Kargonomi API'sinde iade ucu yok (belgeler
+    // okundu, 7 Eyl). Kod henüz alınmamışken akış KİLİTLENMEZ: müşteriye
+    // karşı ödemeli gönderim talimatı gider, ücreti yine biz öderiz.
+    // Firma zorunlu kalır — müşteriye hangi şubeye gideceğini söylemeliyiz.
+    if (!kargoFirmasi) {
       return NextResponse.json(
         {
           success: false,
           error:
-            'İade kargo firması ve iade kodu gerekli. Kargonomi panelinden ilgili firmayla ' +
-            'iade oluşturup kodu buraya girin.',
-          code: 'IADE_KODU_GEREKLI',
+            'İade kargo firması belirlenemedi. Siparişin gidiş gönderisi yoksa firmayı elle seçin.',
+          code: 'IADE_FIRMASI_GEREKLI',
         },
         { status: 400 }
       )
@@ -286,7 +290,7 @@ export async function PATCH(
       .update({
         status: 'cargo_sent',
         cargo_company: kargoFirmasi,
-        cargo_tracking_code: iadeKodu,
+        cargo_tracking_code: iadeKodu || null,
         cargo_info_sent_at: simdi.toISOString(),
         updated_at: simdi.toISOString(),
       })
@@ -315,7 +319,7 @@ export async function PATCH(
         const mail = iadeTalimatiEmail({
           orderNumber: order.order_number,
           kargoFirmasi,
-          iadeKodu,
+          iadeKodu: iadeKodu || null,
           // Süre, müşterinin TALEBİ oluşturduğu (cayma bildirimini yönelttiği)
           // tarihten işler — MSY m.13/1.
           sonGun: sonGonderimGunu(row.created_at ?? simdi, GERI_GONDERME_GUN),

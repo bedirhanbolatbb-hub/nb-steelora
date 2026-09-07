@@ -225,7 +225,101 @@ export default function KargoTakipClient({
               )}
             </>
           )}
+
+          {/* Faz 30: üyeliksiz iade. Talep açmanın tek yolu üyeye özel
+              "Siparişlerim" ekranıydı; üyeliksiz müşterinin sitede iade
+              başlatmasının hiçbir yolu yoktu (7 Eyl'de gerçek müşteride
+              yaşandı). Yalnız sipariş no + e-posta ile sorgulandığında ve
+              sipariş teslim edildiyse görünür. */}
+          {sonuc.siparisDurumu === 'delivered' && mod === 'siparis' && (
+            <IadeTalebi siparisNo={siparisNo.trim()} eposta={eposta.trim()} />
+          )}
         </section>
+      )}
+    </div>
+  )
+}
+
+function IadeTalebi({ siparisNo, eposta }: { siparisNo: string; eposta: string }) {
+  const [acik, setAcik] = useState(false)
+  const [gerekce, setGerekce] = useState('')
+  const [durum, setDurum] = useState<'bekliyor' | 'gonderiliyor' | 'tamam'>('bekliyor')
+  const [hata, setHata] = useState<string | null>(null)
+
+  const gonder = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setDurum('gonderiliyor')
+    setHata(null)
+    try {
+      const res = await fetch('/api/kargo-takip/iade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_number: siparisNo, email: eposta, reason: gerekce.trim() }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setHata(data?.error || 'Talep oluşturulamadı. Birazdan tekrar deneyin.')
+        setDurum('bekliyor')
+        return
+      }
+      setDurum('tamam')
+    } catch {
+      setHata('Talep oluşturulamadı. Birazdan tekrar deneyin.')
+      setDurum('bekliyor')
+    }
+  }
+
+  if (durum === 'tamam') {
+    return (
+      <div className="mt-8 border-t border-line pt-5">
+        <p className="font-heading text-[17px] text-ink">İade talebiniz alındı</p>
+        <p className="mt-2 font-body text-[13px] leading-relaxed text-ink-soft">
+          Teyit e-postası adresinize gönderildi. Talebinizi onayladığımızda kullanacağınız
+          kargo firmasını ve iade kodunu yine e-posta ile bildireceğiz. İade kargo ücreti
+          bize aittir; sizden hiçbir ücret alınmaz.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-8 border-t border-line pt-5">
+      {!acik ? (
+        <>
+          <p className="font-body text-[13px] leading-relaxed text-ink-soft">
+            Siparişiniz teslim edildi. Teslim tarihinden itibaren 14 gün içinde, gerekçe
+            göstermeden iade edebilirsiniz. Üye olmanız gerekmez.
+          </p>
+          <button
+            onClick={() => setAcik(true)}
+            className="basis mt-3 inline-flex min-h-[44px] items-center rounded-[4px] border border-ink px-6 font-body text-[11px] font-medium uppercase tracking-[0.16em] text-ink hover:bg-ink hover:text-bg"
+          >
+            İade talebi oluştur
+          </button>
+        </>
+      ) : (
+        <form onSubmit={gonder} className="space-y-3">
+          <label className="block font-body text-[13px] text-ink-soft" htmlFor="iade-gerekce">
+            İade sebebiniz (isteğe bağlı)
+          </label>
+          <textarea
+            id="iade-gerekce"
+            value={gerekce}
+            onChange={(e) => setGerekce(e.target.value)}
+            rows={3}
+            maxLength={1000}
+            placeholder="Yazmak zorunda değilsiniz."
+            className="w-full rounded-[4px] border border-line bg-bg px-3 py-2 font-body text-[13px] text-ink outline-none focus:border-ink"
+          />
+          {hata && <p className="font-body text-[12px] text-red-600">{hata}</p>}
+          <button
+            type="submit"
+            disabled={durum === 'gonderiliyor'}
+            className="basis inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-7 font-body text-[11px] font-medium uppercase tracking-[0.16em] text-bg hover:bg-accent-deep disabled:opacity-50"
+          >
+            {durum === 'gonderiliyor' ? 'Gönderiliyor…' : 'İade talebini gönder'}
+          </button>
+        </form>
       )}
     </div>
   )

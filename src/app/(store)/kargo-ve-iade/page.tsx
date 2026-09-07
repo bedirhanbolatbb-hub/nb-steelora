@@ -81,10 +81,12 @@ export default async function KargoVeIadePage() {
         cayabilirsiniz.
       </p>
       <p>
-        <strong>Nasıl yapılır?</strong> Hesabım → Siparişlerim ekranından iade talebi
-        oluşturun,{' '}
-        <Link href={SOZLESME_YOLLARI.caymaFormu}>örnek cayma formunu</Link> gönderin ya da
-        {' '}{ORG_EMAIL} adresine sipariş numaranızla birlikte bir e-posta yazın. Form
+        <strong>Nasıl yapılır?</strong> <Link href="/kargo-takip">Kargo takip sayfasından</Link>{' '}
+        sipariş numaranız ve e-posta adresinizle siparişinizi sorgulayın; teslim edilmiş
+        siparişlerde &quot;İade talebi oluştur&quot; düğmesi orada çıkar. Üye olmanız
+        gerekmez. Üyeyseniz Hesabım → Siparişlerim ekranından da oluşturabilirsiniz.
+        Dilerseniz <Link href={SOZLESME_YOLLARI.caymaFormu}>örnek cayma formunu</Link>{' '}
+        gönderin ya da {ORG_EMAIL} adresine sipariş numaranızla bir e-posta yazın — form
         doldurmak zorunlu değildir. Talebiniz bize ulaştığında size derhâl teyit bildirimi
         gönderilir.
       </p>

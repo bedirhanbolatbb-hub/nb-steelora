@@ -431,18 +431,22 @@ export default function SiparislerClient({
               </PSelect>
             </div>
             <div>
-              <label className="mb-1 block text-[12px] text-[var(--p-ink-soft)]">İade kodu</label>
+              <label className="mb-1 block text-[12px] text-[var(--p-ink-soft)]">
+                İade kodu <span className="text-[var(--p-muted)]">(varsa)</span>
+              </label>
               <PInput
                 value={iadeKodu}
                 onChange={(e) => setIadeKodu(e.target.value)}
-                placeholder="Kargonomi panelinden aldığınız kod"
+                placeholder="Anlaşmalı iade kodunuz — yoksa boş bırakın"
               />
             </div>
             <p className="text-[11px] leading-relaxed text-[var(--p-muted)]">
               Firma, siparişin gidiş gönderisinde kullanılan taşıyıcıdan önerilir; gerekirse
-              değiştirin. Kargonomi API&apos;sinde iade gönderisi ucu yok — kodu Kargonomi
-              panelinden ilgili firmayla &quot;iade oluştur&quot; ile üretip buraya
-              yapıştırın. Her firmanın kod biçimi farklıdır.
+              değiştirin. <strong>Kod zorunlu değil:</strong> boş bırakırsanız müşteriye
+              &quot;karşı ödemeli gönderin&quot; talimatı ve iade adresi gider, ücret yine
+              bize ait olur. Anlaşmalı iade kodunuz varsa yazın — müşteri şubede yalnız kodu
+              söyler. Kod kargo firmasıyla yapılan anlaşmadan gelir; Kargonomi API&apos;sinde
+              iade gönderisi ucu yoktur.
             </p>
           </div>
         )}

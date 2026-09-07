@@ -748,7 +748,13 @@ export function talepTeyidiEmail(params: {
 export function iadeTalimatiEmail(params: {
   orderNumber: string
   kargoFirmasi: string
-  iadeKodu: string
+  /**
+   * Anlaşmalı iade kodu. Faz 30: BOŞ OLABİLİR. Kod firma bazında, kargo
+   * firmasıyla yapılan anlaşmadan gelir (Kargonomi API'sinde iade ucu yok —
+   * belgeler okundu). Kod yokken akış durmaz: müşteriye karşı ödemeli
+   * gönderim talimatı gider, ücreti yine biz öderiz.
+   */
+  iadeKodu: string | null
   sonGun: Date
   adres: string[]
 }) {
@@ -769,19 +775,32 @@ export function iadeTalimatiEmail(params: {
         bize gönderebilirsiniz.
       </p>
 
-      <div style="background:#2A1E1E;padding:20px;text-align:center;margin-bottom:20px;">
-        <p style="margin:0 0 6px;color:#A88070;font-size:11px;letter-spacing:.15em;text-transform:uppercase;">İade Kargo Kodu</p>
-        <p style="margin:0;color:#FFF8F6;font-size:22px;letter-spacing:.1em;font-family:monospace;">${params.iadeKodu}</p>
-        <p style="margin:8px 0 0;color:#A88070;font-size:13px;">${params.kargoFirmasi}</p>
-      </div>
+      ${
+        params.iadeKodu
+          ? `<div style="background:#2A1E1E;padding:20px;text-align:center;margin-bottom:20px;">
+               <p style="margin:0 0 6px;color:#A88070;font-size:11px;letter-spacing:.15em;text-transform:uppercase;">İade Kargo Kodu</p>
+               <p style="margin:0;color:#FFF8F6;font-size:22px;letter-spacing:.1em;font-family:monospace;">${params.iadeKodu}</p>
+               <p style="margin:8px 0 0;color:#A88070;font-size:13px;">${params.kargoFirmasi}</p>
+             </div>`
+          : `<div style="background:#2A1E1E;padding:20px;text-align:center;margin-bottom:20px;">
+               <p style="margin:0 0 6px;color:#A88070;font-size:11px;letter-spacing:.15em;text-transform:uppercase;">Gönderim Şekli</p>
+               <p style="margin:0;color:#FFF8F6;font-size:20px;letter-spacing:.06em;">Karşı ödemeli</p>
+               <p style="margin:8px 0 0;color:#A88070;font-size:13px;">${params.kargoFirmasi}</p>
+             </div>`
+      }
 
       <div style="background:#FFF8F6;border:1px solid #E8D8D0;padding:16px;margin-bottom:16px;">
         <p style="margin:0 0 10px;color:#2A1E1E;font-size:14px;"><strong>Nasıl gönderirsiniz?</strong></p>
         <ol style="margin:0;padding-left:18px;color:#7A5048;font-size:13px;line-height:1.9;">
           <li>Ürünü, varsa kutusu ve koruyucu ambalajıyla birlikte paketleyin.</li>
           <li>Takının çizilmemesi için yumuşak bir bezle sarın; kutuyu boşluk kalmayacak şekilde doldurun.</li>
-          <li>Paketin üzerine <strong>${params.iadeKodu}</strong> kodunu, adınızı ve telefonunuzu yazın.</li>
-          <li>En yakın <strong>${subeIfadesi(params.kargoFirmasi)}</strong> bırakın ve kodu görevliye belirtin.</li>
+          ${
+            params.iadeKodu
+              ? `<li>Paketin üzerine <strong>${params.iadeKodu}</strong> kodunu, adınızı ve telefonunuzu yazın.</li>
+                 <li>En yakın <strong>${subeIfadesi(params.kargoFirmasi)}</strong> bırakın ve kodu görevliye belirtin.</li>`
+              : `<li>Paketin üzerine aşağıdaki iade adresini, adınızı ve telefonunuzu yazın.</li>
+                 <li>En yakın <strong>${subeIfadesi(params.kargoFirmasi)}</strong> bırakın ve gönderinin <strong>karşı ödemeli</strong> olduğunu görevliye belirtin.</li>`
+          }
         </ol>
         <p style="margin:12px 0 0;color:#A88070;font-size:12px;">
           <strong>Ücret ödemeyin.</strong> İade kargo bedeli bize aittir; şubede sizden ücret istenirse
