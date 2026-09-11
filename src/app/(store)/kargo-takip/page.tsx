@@ -1,14 +1,15 @@
 import type { Metadata } from 'next'
+import { sayfaUstVerisi } from '@/lib/seo'
 import KargoTakipClient from './KargoTakipClient'
 import SiparisleriniBul from '@/components/store/SiparisleriniBul'
 
-export const metadata: Metadata = {
-  title: 'Kargo Takip',
-  description: 'Sipariş numaranız ve e-postanızla ya da takip kodunuzla kargonuzun durumunu görün.',
-  // Sorgu parametreleriyle (?siparis=…&kod=…) çağrılabiliyor; kanonik adres
-  // parametresiz sayfadır (Faz 11F kapanış denetimi).
-  alternates: { canonical: '/kargo-takip' },
-}
+// Sorgu parametreleriyle (?siparis=…&kod=…) çağrılabiliyor; kanonik adres
+// parametresiz sayfadır (Faz 11F kapanış denetimi).
+export const metadata: Metadata = sayfaUstVerisi({
+  baslik: 'Kargo Takip',
+  aciklama: 'Sipariş numaranız ve e-postanızla ya da takip kodunuzla kargonuzun durumunu görün.',
+  yol: '/kargo-takip',
+})
 
 export default async function KargoTakipPage({
   searchParams,

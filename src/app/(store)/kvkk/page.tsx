@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { sayfaUstVerisi } from '@/lib/seo'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import { kunyeGetir, kunyeHtml } from '@/lib/legal/veriSorumlusu'
 import { HAKLAR_HTML, YURTDISI_HTML, basvuruHtml } from '@/lib/legal/metinler'
@@ -6,12 +7,11 @@ import { hesapSilmeMetniGetir } from '@/lib/legal/hesapSilmeMetni'
 import { createServiceClient } from '@/lib/supabase/service'
 import { KVKK_SURUMU, surumBloguHtml } from '@/lib/legal/surum'
 
-export const metadata: Metadata = {
-  title: 'KVKK Aydınlatma Metni',
-  description:
-    '6698 sayılı Kanun kapsamında kişisel verilerin hangi amaçla işlendiği, kimlere aktarıldığı, saklama süreleri ve veri sahibinin başvuru yolları.',
-  alternates: { canonical: '/kvkk' },
-}
+export const metadata: Metadata = sayfaUstVerisi({
+  baslik: 'KVKK Aydınlatma Metni',
+  aciklama: '6698 sayılı Kanun kapsamında kişisel verilerin hangi amaçla işlendiği, kimlere aktarıldığı, saklama süreleri ve veri sahibinin başvuru yolları.',
+  yol: '/kvkk',
+})
 export const dynamic = 'force-dynamic'
 
 /**

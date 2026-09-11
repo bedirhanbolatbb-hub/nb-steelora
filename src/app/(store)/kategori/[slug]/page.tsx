@@ -9,7 +9,7 @@ import { fiyatKovalari, gosterilenFiyat, listeFiyatina } from '@/lib/catalog/fiy
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import JsonLd from '@/components/seo/JsonLd'
 import { getSiteContent } from '@/lib/supabase/content'
-import { breadcrumbJsonLd } from '@/lib/seo'
+import { breadcrumbJsonLd, sayfaUstVerisi, webPageJsonLd } from '@/lib/seo'
 
 /**
  * Kategori sayfası üst verisi (Faz 11A).
@@ -44,25 +44,15 @@ export async function generateMetadata({
   // Sayfa 2+ KENDİNE canonical: içerikleri farklı, birbirinin kopyası değil.
   const yol = sayfa > 1 ? `/kategori/${slug}?sayfa=${sayfa}` : `/kategori/${slug}`
 
-  return {
-    // Kök layout başlığa zaten "| NB Steelora" ekliyor (title.template);
-    // burada da yazınca iki kez basılıyordu. `absolute` ile tam başlık
-    // istenen hâline sabitlenir, sonek bir kez gelir.
-    title: { absolute: `Çelik ${def.title} Modelleri | NB Steelora` },
-    description: tanitim.slice(0, 158),
-    alternates: { canonical: yol },
-    openGraph: {
-      title: `Çelik ${def.title} Modelleri`,
-      description: tanitim.slice(0, 158),
-      url: yol,
-      // Faz 31: `images` YAZILMAZSA kategori sayfası paylaşım görselsiz kalıyor.
-      // Next, sayfa kendi openGraph nesnesini tanımladığında dosya tabanlı
-      // opengraph-image'i o nesneye EKLEMİYOR — ölçüldü (11 Eyl): ürün ve
-      // diğer sayfalarda og:image var, yalnız kategoride yoktu. Kategori
-      // bağlantısı WhatsApp/Instagram'da düz yazı olarak paylaşılıyordu.
-      images: ['/opengraph-image'],
-    },
-  }
+  // Kök layout başlığa zaten "| NB Steelora" ekliyor (title.template); burada da
+  // yazınca iki kez basılıyordu. `tamBaslik` şablonu atlar, sonek bir kez gelir.
+  // Paylaşım görseli de sayfaUstVerisi'nden gelir: Next, sayfa kendi openGraph
+  // nesnesini tanımladığında dosya tabanlı opengraph-image'i o nesneye EKLEMİYOR.
+  return sayfaUstVerisi({
+    tamBaslik: `Çelik ${def.title} Modelleri | NB Steelora`,
+    aciklama: tanitim.slice(0, 158),
+    yol,
+  })
 }
 
 export default async function KategoriPage({
@@ -127,8 +117,25 @@ export default async function KategoriPage({
     (products || []).map((p: any) => gosterilenFiyat(Number(p.display_price) || 0, kampanyaOrani))
   )
 
+  // Kategori sayfası bir SEÇKİ sayfasıdır. /urunler bunu CollectionPage ile
+  // bildiriyordu, kategoriler bildirmiyordu — arama motoru sekiz kategoriyi de
+  // türü belirsiz bir sayfa sayıyordu. Ad ve açıklama sayfanın kendi
+  // metninden gelir; yeni cümle uydurulmaz.
+  const tanitimMetni =
+    (icerik[`kategori_tanitim_${slug}`] || '').trim() ||
+    kategoriTanitimi(slug, def.title)[0] ||
+    `${def.title} modelleri.`
+
   return (
     <>
+      <JsonLd
+        data={webPageJsonLd({
+          tip: 'CollectionPage',
+          ad: `Çelik ${kategori} Modelleri`,
+          aciklama: tanitimMetni,
+          path: `/kategori/${slug}`,
+        })}
+      />
       <JsonLd
         data={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },

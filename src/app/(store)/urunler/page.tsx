@@ -7,7 +7,7 @@ import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import ProductsClient from '@/components/store/ProductsClient'
 import JsonLd from '@/components/seo/JsonLd'
 import KirintiYolu from '@/components/seo/KirintiYolu'
-import { webPageJsonLd } from '@/lib/seo'
+import { webPageJsonLd, sayfaUstVerisi } from '@/lib/seo'
 import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
 import { getSiteContent } from '@/lib/supabase/content'
 
@@ -21,11 +21,11 @@ import { getSiteContent } from '@/lib/supabase/content'
 const KATALOG_ACIKLAMA =
   'NB Steelora kataloğunun tamamı: 316L paslanmaz çelik kolye, küpe, bileklik, yüzük, piercing ve setler. Kategori, fiyat ve renge göre süzün.'
 
-export const metadata: Metadata = {
-  title: 'Tüm Ürünler',
-  description: KATALOG_ACIKLAMA,
-  alternates: { canonical: '/urunler' },
-}
+export const metadata: Metadata = sayfaUstVerisi({
+  baslik: 'Tüm Ürünler',
+  aciklama: KATALOG_ACIKLAMA,
+  yol: '/urunler',
+})
 
 export default async function UrunlerPage({
   searchParams,

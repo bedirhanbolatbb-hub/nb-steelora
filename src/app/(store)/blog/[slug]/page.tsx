@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
 import type { Metadata } from 'next'
 import JsonLd from '@/components/seo/JsonLd'
-import { articleJsonLd, breadcrumbJsonLd } from '@/lib/seo'
+import { articleJsonLd, breadcrumbJsonLd, sayfaUstVerisi } from '@/lib/seo'
 import ProductGrid from '@/components/store/ProductGrid'
 import { yaziKategorisi, railUrunleri } from '@/lib/blog/kategori'
 
@@ -26,15 +26,21 @@ export async function generateMetadata({
   const supabase = createServiceClient()
   const { data } = await supabase
     .from('blog_posts')
-    .select('meta_title, meta_description, title, excerpt')
+    .select('meta_title, meta_description, title, excerpt, cover_image')
     .eq('slug', slug)
     .single()
   if (!data) return {}
-  return {
-    title: data.meta_title || `${data.title} | NB Steelora Blog`,
-    description: data.meta_description || data.excerpt || '',
-    alternates: { canonical: `/blog/${slug}` },
-  }
+  // Yazının KENDİ kapağı paylaşım kartına girer; yoksa marka kartı basılır.
+  // Önceden yazı sayfaları paylaşım bilgisi hiç tanımlamıyordu ve kökün ana
+  // sayfa kartını devralıyordu — 26 yazının tamamı "NB Steelora | Fine
+  // Jewellery" ve ana sayfa adresiyle paylaşılıyordu (11 Eyl ölçümü).
+  return sayfaUstVerisi({
+    tamBaslik: data.meta_title || `${data.title} | NB Steelora Blog`,
+    aciklama: data.meta_description || data.excerpt || '',
+    yol: `/blog/${slug}`,
+    gorsel: data.cover_image,
+    tur: 'article',
+  })
 }
 
 export default async function BlogPostPage({

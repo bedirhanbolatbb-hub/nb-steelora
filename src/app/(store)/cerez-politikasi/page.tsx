@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { sayfaUstVerisi } from '@/lib/seo'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import { createServiceClient } from '@/lib/supabase/service'
 import { kunyeGetir, kunyeHtml } from '@/lib/legal/veriSorumlusu'
@@ -13,12 +14,11 @@ import {
 import { CEREZ_SURUMU, surumBloguHtml } from '@/lib/legal/surum'
 import { hesapSilmeMetniGetir } from '@/lib/legal/hesapSilmeMetni'
 
-export const metadata: Metadata = {
-  title: 'Çerez Politikası',
-  description:
-    'Sitede kullanılan çerezlerin envanteri, amaçları ve saklama süreleri; rıza tercihinizi dilediğiniz an değiştirme yolu.',
-  alternates: { canonical: '/cerez-politikasi' },
-}
+export const metadata: Metadata = sayfaUstVerisi({
+  baslik: 'Çerez Politikası',
+  aciklama: 'Sitede kullanılan çerezlerin envanteri, amaçları ve saklama süreleri; rıza tercihinizi dilediğiniz an değiştirme yolu.',
+  yol: '/cerez-politikasi',
+})
 export const dynamic = 'force-dynamic'
 
 /**

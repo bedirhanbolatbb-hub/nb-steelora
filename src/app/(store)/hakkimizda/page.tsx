@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import JsonLd from '@/components/seo/JsonLd'
 import KirintiYolu from '@/components/seo/KirintiYolu'
-import { webPageJsonLd } from '@/lib/seo'
+import { webPageJsonLd, sayfaUstVerisi } from '@/lib/seo'
 import Image from 'next/image'
 import { FREE_SHIPPING_LABEL, HAZIRLIK_LABEL, TASIMA_LABEL } from '@/lib/shipping'
 import { getSiteContent } from '@/lib/supabase/content'
@@ -11,11 +11,11 @@ import { isRemoteMedia, IMAGE_QUALITY } from '@/lib/images'
 const HAKKIMIZDA_ACIKLAMA =
   "NB Steelora'nın hikâyesi: 316L paslanmaz çelik takıları neden seçtiğimiz, nasıl hazırlayıp gönderdiğimiz ve markanın arkasındaki atölye."
 
-export const metadata: Metadata = {
-  title: 'Hakkımızda',
-  description: HAKKIMIZDA_ACIKLAMA,
-  alternates: { canonical: '/hakkimizda' },
-}
+export const metadata: Metadata = sayfaUstVerisi({
+  baslik: 'Hakkımızda',
+  aciklama: HAKKIMIZDA_ACIKLAMA,
+  yol: '/hakkimizda',
+})
 
 /**
  * Hakkımızda — fotoğraf slotlu şablon (Faz 11B).

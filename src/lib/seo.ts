@@ -8,6 +8,7 @@
  *
  * Tüm çıktı sunucuda üretilir; istemciye tek satır JS eklemez.
  */
+import type { Metadata } from 'next'
 import { HAZIRLIK_IS_GUNU, TASIMA_IS_GUNU } from './shipping'
 
 /**
@@ -156,6 +157,70 @@ export function websiteJsonLd() {
     url: SITE_URL,
     inLanguage: 'tr-TR',
     publisher: { '@type': 'Organization', name: ORG_NAME, url: SITE_URL },
+  }
+}
+
+/**
+ * Paylaşım kartı (Open Graph + X/Twitter) — TEK KAYNAK.
+ *
+ * ÖLÇÜLEN KUSUR (11 Eyl 2026). Kök layout `openGraph` ve `twitter` içine ana
+ * sayfanın başlığını ve açıklamasını SABİT yazmıştı. Next'te bu iki alan iç içe
+ * nesnedir ve "sığ birleşme" kuralı geçerlidir:
+ *   · nesneyi HİÇ tanımlamayan sayfa (sss, blog yazıları, sözleşmeler…)
+ *     kökün nesnesini OLDUĞU GİBİ devralır → paylaşınca ana sayfa görünür;
+ *   · nesneyi tanımlayan sayfa (ürün, kategori) kökünkini TAMAMEN siler
+ *     → site adı, dil ve tür etiketleri kaybolur, `twitter` yine kökten gelir.
+ * Sonuç: 300'ü aşkın sayfanın X kartında "NB Steelora | Fine Jewellery" ve ana
+ * sayfa adresi yazıyordu. Ölçüldü, tahmin değil.
+ *
+ * Bu yüzden her sayfa kartını KENDİ değerleriyle basar; ortak alanlar burada
+ * bir kez tanımlıdır. Yeni sayfa eklendiğinde de doğru olur.
+ */
+type SayfaUstVerisiOrtak = {
+  aciklama: string
+  /** Kanonik yol — '/sss' gibi, başında eğik çizgi. */
+  yol: string
+  /** Sayfaya özel paylaşım görseli; yoksa marka kartı kullanılır. */
+  gorsel?: string | null
+  /** Yazı sayfalarında 'article'. */
+  tur?: 'website' | 'article'
+}
+
+/**
+ * Başlık İKİSİNDEN BİRİ olarak verilir; ikisi birden verilemez:
+ *   · `baslik`    → kök layout'un '%s | NB Steelora' şablonuna girer
+ *   · `tamBaslik` → şablonu atlar (marka adı başlıkta zaten geçiyorsa)
+ */
+export type SayfaUstVerisi =
+  | (SayfaUstVerisiOrtak & { baslik: string; tamBaslik?: never })
+  | (SayfaUstVerisiOrtak & { tamBaslik: string; baslik?: never })
+
+/** Marka kartı — app/opengraph-image.tsx üretir (1200×630). */
+const PAYLASIM_GORSELI = '/opengraph-image'
+
+export function sayfaUstVerisi(s: SayfaUstVerisi): Metadata {
+  const tam = s.tamBaslik ?? `${s.baslik} | ${ORG_NAME}`
+  const gorseller = [(s.gorsel ?? '').trim() || PAYLASIM_GORSELI]
+
+  return {
+    title: s.tamBaslik ? { absolute: s.tamBaslik } : s.baslik,
+    description: s.aciklama,
+    alternates: { canonical: s.yol },
+    openGraph: {
+      type: s.tur ?? 'website',
+      locale: 'tr_TR',
+      siteName: ORG_NAME,
+      title: tam,
+      description: s.aciklama,
+      url: s.yol,
+      images: gorseller,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: tam,
+      description: s.aciklama,
+      images: gorseller,
+    },
   }
 }
 

@@ -147,7 +147,7 @@ export default function ProductImageGallery({ images, title, morphAd }: ProductI
               <button
                 key={i}
                 onClick={() => setActiveIndex(i)}
-                aria-label={`Görsel ${i + 1}`}
+                aria-label={`${title} — ${i + 1}. görsel`}
                 className={cn(
                   'relative w-14 shrink-0 aspect-[4/5] overflow-hidden rounded-[3px] bg-surface-muted transition-opacity duration-300',
                   i === activeIndex
@@ -158,7 +158,9 @@ export default function ProductImageGallery({ images, title, morphAd }: ProductI
                 <Image
                   src={gorselBoyutu(img, 128)}
                   unoptimized={isRemoteMedia(img)}
-                  alt=""
+                  // Küçük resimler boş alt metniyle basılıyordu: ekran
+                  // okuyucu ve arama motoru dört görseli de adsız görüyordu.
+                  alt={`${title} — ${i + 1}. görsel`}
                   fill
                   className="object-cover"
                   sizes="56px"

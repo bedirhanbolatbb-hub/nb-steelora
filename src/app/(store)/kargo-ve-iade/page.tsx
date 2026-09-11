@@ -4,14 +4,13 @@ import LegalPageLayout from '@/components/store/LegalPageLayout'
 import { getSiteContent } from '@/lib/supabase/content'
 import { AYIP_ISPAT_AY, AYIP_ZAMANASIMI_YIL, AZAMI_TESLIM_GUN, BANKA_YANSIMA_LABEL, CAYMA_SURESI_GUN, GERI_GONDERME_GUN, GERI_ODEME_GUN, HAKEM_HEYETI_SINIRI_TL, HAKEM_HEYETI_YILI, ONARIM_DEGISIM_IS_GUNU, SOZLESME_YOLLARI } from '@/lib/legal/sozlesme'
 import { FREE_SHIPPING_LABEL, HAZIRLIK_LABEL, TASIMA_LABEL, TESLIM_CUMLESI } from '@/lib/shipping'
-import { ORG_EMAIL } from '@/lib/seo'
+import { ORG_EMAIL, sayfaUstVerisi } from '@/lib/seo'
 
-export const metadata: Metadata = {
-  title: 'Kargo, İade ve Değişim',
-  description:
-    'Ücretsiz kargo, hazırlık ve taşıma süreleri, 14 gün koşulsuz cayma hakkı, iade ve değişim adımları.',
-  alternates: { canonical: '/kargo-ve-iade' },
-}
+export const metadata: Metadata = sayfaUstVerisi({
+  baslik: 'Kargo, İade ve Değişim',
+  aciklama: 'Ücretsiz kargo, hazırlık ve taşıma süreleri, 14 gün koşulsuz cayma hakkı, iade ve değişim adımları.',
+  yol: '/kargo-ve-iade',
+})
 export const dynamic = 'force-dynamic'
 
 /**

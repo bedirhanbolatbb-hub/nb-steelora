@@ -221,6 +221,10 @@ export default function Footer({
             <img
               src="/badges/iyzico-logo-pack/iyzico-logo-pack/footer_iyzico_ile_ode/White/logo_band_white.svg"
               alt="iyzico ile öde"
+              // Alt şeritte, ekranın çok altında duruyor; öncelikli yüklenip
+              // kapak görseliyle yarışmasın.
+              loading="lazy"
+              decoding="async"
               className="h-8 object-contain opacity-80 hover:opacity-100 transition-opacity"
             />
           </div>

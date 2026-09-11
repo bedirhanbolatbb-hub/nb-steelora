@@ -6,7 +6,7 @@ import ProductCardV2 from '@/components/store/ProductCardV2'
 import { getCollection } from '@/lib/collections'
 import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
 import JsonLd from '@/components/seo/JsonLd'
-import { breadcrumbJsonLd } from '@/lib/seo'
+import { breadcrumbJsonLd, sayfaUstVerisi } from '@/lib/seo'
 
 export async function generateMetadata({
   params,
@@ -21,16 +21,12 @@ export async function generateMetadata({
   const description =
     collection.description || `${collection.name} koleksiyonu — NB Steelora küratörlü seçki.`
 
-  return {
-    title: collection.name,
-    description,
-    alternates: { canonical: `/koleksiyon/${slug}` },
-    openGraph: {
-      title: collection.name,
-      description,
-      images: data.cover ? [{ url: data.cover }] : undefined,
-    },
-  }
+  return sayfaUstVerisi({
+    baslik: collection.name,
+    aciklama: description,
+    yol: `/koleksiyon/${slug}`,
+    gorsel: data.cover,
+  })
 }
 
 export default async function KoleksiyonPage({

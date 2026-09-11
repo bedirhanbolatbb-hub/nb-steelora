@@ -3,18 +3,18 @@ import SaticiKunyesi from '@/components/store/SaticiKunyesi'
 import JsonLd from '@/components/seo/JsonLd'
 import KirintiYolu from '@/components/seo/KirintiYolu'
 import { kunyeGetir } from '@/lib/legal/veriSorumlusu'
-import { webPageJsonLd } from '@/lib/seo'
+import { webPageJsonLd, sayfaUstVerisi } from '@/lib/seo'
 import IletisimClient from './IletisimClient'
 
 /** Meta açıklaması ile ContactPage şeması aynı cümleyi taşır. */
 const ILETISIM_ACIKLAMA =
   'NB Steelora ile iletişim: mesaj formu, e-posta ve telefon ile satıcı künyesi — unvan, adres ve vergi bilgileri.'
 
-export const metadata: Metadata = {
-  title: 'İletişim',
-  description: ILETISIM_ACIKLAMA,
-  alternates: { canonical: '/iletisim' },
-}
+export const metadata: Metadata = sayfaUstVerisi({
+  baslik: 'İletişim',
+  aciklama: ILETISIM_ACIKLAMA,
+  yol: '/iletisim',
+})
 export const dynamic = 'force-dynamic'
 
 /**

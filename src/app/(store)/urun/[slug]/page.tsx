@@ -26,7 +26,7 @@ import ProductAccordion from '@/components/store/ProductAccordion'
 import AddToCartButton from '@/components/store/AddToCartButton'
 import StickyBuyBar, { BUY_BLOCK_ID } from '@/components/store/StickyBuyBar'
 import JsonLd from '@/components/seo/JsonLd'
-import { breadcrumbJsonLd, plainText, productJsonLd } from '@/lib/seo'
+import { breadcrumbJsonLd, plainText, productJsonLd, sayfaUstVerisi } from '@/lib/seo'
 import RelatedProducts from '@/components/store/RelatedProducts'
 import ReviewList from '@/components/store/ReviewList'
 import RecentlyViewedTracker from '@/components/store/RecentlyViewedTracker'
@@ -85,16 +85,12 @@ export async function generateMetadata({
     odenecekFiyat
   )}. ${FREE_SHIPPING_LABEL}, ${CAYMA_SURESI_GUN} gün koşulsuz iade.`
 
-  return {
-    title: seoTitle,
-    description,
-    alternates: { canonical: `/urun/${canonicalSlug}` },
-    openGraph: {
-      title: seoTitle,
-      description,
-      images: data.display_images?.[0] ? [{ url: data.display_images[0] }] : undefined,
-    },
-  }
+  return sayfaUstVerisi({
+    baslik: seoTitle,
+    aciklama: description,
+    yol: `/urun/${canonicalSlug}`,
+    gorsel: data.display_images?.[0] ?? null,
+  })
 }
 
 export default async function UrunDetayPage({

@@ -3,14 +3,13 @@ import Link from 'next/link'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import JsonLd from '@/components/seo/JsonLd'
 import { SSS_TAMAMI } from '@/lib/legal/sss'
-import { ORG_NAME, SITE_URL } from '@/lib/seo'
+import { ORG_NAME, SITE_URL, sayfaUstVerisi } from '@/lib/seo'
 
-export const metadata: Metadata = {
-  title: 'Sık Sorulan Sorular',
-  description:
-    'Çelik takı kararır mı, suyla teması sorun olur mu, iade nasıl yapılır, kargo ücreti var mı — en çok sorulanların cevapları.',
-  alternates: { canonical: '/sss' },
-}
+export const metadata: Metadata = sayfaUstVerisi({
+  baslik: 'Sık Sorulan Sorular',
+  aciklama: 'Çelik takı kararır mı, suyla teması sorun olur mu, iade nasıl yapılır, kargo ücreti var mı — en çok sorulanların cevapları.',
+  yol: '/sss',
+})
 
 /**
  * Sık sorulan sorular (Faz 11A).

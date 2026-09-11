@@ -8,19 +8,18 @@ import {
   HAKEM_HEYETI_YILI,
   SOZLESME_YOLLARI,
 } from '@/lib/legal/sozlesme'
-import { ORG_EMAIL } from '@/lib/seo'
+import { ORG_EMAIL, sayfaUstVerisi } from '@/lib/seo'
 import { HAZIRLIK_LABEL, TASIMA_LABEL } from '@/lib/shipping'
 import SaticiKunyesi from '@/components/store/SaticiKunyesi'
 import { kunyeGetir } from '@/lib/legal/veriSorumlusu'
 import { createServiceClient } from '@/lib/supabase/service'
 import { MESAFELI_SURUMU, surumBloguHtml } from '@/lib/legal/surum'
 
-export const metadata: Metadata = {
-  title: 'Mesafeli Satış Sözleşmesi',
-  description:
-    'Satıcı ve alıcı bilgileri, sipariş konusu, ödeme, teslimat ve cayma hakkı koşullarını içeren mesafeli satış sözleşmesi.',
-  alternates: { canonical: '/mesafeli-satis-sozlesmesi' },
-}
+export const metadata: Metadata = sayfaUstVerisi({
+  baslik: 'Mesafeli Satış Sözleşmesi',
+  aciklama: 'Satıcı ve alıcı bilgileri, sipariş konusu, ödeme, teslimat ve cayma hakkı koşullarını içeren mesafeli satış sözleşmesi.',
+  yol: '/mesafeli-satis-sozlesmesi',
+})
 export const dynamic = 'force-dynamic'
 
 export default async function MesafeliSatisSozlesmesiPage() {

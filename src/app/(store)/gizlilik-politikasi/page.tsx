@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
+import { sayfaUstVerisi } from '@/lib/seo'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 
-export const metadata: Metadata = {
-  title: 'Gizlilik Politikası',
-  description:
-    'nbsteelora.com üzerinden toplanan kişisel bilgilerin nasıl toplandığı, ne için kullanıldığı ve nasıl korunduğu.',
-  alternates: { canonical: '/gizlilik-politikasi' },
-}
+export const metadata: Metadata = sayfaUstVerisi({
+  baslik: 'Gizlilik Politikası',
+  aciklama: 'nbsteelora.com üzerinden toplanan kişisel bilgilerin nasıl toplandığı, ne için kullanıldığı ve nasıl korunduğu.',
+  yol: '/gizlilik-politikasi',
+})
 
 export default function GizlilikPolitikasiPage() {
   return (

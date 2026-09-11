@@ -5,19 +5,17 @@ import { createServiceClient } from '@/lib/supabase/service'
 import type { Metadata } from 'next'
 import JsonLd from '@/components/seo/JsonLd'
 import KirintiYolu from '@/components/seo/KirintiYolu'
-import { webPageJsonLd } from '@/lib/seo'
+import { webPageJsonLd, sayfaUstVerisi } from '@/lib/seo'
 
 /** Meta açıklaması ile Blog şeması aynı cümleyi taşır. */
 const BLOG_ACIKLAMA =
   'Takı dünyasından ipuçları, bakım rehberleri ve ilhamlar. Paslanmaz çelik takılar hakkında bilmeniz gereken her şey.'
 
-export const metadata: Metadata = {
-  // absolute: kök layout'un '%s | NB Steelora' şablonu marka adını bir kez daha
-  // ekliyordu — başlık "Blog | NB Steelora | NB Steelora" çıkıyordu.
-  title: { absolute: 'Blog | NB Steelora' },
-  description: BLOG_ACIKLAMA,
-  alternates: { canonical: '/blog' },
-}
+export const metadata: Metadata = sayfaUstVerisi({
+  tamBaslik: 'Blog | NB Steelora',
+  aciklama: BLOG_ACIKLAMA,
+  yol: '/blog',
+})
 
 export const revalidate = 0
 

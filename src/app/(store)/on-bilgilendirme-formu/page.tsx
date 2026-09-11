@@ -5,15 +5,14 @@ import { kunyeGetir } from '@/lib/legal/veriSorumlusu'
 import { getSiteContent } from '@/lib/supabase/content'
 import { AYIP_ISPAT_AY, AYIP_ZAMANASIMI_YIL, AZAMI_TESLIM_GUN, BANKA_YANSIMA_LABEL, CAYMA_SURESI_GUN, GERI_GONDERME_GUN, GERI_ODEME_GUN, HAKEM_HEYETI_SINIRI_TL, HAKEM_HEYETI_YILI, ONARIM_DEGISIM_IS_GUNU, SOZLESME_SURUMU, SOZLESME_YOLLARI, URUN_TOLERANS_KISA } from '@/lib/legal/sozlesme'
 import { FREE_SHIPPING_LABEL, HAZIRLIK_LABEL, TASIMA_LABEL } from '@/lib/shipping'
-import { ORG_EMAIL } from '@/lib/seo'
+import { ORG_EMAIL, sayfaUstVerisi } from '@/lib/seo'
 import Link from 'next/link'
 
-export const metadata: Metadata = {
-  title: 'Ön Bilgilendirme Formu',
-  description:
-    'Sipariş öncesi zorunlu ön bilgilendirme: satıcı künyesi, ürün bedeli, ödeme ve teslimat koşulları, cayma hakkının kullanımı.',
-  alternates: { canonical: '/on-bilgilendirme-formu' },
-}
+export const metadata: Metadata = sayfaUstVerisi({
+  baslik: 'Ön Bilgilendirme Formu',
+  aciklama: 'Sipariş öncesi zorunlu ön bilgilendirme: satıcı künyesi, ürün bedeli, ödeme ve teslimat koşulları, cayma hakkının kullanımı.',
+  yol: '/on-bilgilendirme-formu',
+})
 export const dynamic = 'force-dynamic'
 
 /**
