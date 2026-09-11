@@ -55,6 +55,12 @@ export async function generateMetadata({
       title: `Çelik ${def.title} Modelleri`,
       description: tanitim.slice(0, 158),
       url: yol,
+      // Faz 31: `images` YAZILMAZSA kategori sayfası paylaşım görselsiz kalıyor.
+      // Next, sayfa kendi openGraph nesnesini tanımladığında dosya tabanlı
+      // opengraph-image'i o nesneye EKLEMİYOR — ölçüldü (11 Eyl): ürün ve
+      // diğer sayfalarda og:image var, yalnız kategoride yoktu. Kategori
+      // bağlantısı WhatsApp/Instagram'da düz yazı olarak paylaşılıyordu.
+      images: ['/opengraph-image'],
     },
   }
 }

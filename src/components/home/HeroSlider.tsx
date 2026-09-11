@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { createElement, useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia, varyantSec } from '@/lib/images'
@@ -100,12 +100,22 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
                       {s.eyebrow}
                     </p>
                   )}
-                  <h2
-                    className="hero-line mt-3 font-heading text-[34px] font-medium leading-[1.08] text-ink sm:text-[44px] lg:text-[58px]"
-                    style={{ '--hero-delay': '70ms' } as React.CSSProperties}
-                  >
-                    {s.title}
-                  </h2>
+                  {/* Faz 31: İLK slaydın başlığı h1.
+                      ÖLÇÜLEN KUSUR (11 Eyl): ana sayfada HİÇ h1 yoktu — bütün
+                      slaytlar h2'ydi, sayfa h2 ile başlıyordu. h1 sayfanın ne
+                      olduğunu söyleyen tek başlık; arama motoru ve ekran
+                      okuyucu ilk onu arar. Lighthouse erişilebilirlik denetimi
+                      de "başlıklar sırayla azalmıyor" derken bunu gösteriyordu.
+                      Yalnız ilk slayt h1: sayfada tek h1 olmalı. */}
+                  {createElement(
+                    i === 0 ? 'h1' : 'h2',
+                    {
+                      className:
+                        'hero-line mt-3 font-heading text-[34px] font-medium leading-[1.08] text-ink sm:text-[44px] lg:text-[58px]',
+                      style: { '--hero-delay': '70ms' } as React.CSSProperties,
+                    },
+                    s.title
+                  )}
                   {s.subtitle && (
                     <p
                       className="hero-line mt-4 max-w-md font-body text-[13px] leading-relaxed text-ink-soft lg:text-[14px]"
