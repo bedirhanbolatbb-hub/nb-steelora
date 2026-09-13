@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { adminIstegiMi } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
+import { makineleriBul } from '@/lib/analytics/makine'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -188,7 +189,67 @@ export async function GET(request: Request) {
 
   const pvler = olaylar.filter((o) => o.event === 'page_view')
 
+  // ── Tek hareketlik oturumlar gerçek insan mı? ──
+  //
+  // Gece 02–06 arası insan trafiği neredeyse durur; tarama robotları ise gün
+  // boyu eşit dağılır. Tek hareketlik oturumların saat dağılımı düz çıkıyorsa
+  // bunlar müşteri değil robottur. Karşılaştırma için çok hareketli
+  // oturumların dağılımı da veriliyor.
+  const saatDagilimi = (sec: (s: { olay: number }) => boolean) => {
+    const kova = new Array(24).fill(0)
+    const secili = new Set(oturumListesi.filter(sec).map((s) => s.id))
+    for (const o of olaylar) {
+      if (!secili.has(o.session_id.slice(0, 8))) continue
+      const saat = Number(
+        new Intl.DateTimeFormat('tr-TR', {
+          timeZone: 'Europe/Istanbul',
+          hour: '2-digit',
+          hour12: false,
+        }).format(new Date(o.occurred_at))
+      )
+      kova[saat % 24]++
+    }
+    return kova
+  }
+  const gece = (k: number[]) => k.slice(2, 7).reduce((a, b) => a + b, 0)
+  const toplamK = (k: number[]) => k.reduce((a, b) => a + b, 0) || 1
+  const tekHareketSaat = saatDagilimi((s) => s.olay === 1)
+  const cokHareketSaat = saatDagilimi((s) => s.olay >= 4)
+
+  const ayiklama = makineleriBul(olaylar)
+
+  // ── Yeni olay adı yazılabiliyor mu? ──
+  //
+  // analytics_events.event üzerinde bir CHECK kısıtı varsa listede olmayan bir
+  // ad reddedilir (23514) ve olay sessizce kaybolur. Tarayıcı doğrulaması için
+  // yeni bir olay adı gerekiyor; eklenebilir mi, denenerek öğrenilir. Yazılan
+  // satır hemen silinir, ölçüme karışmaz.
+  let kisitDurumu = 'bilinmiyor'
+  try {
+    const deneAd = 'olcum_teshis_deneme'
+    const { error } = await supabase
+      .from('analytics_events')
+      .insert({ event: deneAd, session_id: 'teshis-deneme', device: 'desktop' })
+    if (!error) {
+      kisitDurumu = 'serbest'
+      await supabase.from('analytics_events').delete().eq('session_id', 'teshis-deneme')
+    } else {
+      kisitDurumu = `kisitli:${error.code ?? ''}`
+    }
+  } catch {
+    kisitDurumu = 'deneme-hatasi'
+  }
+
   return NextResponse.json({
+    kisitDurumu,
+    makineOzeti: { oturum: ayiklama.oturum, olay: ayiklama.olay },
+    saatDagilimi: {
+      tekHareket: tekHareketSaat,
+      tekHareketGeceOrani: Math.round((gece(tekHareketSaat) / toplamK(tekHareketSaat)) * 1000) / 10,
+      cokHareket: cokHareketSaat,
+      cokHareketGeceOrani: Math.round((gece(cokHareketSaat) / toplamK(cokHareketSaat)) * 1000) / 10,
+      not: 'gece = 02:00–06:59 arası payı (%). Düz dağılım robot işaretidir.',
+    },
     pencere: { gun: gunSayisi, olay: olaylar.length, oturum: oturumlar.size },
     ilkOlay: olaylar[0]?.occurred_at ?? null,
     sonOlay: olaylar[olaylar.length - 1]?.occurred_at ?? null,
