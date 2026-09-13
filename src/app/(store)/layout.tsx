@@ -4,6 +4,7 @@ import Footer from '@/components/store/Footer'
 import FloatingWhatsApp from '@/components/store/FloatingWhatsApp'
 import RevealController from '@/components/motion/RevealController'
 import ConsentGate from '@/components/store/ConsentGate'
+import TarayiciDogrula from '@/components/store/TarayiciDogrula'
 import { getLayoutData } from '@/lib/layoutData'
 import { sunucuOlayi } from '@/lib/analytics/server'
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
@@ -60,6 +61,7 @@ export default async function StoreLayout({
       <FloatingWhatsApp />
       <RevealController />
       <ConsentGate />
+      <TarayiciDogrula />
       </UyelikTesvikSaglayici>
     </KampanyaSaglayici>
   )

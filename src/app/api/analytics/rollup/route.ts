@@ -57,13 +57,14 @@ export async function GET(request: Request) {
     value: number | null
     path: string | null
     occurred_at: string
+    meta: Record<string, unknown> | null
   }
   const olaylar: OzetOlay[] = []
   const adim = 1000
   for (let i = 0; i < 200; i++) {
     const { data, error } = await supabase
       .from('analytics_events')
-      .select('event, session_id, visitor_id, product_id, value, path, occurred_at')
+      .select('event, session_id, visitor_id, product_id, value, path, occurred_at, meta')
       .gte('occurred_at', bas)
       .lte('occurred_at', bit)
       .order('occurred_at', { ascending: true })
@@ -93,9 +94,14 @@ export async function GET(request: Request) {
 
   for (const o of temiz) {
     oturumlar.add(o.session_id)
-    // Panelle AYNI kimlik uzayı: `visitor_id || session_id` iki ayrı uzayı tek
-    // kümede topluyor ve aynı kişiyi hem rıza öncesi hem sonrası ayrı sayıyordu.
-    ziyaretciler.add(o.session_id)
+    // Tarayıcı işareti satırı (Faz 32): sayfa görüntüleme DEĞİL, yalnız
+    // oturumun gerçek bir tarayıcıdan geldiğinin kanıtı. `visitors` sütunu
+    // artık bunu taşır; sabah giden rapor da panelin gösterdiği ihtiyatlı
+    // sayıyı yazar. `sessions` ham (robotu ayıklanmış) oturum sayısıdır.
+    if (o.event === 'page_view' && Number(o.meta?.js) === 1) {
+      ziyaretciler.add(o.session_id)
+      continue
+    }
     if (o.event === 'page_view') pv++
     if (o.event === 'product_view') { urun++; if (o.product_id) urunAl(o.product_id).views++ }
     if (o.event === 'add_to_cart') { sepet++; if (o.product_id) urunAl(o.product_id).atc++ }
@@ -109,7 +115,11 @@ export async function GET(request: Request) {
     {
       day: gun,
       sessions: oturumlar.size,
-      visitors: ziyaretciler.size,
+      // Tarayıcı doğrulaması 13 Eylül'de başladı. O günden ÖNCEKİ günler
+      // yeniden hesaplandığında hiç işaret satırı bulunmaz; `visitors` sıfır
+      // yazılırsa geçmiş günler boş görünürdü. İşaret yoksa eski anlamına
+      // (oturum sayısı) düşülür — uydurma değil, o günün elde olan en iyi sayısı.
+      visitors: ziyaretciler.size > 0 ? ziyaretciler.size : oturumlar.size,
       page_views: pv,
       product_views: urun,
       add_to_cart: sepet,

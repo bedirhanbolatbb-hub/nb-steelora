@@ -15,6 +15,13 @@ export type Donem = { baslangic: Date; bitis: Date; etiket: string }
 export const ISTANBUL = 'Europe/Istanbul'
 
 /**
+ * Tarayıcı doğrulamasının yayına girdiği gün. Bu tarihten ÖNCEKİ dönemlerde
+ * "doğrulanmış ziyaretçi" sayısı eksik olur; panel bunu gizlemek yerine
+ * açıkça yazar.
+ */
+export const DOGRULAMA_BASLANGICI = '2026-09-13'
+
+/**
  * Dönem sınırları İstanbul takvimine göre kurulur (Faz 17).
  *
  * Önceki sürümde "bugün/dün/son7" doğru çalışıyordu ama ay ve yıl sınırları
@@ -135,6 +142,18 @@ type HamOlay = {
   meta: any
 }
 
+/**
+ * Bu satır bir "gerçek tarayıcı" işareti mi? (Faz 32)
+ *
+ * TarayiciDogrula bileşeni oturum başına bir kez `page_view` + `meta.js=1`
+ * gönderir. Bu satır SAYFA GÖRÜNTÜLEME DEĞİLDİR; yalnız oturumun JavaScript
+ * çalıştıran gerçek bir tarayıcıdan geldiğini söyler. Her yerde ayıklanır ki
+ * sayfa sayısı, cihaz kırılımı ve saat yoğunluğu şişmesin.
+ */
+function tarayiciIsaretiMi(o: { event: string; meta: any }): boolean {
+  return o.event === 'page_view' && Number(o.meta?.js) === 1
+}
+
 const KOLONLAR =
   'event, session_id, visitor_id, occurred_at, path, referrer_host, device, product_id, search_query, value, order_id, meta'
 
@@ -219,6 +238,14 @@ export type Metrikler = {
    * niteliğinin sorunlu olduğunu söyler.
    */
   tekHareketOrani: number
+  /**
+   * JavaScript çalıştıran gerçek tarayıcıdan geldiği DOĞRULANMIŞ ziyaretçi.
+   * Sayfa görüntüleme sunucuda yazıldığı için robotlar da kayda giriyor;
+   * bu sayı onları dışarıda bırakır. Reklam engelleyici kullanan gerçek
+   * müşteriler de doğrulanamayabileceği için sayı ihtiyatlıdır: gerçek
+   * ziyaretçi bu sayı ile toplam arasındadır.
+   */
+  dogrulanmisZiyaretci: number
 }
 
 /** Ziyaret süresi kırpma sınırı — bkz. ortAktiflikSaniye. */
@@ -258,6 +285,7 @@ function metrikHesapla(olaylar: HamOlay[], iptalEdilenSiparisler: Set<string> = 
   const ziyaretciler = new Set<string>()
   const aktiflik = new Map<string, { ilk: number; son: number }>()
   const oturumHareketi = new Map<string, number>()
+  const dogrulanmis = new Set<string>()
   let sayfa = 0, urun = 0, sepet = 0, favori = 0, uyelik = 0, odeme = 0
   let siparis = 0, iptalIade = 0, ciro = 0, brutCiro = 0
 
@@ -270,6 +298,12 @@ function metrikHesapla(olaylar: HamOlay[], iptalEdilenSiparisler: Set<string> = 
     // Artık herkes session_id ile sayılır — Katman A'da kimlik zaten günlük
     // tekil kişidir; visitor_id yalnız üye kırılımı için kullanılır.
     ziyaretciler.add(o.session_id)
+    if (tarayiciIsaretiMi(o)) {
+      // İşaret satırı: oturumu doğrular ama hareket olarak sayılmaz — yoksa
+      // "tek sayfada ayrılan" oranı ve sayfa sayısı yanlış olurdu.
+      dogrulanmis.add(o.session_id)
+      continue
+    }
     oturumHareketi.set(o.session_id, (oturumHareketi.get(o.session_id) || 0) + 1)
 
     const t = new Date(o.occurred_at).getTime()
@@ -325,6 +359,7 @@ function metrikHesapla(olaylar: HamOlay[], iptalEdilenSiparisler: Set<string> = 
     tekHareketOrani: ziyaretciSayisi
       ? Math.round((tekHareket / ziyaretciSayisi) * 10000) / 100
       : 0,
+    dogrulanmisZiyaretci: dogrulanmis.size,
   }
 }
 
@@ -375,6 +410,10 @@ export type Rapor = {
     ayiklananOlay: number
     /** Ayıklananın ham hareketlere oranı (%). */
     ayiklananOran: number
+    /** Tarayıcı doğrulamasının yayına girdiği gün (öncesi için sayı eksiktir). */
+    dogrulamaBaslangici: string
+    /** Dönem tamamen doğrulama başladıktan sonra mı? */
+    dogrulamaGecerli: boolean
   }
 }
 
@@ -450,7 +489,7 @@ export async function raporUret(d: Donem): Promise<Rapor> {
       }
     }
 
-    if (o.event === 'page_view') {
+    if (o.event === 'page_view' && !tarayiciIsaretiMi(o)) {
       cihazlar.set(o.device || 'bilinmiyor', (cihazlar.get(o.device || 'bilinmiyor') || 0) + 1)
 
       // Yoğunluk haritası yalnız sayfa görüntülemeden — diğer olaylar
@@ -587,6 +626,8 @@ export async function raporUret(d: Donem): Promise<Rapor> {
       ayiklananOran: hamOlaylar.length
         ? Math.round((ayiklama.olay / hamOlaylar.length) * 1000) / 10
         : 0,
+      dogrulamaBaslangici: DOGRULAMA_BASLANGICI,
+      dogrulamaGecerli: d.baslangic.getTime() >= new Date(`${DOGRULAMA_BASLANGICI}T00:00:00+03:00`).getTime(),
     },
   }
 }

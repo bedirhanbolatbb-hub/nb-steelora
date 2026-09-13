@@ -306,18 +306,46 @@ export default function AnalizClient({
 
       {/* Faz 32: ölçümün kendi sağlığı. Tarama robotlarının trafiği ayıklanıyor;
           ne kadarının ayıklandığı gizlenmez, açıkça yazılır. */}
-      {rapor.olcumSagligi.ayiklananOturum > 0 && (
-        <div className="rounded-[var(--p-radius)] border border-[var(--p-line)] bg-[var(--p-surface)] px-4 py-3 text-[12px] leading-relaxed">
-          <strong className="font-medium text-[var(--p-ink)]">Ölçüm sağlığı:</strong>{' '}
-          Bu dönemde {sayi(rapor.olcumSagligi.ayiklananOturum)} ziyaretçi tarama robotu olarak
-          ayıklandı; toplam hareketin %{rapor.olcumSagligi.ayiklananOran}'ini oluşturuyorlardı.
-          Aşağıdaki bütün sayılar ayıklama sonrasıdır. Kayıtlar silinmez, yalnız sayılmaz.
-        </div>
-      )}
+      <div className="rounded-[var(--p-radius)] border border-[var(--p-line)] bg-[var(--p-surface)] px-4 py-3 text-[12px] leading-relaxed">
+        <strong className="font-medium text-[var(--p-ink)]">Ölçüm sağlığı.</strong>{' '}
+        {rapor.olcumSagligi.ayiklananOturum > 0 ? (
+          <>
+            Bu dönemde {sayi(rapor.olcumSagligi.ayiklananOturum)} ziyaretçi tarama robotu olarak
+            ayıklandı; toplam hareketin %{rapor.olcumSagligi.ayiklananOran}'ini oluşturuyorlardı.
+            Aşağıdaki bütün sayılar ayıklama sonrasıdır. Kayıtlar silinmez, yalnız sayılmaz.{' '}
+          </>
+        ) : (
+          <>Bu dönemde tarama robotu davranışı gösteren ziyaretçi bulunmadı. </>
+        )}
+        {rapor.olcumSagligi.dogrulamaGecerli ? (
+          <>
+            <strong className="font-medium text-[var(--p-ink)]">Gerçek tarayıcı</strong> sayısı,
+            JavaScript çalıştırdığı doğrulanan ziyaretçileri gösterir; gerçek ziyaretçi sayısı bu
+            sayı ile günlük tekil ziyaretçi arasındadır.
+          </>
+        ) : (
+          <>
+            Tarayıcı doğrulaması {rapor.olcumSagligi.dogrulamaBaslangici} tarihinde başladı; daha
+            eski dönemlerde tek sayfa açıp giden robotlar hâlâ sayıya dahildir.
+          </>
+        )}
+      </div>
 
       {/* Kartlar */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kart baslik="Günlük tekil ziyaretçi" deger={sayi(m.ziyaretci)} simdi={m.ziyaretci} onceki={o.ziyaretci} oncekiVeriVar={rapor.oncekiVeriVar} not="aynı gün tekrar gelen tek sayılır" />
+        <Kart
+          baslik="Gerçek tarayıcı"
+          deger={rapor.olcumSagligi.dogrulamaGecerli ? sayi(m.dogrulanmisZiyaretci) : '—'}
+          simdi={m.dogrulanmisZiyaretci}
+          onceki={o.dogrulanmisZiyaretci}
+          oncekiVeriVar={rapor.oncekiVeriVar && rapor.olcumSagligi.dogrulamaGecerli}
+          not={
+            rapor.olcumSagligi.dogrulamaGecerli
+              ? 'robot olmadığı doğrulanan ziyaretçi'
+              : 'bu dönem doğrulamadan önce'
+          }
+        />
         <Kart baslik="Sayfa görüntüleme" deger={sayi(m.sayfaGoruntuleme)} simdi={m.sayfaGoruntuleme} onceki={o.sayfaGoruntuleme} oncekiVeriVar={rapor.oncekiVeriVar} />
         <Kart baslik="Ort. aktiflik" deger={sure(m.ortAktiflikSaniye)} simdi={m.ortAktiflikSaniye} onceki={o.ortAktiflikSaniye} oncekiVeriVar={rapor.oncekiVeriVar} not="ilk–son hareket arası, 30 dk ile sınırlı" />
         <Kart baslik="Sepete ekleme" deger={sayi(m.sepeteEkleme)} simdi={m.sepeteEkleme} onceki={o.sepeteEkleme} oncekiVeriVar={rapor.oncekiVeriVar} />

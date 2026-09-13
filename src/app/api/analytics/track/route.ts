@@ -39,7 +39,17 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null)
   const event = String(body?.event || '') as AnalyticsEvent
-  if (!IZINLI.includes(event)) {
+  const jsIsareti = Number((body?.meta as Record<string, unknown> | undefined)?.js) === 1
+
+  /**
+   * 'page_view' istemciden YALNIZ tarayıcı işareti olarak kabul edilir
+   * (Faz 32 · components/store/TarayiciDogrula). Bu satır sayfa görüntüleme
+   * sayısına katılmaz — raporda `meta.js` taşıyanlar ayrılır. İşaretsiz bir
+   * page_view denemesi reddedilir ki istemci sayfa sayısını şişiremesin.
+   */
+  if (event === 'page_view') {
+    if (!jsIsareti) return NextResponse.json({ error: 'Bilinmeyen olay' }, { status: 400 })
+  } else if (!IZINLI.includes(event)) {
     return NextResponse.json({ error: 'Bilinmeyen olay' }, { status: 400 })
   }
 
