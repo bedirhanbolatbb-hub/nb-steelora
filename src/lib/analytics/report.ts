@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import { kaynakGrubu, KAYNAK_ADI, type KaynakGrubu } from './kaynak'
+import { makineleriBul } from './makine'
 
 /**
  * Panel raporlama sorguları (Faz 12).
@@ -212,6 +213,12 @@ export type Metrikler = {
   donusumOrani: number
   sepeteEklemeOrani: number
   sepettenOdemeOrani: number
+  /**
+   * Tek harekette ayrılan ziyaretçi oranı. Tek sayfa açıp çıkan biri ürünü
+   * görmemiş demektir; bu oranın yüksekliği giriş sayfasının ya da trafiğin
+   * niteliğinin sorunlu olduğunu söyler.
+   */
+  tekHareketOrani: number
 }
 
 /** Ziyaret süresi kırpma sınırı — bkz. ortAktiflikSaniye. */
@@ -250,6 +257,7 @@ async function iptalEdilenSiparisKimlikleri(olaylar: HamOlay[]): Promise<Set<str
 function metrikHesapla(olaylar: HamOlay[], iptalEdilenSiparisler: Set<string> = new Set()): Metrikler {
   const ziyaretciler = new Set<string>()
   const aktiflik = new Map<string, { ilk: number; son: number }>()
+  const oturumHareketi = new Map<string, number>()
   let sayfa = 0, urun = 0, sepet = 0, favori = 0, uyelik = 0, odeme = 0
   let siparis = 0, iptalIade = 0, ciro = 0, brutCiro = 0
 
@@ -262,6 +270,7 @@ function metrikHesapla(olaylar: HamOlay[], iptalEdilenSiparisler: Set<string> = 
     // Artık herkes session_id ile sayılır — Katman A'da kimlik zaten günlük
     // tekil kişidir; visitor_id yalnız üye kırılımı için kullanılır.
     ziyaretciler.add(o.session_id)
+    oturumHareketi.set(o.session_id, (oturumHareketi.get(o.session_id) || 0) + 1)
 
     const t = new Date(o.occurred_at).getTime()
     const mevcut = aktiflik.get(o.session_id)
@@ -295,6 +304,7 @@ function metrikHesapla(olaylar: HamOlay[], iptalEdilenSiparisler: Set<string> = 
   const ortSure = sureler.length ? sureler.reduce((a, b) => a + b, 0) / sureler.length : 0
 
   const ziyaretciSayisi = ziyaretciler.size
+  const tekHareket = [...oturumHareketi.values()].filter((n) => n === 1).length
   return {
     ziyaretci: ziyaretciSayisi,
     sayfaGoruntuleme: sayfa,
@@ -312,6 +322,9 @@ function metrikHesapla(olaylar: HamOlay[], iptalEdilenSiparisler: Set<string> = 
     donusumOrani: ziyaretciSayisi ? Math.round((siparis / ziyaretciSayisi) * 10000) / 100 : 0,
     sepeteEklemeOrani: urun ? Math.round((sepet / urun) * 10000) / 100 : 0,
     sepettenOdemeOrani: sepet ? Math.round((odeme / sepet) * 10000) / 100 : 0,
+    tekHareketOrani: ziyaretciSayisi
+      ? Math.round((tekHareket / ziyaretciSayisi) * 10000) / 100
+      : 0,
   }
 }
 
@@ -350,13 +363,41 @@ export type Rapor = {
   seri: { gun: string; ziyaretci: number; ciro: number }[]
   rizaOrani: number
   katmanBOlay: number
+  /**
+   * Sayının nasıl oluştuğunu gösteren denetim bilgisi (Faz 32). Panelde
+   * "Ölçüm sağlığı" kutusunda basılır: ne kadar makine trafiği ayıklandı,
+   * geriye ne kaldı. Rakam güvenilir mi sorusunun cevabı burada.
+   */
+  olcumSagligi: {
+    hamOlay: number
+    hamOturum: number
+    ayiklananOturum: number
+    ayiklananOlay: number
+    /** Ayıklananın ham hareketlere oranı (%). */
+    ayiklananOran: number
+  }
 }
 
 export async function raporUret(d: Donem): Promise<Rapor> {
-  const [olaylar, oncekiOlaylar] = await Promise.all([
+  const [hamOlaylar, hamOncekiOlaylar] = await Promise.all([
     olaylariCek(d),
     olaylariCek(oncekiDonem(d)),
   ])
+
+  // ── Makine trafiği ayıklanır (Faz 32) ──
+  //
+  // Ölçülen kusur: 18 Ağu – 13 Eyl arası 20.187 hareketin 13.607'si TEK bir
+  // oturumdandı (91 dakikada 485 farklı sayfa). Dört benzer oturum tüm
+  // trafiğin %75'ini oluşturuyordu; ürün sıralaması, cihaz kırılımı ve saat
+  // yoğunluğu bu tarayıcıların eseriydi. Satır silinmez, yalnız hesaba
+  // katılmaz — ayrıntı için lib/analytics/makine.ts.
+  const ayiklama = makineleriBul(hamOlaylar)
+  const oncekiAyiklama = makineleriBul(hamOncekiOlaylar)
+  const olaylar = hamOlaylar.filter((o) => !ayiklama.makineOturumlar.has(o.session_id))
+  const oncekiOlaylar = hamOncekiOlaylar.filter(
+    (o) => !oncekiAyiklama.makineOturumlar.has(o.session_id)
+  )
+  const hamOturumSayisi = new Set(hamOlaylar.map((o) => o.session_id)).size
 
   // İptal/iade edilmiş siparişler ciroyu ve dönüşümü şişirmesin (Faz 23).
   // Panel iptal edilmiş tek siparişi ₺664,86 ciro diye gösteriyordu.
@@ -373,6 +414,17 @@ export async function raporUret(d: Donem): Promise<Rapor> {
     return urunHarita.get(id)!
   }
   const cihazlar = new Map<string, number>()
+  /**
+   * Trafik kaynağı artık SAYFA değil ZİYARETÇİ sayar (Faz 32).
+   *
+   * Ölçülen kusur: 11.421 sayfa görüntülemenin 11.270'i "doğrudan" yazıyordu.
+   * Sebep, yönlendiren adresin yalnız siteye İLK girişte dolu olması; ziyaretçi
+   * içeride her sayfaya geçtiğinde kayıt yine düşüyor ama kaynağı boş oluyordu.
+   * Böylece Instagram'dan gelen bir kişi 1 "Instagram" + 12 "doğrudan"
+   * üretiyordu. Artık her oturumun İLK dış kaynağı o oturumun kaynağı sayılır;
+   * hiç dış kaynak yoksa oturum gerçekten doğrudandır.
+   */
+  const oturumKaynagi = new Map<string, string>()
   const kaynaklar = new Map<string, number>()
   const kaynakGrup = new Map<KaynakGrubu, number>()
   // 7 gün × 24 saat, İstanbul saatiyle. Pazartesi 0. satır.
@@ -390,13 +442,16 @@ export async function raporUret(d: Donem): Promise<Rapor> {
       if (o.event === 'add_to_cart') s.sepeteEkleme++
       if (o.event === 'favorite_add') s.favori++
     }
+    // Site içi dönüşler (ödeme sağlayıcısı, kendi alan adımız) kaynak değildir;
+    // oturumun kaynağı bir kez, ilk DIŞ yönlendirmede belirlenir.
+    if (o.referrer_host && !oturumKaynagi.has(o.session_id)) {
+      if (kaynakGrubu(o.referrer_host) !== 'ic') {
+        oturumKaynagi.set(o.session_id, o.referrer_host)
+      }
+    }
+
     if (o.event === 'page_view') {
       cihazlar.set(o.device || 'bilinmiyor', (cihazlar.get(o.device || 'bilinmiyor') || 0) + 1)
-      const k = o.referrer_host || 'doğrudan'
-      kaynaklar.set(k, (kaynaklar.get(k) || 0) + 1)
-      // Site içi dönüşler (ödeme sağlayıcısı, kendi alan adımız) kaynak değildir.
-      const g = kaynakGrubu(o.referrer_host)
-      if (g !== 'ic') kaynakGrup.set(g, (kaynakGrup.get(g) || 0) + 1)
 
       // Yoğunluk haritası yalnız sayfa görüntülemeden — diğer olaylar
       // sayfa başına birden çok kez düşüp saati şişirirdi.
@@ -430,6 +485,16 @@ export async function raporUret(d: Donem): Promise<Rapor> {
     if (o.event === 'purchase' && !(o.order_id && iptalEdilenler.has(o.order_id))) {
       g.ciro += Number(o.value) || 0
     }
+  }
+
+  // Her oturum bir kez sayılır: kaynağı bilinmeyenler "doğrudan".
+  for (const oturum of new Set(olaylar.map((o) => o.session_id))) {
+    const k = oturumKaynagi.get(oturum) || 'doğrudan'
+    kaynaklar.set(k, (kaynaklar.get(k) || 0) + 1)
+    kaynakGrup.set(
+      kaynakGrubu(oturumKaynagi.get(oturum) ?? null),
+      (kaynakGrup.get(kaynakGrubu(oturumKaynagi.get(oturum) ?? null)) || 0) + 1
+    )
   }
 
   const urunler = [...urunHarita.values()]
@@ -514,5 +579,14 @@ export async function raporUret(d: Donem): Promise<Rapor> {
       .sort((a, b) => a.gun.localeCompare(b.gun)),
     rizaOrani: toplamRiza ? Math.round((kabul / toplamRiza) * 1000) / 10 : 0,
     katmanBOlay: olaylar.filter((o) => o.visitor_id).length,
+    olcumSagligi: {
+      hamOlay: hamOlaylar.length,
+      hamOturum: hamOturumSayisi,
+      ayiklananOturum: ayiklama.oturum,
+      ayiklananOlay: ayiklama.olay,
+      ayiklananOran: hamOlaylar.length
+        ? Math.round((ayiklama.olay / hamOlaylar.length) * 1000) / 10
+        : 0,
+    },
   }
 }

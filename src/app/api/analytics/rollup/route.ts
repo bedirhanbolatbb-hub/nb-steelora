@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { cronIstegiMi } from '@/lib/admin/requireAdmin'
+import { adminIstegiMi, cronIstegiMi } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
+import { makineleriBul } from '@/lib/analytics/makine'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -25,21 +26,61 @@ export async function GET(request: Request) {
   //     saldırgan tam o başlıkla yetkili sayılıyordu — açık başarısız.
   // İkisi de tek kaynaktaki `cronIstegiMi` ile çözüldü: sabit zamanlı
   // karşılaştırma, sır yoksa kapalı başarısız.
-  if (!cronIstegiMi(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Panel oturumu da kabul edilir (Faz 32): geçmiş günlerin özeti elle yeniden
+  // üretilebilsin diye. Fark önemli — SAKLAMA TEMİZLİĞİ yalnız cron koşusunda
+  // çalışır; elle tetiklenen bir yeniden hesap hiçbir satırı silmez.
+  const cron = cronIstegiMi(request)
+  if (!cron && !(await adminIstegiMi(request))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   const supabase = createServiceClient()
   const gun = url.searchParams.get('gun') || new Date(Date.now() - 86400000).toISOString().slice(0, 10)
   const bas = `${gun}T00:00:00+03:00`
   const bit = `${gun}T23:59:59.999+03:00`
 
-  const { data: olaylar, error } = await supabase
-    .from('analytics_events')
-    .select('event, session_id, visitor_id, product_id, value')
-    .gte('occurred_at', bas)
-    .lte('occurred_at', bit)
-    .limit(50000)
+  /**
+   * SAYFALAMA ZORUNLU (Faz 32 — ölçülen kusur).
+   *
+   * Burada `.limit(50000)` yazıyordu ama PostgREST tek istekte en çok 1.000
+   * satır döndürür; istenen sayı sunucu tavanını AŞAMAZ. Yani gecelik özet bir
+   * günün yalnız İLK 1.000 hareketini okuyordu ve fazlası sessizce düşüyordu.
+   * Kanıt: 27 Ağustos'ta özet tabloya 548 sayfa görüntüleme yazılmıştı, o günün
+   * gerçek sayısı 7.850'di. Her sabah giden sağlık raporu bu tablodan okuduğu
+   * için yoğun günlerde HEP eksik rakam bildiriyordu.
+   */
+  type OzetOlay = {
+    event: string
+    session_id: string
+    visitor_id: string | null
+    product_id: string | null
+    value: number | null
+    path: string | null
+    occurred_at: string
+  }
+  const olaylar: OzetOlay[] = []
+  const adim = 1000
+  for (let i = 0; i < 200; i++) {
+    const { data, error } = await supabase
+      .from('analytics_events')
+      .select('event, session_id, visitor_id, product_id, value, path, occurred_at')
+      .gte('occurred_at', bas)
+      .lte('occurred_at', bit)
+      .order('occurred_at', { ascending: true })
+      .range(i * adim, i * adim + adim - 1)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (!data || data.length === 0) break
+    olaylar.push(...(data as OzetOlay[]))
+    if (data.length < adim) break
+  }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  /**
+   * Panelle AYNI ayıklama (Faz 32). Önceden özet ham satırları sayıyordu;
+   * panel ise makine oturumlarını eliyordu. İki yer aynı gün için farklı sayı
+   * gösteriyordu — mail 174, panel 173 gibi. Artık tek hesap.
+   */
+  const ayiklama = makineleriBul(olaylar)
+  const temiz = olaylar.filter((o) => !ayiklama.makineOturumlar.has(o.session_id))
 
   const oturumlar = new Set<string>()
   const ziyaretciler = new Set<string>()
@@ -50,9 +91,11 @@ export async function GET(request: Request) {
     return urunOzet.get(id)!
   }
 
-  for (const o of olaylar || []) {
+  for (const o of temiz) {
     oturumlar.add(o.session_id)
-    ziyaretciler.add(o.visitor_id || o.session_id)
+    // Panelle AYNI kimlik uzayı: `visitor_id || session_id` iki ayrı uzayı tek
+    // kümede topluyor ve aynı kişiyi hem rıza öncesi hem sonrası ayrı sayıyordu.
+    ziyaretciler.add(o.session_id)
     if (o.event === 'page_view') pv++
     if (o.event === 'product_view') { urun++; if (o.product_id) urunAl(o.product_id).views++ }
     if (o.event === 'add_to_cart') { sepet++; if (o.product_id) urunAl(o.product_id).atc++ }
@@ -98,15 +141,23 @@ export async function GET(request: Request) {
     if (urunErr) console.error('[rollup] ürün özeti hatası:', urunErr.message)
   }
 
-  // Saklama: 13 aydan eski ham olaylar silinir.
-  const sinir = new Date(Date.now() - 395 * 86400000).toISOString()
-  const { error: temizlikErr } = await supabase.from('analytics_events').delete().lt('occurred_at', sinir)
-  if (temizlikErr) console.error('[rollup] temizlik hatası:', temizlikErr.message)
+  // Saklama: 13 aydan eski ham olaylar silinir — YALNIZ gecelik cron koşusunda.
+  if (cron) {
+    const sinir = new Date(Date.now() - 395 * 86400000).toISOString()
+    const { error: temizlikErr } = await supabase
+      .from('analytics_events')
+      .delete()
+      .lt('occurred_at', sinir)
+    if (temizlikErr) console.error('[rollup] temizlik hatası:', temizlikErr.message)
+  }
 
   return NextResponse.json({
     ok: true,
     gun,
-    olay: olaylar?.length ?? 0,
+    hamOlay: olaylar.length,
+    olay: temiz.length,
+    ayiklananOturum: ayiklama.oturum,
+    ayiklananOlay: ayiklama.olay,
     oturum: oturumlar.size,
     urunSatiri: urunOzet.size,
   })

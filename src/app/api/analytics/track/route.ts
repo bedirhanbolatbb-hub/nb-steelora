@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { olayYaz, istektenKimlik, botMu, cihazTipi, ISTEMCI_OLAYLARI, type AnalyticsEvent } from '@/lib/analytics/track'
 import { oturumKimligi, istekIp } from '@/lib/analytics/session'
 import { uyeKimligi } from '@/lib/analytics/uye'
+import { olcumeDahilMi } from '@/lib/analytics/kendiTrafik'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,11 @@ export async function POST(request: Request) {
   const event = String(body?.event || '') as AnalyticsEvent
   if (!IZINLI.includes(event)) {
     return NextResponse.json({ error: 'Bilinmeyen olay' }, { status: 400 })
+  }
+
+  // Kendi trafiğimiz ölçüme girmez (Faz 32) — sunucu olaylarıyla aynı kapı.
+  if (!(await olcumeDahilMi(request.headers.get('cookie')))) {
+    return NextResponse.json({ ok: true, skipped: 'kendi' })
   }
 
   const { visitorId } = istektenKimlik(request.headers.get('cookie'))

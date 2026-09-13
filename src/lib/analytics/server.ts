@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import { olayYaz, istektenKimlik, botMu, cihazTipi, type AnalyticsEvent } from './track'
 import { oturumKimligi, istekIp } from './session'
 import { uyeKimligi } from './uye'
+import { olcumeDahilMi } from './kendiTrafik'
 
 /**
  * Sunucu tarafı ölçüm (Faz 12).
@@ -28,6 +29,10 @@ export async function sunucuOlayi(
     // gezinmesi de RSC isteğidir ama prefetch başlığını taşımaz, o yüzden
     // yalnız bu başlığa bakılır.
     if (h.get('next-router-prefetch') === '1') return
+
+    // Kendi ziyaretlerimiz sayılmaz (Faz 32): panel oturumu açık olan tarayıcı
+    // ya da "beni ölçme" tercihi konmuş cihaz ölçüme girmez.
+    if (!(await olcumeDahilMi(h.get('cookie')))) return
 
     const sessionId = oturumKimligi(istekIp(h), ua, h.get('accept-language'))
     // Tuz yoksa kimlik üretilemez; şişmiş sayı yazmaktansa ölçümü atlarız.

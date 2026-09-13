@@ -304,6 +304,17 @@ export default function AnalizClient({
         düşülür.
       </p>
 
+      {/* Faz 32: ölçümün kendi sağlığı. Tarama robotlarının trafiği ayıklanıyor;
+          ne kadarının ayıklandığı gizlenmez, açıkça yazılır. */}
+      {rapor.olcumSagligi.ayiklananOturum > 0 && (
+        <div className="rounded-[var(--p-radius)] border border-[var(--p-line)] bg-[var(--p-surface)] px-4 py-3 text-[12px] leading-relaxed">
+          <strong className="font-medium text-[var(--p-ink)]">Ölçüm sağlığı:</strong>{' '}
+          Bu dönemde {sayi(rapor.olcumSagligi.ayiklananOturum)} ziyaretçi tarama robotu olarak
+          ayıklandı; toplam hareketin %{rapor.olcumSagligi.ayiklananOran}'ini oluşturuyorlardı.
+          Aşağıdaki bütün sayılar ayıklama sonrasıdır. Kayıtlar silinmez, yalnız sayılmaz.
+        </div>
+      )}
+
       {/* Kartlar */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kart baslik="Günlük tekil ziyaretçi" deger={sayi(m.ziyaretci)} simdi={m.ziyaretci} onceki={o.ziyaretci} oncekiVeriVar={rapor.oncekiVeriVar} not="aynı gün tekrar gelen tek sayılır" />
@@ -319,6 +330,7 @@ export default function AnalizClient({
         <Kart baslik="Dönüşüm oranı" deger={yuzde(m.donusumOrani)} simdi={m.donusumOrani} onceki={o.donusumOrani} oncekiVeriVar={rapor.oncekiVeriVar} not="sipariş / günlük tekil ziyaretçi" />
         <Kart baslik="Sepete ekleme oranı" deger={yuzde(m.sepeteEklemeOrani)} simdi={m.sepeteEklemeOrani} onceki={o.sepeteEklemeOrani} oncekiVeriVar={rapor.oncekiVeriVar} not="sepet / ürün görünt." />
         <Kart baslik="Sepetten ödemeye" deger={yuzde(m.sepettenOdemeOrani)} simdi={m.sepettenOdemeOrani} onceki={o.sepettenOdemeOrani} oncekiVeriVar={rapor.oncekiVeriVar} not="ödeme / sepet" />
+        <Kart baslik="Tek sayfada ayrılan" deger={yuzde(m.tekHareketOrani)} simdi={m.tekHareketOrani} onceki={o.tekHareketOrani} oncekiVeriVar={rapor.oncekiVeriVar} not="tek hareket yapıp çıkanlar" />
       </div>
 
       <PCard title={`Ziyaretçi ve ciro — ${rapor.donem.etiket}`}>
@@ -465,7 +477,13 @@ export default function AnalizClient({
         <PCard title="Trafik kaynağı">
           {/* Faz 23-B: önce grup, sonra ham alan adı. Eskiden yalnız ham liste
               vardı ve `api.iyzipay.com` (ödeme dönüşü) ile `nbsteelora.com.`
-              (kendi sitemiz) trafik kaynağı gibi görünüyordu. */}
+              (kendi sitemiz) trafik kaynağı gibi görünüyordu.
+              Faz 32: artık SAYFA değil ZİYARETÇİ sayılıyor — her ziyaretçi
+              geldiği ilk kaynakla bir kez. Önceden içeride gezilen her sayfa
+              ayrıca "doğrudan" yazılıyordu ve liste %99 doğrudan çıkıyordu. */}
+          <p className="border-b border-[var(--p-line)] px-4 py-2 text-[11px] text-[var(--p-muted)]">
+            Her ziyaretçi, siteye girdiği ilk kaynakla bir kez sayılır.
+          </p>
           <ul className="divide-y divide-[var(--p-line)] text-[12px]">
             {rapor.kaynakGruplari.length === 0 && <li className="px-4 py-6 text-center text-[var(--p-muted)]">Veri yok.</li>}
             {rapor.kaynakGruplari.map((k) => (
