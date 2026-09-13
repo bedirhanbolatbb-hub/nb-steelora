@@ -42,6 +42,17 @@ export async function sunucuOlayi(
     const path = ek?.path ?? h.get('x-nb-path') ?? null
     const referrer = h.get('referer')
     const device = cihazTipi(ua)
+    // Kampanya etiketi (Faz 32) — proxy yalnız utm_* değerlerini taşır.
+    const kampanya = h.get('x-nb-kampanya')
+    const [utmKaynak, utmOrtam, utmKampanya] = (kampanya || '').split('|')
+    const meta =
+      utmKaynak || utmOrtam || utmKampanya
+        ? {
+            ...(utmKaynak ? { utm_source: utmKaynak } : {}),
+            ...(utmOrtam ? { utm_medium: utmOrtam } : {}),
+            ...(utmKampanya ? { utm_campaign: utmKampanya } : {}),
+          }
+        : null
 
     after(async () => {
       // Yanıt gönderildikten SONRA: oturum doğrulaması sayfayı geciktirmez.
@@ -57,6 +68,7 @@ export async function sunucuOlayi(
         device,
         productId: ek?.productId ?? null,
         collectionSlug: ek?.collectionSlug ?? null,
+        meta,
       })
     })
   } catch (e: any) {

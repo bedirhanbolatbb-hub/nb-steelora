@@ -481,10 +481,15 @@ export async function raporUret(d: Donem): Promise<Rapor> {
       if (o.event === 'add_to_cart') s.sepeteEkleme++
       if (o.event === 'favorite_add') s.favori++
     }
-    // Site içi dönüşler (ödeme sağlayıcısı, kendi alan adımız) kaynak değildir;
-    // oturumun kaynağı bir kez, ilk DIŞ yönlendirmede belirlenir.
-    if (o.referrer_host && !oturumKaynagi.has(o.session_id)) {
-      if (kaynakGrubu(o.referrer_host) !== 'ic') {
+    // Oturumun kaynağı bir kez belirlenir. Kampanya etiketi (utm_source)
+    // yönlendiren adresten ÖNCE gelir: bağlantıyı biz etiketlediysek kaynağı
+    // kesin biliyoruz, tahmine gerek yok. Site içi dönüşler (ödeme sağlayıcısı,
+    // kendi alan adımız) kaynak değildir.
+    if (!oturumKaynagi.has(o.session_id)) {
+      const utm = typeof o.meta?.utm_source === 'string' ? o.meta.utm_source.trim() : ''
+      if (utm) {
+        oturumKaynagi.set(o.session_id, utm)
+      } else if (o.referrer_host && kaynakGrubu(o.referrer_host) !== 'ic') {
         oturumKaynagi.set(o.session_id, o.referrer_host)
       }
     }

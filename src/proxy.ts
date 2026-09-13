@@ -6,6 +6,24 @@ import { panelCereziGecerliMi } from '@/lib/admin/panelOturumu'
 const YOL_BASLIGI = 'x-nb-path'
 
 /**
+ * Kampanya etiketlerini taşıyan başlık (Faz 32).
+ *
+ * Ölçüm yolu sorgu dizesini ATAR (temizYol) — doğru karar, çünkü sorguda
+ * kişisel veri gezebilir. Ama bu yüzden Instagram profilindeki bağlantı ile
+ * hikâyedeki bağlantı ayırt edilemiyordu; ikisi de "Sosyal medya" yazıyordu.
+ * Yalnız utm_* etiketleri, kısaltılmış hâlde taşınır; başka hiçbir parametre
+ * alınmaz.
+ */
+const KAMPANYA_BASLIGI = 'x-nb-kampanya'
+
+/** Sorgu dizesinden YALNIZ utm_source/medium/campaign — en fazla 60 karakter. */
+function kampanyaEtiketi(arama: URLSearchParams): string {
+  const al = (ad: string) => (arama.get(ad) || '').trim().slice(0, 60)
+  const parcalar = [al('utm_source'), al('utm_medium'), al('utm_campaign')]
+  return parcalar.some(Boolean) ? parcalar.join('|') : ''
+}
+
+/**
  * Her istek için tek kullanımlık nonce.
  *
  * `crypto.randomUUID()` Edge çalışma zamanında var; base64'e çevrilmesi CSP
@@ -70,6 +88,8 @@ export async function proxy(request: NextRequest) {
   // (headers() içinde istenen yol Next 16'da doğrudan bulunmuyor.)
   const basliklar = new Headers(request.headers)
   basliklar.set(YOL_BASLIGI, pathname)
+  const kampanya = kampanyaEtiketi(request.nextUrl.searchParams)
+  if (kampanya) basliklar.set(KAMPANYA_BASLIGI, kampanya)
   // Sunucu bileşenleri (JsonLd) nonce'u buradan okur.
   basliklar.set('x-nonce', nonce)
   // Next kendi inline script'lerine nonce'u İSTEK başlığındaki CSP'den okur.
