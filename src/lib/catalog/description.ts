@@ -70,6 +70,16 @@ const IDDIA_DESENLERI: [RegExp, string][] = [
   [/\s*el\s+işçiliğiyle\s+üretilen\s*/gi, ' '],
   [/\s*Her\s+detayında\s+ince\s+işçilik\s+barındıran\s+/gi, ''],
   [/\bbu\s+premium\s+(çelik|altın|gümüş)\s+/gi, 'bu '],
+  // MENŞEİ CÜMLESİ (14 Eyl 2026). Tedarikçi şablonu "Menşei bilgisi
+  // belirtilmemiş olup, yerel üretim veya ithal ürün olabilir." diyordu.
+  // Yanlış değil ama müşteriye söylenecek bir şey de değil: ürünün nereden
+  // geldiğini bilmediğimizi ilan ediyor ve Google'ın besleme denetiminde
+  // gereksiz bir soru işareti bırakıyor. Cümlenin tamamı atılır.
+  [/\s*Menşei\s+bilgisi[^.]*\.\s*/gi, ' '],
+  // "Kadınlara özel tasarlanmış olup, her türlü kıyafetle uyum sağlar."
+  // Cümle tedarikçi dolgusu; "özel tasarlanmış" ifadesi tasarımın bize ait
+  // olduğu izlenimini verebiliyor. Cümlenin tamamı atılır, kalan metin durur.
+  [/\s*[^.]*özel\s+tasarlanmış\s+olup[^.]*\.\s*/gi, ' '],
 ]
 
 export function iddiaTemizle(line: string): string {
