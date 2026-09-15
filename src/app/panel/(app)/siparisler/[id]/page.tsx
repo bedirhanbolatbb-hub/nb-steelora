@@ -45,6 +45,20 @@ export default async function PanelSiparisDetayPage({
   const bs = o ? await bsDurumu(supabase, o.guest_email, o.created_at) : null
   if (!o) notFound()
 
+  /**
+   * Faz 33: panelden müşteri adına iade talebi açılabilir mi?
+   *
+   * Panelin iade adımları (kod gönder, ürünü teslim al, parayı iade et)
+   * hepsi AÇIK BİR TALEBE bağlı. Telefonla arayan müşteride talebi başlatan
+   * düğme yoktu; artık var — ama açık talep zaten varsa ikincisi açılmasın.
+   */
+  const { data: acikIadeTalebi } = await supabase
+    .from('order_requests')
+    .select('id, request_type')
+    .eq('order_id', o.id)
+    .in('status', ['pending', 'cargo_pending', 'cargo_sent', 'inspecting'])
+    .maybeSingle()
+
   // Kalemlerdeki ürünlerin güncel görsel/slug bilgisi (görüntüleme için).
   const itemler = Array.isArray(o.items) ? (o.items as any[]) : []
   const productIds = itemler.map((i) => i?.productId ?? i?.product_id).filter((x) => x && x !== 'KARGO')
@@ -215,6 +229,7 @@ export default async function PanelSiparisDetayPage({
               siparisSayisi: bs.siparisSayisi,
             }
           : null,
+        acikTalepVar: Boolean(acikIadeTalebi),
         iyzicoId: o.iyzico_payment_id ?? null,
         takipNo: o.tracking_number ?? null,
         createdAt: o.created_at,

@@ -52,6 +52,8 @@ export type SiparisDetay = {
   bsUyarisi: { gunlukToplam: number; matrah: number; siparisSayisi: number } | null
   /** Müşteri maili engellendiyse sebebi (Faz 15 sonrası güvenlik ağı). */
   mailEngeli?: 'alici-yok' | 'yonetici-adresi' | 'test-siparisi' | 'hata' | null
+  /** Bu siparişte şu an açık (sonuçlanmamış) bir iade/iptal talebi var mı. */
+  acikTalepVar: boolean
   iyzicoId: string | null
   takipNo: string | null
   createdAt: string
@@ -113,6 +115,43 @@ export default function SiparisDetayClient({
   }
 
   const { push: toast } = useToast()
+
+  /**
+   * Faz 33: müşteri adına iade talebi açma.
+   *
+   * Müşteri talebi kendi açamadığında (telefonla aradı, maille yazdı, ekranı
+   * bulamadı) akışı başlatan düğme buydu ve yoktu. Kayıt, teyit maili ve iade
+   * defteri adımı müşterinin kendi açtığı taleple birebir aynı yoldan geçer.
+   */
+  const [iadeAcik, setIadeAcik] = useState(false)
+  const [iadeGerekce, setIadeGerekce] = useState('')
+  const [iadeIsleniyor, setIadeIsleniyor] = useState(false)
+
+  const iadeTalebiAc = async () => {
+    setIadeIsleniyor(true)
+    try {
+      const res = await fetch('/api/panel/order-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: siparis.id, reason: iadeGerekce.trim() || null }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d?.error || 'Talep açılamadı')
+      toast(
+        'İade talebi açıldı' +
+          (d.mailAdresiVar ? ' · müşteriye teyit maili gönderildi' : ' · MAİL GİTMEDİ (adres yok)') +
+          (d.sureDoldu ? ` · teslimden bu yana ${d.gecenGun} gün geçmiş` : ''),
+        d.sureDoldu ? 'neutral' : 'success'
+      )
+      setIadeAcik(false)
+      setIadeGerekce('')
+      router.refresh()
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Talep açılamadı', 'danger')
+    }
+    setIadeIsleniyor(false)
+  }
+
 
   const [hedefDurum, setHedefDurum] = useState(siparis.durum)
   const [takipNo, setTakipNo] = useState(siparis.takipNo ?? '')
@@ -272,6 +311,67 @@ export default function SiparisDetayClient({
             value={iptalSebep}
             onChange={(e) => setIptalSebep(e.target.value.slice(0, 300))}
             placeholder="Örn: Bu ürünün stoğu tükendi, en kısa sürede yeniden getireceğiz."
+          />
+        </label>
+      </PDialog>
+
+      {/* Faz 33 · müşteri adına iade talebi.
+          Panelin iade adımlarının hepsi açık bir talebe bağlı; talebi
+          başlatacak düğme yoktu. Yalnız teslim edilmiş siparişte görünür. */}
+      {siparis.durum === 'delivered' && (
+        <PCard title="İade talebi">
+          {siparis.acikTalepVar ? (
+            <p className="text-[13px] leading-relaxed text-[var(--p-ink-soft)]">
+              Bu siparişte açık bir talep zaten var. Adımları{' '}
+              <Link href="/panel/siparisler?tab=talepler" className="underline">
+                Müşteri talepleri
+              </Link>{' '}
+              sekmesinden yürütün.
+            </p>
+          ) : (
+            <>
+              <p className="text-[13px] leading-relaxed text-[var(--p-ink-soft)]">
+                Müşteri iade talebini kendi açamadıysa (telefon, e-posta) siz açabilirsiniz.
+                Kayıt müşterinin kendi açtığı taleple aynıdır: müşteriye teyit e-postası gider
+                ve talep <strong>Müşteri talepleri</strong> sekmesinde işlem bekler.
+              </p>
+              <PButton className="mt-3" onClick={() => setIadeAcik(true)}>
+                Müşteri adına iade talebi aç
+              </PButton>
+            </>
+          )}
+        </PCard>
+      )}
+
+      <PDialog
+        open={iadeAcik}
+        onClose={() => setIadeAcik(false)}
+        title="Müşteri adına iade talebi açılacak"
+        footer={
+          <>
+            <PButton variant="ghost" onClick={() => setIadeAcik(false)} disabled={iadeIsleniyor}>
+              Vazgeç
+            </PButton>
+            <PButton onClick={iadeTalebiAc} disabled={iadeIsleniyor}>
+              {iadeIsleniyor ? 'Açılıyor…' : 'Talebi aç'}
+            </PButton>
+          </>
+        }
+      >
+        <p className="text-[13px] leading-relaxed">
+          Müşteriye <strong>talebinizi aldık</strong> e-postası gider. Para ŞİMDİ iade edilmez;
+          sonraki adımları (iade kodu, ürünün teslim alınması, para iadesi) Müşteri talepleri
+          sekmesinden siz yürütürsünüz. 14 günlük cayma süresi dolmuş olsa da talep açılır —
+          süresi geçmiş bir iadeyi kabul etmek sizin kararınız.
+        </p>
+        <label className="mt-3 block">
+          <span className="mb-1 block text-[12px] text-[var(--p-muted)]">
+            Müşterinin söylediği sebep (isteğe bağlı)
+          </span>
+          <PInput
+            value={iadeGerekce}
+            onChange={(e) => setIadeGerekce(e.target.value.slice(0, 300))}
+            placeholder="Örn: Beden küçük geldi — telefonla bildirdi."
           />
         </label>
       </PDialog>
