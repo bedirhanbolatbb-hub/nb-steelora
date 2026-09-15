@@ -43,6 +43,28 @@ müşteri iade kodunu satıcıdan/kargo firmasından alır, şubeye götürür.
 | 5 | **İade kodu artık zorunlu değil.** Kod yokken onay kilitleniyordu. Boş bırakılırsa müşteriye "karşı ödemeli gönderin" talimatı + iade adresi gider; ücret yine bize ait. Kargo firması zorunlu kalır (gidiş gönderisinden kendiliğinden gelir). |
 | 6 | Kargo & İade sayfası düzeltildi: artık üyeliksiz yolu birinci sırada anlatıyor. |
 
+## Üçüncü kapı: mağaza müşteri adına açar (15 Eyl 2026)
+
+İki kapı vardı: üye ekranı ve kargo takip sayfası. Telefonla arayan, maille
+yazan ya da ekranı bulamayan müşteride akış yine başlamıyordu — panelin iade
+adımlarının (kod gönder, ürünü teslim al, parayı iade et) hepsi AÇIK BİR
+TALEBE bağlı ve talebi başlatan düğme yoktu.
+
+| ne | nerede |
+|---|---|
+| `src/lib/iade/talepAc.ts` | Talep açmanın tek yeri: kayıt, mağaza bildirimi, müşteriye teyit maili, iade defteri adımı. İki kapı da buradan geçer; kimlik doğrulaması çağıran ucun işi. |
+| `POST /api/panel/order-requests` | Panel oturumu şart. Gövde: `{ orderId, reason? }`. |
+| Sipariş detayında "İade talebi" kartı | Yalnız `delivered` siparişte; açık talep varsa düğme yerine "zaten açık talep var" yazar. |
+
+**Tek davranış farkı — cayma süresi.** Müşteri kendi açarken 14 gün uygulanır
+(sonrası vaat edilmiş bir hak değil). Panelden açarken uygulanmaz: süresi
+geçmiş bir iadeyi kabul etmek mağazanın kendi kararıdır, kanun bunu
+yasaklamaz. Geçen gün sayısı yanıtta döner ve panelde bildirim olarak
+gösterilir ki BB neyi kabul ettiğini bilsin.
+
+Müşteriye teyit maili panelden açıldığında da GİDER. Telefonda "açtım" demek
+kanıt değildir (MSY m.11/2).
+
 ## Kalıcı kural
 
 Vitrine "yalnız üyede var" bir yol açılırsa, üyeliksiz karşılığı **aynı işte**
