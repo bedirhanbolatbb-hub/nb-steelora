@@ -150,10 +150,19 @@ export async function iadeTalebiAc(girdi: {
     console.error('[iade-talebi] yönetici bildirimi gönderilemedi:', e)
   }
 
+  const acanNotu =
+    kaynak === 'panel' ? 'Mağaza müşteri adına açtı (panel)' : 'Üyeliksiz — kargo takip sayfasından'
+
   // Müşteriye DERHÂL teyit — MSY m.11/2. Panelden açılsa da müşteri talebin
   // kaydedildiğini yazılı görmeli; telefonda "açtım" demek kanıt değildir.
-  try {
-    if (siparis.guest_email) {
+  //
+  // İade defterine düşen adım mail GİTMESE DE yazılır: panelden açılan bir
+  // talepte siparişte e-posta olmayabilir, o zaman da talebin ne zaman ve kim
+  // tarafından açıldığı kayıtta durmalı — yoksa panelde iz hiç görünmez.
+  let mailId: string | null = null
+  let mailNotu: string | null = siparis.guest_email ? null : 'Siparişte e-posta yok — teyit gönderilemedi'
+  if (siparis.guest_email) {
+    try {
       const teyit = talepTeyidiEmail({
         orderNumber: siparis.order_number,
         tip: 'return',
@@ -166,18 +175,14 @@ export async function iadeTalebiAc(girdi: {
         html: teyit.html,
         label: `Return request received (${etiketEki})`,
       })
-      await adimKaydet(service, siparis.id, 'talep', {
-        mailId: (gonderim as { id?: string } | null)?.id ?? null,
-        mailNotu: (gonderim as { sebep?: string } | null)?.sebep ?? null,
-        not:
-          kaynak === 'panel'
-            ? 'Mağaza müşteri adına açtı (panel)'
-            : 'Üyeliksiz — kargo takip sayfasından',
-      })
+      mailId = (gonderim as { id?: string } | null)?.id ?? null
+      mailNotu = (gonderim as { sebep?: string } | null)?.sebep ?? null
+    } catch (e) {
+      console.error('[iade-talebi] teyit maili gönderilemedi:', e)
+      mailNotu = 'Teyit maili gönderilemedi'
     }
-  } catch (e) {
-    console.error('[iade-talebi] teyit maili gönderilemedi:', e)
   }
+  await adimKaydet(service, siparis.id, 'talep', { mailId, mailNotu, not: acanNotu })
 
   return { ok: true, sureDoldu, gecenGun }
 }
