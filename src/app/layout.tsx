@@ -44,8 +44,19 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  /**
+   * Search Console doğrulaması (15 Eyl 2026).
+   *
+   * İlk anahtar hangi Google hesabıyla kurulduğu bilinmeyen eski kayıt; o
+   * hesaba erişimimiz yok, ama kaldırılırsa oradaki doğrulama düşer — duruyor.
+   * İkinci anahtar marka hesabının (nbsteelora@gmail.com) kaydı: arama
+   * performansı artık görülebiliyor. Google birden çok anahtarı kabul eder.
+   */
   verification: {
-    google: 'KLeocfEgs-ztRnuoXebjx8HU8QvM5RF8HszV9tmjGdo',
+    google: [
+      'KLeocfEgs-ztRnuoXebjx8HU8QvM5RF8HszV9tmjGdo',
+      'lFWWUMH08iuZMLmWMJMJOiqnkV6NDGnJxaMQRXZhcgw',
+    ],
   },
 }
 
