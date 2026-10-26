@@ -219,9 +219,14 @@ export default async function PanelSiparisDetayPage({
             if (d.durum === 'ok') durumlar[tur] = { etiket: olayTurkce(d.sonOlay), olay: d.sonOlay }
             else if (d.durum === 'kisitli') kisitli = true
           }
-          // Faz 34: bir mail "suppressed" ise alıcı Resend baskı listesindedir;
-          // sebebi (geri dönüş / şikâyet / elle) ve kaynağı panelde görünsün.
-          const engellenmis = Object.values(durumlar).some((d) => d.olay === 'suppressed')
+          // Faz 34: bir mail geri döndüyse (bounced), spam işaretlendiyse
+          // (complained) ya da durdurulduysa (suppressed) alıcı Resend baskı
+          // listesindedir; sebebi ve kaynağı panelde görünsün. İlk geri dönüşte
+          // son olay "bounced" olur — yalnız "suppressed"a bakmak en sık
+          // durumu kaçırırdı.
+          const engellenmis = Object.values(durumlar).some((d) =>
+            ['suppressed', 'bounced', 'complained'].includes(d.olay)
+          )
           const baski = engellenmis && o.guest_email ? await baskiKaydiBul(o.guest_email) : null
           return {
             mailDurumlari: durumlar,

@@ -417,6 +417,53 @@ export function adminNewOrderEmail(order: any) {
   }
 }
 
+/**
+ * Yöneticiye: müşteri maili ULAŞMADI (Faz 34).
+ *
+ * GERÇEK OLAY (26 Eki 2026): sipariş onayı müşterinin adresinden kalıcı
+ * olarak geri döndü (adres yok); kimse fark etmedi, sonraki her gönderim
+ * sessizce durduruldu. Mesafeli Sözleşmeler Yönetmeliği m.11/2 gereği
+ * sipariş teyidi tüketiciye ULAŞMALI — bunun yolu müşteriyi arayıp doğru
+ * adresi almak. Bu mail BB'yi o an haberdar eder.
+ */
+export function adminMailUlasmadiEmail(
+  order: any,
+  konu: string,
+  olay: 'bounced' | 'complained'
+) {
+  const sikayet = olay === 'complained'
+  const adres = order?.shipping_address ?? {}
+  const musteri = htmlKacir(adres.fullName || adres.full_name || 'Müşteri')
+  const telefon = htmlKacir(adres.phone || '—')
+  return {
+    subject: sikayet
+      ? `⚠️ Müşteri mailimizi spam işaretledi — ${order.order_number}`
+      : `⚠️ Müşteriye mail ULAŞMADI — ${order.order_number}`,
+    html: shell(
+      sikayet ? 'Mail spam olarak işaretlendi' : 'Müşteriye mail ulaşmadı',
+      `${orderNumberBox(order.order_number)}
+      <p style="color:#7A5048;line-height:1.8;margin:0 0 12px;">
+        <strong>&quot;${htmlKacir(konu)}&quot;</strong> ${
+          sikayet
+            ? 'başlıklı mail müşteri tarafından <strong>spam olarak işaretlendi</strong>. Bu adrese artık hiçbir mail gönderilmiyor.'
+            : 'başlıklı mail müşterinin adresinden <strong>kalıcı olarak geri döndü</strong>; adres büyük ihtimalle yanlış yazılmış ya da kapalı. Bu adrese sonraki hiçbir mail (kargo bildirimi dahil) ulaşmayacak.'
+        }
+      </p>
+      <p style="color:#7A5048;line-height:1.8;margin:0 0 12px;">
+        ${musteri} · ${telefon}<br>
+        ${
+          sikayet
+            ? 'Müşteri açıkça istemedikçe engeli kaldırmayın.'
+            : 'Müşteriyi arayıp doğru e-posta adresini alın, panelde siparişin içinden düzeltin; ulaşmayan mailler yeni adrese kendiliğinden yeniden gider.'
+        }
+      </p>
+      <p style="text-align:center;margin:24px 0 0;">
+        <a href="${PANEL}/siparisler/${order.id}" style="display:inline-block;background:#2A1E1E;color:#FFF8F6;padding:14px 32px;text-decoration:none;font-size:12px;letter-spacing:.15em;text-transform:uppercase;">Siparişi aç</a>
+      </p>`
+    ),
+  }
+}
+
 /** Yöneticiye: iptal/iade talebi (Faz 15). */
 export function adminOrderRequestEmail(order: any, tur: 'cancel' | 'return', mesaj?: string | null) {
   const baslik = tur === 'cancel' ? 'İptal talebi' : 'İade talebi'

@@ -59,9 +59,29 @@ export default function MailGecmisi({
   const [engelKaldiriliyor, setEngelKaldiriliyor] = useState(false)
   const [yeniEposta, setYeniEposta] = useState(eposta ?? '')
   const [epostaKaydediliyor, setEpostaKaydediliyor] = useState(false)
-  const engellenenTurler = Object.entries(durumlar)
-    .filter(([, d]) => d.olay === 'suppressed')
+  /** Müşteriye ULAŞMAYAN mail türleri — düzeltmeden sonra yeniden gönderilir. */
+  const ulasmayanTurler = Object.entries(durumlar)
+    .filter(([, d]) => ['suppressed', 'bounced', 'complained'].includes(d.olay))
     .map(([tur]) => tur)
+
+  /** Ulaşmayan mailleri sırayla yeniden gönderir; kaç tanesinin gittiğini döner. */
+  const ulasmayanlariGonder = async () => {
+    let gonderilen = 0
+    for (const tur of ulasmayanTurler) {
+      try {
+        const r = await fetch('/api/panel/siparis-mail', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: siparisId, tur }),
+        })
+        const g = await r.json()
+        if (g?.ok) gonderilen++
+      } catch {
+        /* biri düşerse diğerleri denenir */
+      }
+    }
+    return gonderilen
+  }
 
   const gonder = async (tur: string) => {
     setGonderiliyor(tur)
@@ -99,16 +119,7 @@ export default function MailGecmisi({
       })
       const d = await res.json()
       if (!res.ok || !d?.ok) throw new Error(d?.error || 'Engel kaldırılamadı')
-      let gonderilen = 0
-      for (const tur of engellenenTurler) {
-        const r = await fetch('/api/panel/siparis-mail', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId: siparisId, tur }),
-        })
-        const g = await r.json()
-        if (g?.ok) gonderilen++
-      }
+      const gonderilen = await ulasmayanlariGonder()
       toast(`Engel kaldırıldı · ${gonderilen} mail yeniden gönderildi`, 'success')
       router.refresh()
     } catch (e) {
@@ -127,7 +138,9 @@ export default function MailGecmisi({
       })
       const d = await res.json()
       if (!res.ok || !d?.ok) throw new Error(d?.error || 'Kaydedilemedi')
-      toast('E-posta düzeltildi — şimdi mailleri yeniden gönderin', 'success')
+      // Yeni adres baskı listesinde değil: ulaşmayan mailler hemen gider.
+      const gonderilen = await ulasmayanlariGonder()
+      toast(`E-posta düzeltildi · ${gonderilen} mail yeni adrese gönderildi`, 'success')
       router.refresh()
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Kaydedilemedi', 'danger')
@@ -167,7 +180,7 @@ export default function MailGecmisi({
           <div className="mt-3 flex flex-wrap items-end gap-2">
             <label className="block min-w-[240px] flex-1">
               <span className="mb-1 block text-[12px] text-[var(--p-muted)]">
-                Adres yanlışsa doğrusunu yazıp kaydedin
+                Adres yanlışsa doğrusunu yazın — ulaşmayan mailler yeni adrese kendiliğinden gider
               </span>
               <PInput
                 type="email"
@@ -181,7 +194,7 @@ export default function MailGecmisi({
               onClick={epostayiDuzelt}
               disabled={epostaKaydediliyor || !yeniEposta.trim() || yeniEposta.trim().toLowerCase() === (eposta ?? '').toLowerCase()}
             >
-              {epostaKaydediliyor ? 'Kaydediliyor…' : 'E-postayı düzelt'}
+              {epostaKaydediliyor ? 'Gönderiliyor…' : 'Düzelt ve gönder'}
             </PButton>
           </div>
 
