@@ -8,6 +8,7 @@ import { gonderiGetir, olaylariGetir } from '@/lib/shipping/shipments'
 import { bolgeEslestir, bolgeleriSenkronla, illeriGetir } from '@/lib/shipping/geo'
 import SiparisDetayClient from './SiparisDetayClient'
 import { mailTeslimDurumu, olayTurkce } from '@/lib/emails/teslimDurumu'
+import { baskiKaydiBul } from '@/lib/emails/baskiListesi'
 import type { PanelGonderi } from './KargoBlogu'
 import { musteriMailiEngeli } from '@/lib/emails/musteriMaili'
 import { bildirimAdresi } from '@/lib/emails/bildirim'
@@ -218,7 +219,15 @@ export default async function PanelSiparisDetayPage({
             if (d.durum === 'ok') durumlar[tur] = { etiket: olayTurkce(d.sonOlay), olay: d.sonOlay }
             else if (d.durum === 'kisitli') kisitli = true
           }
-          return { mailDurumlari: durumlar, mailDurumuKisitli: kisitli }
+          // Faz 34: bir mail "suppressed" ise alıcı Resend baskı listesindedir;
+          // sebebi (geri dönüş / şikâyet / elle) ve kaynağı panelde görünsün.
+          const engellenmis = Object.values(durumlar).some((d) => d.olay === 'suppressed')
+          const baski = engellenmis && o.guest_email ? await baskiKaydiBul(o.guest_email) : null
+          return {
+            mailDurumlari: durumlar,
+            mailDurumuKisitli: kisitli,
+            mailBaskisi: baski && baski.durum === 'var' ? baski.kayit : null,
+          }
         })()),
         // Kurumsal fatura yalnız müşteri istediyse dolu (Faz 28).
         fatura: (o.metadata as any)?.fatura ?? null,

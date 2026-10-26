@@ -11,6 +11,7 @@ import { ORDER_STATUS, PBadge, PButton, PCard, PInput, PSelect } from '../../_co
 import { PDialog, useToast } from '../../_components/overlays'
 import KargoBlogu, { type KargoBloguProps } from './KargoBlogu'
 import MailGecmisi from './MailGecmisi'
+import type { BaskiKaydi } from '@/lib/emails/baskiListesi'
 import IcNotlar from './IcNotlar'
 
 type Kalem = { productId: string; ad: string; adet: number; birim: number; slug: string | null; image: string | null }
@@ -46,6 +47,8 @@ export type SiparisDetay = {
   icNotlar?: { t: string; m: string }[]
   mailDurumlari?: Record<string, { etiket: string; olay: string }>
   mailDurumuKisitli?: boolean
+  /** Alıcı Resend baskı listesindeyse sebebi (Faz 34). */
+  mailBaskisi?: BaskiKaydi | null
   /** Kurumsal fatura — yalnız müşteri istediyse dolu (Faz 28). */
   fatura: { firma: string; vergiDairesi: string; vergiNo: string } | null
   /** Aynı gün aynı müşteriye 5.000 TL (KDV hariç) üzeri satış yapıldıysa. */
@@ -384,6 +387,8 @@ export default function SiparisDetayClient({
         gecmis={siparis.mailGecmisi}
         durumlar={siparis.mailDurumlari ?? {}}
         durumKisitli={Boolean(siparis.mailDurumuKisitli)}
+        baski={siparis.mailBaskisi ?? null}
+        eposta={siparis.email}
       />
 
       <IcNotlar siparisId={siparis.id} notlar={siparis.icNotlar ?? []} />

@@ -29,6 +29,8 @@ const OLAY_TR: Record<string, string> = {
   scheduled: 'Zamanlanmış',
   canceled: 'İptal edildi',
   failed: 'Başarısız',
+  // Faz 34: alıcı Resend baskı listesinde — teslim DENENMEDİ.
+  suppressed: 'Engellendi (baskı listesi)',
 }
 
 export function olayTurkce(olay: string): string {
