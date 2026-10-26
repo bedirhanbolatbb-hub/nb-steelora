@@ -9,6 +9,7 @@ import {
 } from '@/lib/emails/templates'
 import { musteriMailiGonder } from '@/lib/emails/musteriMaili'
 import { bildirimDamgala } from '@/lib/emails/bildirimSuprugu'
+import { baskiKaydiBul } from '@/lib/emails/baskiListesi'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,6 +75,23 @@ export async function POST(request: Request) {
     ))
   } else {
     ;({ subject, html } = orderCancelledEmail(order as any, Boolean(order.payment_refunded_at)))
+  }
+
+  // Faz 34: adres Resend'in engel listesindeyse gönderim "başarılı" döner ama
+  // mail teslim edilmez — BB "gönderildi" yazısını görüp yanılıyordu. Önce
+  // engel denetlenir, varsa açıkça söylenir.
+  if (order.guest_email) {
+    const baski = await baskiKaydiBul(String(order.guest_email))
+    if (baski.durum === 'var') {
+      return NextResponse.json({
+        ok: false,
+        tur,
+        error:
+          baski.kayit.sebep === 'complaint'
+            ? 'Gönderilmedi: müşteri daha önce mailimizi spam işaretlemiş, adres engelli.'
+            : 'Gönderilmedi: bu adrese giden mail daha önce geri döndü, adres engelli. Önce adresi düzeltin (kırmızı kutu).',
+      })
+    }
   }
 
   const gonderim = await musteriMailiGonder({

@@ -21,7 +21,7 @@ const OLAY_TR: Record<string, string> = {
   sent: 'Gönderildi',
   delivered: 'Teslim edildi',
   delivery_delayed: 'Teslim gecikti',
-  bounced: 'Geri döndü (bounce)',
+  bounced: 'Geri döndü',
   complained: 'Spam şikâyeti',
   opened: 'Açıldı',
   clicked: 'Tıklandı',
@@ -30,7 +30,7 @@ const OLAY_TR: Record<string, string> = {
   canceled: 'İptal edildi',
   failed: 'Başarısız',
   // Faz 34: alıcı Resend baskı listesinde — teslim DENENMEDİ.
-  suppressed: 'Engellendi (baskı listesi)',
+  suppressed: 'Ulaşmadı (adres engelli)',
 }
 
 export function olayTurkce(olay: string): string {
