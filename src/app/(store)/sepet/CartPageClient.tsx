@@ -16,12 +16,20 @@ import { FREE_SHIPPING_LABEL, SHIPPING_LINE_LABEL, shippingCostFor } from '@/lib
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
 import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
 import KuponKutusu, { useKuponKodu } from '@/components/store/KuponKutusu'
+import { PaylasilanSepet, SepetiPaylasDugmesi } from '@/components/store/SepetPaylasim'
+import type { PaylasilanKalem } from './page'
 
 // Sepet localStorage'da tutuluyor; ilk sunucu çıktısıyla uyumsuzluk olmasın diye
 // içerik yalnızca hidrasyondan sonra basılır.
 const subscribeNoop = () => () => {}
 
-export default function CartPageClient({ coupon }: { coupon: CouponReminder | null }) {
+export default function CartPageClient({
+  coupon,
+  paylasilan = [],
+}: {
+  coupon: CouponReminder | null
+  paylasilan?: PaylasilanKalem[]
+}) {
   const hydrated = useSyncExternalStore(subscribeNoop, () => true, () => false)
   const { items, removeItem, updateQuantity, totalPrice } = useCart()
 
@@ -46,8 +54,14 @@ export default function CartPageClient({ coupon }: { coupon: CouponReminder | nu
     <div className="min-h-[480px] max-w-[1400px] mx-auto px-4 lg:px-8 py-14 lg:py-20">
       <header className="mb-10 border-b border-line pb-6">
         <p className="eyebrow">Sipariş</p>
-        <h1 className="font-heading text-[38px] lg:text-[48px] font-medium text-ink mt-2">Sepetiniz</h1>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+          <h1 className="font-heading text-[38px] lg:text-[48px] font-medium text-ink">Sepetiniz</h1>
+          {hydrated && <SepetiPaylasDugmesi />}
+        </div>
       </header>
+
+      {/* Faz 35: paylaşılan sepet bağlantısıyla gelindiyse. */}
+      <PaylasilanSepet kalemler={paylasilan} />
 
       {/* Faz 11E: üyelere özel kampanya varsa sepette hatırlatılır. */}
       <div className="mb-6">

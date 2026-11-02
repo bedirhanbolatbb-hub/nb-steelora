@@ -19,6 +19,7 @@ import Button from '@/components/ui/Button'
 import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
 import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
+import { SepetiPaylasDugmesi } from '@/components/store/SepetPaylasim'
 
 interface CartDrawerProps {
   isOpen: boolean
@@ -95,7 +96,14 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                     key={item.product.id}
                     className="flex gap-4 pb-4 border-b border-line/50"
                   >
-                    <div className="relative w-20 h-24 bg-surface-muted shrink-0">
+                    {/* Faz 35: görsel ve ad ürün sayfasına gider (BB: "sepetteki
+                        ürüne tıklayınca ürünün içine girmiyor"). */}
+                    <Link
+                      href={`/urun/${item.product.slug}`}
+                      onClick={onClose}
+                      className="relative w-20 h-24 bg-surface-muted shrink-0 block"
+                      aria-label={item.product.display_title}
+                    >
                       <Image
                         src={gorselBoyutu(imageUrl, 160)}
                         unoptimized={isRemoteMedia(imageUrl)}
@@ -104,10 +112,16 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                         className="object-cover"
                         sizes="80px"
                       />
-                    </div>
+                    </Link>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-heading text-[14px] text-ink truncate">
-                        {item.product.display_title}
+                        <Link
+                          href={`/urun/${item.product.slug}`}
+                          onClick={onClose}
+                          className="hover:text-accent-deep transition-colors"
+                        >
+                          {item.product.display_title}
+                        </Link>
                       </h3>
                       <p className="text-[11px] text-muted font-body mt-0.5">
                         {markaKategorisi(item.product.trendyol_category)}
@@ -170,6 +184,9 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                   </div>
                 )
               })}
+              <div className="pt-1">
+                <SepetiPaylasDugmesi />
+              </div>
             </div>
 
             {/* Ücretsiz kargo güven rozeti — kargo koşulsuz ücretsiz olduğu için
