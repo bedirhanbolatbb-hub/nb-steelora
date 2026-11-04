@@ -12,7 +12,7 @@ export const KUNYE_ANAHTARLARI = [
   {
     key: 'veri_sorumlusu_unvan',
     etiket: 'Unvan',
-    ipucu: 'Ticari unvan ya da ad soyad (ör. NB Steelora — Nalan Bolat)',
+    ipucu: 'Ticari unvan ya da ad soyad (ör. İsa Bolat — NB Steelora)',
     zorunlu: true,
   },
   {

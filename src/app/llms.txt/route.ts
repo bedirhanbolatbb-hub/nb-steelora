@@ -44,7 +44,7 @@ export async function GET() {
 
 > 316L paslanmaz çelik ve premium kaplama takı satan Türkiye merkezli çevrimiçi mağaza. Kolye, küpe, bileklik, yüzük, piercing, halhal ve setler.${aktifUrun > 0 ? ` Şu an ${aktifUrun} ürün satışta.` : ''}
 
-Satıcı: Nalan Bolat — NB Steelora · Mezitli / Mersin, Türkiye
+Satıcı: İsa Bolat — NB Steelora · Mezitli / Mersin, Türkiye
 İletişim: info@nbsteelora.com · 0505 198 46 46 (Pazartesi–Cuma 09:00–18:00)
 Marka adı TÜRKPATENT'te tescillidir (2025 163503).
 
