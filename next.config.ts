@@ -12,7 +12,36 @@ const nextConfig: NextConfig = {
    * her istek için ayrı nonce gerektiği için proxy.ts'te üretiliyor.
    */
   async headers() {
-    return [{ source: '/:path*', headers: SABIT_GUVENLIK_BASLIKLARI }]
+    return [
+      { source: '/:path*', headers: SABIT_GUVENLIK_BASLIKLARI },
+      /**
+       * Faz 36: görsel sunucularına ERKEN bağlantı.
+       *
+       * Ölçüm (6 Kas 2026, ana sayfa): belge 141 ms'de akmaya başlıyor ama
+       * <head> — dolayısıyla hero görselinin ön yükleme bağlantısı — sayfa
+       * verisi hazırlanınca, ~500 ms'de geliyor; görsel isteği ancak o zaman
+       * başlıyor ve AYRI bir adres (Supabase depolama) olduğu için önce
+       * bağlantı kuruluyordu. Bu başlık ilk baytla gider: tarayıcı sayfa
+       * hazırlanırken bağlantıyı açmış olur. Ürün görselleri de Trendyol
+       * CDN'inde (galeri, hover görseli).
+       */
+      {
+        // Tarayıcılar Link başlığını yalnız sayfa (belge) yanıtında işler;
+        // API ve dosya yanıtlarında zararsızdır.
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Link',
+            value: [
+              process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://halyhtowppivuwpdserp.supabase.co',
+              'https://cdn.dsmcdn.com',
+            ]
+              .map((adres) => `<${adres.replace(/\/$/, '')}>; rel=preconnect`)
+              .join(', '),
+          },
+        ],
+      },
+    ]
   },
 
   /**
