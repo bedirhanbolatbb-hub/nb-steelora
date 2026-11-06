@@ -490,6 +490,27 @@ export default function AnalizClient({
         </PCard>
       </div>
 
+      {/* Faz 36: sepete eklemenin nereden yapıldığı. Huni "26 ekleme, 1 ödeme"
+          diyordu ama eklemenin kartta mı ürün sayfasında mı yapıldığı, kaç
+          farklı kişiden geldiği görünmüyordu. */}
+      <PCard title="Sepete ekleme nereden?">
+        <p className="border-b border-[var(--p-line)] px-4 py-2 text-[11px] text-[var(--p-muted)]">
+          {sayi(rapor.sepeteEkleyenZiyaretci ?? 0)} farklı ziyaretçi sepete ekleme yaptı. Kaynağı
+          kaydedilmeye başlamadan önceki eklemeler “eski kayıt” satırındadır.
+        </p>
+        <ul className="divide-y divide-[var(--p-line)] text-[12px]">
+          {(rapor.sepetKaynaklari ?? []).length === 0 && (
+            <li className="px-4 py-6 text-center text-[var(--p-muted)]">Bu dönemde veri yok.</li>
+          )}
+          {(rapor.sepetKaynaklari ?? []).map((k) => (
+            <li key={k.ad} className="flex justify-between gap-3 px-4 py-2">
+              <span className="text-[var(--p-ink)]">{k.ad}</span>
+              <span className="tabular-nums">{sayi(k.adet)}</span>
+            </li>
+          ))}
+        </ul>
+      </PCard>
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <PCard title="Cihaz">
           <ul className="divide-y divide-[var(--p-line)] text-[12px]">

@@ -3,13 +3,14 @@ import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { CAYMA_SURESI_GUN, URUN_TOLERANS_KISA } from '@/lib/legal/sozlesme'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Gift, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
+import { CalendarDays, Gift, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
-import { FREE_SHIPPING_LABEL, TESLIM_CUMLESI } from '@/lib/shipping'
+import { FREE_SHIPPING_LABEL, TESLIM_CUMLESI, tahminiTeslimEtiketi } from '@/lib/shipping'
+import { GUVEN_METNI } from '@/lib/metin/guven'
 import { cleanDescription, iddiaTemizle, hasContent } from '@/lib/catalog/description'
 import { materialCare, materialLabel } from '@/lib/catalog/material'
 import { SSS_URUN } from '@/lib/legal/sss'
@@ -327,13 +328,24 @@ export default async function UrunDetayPage({
             <WishlistButton productId={product.id} gorunum="kutu" />
           </div>
 
+          {/* Faz 36: teslim süresi TARİH olarak, karar düğmesinin hemen altında.
+              Süre zaten yayındaydı (TESLIM_CUMLESI) ama yalnız "Kargo ve İade"
+              akordeonunun içinde, kapalı duruyordu. Hesap lib/shipping'den;
+              sayfa her istekte sunucuda üretildiği için tarih hep günceldir. */}
+          {stock > 0 && (
+            <p className="mt-3 flex items-center gap-1.5 text-[12px] font-body text-ink-soft">
+              <CalendarDays size={14} strokeWidth={1.5} className="text-accent-deep shrink-0" aria-hidden />
+              Tahmini teslim: <span className="font-medium text-ink">{tahminiTeslimEtiketi()}</span>
+            </p>
+          )}
+
           {/* Güven şeridi — tek sıra ikonlu kompakt satır (vaatler sabitlerden) */}
           <ul className="mt-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-y border-line py-3 text-[10px] font-body text-ink-soft">
             {[
               { Icon: Truck, metin: FREE_SHIPPING_LABEL },
-              { Icon: RotateCcw, metin: '14 gün iade' },
-              { Icon: Gift, metin: 'Hediye kutusu' },
-              { Icon: ShieldCheck, metin: 'iyzico güvencesi' },
+              { Icon: RotateCcw, metin: GUVEN_METNI.iade },
+              { Icon: Gift, metin: GUVEN_METNI.hediye },
+              { Icon: ShieldCheck, metin: GUVEN_METNI.odeme },
             ].map(({ Icon, metin }) => (
               <li key={metin} className="flex items-center gap-1.5 whitespace-nowrap">
                 <Icon size={13} strokeWidth={1.5} className="text-accent-deep shrink-0" />

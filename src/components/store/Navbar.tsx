@@ -12,6 +12,7 @@ import { useCart } from '@/hooks/useCart'
 import { useWishlist } from '@/hooks/useWishlist'
 import CartDrawer from './CartDrawer'
 import SearchModal from './SearchModal'
+import DuyuruSeridi from './DuyuruSeridi'
 import { MENU_LINKS } from '@/lib/catalog/categories'
 import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
 import type { CouponReminder } from '@/lib/campaigns'
@@ -147,16 +148,22 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
       <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="hidden sm:block text-ink-soft hover:text-accent-deep transition-colors" aria-label="Hesap">
         <User size={18} strokeWidth={1.6} />
       </Link>
-      <button className="relative -m-3 flex h-11 w-11 items-center justify-center text-ink-soft hover:text-accent-deep transition-colors" aria-label="Sepet" onClick={() => setCartOpen(true)}>
-        <ShoppingBag size={18} strokeWidth={1.6} />
-        {totalItems > 0 && (
-          <span
-            key={totalItems}
-            className="animate-cart-pulse absolute -top-1.5 -right-1.5 min-w-[18px] min-h-[18px] bg-ink text-bg text-[9px] rounded-full flex items-center justify-center font-body font-medium"
-          >
-            {totalItems}
-          </span>
-        )}
+      {/* Faz 36: rozet 44px'lik dokunma kutusuna göre konumlanıyordu; kutu
+          -m-3 ile ikonun 12px dışına taştığı için rozet 375px ekranda sağ
+          kenardan kesiliyordu. Artık ikonun kendisine tutunuyor. */}
+      <button className="-m-3 flex h-11 w-11 items-center justify-center text-ink-soft hover:text-accent-deep transition-colors" aria-label={totalItems > 0 ? `Sepet, ${totalItems} ürün` : 'Sepet'} onClick={() => setCartOpen(true)}>
+        <span className="relative">
+          <ShoppingBag size={18} strokeWidth={1.6} />
+          {totalItems > 0 && (
+            <span
+              key={totalItems}
+              aria-hidden
+              className="animate-cart-pulse absolute -top-2 -right-2.5 min-w-[18px] min-h-[18px] px-1 bg-ink text-bg text-[9px] rounded-full flex items-center justify-center font-body font-medium"
+            >
+              {totalItems}
+            </span>
+          )}
+        </span>
       </button>
     </div>
   )
@@ -183,21 +190,24 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
       >
       {/* Duyuru şeridi */}
       <div ref={seritRef} className="text-center py-2 px-4" style={{ backgroundColor: bannerColor || '#2A1E1E' }}>
-        <p className="text-accent-deep text-[10px] tracking-[0.2em] uppercase font-body">
-          {/* Öncelik: panelden tanımlı banner kampanyası > ilk sipariş kuponu
-              duyurusu > varsayılan satır. Kupon duyurusu YALNIZ otomatik bir
-              vitrin kampanyası yokken dolu gelir (bkz. ilkSiparisKuponu.ts) —
-              "sepette %30" ile "kodla %10" yan yana çıkmaz. Kargo vaadi tek
-              kaynaktan (lib/shipping.ts) gelmeye devam ediyor. */}
-          {bannerText ||
+        {/* Öncelik: panelden tanımlı banner kampanyası > ilk sipariş kuponu
+            duyurusu > varsayılan satır. Kupon duyurusu YALNIZ otomatik bir
+            vitrin kampanyası yokken dolu gelir (bkz. ilkSiparisKuponu.ts) —
+            "sepette %30" ile "kodla %10" yan yana çıkmaz. Kargo vaadi tek
+            kaynaktan (lib/shipping.ts) gelmeye devam ediyor.
+            Faz 36: mobilde mesajlar tek satırda sırayla (DuyuruSeridi). */}
+        <DuyuruSeridi
+          metin={
+            bannerText ||
             (ilkSiparisSeridi
               ? `${FREE_SHIPPING_LABEL} • ${ilkSiparisSeridi}`
               /* "Premium Çelik Takılar" idi (5 Eyl 2026): katalogda kaplama
                  pirinç ürünler de var, her sayfanın tepesinde tüm ürünlere
                  "çelik" demek yanlış beyan. Yerine her ürün için DOĞRU olan
                  iki vaat yazıyor. */
-              : `${FREE_SHIPPING_LABEL} • Hediye kutusunda gönderilir`)}
-        </p>
+              : `${FREE_SHIPPING_LABEL} • Hediye kutusunda gönderilir`)
+          }
+        />
       </div>
 
       {/* ── Mobil tek sıra ── */}

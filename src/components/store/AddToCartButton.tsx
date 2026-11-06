@@ -17,7 +17,7 @@ export default function AddToCartButton({ product, disabled }: AddToCartButtonPr
   const panelAc = useSepetPaneli((s) => s.ac)
 
   const handleClick = () => {
-    addItem(product)
+    addItem(product, 1, 'pdp')
     setAdded(true)
     // Faz 11A: ekledikten sonra sepet paneli açılır — ödemeye giden yol
     // müşterinin kendi çabasına bırakılmasın. Onay yazısı yerinde kalır.

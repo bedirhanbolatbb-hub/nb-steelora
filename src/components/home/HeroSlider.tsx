@@ -93,7 +93,7 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
                 dardı. Vitrin fotoğrafı satmalı — 40/60'a çevrildi. */}
             <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr]">
               {/* ── Yazı: fildişi zemin, fotoğrafın üstünde DEĞİL ── */}
-              <div className="order-1 flex items-center bg-bg px-5 py-10 sm:px-8 md:px-10 md:py-14 lg:px-16 lg:py-20">
+              <div className="order-1 flex items-center bg-bg px-5 py-8 sm:px-8 sm:py-10 md:px-10 md:py-14 lg:px-16 lg:py-20">
                 <div className="max-w-lg">
                   {s.eyebrow && (
                     <p className="eyebrow hero-line" style={{ '--hero-delay': '0ms' } as React.CSSProperties}>

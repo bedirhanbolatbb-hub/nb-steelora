@@ -394,6 +394,13 @@ export type Rapor = {
   /** Üye / misafir kırılımı. Üye bağlantısı kapalıyken null. */
   uyeKirilimi: { uyeZiyaretci: number; misafirZiyaretci: number; uyeSiparis: number } | null
   koleksiyonlar: { ad: string; adet: number }[]
+  /**
+   * Sepete eklemenin yapıldığı yer (Faz 36) — olaydaki `meta.kaynak`.
+   * Kaynağı yazılmadan önceki eklemeler ayrı satırda sayılır.
+   */
+  sepetKaynaklari: { ad: string; adet: number }[]
+  /** Dönemde en az bir kez sepete ekleyen farklı ziyaretçi. */
+  sepeteEkleyenZiyaretci: number
   aramalar: { sorgu: string; adet: number; sonucsuz: boolean }[]
   seri: { gun: string; ziyaretci: number; ciro: number }[]
   rizaOrani: number
@@ -415,6 +422,27 @@ export type Rapor = {
     /** Dönem tamamen doğrulama başladıktan sonra mı? */
     dogrulamaGecerli: boolean
   }
+}
+
+const SEPET_KAYNAK_ADI: Record<string, string> = {
+  pdp: 'Ürün sayfası · Sepete Ekle düğmesi',
+  yapiskan: 'Ürün sayfası · alt çubuk (mobil)',
+  kart: 'Ürün kartı',
+  paylasim: 'Paylaşılan sepet bağlantısı',
+}
+
+/** Kartın bulunduğu sayfanın türü — "kart" kaynağını ayrıştırır. */
+function kartSayfasi(path: string | null): string {
+  if (!path || path === '/') return 'ana sayfa'
+  if (path.startsWith('/urun/')) return 'ürün sayfası önerileri'
+  if (path.startsWith('/urunler') || path.startsWith('/kategori/') || path.startsWith('/koleksiyon/')) return 'liste'
+  if (path.startsWith('/favorilerim')) return 'favoriler'
+  return 'diğer sayfalar'
+}
+
+function sepetKaynakAdi(kaynak: unknown, path: string | null): string {
+  if (typeof kaynak !== 'string' || !SEPET_KAYNAK_ADI[kaynak]) return 'Kaynak kaydı yok (eski kayıt)'
+  return kaynak === 'kart' ? `${SEPET_KAYNAK_ADI.kart} · ${kartSayfasi(path)}` : SEPET_KAYNAK_ADI[kaynak]
 }
 
 export async function raporUret(d: Donem): Promise<Rapor> {
@@ -472,9 +500,16 @@ export async function raporUret(d: Donem): Promise<Rapor> {
   const misafirZiyaretciler = new Set<string>()
   let uyeSiparis = 0
   const aramalar = new Map<string, { adet: number; sonucsuz: number }>()
+  const sepetKaynak = new Map<string, number>()
+  const sepeteEkleyenler = new Set<string>()
   const gunluk = new Map<string, { oturumlar: Set<string>; ciro: number }>()
 
   for (const o of olaylar) {
+    if (o.event === 'add_to_cart') {
+      sepeteEkleyenler.add(o.session_id)
+      const ad = sepetKaynakAdi(o.meta?.kaynak, o.path)
+      sepetKaynak.set(ad, (sepetKaynak.get(ad) || 0) + 1)
+    }
     if (o.product_id) {
       const s = al(o.product_id)
       if (o.event === 'product_view') s.goruntuleme++
@@ -614,6 +649,10 @@ export async function raporUret(d: Donem): Promise<Rapor> {
         }
       : null,
     koleksiyonlar: [],
+    sepetKaynaklari: [...sepetKaynak.entries()]
+      .map(([ad, adet]) => ({ ad, adet }))
+      .sort((a, b) => b.adet - a.adet),
+    sepeteEkleyenZiyaretci: sepeteEkleyenler.size,
     aramalar: [...aramalar.entries()]
       .map(([sorgu, v]) => ({ sorgu, adet: v.adet, sonucsuz: v.sonucsuz > 0 }))
       .sort((a, b) => b.adet - a.adet)

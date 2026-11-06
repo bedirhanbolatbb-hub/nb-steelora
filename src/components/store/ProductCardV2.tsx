@@ -90,7 +90,7 @@ export default function ProductCardV2({
     e.preventDefault()
     e.stopPropagation()
     if (outOfStock || added) return
-    addItem(product)
+    addItem(product, 1, 'kart')
     setAdded(true)
     // Faz 11A: karttan eklemede de sepet paneli açılır.
     panelAc()

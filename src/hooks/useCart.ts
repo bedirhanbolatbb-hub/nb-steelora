@@ -3,6 +3,14 @@ import { persist } from 'zustand/middleware'
 import type { Product } from '@/types'
 import { izle } from '@/lib/analytics/izle'
 
+/**
+ * Sepete eklemenin YAPILDIĞI YER (Faz 36). Ölçümde `meta.kaynak` olarak
+ * yazılır; panel analizde "Sepete ekleme nereden?" kırılımı buradan gelir.
+ * Sayfa yolu zaten kaydediliyor ama ürün sayfasındaki asıl düğme ile mobil
+ * alt çubuğu yoldan ayırt edilemiyordu.
+ */
+export type SepetKaynagi = 'pdp' | 'yapiskan' | 'kart' | 'paylasim'
+
 interface CartItem {
   product: Product
   quantity: number
@@ -10,7 +18,7 @@ interface CartItem {
 
 interface CartStore {
   items: CartItem[]
-  addItem: (product: Product, quantity?: number) => void
+  addItem: (product: Product, quantity?: number, kaynak?: SepetKaynagi) => void
   removeItem: (productId: string) => void
   updateQuantity: (productId: string, quantity: number) => void
   clearCart: () => void
@@ -23,7 +31,7 @@ export const useCart = create<CartStore>()(
     (set, get) => ({
       items: [],
 
-      addItem: (product, quantity = 1) => {
+      addItem: (product, quantity = 1, kaynak) => {
         const items = get().items
         const existing = items.find(i => i.product.id === product.id)
 
@@ -31,7 +39,7 @@ export const useCart = create<CartStore>()(
         izle('add_to_cart', {
           productId: product.id,
           value: Number(product.display_price) * quantity || null,
-          meta: { quantity },
+          meta: kaynak ? { quantity, kaynak } : { quantity },
         })
 
         if (existing) {

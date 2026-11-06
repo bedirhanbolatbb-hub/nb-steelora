@@ -73,7 +73,7 @@ export function PaylasilanSepet({ kalemler }: { kalemler: PaylasilanKalem[] }) {
   if (!kalemler.length) return null
 
   const hepsiniEkle = () => {
-    for (const k of eklenebilir) addItem(k.product, k.quantity)
+    for (const k of eklenebilir) addItem(k.product, k.quantity, 'paylasim')
     setEklendi(true)
     router.replace('/sepet', { scroll: false })
   }

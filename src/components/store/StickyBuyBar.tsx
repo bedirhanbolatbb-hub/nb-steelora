@@ -130,7 +130,7 @@ export default function StickyBuyBar({
       }
     }
 
-    addItem(product)
+    addItem(product, 1, 'yapiskan')
     // Faz 11A: mobil çubuktan eklemede de sepet paneli açılır.
     panelAc()
     setAdded(true)

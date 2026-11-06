@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import Image from 'next/image'
 import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
@@ -10,12 +10,13 @@ import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
 import { useKatmanKlavyesi } from '@/hooks/useKatmanKlavyesi'
 import Link from 'next/link'
-import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
+import { X, Minus, Plus, Trash2, ShoppingBag, ShieldCheck, RotateCcw, Gift } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
 import Button from '@/components/ui/Button'
-import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
+import { FREE_SHIPPING_LABEL, tahminiTeslimEtiketi } from '@/lib/shipping'
+import { GUVEN_METNI } from '@/lib/metin/guven'
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
 import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
 import { SepetiPaylasDugmesi } from '@/components/store/SepetPaylasim'
@@ -46,6 +47,8 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
   )
   const indirimliToplam = Math.max(0, subtotal - ozet.indirimToplami)
   const hasItems = items.length > 0
+  // Faz 36: teslim süresi tarih olarak (panel her açıldığında yeniden hesap).
+  const teslimEtiketi = useMemo(() => (isOpen ? tahminiTeslimEtiketi() : ''), [isOpen])
 
 
   return (
@@ -191,10 +194,17 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
             </div>
 
             {/* Ücretsiz kargo güven rozeti — kargo koşulsuz ücretsiz olduğu için
-                ilerleme çubuğu kaldırıldı (tek satır kaldı). */}
+                ilerleme çubuğu kaldırıldı (tek satır kaldı).
+                Faz 36: yanına teslim TARİHİ eklendi. Ölçülen kusur: 30 günde
+                26 sepete eklemeden yalnız 1'i ödeme adımına geçti; ödeme
+                kararının verildiği bu panelde "ne zaman gelir" sorusunun
+                cevabı yoktu (yalnız /kargo-ve-iade sayfasında yazıyordu). */}
             <div className="px-6 py-3 bg-surface-muted/50">
               <p className="text-[11px] font-body text-ink text-center">
                 <span className="text-accent-deep">✓</span> {FREE_SHIPPING_LABEL}
+                {teslimEtiketi && (
+                  <span className="text-ink-soft"> · Tahmini teslim {teslimEtiketi}</span>
+                )}
               </p>
             </div>
 
@@ -264,6 +274,20 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
               >
                 Alışverişe Devam Et
               </button>
+              {/* Faz 36: güven satırı ürün sayfasında vardı, ödeme düğmesinin
+                  yanında yoktu. Metinler tek kaynaktan (lib/metin/guven). */}
+              <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[10px] font-body text-ink-soft">
+                {[
+                  { Icon: ShieldCheck, metin: GUVEN_METNI.odeme },
+                  { Icon: RotateCcw, metin: GUVEN_METNI.iade },
+                  { Icon: Gift, metin: GUVEN_METNI.hediye },
+                ].map(({ Icon, metin }) => (
+                  <li key={metin} className="flex items-center gap-1.5 whitespace-nowrap">
+                    <Icon size={12} strokeWidth={1.5} className="text-accent-deep shrink-0" aria-hidden />
+                    {metin}
+                  </li>
+                ))}
+              </ul>
             </div>
           </>
         ) : (

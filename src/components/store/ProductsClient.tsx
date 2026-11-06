@@ -216,32 +216,37 @@ function ProductsInner({
   )
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-12 lg:py-16">
+    // Faz 36: mobilde ilk ürün satırı ekranın %40'ından sonra başlıyordu
+    // (375×812: 48px üst boşluk + 38px başlık + tanıtım + kontroller). Liste
+    // sayfasının işi ürün göstermek — mobil başlık sıkılaştırıldı, masaüstü
+    // aynı kaldı.
+    <div className="max-w-[1400px] mx-auto px-4 lg:px-8 pt-5 pb-12 sm:pt-12 lg:py-16">
       {/* Kırıntı yolu sunucuda üretilip buraya geçirilir: JsonLd bir SUNUCU
           bileşeni (headers() ile nonce okuyor), istemci bileşeninin içinde
           çağrılamaz — ama prop olarak taşınabilir (Faz 11F son). */}
       {ustSerit}
       {/* Editorial sayfa başı — Sessiz Atölye */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4 border-b border-line pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-5 sm:mb-8 gap-3 sm:gap-4 border-b border-line pb-4 sm:pb-6">
         <div className="max-w-2xl">
-          <h1 className="font-heading text-[38px] lg:text-[48px] font-medium text-ink leading-tight">
+          <h1 className="font-heading text-[30px] sm:text-[38px] lg:text-[48px] font-medium text-ink leading-tight">
             {title}
           </h1>
-          <p className="text-muted text-[11px] uppercase tracking-[0.16em] font-body mt-2">
+          <p className="text-muted text-[11px] uppercase tracking-[0.16em] font-body mt-1 sm:mt-2">
             {total} ürün
           </p>
           {tanitim && (
-            <p className="text-[13px] font-body text-ink-soft leading-relaxed mt-3">
+            <p className="text-[13px] font-body text-ink-soft leading-relaxed mt-2 sm:mt-3 line-clamp-2 sm:line-clamp-none">
               {tanitim}
             </p>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Mobilde Filtrele ve Sıralama yan yana eşit iki düğme (44px). */}
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3">
           {/* Mobil filtre girişi — masaüstünde kenar çubuğu zaten görünür */}
           <button
             onClick={() => setFiltersOpen(true)}
-            className="lg:hidden flex items-center gap-2 px-4 py-2 border border-line bg-white font-body text-[12px] text-ink hover:border-accent-line transition-colors"
+            className="lg:hidden flex h-11 sm:h-auto items-center justify-center gap-2 px-4 py-2 border border-line bg-white font-body text-[12px] text-ink hover:border-accent-line transition-colors"
           >
             <SlidersHorizontal size={14} />
             Filtrele
@@ -251,7 +256,7 @@ function ProductsInner({
             aria-label="Sıralama"
             value={currentParams.siralama || ''}
             onChange={(e) => updateParams({ siralama: e.target.value })}
-            className="w-full sm:w-auto px-4 py-2 border border-line bg-white font-body text-[12px] text-ink focus:border-accent-line focus:outline-none transition-colors"
+            className="w-full h-11 sm:h-auto sm:w-auto px-4 py-2 border border-line bg-white font-body text-[12px] text-ink focus:border-accent-line focus:outline-none transition-colors"
           >
             {SIRALAMA_SECENEKLERI.map((opt) => (
               <option key={opt.value} value={opt.value}>

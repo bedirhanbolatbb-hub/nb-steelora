@@ -73,3 +73,65 @@ export const TASIMA_LABEL = araligi(TASIMA_IS_GUNU)
  * Yeni bir vaat değil, yayında olan vaadin toplamla karıştırılmayacak hâli.
  */
 export const TESLIM_CUMLESI = `Siparişiniz ${HAZIRLIK_LABEL} içinde kargoya verilir, kargo ${TASIMA_LABEL} içinde teslim eder.`
+
+// ── Tahmini teslim TARİHİ (Faz 36) ──
+//
+// Yeni bir vaat DEĞİL: yukarıdaki iki aralığın takvime çevrilmiş hâli.
+// Müşteri "1–2 + 1–5 iş günü"yü kafasında toplamak zorunda kalmasın; sepet ve
+// ürün sayfası aynı hesabı gösterir. Hafta sonu atlanır. Resmî tatiller
+// hesaba katılmaz — bu yüzden metinde "tahmini" kelimesi hiç düşmez.
+
+const ISTANBUL_SAAT_DILIMI = 'Europe/Istanbul'
+
+const AY_ADLARI = [
+  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
+] as const
+
+/**
+ * İstanbul takvimine göre bugünün tarihi. Sunucu UTC'de çalışır; gece
+ * 00:00–03:00 arası UTC tarihi bir gün geride kalırdı.
+ */
+function istanbulBugunu(simdi: Date): Date {
+  const [y, m, d] = new Intl.DateTimeFormat('en-CA', {
+    timeZone: ISTANBUL_SAAT_DILIMI,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+    .format(simdi)
+    .split('-')
+    .map(Number)
+  // Öğlen UTC: gün eklerken yaz/kış saati kaymaları tarihi değiştiremez.
+  return new Date(Date.UTC(y, m - 1, d, 12))
+}
+
+function isGunuEkle(gun: Date, adet: number): Date {
+  const t = new Date(gun)
+  let kalan = adet
+  while (kalan > 0) {
+    t.setUTCDate(t.getUTCDate() + 1)
+    const haftaGunu = t.getUTCDay()
+    if (haftaGunu !== 0 && haftaGunu !== 6) kalan--
+  }
+  return t
+}
+
+/** Bugün verilen siparişin en erken ve en geç teslim günü. */
+export function tahminiTeslim(simdi: Date = new Date()): { enErken: Date; enGec: Date } {
+  const bugun = istanbulBugunu(simdi)
+  return {
+    enErken: isGunuEkle(bugun, HAZIRLIK_IS_GUNU.min + TASIMA_IS_GUNU.min),
+    enGec: isGunuEkle(bugun, HAZIRLIK_IS_GUNU.max + TASIMA_IS_GUNU.max),
+  }
+}
+
+/** "10–17 Kasım" · ay değişiyorsa "27 Kasım – 4 Aralık" */
+export function tahminiTeslimEtiketi(simdi: Date = new Date()): string {
+  const { enErken, enGec } = tahminiTeslim(simdi)
+  const ay1 = AY_ADLARI[enErken.getUTCMonth()]
+  const ay2 = AY_ADLARI[enGec.getUTCMonth()]
+  return ay1 === ay2
+    ? `${enErken.getUTCDate()}–${enGec.getUTCDate()} ${ay2}`
+    : `${enErken.getUTCDate()} ${ay1} – ${enGec.getUTCDate()} ${ay2}`
+}
