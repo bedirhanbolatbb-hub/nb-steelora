@@ -95,10 +95,41 @@ export async function GET(request: Request) {
   }
   puanli.sort((a, b) => b.puan - a.puan)
 
+  /**
+   * YAKIN SONUÇ (Kasım 2026 ölçümü: "harf bileklik", "bileklik harfli",
+   * "harf charm" sonuçsuzdu — katalogda harf kolye ve harf küpe varken).
+   *
+   * Hiçbir ürün kelimelerin HEPSİNİ taşımıyorsa boş liste yerine kelimelerin
+   * bir kısmını taşıyanlar döner. Nadir kelime ağır basar: "harf bileklik"te
+   * "harf" az üründe geçtiği için harfli parçalar bilekliklerin önüne çıkar.
+   * Her satır `yakin: true` taşır; arama penceresi bunu söyler ve ölçümde
+   * arama yine SONUÇSUZ sayılır — eksik ürün sinyali kaybolmaz.
+   */
+  let yakin = false
+  if (puanli.length === 0 && sorgu.length >= 2) {
+    const toplam = dizin.length || 1
+    const agirlik = sorgu.map((k) => {
+      const gecen = dizin.filter(
+        (d) => d.ad.some((w) => kelimeEslesir(k, w)) || d.uzun.some((w) => kelimeEslesir(k, w))
+      ).length
+      return gecen > 0 ? Math.log(1 + toplam / gecen) : 0
+    })
+    for (const d of dizin) {
+      let puan = 0
+      sorgu.forEach((k, i) => {
+        if (d.ad.some((w) => kelimeEslesir(k, w))) puan += 3 * agirlik[i]
+        else if (d.uzun.some((w) => kelimeEslesir(k, w))) puan += agirlik[i]
+      })
+      if (puan > 0) puanli.push({ satir: d.satir, puan: puan + (Number(d.satir.trendyol_stock) > 0 ? 0.01 : 0) })
+    }
+    puanli.sort((a, b) => b.puan - a.puan)
+    yakin = puanli.length > 0
+  }
+
   // Gruplama ilk görülme sırasını korur — sıralama puanla kalır.
   const results = groupProducts(puanli.slice(0, RESULT_LIMIT * 8).map((p) => p.satir))
     .slice(0, RESULT_LIMIT)
-    .map((group) => ({ ...group.cover, option_count: group.optionCount }))
+    .map((group) => ({ ...group.cover, option_count: group.optionCount, ...(yakin ? { yakin: true } : {}) }))
 
   // Aynı sorgu kısa süre içinde tekrar yazıldığında (yaygın: silip yeniden
   // yazma) yanıt kenardan döner. İçerik kişiye özel değil; stok/fiyat

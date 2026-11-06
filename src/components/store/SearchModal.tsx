@@ -62,9 +62,12 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         setResults(data)
         setLoading(false)
         // Ölçüm (Faz 12): sorgu ve sonuç sayısı — sonuçsuz aramalar raporlanır.
+        // Yalnız "yakın sonuç" dönen arama da sonuçsuz sayılır (eksik ürün sinyali).
+        const adet = Array.isArray(data) ? data.length : 0
+        const yakinMi = adet > 0 && Boolean(data[0]?.yakin)
         izle('search', {
           searchQuery: query,
-          meta: { sonuc: Array.isArray(data) ? data.length : 0 },
+          meta: yakinMi ? { sonuc: 0, yakin: adet } : { sonuc: adet },
         })
       } catch (error: any) {
         // İptal edilen istek yeni bir aramanın başladığı anlamına gelir:
@@ -147,6 +150,12 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             <p className="p-6 text-center text-muted text-[13px] font-body">
               &ldquo;{query}&rdquo; — {BOS_DURUM.arama.baslik.toLocaleLowerCase('tr-TR')}.{' '}
               {BOS_DURUM.arama.metin}
+            </p>
+          )}
+
+          {!loading && results.length > 0 && (results[0] as any).yakin && (
+            <p className="px-6 pt-4 pb-2 text-[12px] font-body text-muted">
+              &ldquo;{query}&rdquo; için tam eşleşme yok. Yakın sonuçlar:
             </p>
           )}
 
