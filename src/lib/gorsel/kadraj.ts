@@ -13,7 +13,7 @@ import { gorselBoyutu, isRemoteMedia, trendyolCdnMi } from '@/lib/images'
  */
 
 /** Algoritma değişirse artırılır: adres değişir, eski önbellek kendiliğinden düşer. */
-export const KADRAJ_SURUM = '1'
+export const KADRAJ_SURUM = '2'
 
 /** Uç yalnız bu genişlikleri üretir (önbellek isabeti + kötüye kullanım sınırı). */
 export const KADRAJ_GENISLIKLERI = [256, 384, 640, 828, 1080] as const

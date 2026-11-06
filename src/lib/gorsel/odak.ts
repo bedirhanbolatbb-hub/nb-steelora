@@ -226,6 +226,70 @@ export function urunKutusu(rgb: Uint8Array, W: number, H: number, kanal = 3): Ku
 }
 
 /**
+ * Fotoğrafın ÇERÇEVESİZ alanı (Faz 36).
+ *
+ * ÖLÇÜLEN KUSUR (NBH008, 6 Kas 2026): bazı tedarikçi fotoğraflarında asıl
+ * fotoğraf, 1200×1800 tuvalin üstüne ve altına eklenmiş düz BEYAZ BANTLARIN
+ * arasında duruyor. Ortadan kırpımda bantlar kadraj dışında kalıyordu; ürüne
+ * göre kayan kadraj ise alttaki bandı karta taşıdı — kartın dibinde beyaz
+ * şerit. Kadraj artık yalnız bu kutunun içinde dolaşır.
+ *
+ * Kenardan içeri, kenar rengiyle neredeyse aynı (satırın ≥ %99'u ±10 içinde)
+ * satır/sütunlar bant sayılır. Bant ancak ardından KESKİN bir geçiş geliyorsa
+ * kırpılır: hemen sonraki satırların çoğu bant renginden belirgin farklı
+ * olmalı. Böylece beyaz stüdyo zemininde ürünün çevresindeki doğal beyaz alan
+ * bant sanılıp kesilmez (orada geçiş satırın küçük bir kısmında, ürünün
+ * olduğu yerde olur).
+ */
+export function icerikKutusu(rgb: Uint8Array, W: number, H: number, kanal = 3): Kutu {
+  const fark = (p: number, r: number, g: number, b: number) =>
+    Math.max(Math.abs(rgb[p] - r), Math.abs(rgb[p + 1] - g), Math.abs(rgb[p + 2] - b))
+
+  /** Bir satır (yatay) ya da sütun boyunca yakın ve belirgin farklı piksel oranı. */
+  const hat = (yatay: boolean, i: number, r: number, g: number, b: number) => {
+    const uzunluk = yatay ? W : H
+    let yakin = 0
+    let uzak = 0
+    for (let k = 0; k < uzunluk; k++) {
+      const p = (yatay ? i * W + k : k * W + i) * kanal
+      const d = fark(p, r, g, b)
+      if (d <= 10) yakin++
+      else if (d > 24) uzak++
+    }
+    return { yakin: yakin / uzunluk, uzak: uzak / uzunluk }
+  }
+
+  /** Bir kenardaki bandın kalınlığı (piksel); bant yoksa 0. */
+  const bant = (yatay: boolean, ters: boolean): number => {
+    const adet = yatay ? H : W
+    const kenar = ters ? adet - 1 : 0
+    const p0 = (yatay ? kenar * W + Math.floor(W / 2) : Math.floor(H / 2) * W + kenar) * kanal
+    const r = rgb[p0]
+    const g = rgb[p0 + 1]
+    const b = rgb[p0 + 2]
+    let n = 0
+    while (n < adet * 0.4 && hat(yatay, ters ? adet - 1 - n : n, r, g, b).yakin >= 0.99) n++
+    if (n < Math.max(2, adet * 0.015)) return 0
+    // Keskin geçiş: bandın ardındaki ilk üç hattan en az birinin yarısı belirgin farklı
+    // (küçültmenin yumuşattığı geçiş satırı atlanabilsin diye üç hat).
+    let gecis = 0
+    for (let j = n; j < Math.min(adet, n + 3); j++) {
+      gecis = Math.max(gecis, hat(yatay, ters ? adet - 1 - j : j, r, g, b).uzak)
+    }
+    // +2 hat güvenlik payı: küçültme ve JPEG, bant sınırını 1–2 hat yumuşatır;
+    // pay olmadan kadrajın kenarında ince bir bant çizgisi kalabiliyordu
+    // (sentetik testte 2–5 px).
+    return gecis >= 0.5 ? n + 2 : 0
+  }
+
+  const ust = bant(true, false)
+  const alt = bant(true, true)
+  const sol = bant(false, false)
+  const sag = bant(false, true)
+  return { x0: sol / W, x1: (W - sag) / W, y0: ust / H, y1: (H - alt) / H }
+}
+
+/**
  * Ürün kutusundan kart kadrajı (piksel).
  * @param oran  kadrajın en/boy oranı (4:5 = 0.8)
  * @param pay   ürün kutusunun çevresine bırakılan boşluk çarpanı
@@ -238,15 +302,23 @@ export function kadrajHesapla(
   kaynakBoy: number,
   oran: number,
   pay: number,
-  enKucuk: number
+  enKucuk: number,
+  /** Faz 36: fotoğrafın çerçevesiz alanı (icerikKutusu) — kadraj bunun dışına taşmaz. */
+  icerik: Kutu | null = null
 ): Kirpim {
-  const tamEn = Math.min(kaynakEn, kaynakBoy * oran)
+  const sx = icerik ? Math.round(icerik.x0 * kaynakEn) : 0
+  const sy = icerik ? Math.round(icerik.y0 * kaynakBoy) : 0
+  const ex = icerik ? Math.round(icerik.x1 * kaynakEn) : kaynakEn
+  const ey = icerik ? Math.round(icerik.y1 * kaynakBoy) : kaynakBoy
+  const alanEn = Math.max(1, ex - sx)
+  const alanBoy = Math.max(1, ey - sy)
+  const tamEn = Math.min(alanEn, alanBoy * oran)
   if (!kutu) {
-    // Odak bulunamadı: bugünkü davranış — ortadan kırpım.
+    // Odak bulunamadı: ortadan kırpım (çerçevesiz alanın ortası).
     const h = tamEn / oran
     return {
-      left: Math.round((kaynakEn - tamEn) / 2),
-      top: Math.round((kaynakBoy - h) / 2),
+      left: Math.round(sx + (alanEn - tamEn) / 2),
+      top: Math.round(sy + (alanBoy - h) / 2),
       width: Math.round(tamEn),
       height: Math.round(h),
     }
@@ -255,22 +327,22 @@ export function kadrajHesapla(
   const bh = (kutu.y1 - kutu.y0) * kaynakBoy
   const cx = ((kutu.x0 + kutu.x1) / 2) * kaynakEn
   const cy = ((kutu.y0 + kutu.y1) / 2) * kaynakBoy
-  let cw = Math.max(bw * pay, bh * pay * oran, kaynakEn * enKucuk)
+  let cw = Math.max(bw * pay, bh * pay * oran, alanEn * enKucuk)
   let ch = cw / oran
-  if (ch > kaynakBoy) {
-    ch = kaynakBoy
+  if (ch > alanBoy) {
+    ch = alanBoy
     cw = ch * oran
   }
-  if (cw > kaynakEn) {
-    cw = kaynakEn
+  if (cw > alanEn) {
+    cw = alanEn
     ch = cw / oran
   }
-  const left = Math.min(Math.max(cx - cw / 2, 0), kaynakEn - cw)
-  const top = Math.min(Math.max(cy - ch / 2, 0), kaynakBoy - ch)
+  const left = Math.min(Math.max(cx - cw / 2, sx), ex - cw)
+  const top = Math.min(Math.max(cy - ch / 2, sy), ey - ch)
   return {
     left: Math.round(left),
     top: Math.round(top),
-    width: Math.max(1, Math.min(Math.round(cw), kaynakEn - Math.round(left))),
-    height: Math.max(1, Math.min(Math.round(ch), kaynakBoy - Math.round(top))),
+    width: Math.max(1, Math.min(Math.round(cw), ex - Math.round(left))),
+    height: Math.max(1, Math.min(Math.round(ch), ey - Math.round(top))),
   }
 }

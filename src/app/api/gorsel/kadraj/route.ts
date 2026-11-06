@@ -1,6 +1,6 @@
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { hizSiniri, istekKimligi } from '@/lib/guvenlik/hizSiniri'
-import { kadrajHesapla, urunKutusu } from '@/lib/gorsel/odak'
+import { icerikKutusu, kadrajHesapla, urunKutusu } from '@/lib/gorsel/odak'
 import { KADRAJ_GENISLIKLERI, KADRAJ_ORANLARI, type KadrajOrani, trendyolOzgun } from '@/lib/gorsel/kadraj'
 import { gorselBoyutu, trendyolCdnMi } from '@/lib/images'
 import { createServiceClient } from '@/lib/supabase/service'
@@ -99,8 +99,10 @@ export async function GET(request: Request) {
       .toBuffer({ resolveWithObject: true })
 
     const kutu = urunKutusu(kucuk, ki.width, ki.height, ki.channels)
+    // Faz 36: tuvale eklenmiş düz bantlar (beyaz çerçeve) kadraja girmez.
+    const icerik = icerikKutusu(kucuk, ki.width, ki.height, ki.channels)
     const { pay, enKucuk } = AYAR[o]
-    const kirp = kadrajHesapla(kutu, info.width, info.height, KADRAJ_ORANLARI[o], pay, enKucuk)
+    const kirp = kadrajHesapla(kutu, info.width, info.height, KADRAJ_ORANLARI[o], pay, enKucuk, icerik)
 
     const cikti = await sharp(tam, hamPiksel)
       .extract(kirp)
@@ -117,6 +119,8 @@ export async function GET(request: Request) {
         'X-Kadraj': kutu
           ? [kutu.x0, kutu.y0, kutu.x1, kutu.y1].map((v) => v.toFixed(3)).join(',')
           : 'orta',
+        // Çerçevesiz alan — tam kare ise 0,0,1,1.
+        'X-Kadraj-Icerik': [icerik.x0, icerik.y0, icerik.x1, icerik.y1].map((v) => v.toFixed(3)).join(','),
       },
     })
   } catch (e) {
