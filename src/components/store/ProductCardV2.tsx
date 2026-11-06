@@ -13,6 +13,7 @@ import { IMAGE_QUALITY, isRemoteMedia, trendyolCdnMi, trendyolYukleyici } from '
 import { useCart } from '@/hooks/useCart'
 import type { Product } from '@/types'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
+import { useKadraj } from '@/components/store/KadrajContext'
 
 /**
  * Ürün kartı v2 (Faz 8B, "Sessiz Atölye").
@@ -65,6 +66,9 @@ export default function ProductCardV2({
     setHoverHazir(true)
   }
 
+  // Faz 35: kart görseli takıya göre kadrajlanır (ürün başına panelden kapatılabilir).
+  const kadrajAcik = useKadraj(product.id)
+
   const addItem = useCart((s) => s.addItem)
   const [added, setAdded] = useState(false)
   const outOfStock = product.trendyol_stock === 0
@@ -115,6 +119,9 @@ export default function ProductCardV2({
             sizes={buyuk ? '(max-width: 640px) 50vw, (max-width: 1400px) 48vw, 680px' : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 340px'}
             enBoy={buyuk ? 1100 : 680}
             bulanik
+            // Büyük kart mobilde 4:5, masaüstünde 5:4 — iki kutuya da taşmadan
+            // oturan kare kadraj; normal kart 4:5.
+            kadraj={kadrajAcik ? (buyuk ? '11' : '45') : null}
             priority={priority}
             className={`object-cover transition-all duration-700 ${
               hoverImage && hoverIndi ? 'group-hover:opacity-0' : 'group-hover:scale-[1.04]'

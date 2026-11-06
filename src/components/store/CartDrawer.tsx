@@ -7,7 +7,6 @@ import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { markaKategorisi } from '@/lib/catalog/categories'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
-import { gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
 import { useKatmanKlavyesi } from '@/hooks/useKatmanKlavyesi'
 import Link from 'next/link'
@@ -20,6 +19,8 @@ import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
 import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
 import { SepetiPaylasDugmesi } from '@/components/store/SepetPaylasim'
+import { kucukResim } from '@/lib/gorsel/kadraj'
+import { useKadrajSorgu } from '@/components/store/KadrajContext'
 
 interface CartDrawerProps {
   isOpen: boolean
@@ -36,6 +37,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
   useKatmanKlavyesi(isOpen, onClose, kapRef)
   const { items, removeItem, updateQuantity, totalPrice } = useCart()
   // Faz 11A: fiyat gösterimi vitrin kampanyasından türer (tek kaynak).
+  const kadrajMi = useKadrajSorgu()
   const kampanyaIndirimi = useVitrinIndirimi()
   const subtotal = totalPrice()
   // İndirim artık ödeme adımını beklemeden burada görünüyor (Faz 15).
@@ -105,8 +107,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                       aria-label={item.product.display_title}
                     >
                       <Image
-                        src={gorselBoyutu(imageUrl, 160)}
-                        unoptimized={isRemoteMedia(imageUrl)}
+                        {...kucukResim(imageUrl, 256, kadrajMi(item.product.id))}
                         alt={item.product.display_title}
                         fill
                         className="object-cover"

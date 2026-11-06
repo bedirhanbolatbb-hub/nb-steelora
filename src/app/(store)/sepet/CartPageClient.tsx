@@ -6,7 +6,6 @@ import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
-import { gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
 import { useSyncExternalStore } from 'react'
 import { Minus, Plus, Trash2 } from 'lucide-react'
@@ -18,6 +17,8 @@ import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
 import KuponKutusu, { useKuponKodu } from '@/components/store/KuponKutusu'
 import { PaylasilanSepet, SepetiPaylasDugmesi } from '@/components/store/SepetPaylasim'
 import type { PaylasilanKalem } from './page'
+import { kucukResim } from '@/lib/gorsel/kadraj'
+import { useKadrajSorgu } from '@/components/store/KadrajContext'
 
 // Sepet localStorage'da tutuluyor; ilk sunucu çıktısıyla uyumsuzluk olmasın diye
 // içerik yalnızca hidrasyondan sonra basılır.
@@ -38,6 +39,7 @@ export default function CartPageClient({
   // Kampanya indirimi ödeme adımını beklemeden burada da görünür (Faz 15).
   // Kupon artık SEPETTE de girilebiliyor (Faz 25); kod ödeme adımına taşınır.
   const [kod, setKod] = useKuponKodu()
+  const kadrajMi = useKadrajSorgu()
   const kampanyaIndirimi = useVitrinIndirimi()
   const { ozet, indirim, kodHatasi, kuponBilgiMi, kuponUygulandi, ilkSiparisMetni } = useOtomatikIndirim(
     items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 })),
@@ -94,8 +96,7 @@ export default function CartPageClient({
                 <Link href={`/urun/${product.slug}`} className="relative w-24 aspect-[4/5] rounded-[4px] bg-surface-muted shrink-0 overflow-hidden">
                   {product.display_images?.[0] && (
                     <Image
-                      src={gorselBoyutu(product.display_images[0], 160)}
-                      unoptimized={isRemoteMedia(product.display_images[0])}
+                      {...kucukResim(product.display_images[0], 256, kadrajMi(product.id))}
                       alt={product.display_title}
                       fill
                       className="object-cover"

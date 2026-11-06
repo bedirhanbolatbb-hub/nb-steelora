@@ -52,7 +52,7 @@ const gecerliUrl = (u: string) => {
   }
 }
 
-export default function UrunDetayClient({ urun }: { urun: UrunDetay }) {
+export default function UrunDetayClient({ urun, kadrajKarti }: { urun: UrunDetay; kadrajKarti?: React.ReactNode }) {
   const router = useRouter()
   const { push: toast } = useToast()
 
@@ -210,6 +210,9 @@ export default function UrunDetayClient({ urun }: { urun: UrunDetay }) {
               </div>
             )}
           </PCard>
+
+          {/* Faz 35: vitrin kadrajı — kartta ürünün nasıl göründüğü */}
+          {kadrajKarti}
 
           {/* Trendyol görselleri — salt okunur */}
           <PCard title="Trendyol görselleri (salt okunur)">

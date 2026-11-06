@@ -7,11 +7,12 @@ import { useState } from 'react'
 import { Check, Share2 } from 'lucide-react'
 import { useCart } from '@/hooks/useCart'
 import { formatPrice } from '@/lib/utils'
-import { gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { paylasimKodla } from '@/lib/sepet/paylasim'
 import type { PaylasilanKalem } from '@/app/(store)/sepet/page'
+import { kucukResim } from '@/lib/gorsel/kadraj'
+import { useKadrajSorgu } from '@/components/store/KadrajContext'
 
 /**
  * Sepeti paylaş düğmesi (Faz 35).
@@ -64,6 +65,7 @@ export function SepetiPaylasDugmesi() {
 export function PaylasilanSepet({ kalemler }: { kalemler: PaylasilanKalem[] }) {
   const router = useRouter()
   const addItem = useCart((s) => s.addItem)
+  const kadrajMi = useKadrajSorgu()
   const kampanyaIndirimi = useVitrinIndirimi()
   const [eklendi, setEklendi] = useState(false)
   const eklenebilir = kalemler.filter((k) => !k.tukendi)
@@ -95,8 +97,7 @@ export function PaylasilanSepet({ kalemler }: { kalemler: PaylasilanKalem[] }) {
               >
                 {gorsel && (
                   <Image
-                    src={gorselBoyutu(gorsel, 120)}
-                    unoptimized={isRemoteMedia(gorsel)}
+                    {...kucukResim(gorsel, 256, kadrajMi(product.id))}
                     alt={product.display_title}
                     fill
                     className="object-cover"

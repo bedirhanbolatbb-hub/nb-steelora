@@ -11,6 +11,7 @@ import {
   trendyolCdnMi,
   trendyolYukleyici,
 } from '@/lib/images'
+import { kadrajYukleyici, trendyolOzgun, type KadrajOrani } from '@/lib/gorsel/kadraj'
 
 type Props = {
   src?: string | null
@@ -27,6 +28,11 @@ type Props = {
   enBoy?: number
   /** Yüklenene kadar görselin bulanık küçük hâli basılsın mı (F6). */
   bulanik?: boolean
+  /**
+   * Faz 35 · vitrin kadrajı: verilirse Trendyol görseli takıya göre bu oranda
+   * kadrajlanmış hâliyle gelir (/api/gorsel/kadraj). Yalnız `sizes` ile.
+   */
+  kadraj?: KadrajOrani | null
 }
 
 /**
@@ -47,6 +53,7 @@ export default function ProductImage({
   className,
   enBoy,
   bulanik,
+  kadraj,
 }: Props) {
   const [failed, setFailed] = useState(false)
   const [yuklendi, setYuklendi] = useState(false)
@@ -63,9 +70,12 @@ export default function ProductImage({
 
   // Faz 12: Trendyol görseli + `sizes` → duyarlı yol. next/image her ekran
   // basamağını CDN'den ayrı ister (trendyolYukleyici); tek sabit boyut yok.
-  const duyarli = trendyolCdnMi(src) && Boolean(sizes)
-  const kaynak = (duyarli ? src : enBoy ? gorselBoyutu(src, enBoy) : src) as string
-  const onizleme = bulanik ? bulanikOnizleme(src) : null
+  // Faz 35: kadrajlı yol — yükleyici takıya göre kırpılmış görseli ister.
+  // Bulanık önizleme verilmez: tüm kareyi gösterip sonra yakına zıplardı.
+  const kadrajli = Boolean(kadraj) && trendyolCdnMi(src) && Boolean(sizes)
+  const duyarli = !kadrajli && trendyolCdnMi(src) && Boolean(sizes)
+  const kaynak = (kadrajli ? trendyolOzgun(src) : duyarli ? src : enBoy ? gorselBoyutu(src, enBoy) : src) as string
+  const onizleme = bulanik && !kadrajli ? bulanikOnizleme(src) : null
 
   return (
     <>
@@ -87,8 +97,8 @@ export default function ProductImage({
       )}
       <Image
         src={kaynak}
-        loader={duyarli ? trendyolYukleyici : undefined}
-        unoptimized={duyarli ? false : isRemoteMedia(kaynak)}
+        loader={kadrajli ? kadrajYukleyici(kadraj as KadrajOrani) : duyarli ? trendyolYukleyici : undefined}
+        unoptimized={kadrajli || duyarli ? false : isRemoteMedia(kaynak)}
         alt={alt}
         fill
         sizes={sizes}

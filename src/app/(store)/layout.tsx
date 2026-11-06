@@ -11,6 +11,8 @@ import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import { KampanyaSaglayici } from '@/components/store/KampanyaContext'
 import { UyelikTesvikSaglayici } from '@/components/store/UyelikTesvikContext'
 import { uyelikTesvikiGetir } from '@/lib/campaigns/uyelikTesviki'
+import { KadrajSaglayici } from '@/components/store/KadrajContext'
+import { kadrajAyariniOku } from '@/lib/gorsel/kadrajAyari'
 
 export default async function StoreLayout({
   children,
@@ -48,6 +50,8 @@ export default async function StoreLayout({
     // sayfası ₺314,93 derken panel ₺449,90 diyordu. Kabuğun tamamı sarıldı.
     <KampanyaSaglayici indirim={vitrinIndirimi}>
       <UyelikTesvikSaglayici tesvik={uyelikTesviki}>
+      {/* Faz 35: kart görsellerinin takıya göre kadrajlanması (ayar site_content'te). */}
+      <KadrajSaglayici {...kadrajAyariniOku(veri.content)}>
       <Navbar
         bannerText={veri.bannerText}
         bannerColor={veri.bannerColor}
@@ -62,6 +66,7 @@ export default async function StoreLayout({
       <RevealController />
       <ConsentGate />
       <TarayiciDogrula />
+      </KadrajSaglayici>
       </UyelikTesvikSaglayici>
     </KampanyaSaglayici>
   )

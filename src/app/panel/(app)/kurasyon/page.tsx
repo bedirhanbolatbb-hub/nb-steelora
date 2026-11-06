@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { createServiceClient } from '@/lib/supabase/service'
 import KurasyonClient, { type KurasyonUrun, type PanelSlayt } from './KurasyonClient'
+import VitrinKadrajiGenel from './VitrinKadrajiGenel'
+import { KADRAJ_ANAHTARI, KADRAJ_KAPALI_ANAHTARI, kadrajAyariniOku } from '@/lib/gorsel/kadrajAyari'
 
 export const metadata: Metadata = { title: 'Kürasyon' }
 export const dynamic = 'force-dynamic'
@@ -66,7 +68,16 @@ export default async function PanelKurasyonPage() {
     ? slidesRow!.payload.slides
     : []
 
+  // Faz 35: vitrin kadrajı genel anahtarı
+  const { data: kadrajSatirlari } = await supabase
+    .from('site_content')
+    .select('key, value')
+    .in('key', [KADRAJ_ANAHTARI, KADRAJ_KAPALI_ANAHTARI])
+  const kadraj = kadrajAyariniOku(Object.fromEntries((kadrajSatirlari ?? []).map((r) => [r.key, r.value])))
+
   return (
+    <div className="space-y-4">
+    <VitrinKadrajiGenel acik={kadraj.acik} kapaliSayisi={kadraj.kapaliIdler.length} />
     <KurasyonClient
       bolumler={bolumler}
       urunler={urunler}
@@ -75,5 +86,6 @@ export default async function PanelKurasyonPage() {
       koleksiyonlar={(koleksiyonlar || []).map((k: any) => ({ slug: k.slug, name: k.name }))}
       instagramKareleri={Array.isArray(igRow?.payload?.items) ? igRow!.payload.items : []}
     />
+    </div>
   )
 }

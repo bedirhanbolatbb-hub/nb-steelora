@@ -5,7 +5,6 @@ import UyelikTesvikSatiri from '@/components/store/UyelikTesvikSatiri'
 import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
-import { gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import Image from 'next/image'
 import { useCart } from '@/hooks/useCart'
 import { createClient } from '@/lib/supabase/client'
@@ -18,6 +17,8 @@ import { izle } from '@/lib/analytics/izle'
 import { SHIPPING_LINE_LABEL, shippingCostFor } from '@/lib/shipping'
 import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
 import KuponKutusu, { useKuponKodu } from '@/components/store/KuponKutusu'
+import { kucukResim } from '@/lib/gorsel/kadraj'
+import { useKadrajSorgu } from '@/components/store/KadrajContext'
 
 export default function OdemePage() {
   const { items, totalPrice, clearCart } = useCart()
@@ -100,6 +101,7 @@ export default function OdemePage() {
   // Faz 25: kupon kutusu artık sepetle ORTAK bileşen ve kod localStorage'da
   // taşınıyor; müşteri sepette girdiğini burada tekrar yazmıyor.
   const [kod, setKod] = useKuponKodu()
+  const kadrajMi = useKadrajSorgu()
   const kampanyaIndirimi = useVitrinIndirimi()
   const {
     ozet,
@@ -728,8 +730,7 @@ export default function OdemePage() {
                 <div className="relative w-12 h-14 bg-surface-muted shrink-0 overflow-hidden rounded-[2px]">
                   {item.product.display_images?.[0] && (
                     <Image
-                      src={gorselBoyutu(item.product.display_images[0], 96)}
-                      unoptimized={isRemoteMedia(item.product.display_images[0])}
+                      {...kucukResim(item.product.display_images[0], 256, kadrajMi(item.product.id))}
                       alt={item.product.display_title}
                       fill
                       className="object-cover"

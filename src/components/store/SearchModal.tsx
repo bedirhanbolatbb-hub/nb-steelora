@@ -8,10 +8,11 @@ import { markaKategorisi } from '@/lib/catalog/categories'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { useRouter } from 'next/navigation'
-import { gorselBoyutu } from '@/lib/images'
 import { Search, X } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { izle } from '@/lib/analytics/izle'
+import { kucukResim } from '@/lib/gorsel/kadraj'
+import { useKadrajSorgu } from '@/components/store/KadrajContext'
 
 interface SearchModalProps {
   isOpen: boolean
@@ -21,6 +22,7 @@ interface SearchModalProps {
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [query, setQuery] = useState('')
   // Faz 11A: fiyat gösterimi vitrin kampanyasından türer (tek kaynak).
+  const kadrajMi = useKadrajSorgu()
   const kampanyaIndirimi = useVitrinIndirimi()
   const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -159,7 +161,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   // Yüklenene kadar boş kutu görünmesin: zemin dururken görsel
                   // yerine oturunca yumuşak belirir.
                   <img
-                    src={gorselBoyutu(product.display_images[0], 128) as string}
+                    src={kucukResim(product.display_images[0], 256, kadrajMi(product.id)).src}
                     alt={product.display_title}
                     loading="lazy"
                     decoding="async"

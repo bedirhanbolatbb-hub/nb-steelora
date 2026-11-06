@@ -3,6 +3,8 @@ import { beyanEdilenMalzemeMi } from '@/lib/catalog/material'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
 import UrunDetayClient from './UrunDetayClient'
+import VitrinKadraji from './VitrinKadraji'
+import { KADRAJ_ANAHTARI, KADRAJ_KAPALI_ANAHTARI, kadrajAyariniOku } from '@/lib/gorsel/kadrajAyari'
 
 export const metadata: Metadata = { title: 'Ürün düzenle' }
 export const dynamic = 'force-dynamic'
@@ -25,8 +27,25 @@ export default async function PanelUrunDetayPage({
 
   if (!p) notFound()
 
+  // Faz 35: vitrin kadrajı ayarı (genel + bu ürün)
+  const { data: kadrajSatirlari } = await supabase
+    .from('site_content')
+    .select('key, value')
+    .in('key', [KADRAJ_ANAHTARI, KADRAJ_KAPALI_ANAHTARI])
+  const kadraj = kadrajAyariniOku(Object.fromEntries((kadrajSatirlari ?? []).map((r) => [r.key, r.value])))
+  const ilkGorsel =
+    ((p.override_images as string[] | null) ?? [])[0] ?? ((p.trendyol_images as string[] | null) ?? [])[0] ?? null
+
   return (
     <UrunDetayClient
+      kadrajKarti={
+        <VitrinKadraji
+          urunId={p.id}
+          gorsel={ilkGorsel}
+          genelAcik={kadraj.acik}
+          urundeKapali={kadraj.kapaliIdler.includes(p.id)}
+        />
+      }
       urun={{
         id: p.id,
         slug: p.slug,

@@ -39,6 +39,7 @@ export default function CategoryRail({
                       alt={cat.title}
                       className="object-cover transition-transform duration-700 group-hover:scale-[1.05]"
                       sizes="164px"
+                      kadraj="34"
                     />
                   ) : (
                     <span className="absolute inset-0 flex items-center justify-center text-muted/30 text-[10px] font-body tracking-wider uppercase">
