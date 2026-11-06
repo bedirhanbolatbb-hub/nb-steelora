@@ -6,6 +6,7 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BLUR_PLACEHOLDER, IMAGE_QUALITY, gorselBoyutu, isRemoteMedia } from '@/lib/images'
 import ProductImage from './ProductImage'
+import { useKadraj } from './KadrajContext'
 
 interface ProductImageGalleryProps {
   images: string[]
@@ -20,6 +21,15 @@ interface ProductImageGalleryProps {
  * Lightbox davranışları (ESC/ok tuşları/scroll kilidi) aynen korunur.
  */
 export default function ProductImageGallery({ images, title, morphAd }: ProductImageGalleryProps) {
+  // Faz 36: İLK görsel kartla aynı vitrin kadrajından gelir.
+  //  · Hız: ürün sayfasının en büyük öğesi bu görsel (PageSpeed mobil LCP
+  //    5,5 sn). Trendyol'un 828 px JPEG'i yerine kendi adresimizden, bir yıl
+  //    önbellekli WebP iner — ayrı sunucuya bağlantı da gerekmez.
+  //  · Kutu zaten 4:5 (object-cover ortadan kırpıyordu); kadraj ürünü ortalar.
+  //  · Karttan ürün sayfasına akan geçişte görsel aynı kalır.
+  // Diğer kareler ve büyütme (lightbox) özgün fotoğraf. Panelde bu üründe
+  // kadraj kapalıysa ilk kare de özgün.
+  const kadrajIlk = useKadraj(morphAd)
   const [activeIndex, setActiveIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [closing, setClosing] = useState(false)
@@ -97,6 +107,7 @@ export default function ProductImageGallery({ images, title, morphAd }: ProductI
                   sizes="(min-width: 640px) 1px, 100vw"
                   enBoy={900}
                   bulanik
+                  kadraj={i === 0 && kadrajIlk ? '45' : null}
                   priority={i === 0}
                   className="object-cover"
                 />
@@ -140,6 +151,7 @@ export default function ProductImageGallery({ images, title, morphAd }: ProductI
             sizes="(max-width: 639px) 1px, (max-width: 1024px) 100vw, 640px"
             enBoy={1200}
             bulanik
+            kadraj={activeIndex === 0 && kadrajIlk ? '45' : null}
             priority
             className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
           />
