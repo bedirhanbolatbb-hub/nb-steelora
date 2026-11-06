@@ -68,8 +68,12 @@ const IDDIA_DESENLERI: [RegExp, string][] = [
   [/\s*özel\s+tasarım(ı|ıyla|ımızla)\s+(hazırlanmış|üretilmiş)\s*/gi, ' '],
   [/\s*kendi\s+(üretimimiz\w*|atölyemizde\s+üretilen)\s*/gi, ' '],
   [/\s*el\s+işçiliğiyle\s+üretilen\s*/gi, ' '],
-  [/\s*Her\s+detayında\s+ince\s+işçilik\s+barındıran\s+/gi, ''],
-  [/\bbu\s+premium\s+(çelik|altın|gümüş)\s+/gi, 'bu '],
+  // Faz 36: '' idi — öncesindeki boşluğu da yiyip "getiriyor.bu parça"
+  // yapıştırıyordu; boşluk bırakılır, fazlası aşağıda toplanır.
+  [/\s*Her\s+detayında\s+ince\s+işçilik\s+barındıran\s+/gi, ' '],
+  // Faz 36: "bu premium küpe/bileklik/yüzük" (95 ürün) de kapsanır — "premium"
+  // doğrulanamaz bir sıfat; malzeme adı varsa o da düşer (eski davranış).
+  [/\bbu\s+premium\s+((çelik|altın|gümüş)\s+)?/gi, 'bu '],
   // MENŞEİ CÜMLESİ (14 Eyl 2026). Tedarikçi şablonu "Menşei bilgisi
   // belirtilmemiş olup, yerel üretim veya ithal ürün olabilir." diyordu.
   // Yanlış değil ama müşteriye söylenecek bir şey de değil: ürünün nereden
@@ -80,18 +84,33 @@ const IDDIA_DESENLERI: [RegExp, string][] = [
   // Cümle tedarikçi dolgusu; "özel tasarlanmış" ifadesi tasarımın bize ait
   // olduğu izlenimini verebiliyor. Cümlenin tamamı atılır, kalan metin durur.
   [/\s*[^.]*özel\s+tasarlanmış\s+olup[^.]*\.\s*/gi, ' '],
+  // DAYANIKLILIK VAATLERİ (6 Kas 2026, Merchant Center açıklama raporu + besleme
+  // taraması). Tedarikçi şablonu 141 üründe "Dikkatli kullanımda kararma, renk
+  // atma olmaz." diyor — katalogun yarısı kaplama pirinç ve aynı metin bir sonraki
+  // cümlede "bazı tenlerin karartma yaptığını" söylüyor: kendi içinde çelişen,
+  // doğrulanamaz bir vaat. ~99 üründeki "Uzun ömürlü parlaklık ve renk koruması"
+  // da aynı türden. İkisi de atılır; tene dair uyarı (dürüst bilgi) kalır.
+  [/\s*Dikkatli\s+kullanımda\s+kararma,?\s*renk\s+atma\s+olmaz\.?\s*/gi, ' '],
+  [/\s*Uzun\s*ömürlü\s*parlaklık\s*ve\s*renk\s*koruması\.?\s*/gi, ' '],
+  // Vaat atılınca "Ayrıca" boşta kalıyor.
+  [/\bAyrıca\s+teninizin\b/g, 'Teninizin'],
 ]
 
 export function iddiaTemizle(line: string): string {
   let text = line
   for (const [desen, yerine] of IDDIA_DESENLERI) text = text.replace(desen, yerine)
-  return text.replace(/\s{2,}/g, ' ').replace(/\s+([,.;:])/g, '$1').trim()
+  text = text.replace(/\s{2,}/g, ' ').replace(/\s+([,.;:])/g, '$1').trim()
+  // Faz 36: iddia cümlenin başından atılınca yeni cümle küçük harfle
+  // başlıyordu ("…bir araya getiriyor. bu parça", 242 üründe). Cümle sonu
+  // (. ! ? …) ve satır başından sonraki ilk küçük harf büyütülür.
+  return text.replace(/(^|[.!?…]\s+)([a-zçğıöşü])/g, (_, once: string, harf: string) => once + harf.toLocaleUpperCase('tr-TR'))
 }
 
 /** Kargo & İade sekmesinin zaten kapsadığı pazaryeri cümleleri. */
 const POLICY_SENTENCES = [
   /hijyenik nedenlerle/i,
-  /sadece hasarlı,? yanlış veya eksik gönderim/i,
+  // "S adece" yazım hatalı kopyası da var (9 ürün, Faz 36).
+  /s\s?adece hasarlı,? yanlış veya eksik gönderim/i,
   /sipariş vermeden önce açıklamayı dikkatle okuyunuz/i,
 ]
 
@@ -134,6 +153,8 @@ function cleanFragments(line: string): string {
   text = text.replace(/^\)\s*/, '').trim()
   // İçi boş parantezler
   text = text.replace(/\(\s*\)/g, '').replace(/\s{2,}/g, ' ').trim()
+  // Faz 36: maddeler virgülle bitiyordu ("…hediye etmeye hazırdır,")
+  text = text.replace(/\s*[,;:]+$/, '').trim()
   return text
 }
 

@@ -68,15 +68,42 @@ function tarihAraligi(baslangic: string | null, bitis: string | null): string | 
   return `${bas.toISOString()}/${son.toISOString()}`
 }
 
+/**
+ * Açıklamanın başına malzeme cümlesi (Faz 36).
+ *
+ * Merchant Center'ın açıklama raporu 86 kolyede "açıklamaya malzeme ekleyin"
+ * diyordu: g:material alanı dolu ama Google bilgiyi açıklama METNİNDE de
+ * arıyor, sitede ise malzeme cümleleri açıklamadan bilerek ayıklanıyor
+ * (tek kanonik yer başlık altı satır). Değer aynı kaynaktan: material_type.
+ */
+const MALZEME_CUMLESI: Record<string, string> = {
+  stainless_steel: 'Malzeme: 316L paslanmaz çelik.',
+  plated_brass: 'Malzeme: kaplama pirinç.',
+  beaded: 'Malzeme: boncuk ve doğal taş.',
+}
+
+/**
+ * Madde satırları noktasız geliyor; tek metne birleşince cümleler birbirine
+ * yapışıyordu ("…renk koruması Şık kutusunda gönderilir, hediye etmeye
+ * hazırdır, Sağlıklı…"). Her parça noktalamayla kapanır.
+ */
+function cumle(parca: string): string {
+  const t = parca.trim().replace(/[,;:\s]+$/, '')
+  if (!t) return ''
+  return /[.!?…)]$/.test(t) ? t : `${t}.`
+}
+
 function urunAciklamasi(p: any): string {
-  if (p.override_description) return truncate(iddiaTemizle(plainText(p.override_description)), 4000)
+  const malzeme = MALZEME_CUMLESI[String(p.material_type ?? '')] ?? ''
+  const malzemeyle = (metin: string) => truncate([malzeme, metin].filter(Boolean).join(' '), 4000)
+  if (p.override_description) return malzemeyle(iddiaTemizle(plainText(p.override_description)))
   const temiz = cleanDescription(p.trendyol_description)
-  const metin = plainText([...temiz.paragraphs, ...temiz.bullets].join(' '))
-  // Açıklaması boş 5 ürün var; başlık + malzeme cümlesi uydurma değil, katalogda
+  const metin = plainText([...temiz.paragraphs, ...temiz.bullets].map(cumle).filter(Boolean).join(' '))
+  if (metin) return malzemeyle(metin)
+  // Açıklaması boş ürün: başlık + malzeme etiketi — uydurma değil, katalogda
   // zaten yazan bilgi.
-  if (metin) return truncate(metin, 4000)
-  const malzeme = materialLabel(p.material_type)
-  return malzeme ? `${p.display_title} — ${malzeme}.` : String(p.display_title ?? '')
+  const etiketi = materialLabel(p.material_type)
+  return etiketi ? `${p.display_title} — ${etiketi}.` : String(p.display_title ?? '')
 }
 
 export async function GET() {
