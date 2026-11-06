@@ -239,8 +239,8 @@ function TamSlayt({ slayt: s, ilk, etkin }: { slayt: Slayt; ilk: boolean; etkin:
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent md:bg-gradient-to-r md:from-black/55 md:via-black/10 md:to-transparent"
       />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-8 sm:px-8 sm:pb-10 md:inset-y-0 md:right-auto md:flex md:w-[min(48%,640px)] md:items-center md:px-14 md:pb-0 lg:px-20">
-        <div className="pointer-events-auto max-w-lg text-white">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-8 sm:px-8 sm:pb-10 md:inset-y-0 md:right-auto md:flex md:w-[min(56%,760px)] md:items-center md:px-14 md:pb-0 lg:px-20">
+        <div className="pointer-events-auto max-w-xl text-white">
           {s.eyebrow && (
             <p
               className="hero-line font-body text-[10px] font-semibold uppercase tracking-[0.28em] text-white/80"
