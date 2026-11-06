@@ -37,6 +37,10 @@ export type PanelSlayt = {
   odak?: 'ust' | 'orta' | 'alt'
   /** Faz 12: kayıt anında sunucuda üretilir; panel yalnız taşır. */
   image_varyant?: { w: number; url: string }[] | null
+  /** Kasım 2026: 'tam' = kampanya düzeni, yazı görselin üstünde. */
+  yerlesim?: 'tam' | 'bolunmus'
+  /** Tam düzende telefona ayrı dikey görsel (isteğe bağlı). */
+  image_mobil_url?: string | null
 }
 
 const KATEGORILER = [
@@ -360,6 +364,36 @@ export default function KurasyonClient({
                         Dikey fotoğraf geniş ekranda kırpılır; seçtiğiniz bölge kadrajda kalır. Telefonda fotoğrafın tamamı görünür.
                       </p>
                     </div>
+                    <div className="sm:col-span-2">
+                      <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Yerleşim</label>
+                      <PSelect
+                        value={s.yerlesim ?? 'bolunmus'}
+                        onChange={(e) => slaytGuncelle(s.id, { yerlesim: e.target.value as PanelSlayt['yerlesim'] })}
+                      >
+                        <option value="tam">Tam ekran — yazı görselin üstünde (modelli kampanya görseli için)</option>
+                        <option value="bolunmus">Bölünmüş — yazı yanda, görsel ayrı (ürün fotoğrafı için)</option>
+                      </PSelect>
+                    </div>
+                    {s.yerlesim === 'tam' && (
+                      <div className="sm:col-span-2">
+                        <label className="mb-1 block text-[12px] text-[var(--p-muted)]">
+                          Telefon görseli — dikey (4:5), isteğe bağlı
+                        </label>
+                        <MediaUpload
+                          etiket={s.image_mobil_url ? 'Telefon görselini değiştir' : 'Telefon görseli yükle'}
+                          onUploaded={(url) => slaytGuncelle(s.id, { image_mobil_url: url })}
+                        />
+                        <PInput
+                          className="mt-2"
+                          placeholder="…ya da görsel URL'i yapıştır"
+                          value={s.image_mobil_url ?? ''}
+                          onChange={(e) => slaytGuncelle(s.id, { image_mobil_url: e.target.value })}
+                        />
+                        <p className="mt-1 text-[11px] text-[var(--p-muted)]">
+                          Yüklemezseniz telefonda ana görsel ortadan kırpılır; yazı görselin alt kısmına biner.
+                        </p>
+                      </div>
+                    )}
                     <div>
                       <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Hedef tipi</label>
                       <PSelect

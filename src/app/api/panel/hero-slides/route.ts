@@ -44,6 +44,13 @@ export async function POST(request: Request) {
       .filter((s: any) => s.image_url && Array.isArray(s.image_varyant) && s.image_varyant.length)
       .map((s: any) => [s.image_url, s.image_varyant])
   )
+  // Telefon görselinin blur'u ve varyantları da aynı kuralla taşınır.
+  for (const s of mevcutRow?.payload?.slides || []) {
+    if (s?.image_mobil_url && s.image_mobil_blur) eskiBlur.set(s.image_mobil_url, s.image_mobil_blur)
+    if (s?.image_mobil_url && Array.isArray(s.image_mobil_varyant) && s.image_mobil_varyant.length) {
+      eskiVaryant.set(s.image_mobil_url, s.image_mobil_varyant)
+    }
+  }
 
   const uyarilar: string[] = []
   const slides: any[] = []
@@ -91,6 +98,18 @@ export async function POST(request: Request) {
     // Kadraj odağı (Faz 12): fotoğrafta takının durduğu yer. Ölçülen kusur:
     // "üst" sabitken alt-orta duran ürün dizüstü ekranında kadraj dışıydı.
     const odak = ['ust', 'orta', 'alt'].includes(s?.odak) ? s.odak : 'orta'
+    // Kasım 2026: tam ekran kampanya düzeni ve telefona ayrı dikey görsel.
+    const yerlesim = s?.yerlesim === 'tam' ? 'tam' : 'bolunmus'
+    const image_mobil_url = typeof s?.image_mobil_url === 'string' ? s.image_mobil_url.trim() : ''
+    if (image_mobil_url && !/^https?:\/\//.test(image_mobil_url)) {
+      return NextResponse.json({ error: `Slayt ${i + 1}: telefon görseli adresi geçersiz` }, { status: 400 })
+    }
+    const image_mobil_blur = image_mobil_url
+      ? eskiBlur.get(image_mobil_url) ?? (await getBlurDataURL(image_mobil_url))
+      : null
+    const image_mobil_varyant = image_mobil_url
+      ? eskiVaryant.get(image_mobil_url) ?? (await varyantUret(image_mobil_url))
+      : null
 
     slides.push({
       id: typeof s?.id === 'string' && s.id ? s.id : `sl_${Date.now().toString(36)}_${i}`,
@@ -98,6 +117,10 @@ export async function POST(request: Request) {
       image_blur,
       image_varyant,
       odak,
+      yerlesim,
+      image_mobil_url: image_mobil_url || null,
+      image_mobil_blur,
+      image_mobil_varyant,
       eyebrow: typeof s?.eyebrow === 'string' ? s.eyebrow.trim() : '',
       title,
       subtitle: typeof s?.subtitle === 'string' ? s.subtitle.trim() : '',

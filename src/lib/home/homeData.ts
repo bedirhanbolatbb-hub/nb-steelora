@@ -27,6 +27,15 @@ export type HeroSlide = {
   image_varyant?: { w: number; url: string }[] | null
   /** Faz 12: kadraj odağı — fotoğrafta takının durduğu yer. */
   odak?: 'ust' | 'orta' | 'alt' | null
+  /**
+   * Kasım 2026: 'tam' = görsel tam genişlik, yazı görselin üstünde (kampanya
+   * düzeni). Yoksa ya da 'bolunmus' ise yazı yanda/üstte ayrı alanda.
+   */
+  yerlesim?: 'tam' | 'bolunmus' | null
+  /** Tam düzende telefona ayrı dikey görsel; yoksa ana görsel kırpılır. */
+  image_mobil_url?: string | null
+  image_mobil_blur?: string | null
+  image_mobil_varyant?: { w: number; url: string }[] | null
   eyebrow: string
   title: string
   subtitle: string

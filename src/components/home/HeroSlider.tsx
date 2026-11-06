@@ -1,6 +1,6 @@
 'use client'
 
-import Image from 'next/image'
+import Image, { getImageProps } from 'next/image'
 import Link from 'next/link'
 import { createElement, useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -91,6 +91,9 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
                 ona göre uzar. */}
             {/* Faz 11A-FIX (F7): sütun payı 58/42 idi, fotoğraf yazıdan
                 dardı. Vitrin fotoğrafı satmalı — 40/60'a çevrildi. */}
+            {s.yerlesim === 'tam' ? (
+              <TamSlayt slayt={s} ilk={i === 0} etkin={i === aktif} />
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr]">
               {/* ── Yazı: fildişi zemin, fotoğrafın üstünde DEĞİL ── */}
               <div className="order-1 flex items-center bg-bg px-5 py-8 sm:px-8 sm:py-10 md:px-10 md:py-14 lg:px-16 lg:py-20">
@@ -155,6 +158,7 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
                 )}
               </div>
             </div>
+            )}
           </div>
         ))}
       </div>
@@ -205,6 +209,136 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
 }
 
 const ODAK_SINIFI = { ust: 'object-top', orta: 'object-center', alt: 'object-bottom' } as const
+
+/**
+ * Tam ekran kampanya slaytı (Kasım 2026).
+ *
+ * Bölünmüş düzen ürün fotoğrafı için doğruydu; modelli kampanya görselinde
+ * yazıyı ayrı bir krem bloğa koymak ilk ekranı boş ve şablon gibi
+ * gösteriyordu (BB: "profesyonel değil"). Burada görsel alanın tamamı; yazı
+ * telefonda görselin altında, masaüstünde solunda, koyulaşan bir perdenin
+ * üstünde beyaz. Kontrast perdeden gelir, fotoğrafın tonuna bağlı değil.
+ *
+ * Telefonda 4:5: görsel ilk ekranın çoğunu alır ama altındaki kategori
+ * şeridinin başı görünür kalır (ziyaretçi sayfanın devam ettiğini görür).
+ */
+function TamSlayt({ slayt: s, ilk, etkin }: { slayt: Slayt; ilk: boolean; etkin: boolean }) {
+  const Baslik = ilk ? 'h1' : 'h2'
+  return (
+    <div className="relative aspect-[4/5] w-full overflow-hidden bg-ink sm:aspect-[16/10] md:aspect-auto md:h-[min(78vh,760px)] md:min-h-[520px]">
+      {s.href ? (
+        <Link href={s.href} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
+          <SanatYonetimliGorsel slayt={s} ilk={ilk} />
+        </Link>
+      ) : (
+        <div className="absolute inset-0">
+          <SanatYonetimliGorsel slayt={s} ilk={ilk} />
+        </div>
+      )}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent md:bg-gradient-to-r md:from-black/55 md:via-black/10 md:to-transparent"
+      />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-8 sm:px-8 sm:pb-10 md:inset-y-0 md:right-auto md:flex md:w-[min(48%,640px)] md:items-center md:px-14 md:pb-0 lg:px-20">
+        <div className="pointer-events-auto max-w-lg text-white">
+          {s.eyebrow && (
+            <p
+              className="hero-line font-body text-[10px] font-semibold uppercase tracking-[0.28em] text-white/80"
+              style={{ '--hero-delay': '0ms' } as React.CSSProperties}
+            >
+              {s.eyebrow}
+            </p>
+          )}
+          <Baslik
+            className="hero-line mt-2 font-heading text-[30px] font-medium leading-[1.08] text-white sm:text-[40px] lg:text-[56px]"
+            style={{ '--hero-delay': '70ms' } as React.CSSProperties}
+          >
+            {s.title}
+          </Baslik>
+          {s.subtitle && (
+            <p
+              className="hero-line mt-3 max-w-md font-body text-[13px] leading-relaxed text-white/85 lg:text-[15px]"
+              style={{ '--hero-delay': '140ms' } as React.CSSProperties}
+            >
+              {s.subtitle}
+            </p>
+          )}
+          {s.href && s.cta_label && (
+            <Link
+              href={s.href}
+              tabIndex={etkin ? 0 : -1}
+              className="hero-line mt-6 inline-flex min-h-[44px] items-center rounded-[4px] bg-white px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:bg-bg"
+              style={{ '--hero-delay': '210ms' } as React.CSSProperties}
+            >
+              {s.cta_label}
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+type Varyant = { w: number; url: string }
+
+/** Kayıtta üretilmiş duyarlı kopyalar varsa onlardan seçen yükleyici. */
+function varyantYukleyici(varyantlar: Varyant[] | null | undefined, kaynak: string) {
+  if (!varyantlar || varyantlar.length < 2) return undefined
+  return ({ width }: { width: number }) => varyantSec(varyantlar, width) ?? kaynak
+}
+
+/**
+ * Sanat yönetimli görsel: masaüstüne yatay ana görsel, telefona (varsa) ayrı
+ * dikey görsel. <picture> yalnız ekrana uyanı indirir — ikisi birden inmez,
+ * LCP isteği tek kalır. Telefon görseli yoksa ana görsel kullanılır.
+ */
+function SanatYonetimliGorsel({ slayt, ilk }: { slayt: Slayt; ilk: boolean }) {
+  const odak = ODAK_SINIFI[slayt.odak ?? 'orta']
+  const ortak = { alt: slayt.title || '', fill: true, quality: IMAGE_QUALITY, sizes: '100vw' } as const
+
+  const masaustuYukleyici = varyantYukleyici(slayt.image_varyant, slayt.image_url)
+  const masaustu = getImageProps({
+    ...ortak,
+    src: slayt.image_url,
+    loader: masaustuYukleyici,
+    unoptimized: masaustuYukleyici ? false : isRemoteMedia(slayt.image_url),
+  }).props
+
+  const mobilKaynak = slayt.image_mobil_url || slayt.image_url
+  const mobilVaryant = slayt.image_mobil_url ? slayt.image_mobil_varyant : slayt.image_varyant
+  const mobilYukleyici = varyantYukleyici(mobilVaryant, mobilKaynak)
+  const mobil = getImageProps({
+    ...ortak,
+    src: mobilKaynak,
+    loader: mobilYukleyici,
+    unoptimized: mobilYukleyici ? false : isRemoteMedia(mobilKaynak),
+  }).props
+
+  const bulanik = (slayt.image_mobil_url ? slayt.image_mobil_blur : null) || slayt.image_blur || BLUR_PLACEHOLDER
+  const { style: mobilStil, ...mobilOzellik } = mobil
+
+  return (
+    <picture>
+      {slayt.image_mobil_url && (
+        <source media="(min-width: 768px)" srcSet={masaustu.srcSet ?? masaustu.src} sizes={masaustu.sizes} />
+      )}
+      {/* eslint-disable-next-line @next/next/no-img-element -- <picture> sanat yönetimi next/image ile kurulamıyor */}
+      <img
+        {...mobilOzellik}
+        loading={ilk ? 'eager' : 'lazy'}
+        // Faz 36 dersi: yüksek öncelik açıkça istenmeli (bkz. Gorsel).
+        fetchPriority={ilk ? 'high' : undefined}
+        className={`object-cover ${odak} ${ilk ? 'hero-media' : ''}`}
+        style={{
+          ...mobilStil,
+          backgroundImage: `url(${bulanik})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
+    </picture>
+  )
+}
 
 function Gorsel({ slayt, ilk }: { slayt: Slayt; ilk: boolean }) {
   // Faz 12: duyarlı varyantlar kayıt anında üretilmiş olarak gelir; next/image
