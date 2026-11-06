@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cspUret } from '@/lib/security/basliklar'
 import { panelCereziGecerliMi } from '@/lib/admin/panelOturumu'
+import { yayindakiPaylasimlar } from '@/lib/instagram/paylasimlar'
 
 /** Ölçüm için istenen yolu sunucu bileşenlerine taşıyan başlık (Faz 12). */
 const YOL_BASLIGI = 'x-nb-path'
@@ -86,8 +87,17 @@ export async function proxy(request: NextRequest) {
 
   // Vitrin: yolu başlığa yaz ki layout page_view'i doğru yolla kaydedebilsin.
   // (headers() içinde istenen yol Next 16'da doğrudan bulunmuyor.)
+  // Instagram profilindeki bağlantı (utm_source=instagram) ana sayfaya düşer.
+  // Ziyaretçi gönderide gördüğü parçayı ana sayfada aramasın diye aynı adreste
+  // Instagram seçkisi gösterilir; adres çubuğu ve utm etiketleri değişmez.
+  // Yayında paylaşım yoksa normal ana sayfa açılır (bkz. lib/instagram).
+  const instagramSecki =
+    pathname === '/' &&
+    (request.nextUrl.searchParams.get('utm_source') || '').trim().toLowerCase() === 'instagram' &&
+    yayindakiPaylasimlar().length > 0
+
   const basliklar = new Headers(request.headers)
-  basliklar.set(YOL_BASLIGI, pathname)
+  basliklar.set(YOL_BASLIGI, instagramSecki ? '/instagram' : pathname)
   const kampanya = kampanyaEtiketi(request.nextUrl.searchParams)
   if (kampanya) basliklar.set(KAMPANYA_BASLIGI, kampanya)
   // Sunucu bileşenleri (JsonLd) nonce'u buradan okur.
@@ -95,7 +105,12 @@ export async function proxy(request: NextRequest) {
   // Next kendi inline script'lerine nonce'u İSTEK başlığındaki CSP'den okur.
   basliklar.set('Content-Security-Policy', csp)
 
-  return guvenlikEkle(NextResponse.next({ request: { headers: basliklar } }), csp, gizliYol)
+  const yanit = instagramSecki
+    ? NextResponse.rewrite(new URL(`/instagram${request.nextUrl.search}`, request.url), {
+        request: { headers: basliklar },
+      })
+    : NextResponse.next({ request: { headers: basliklar } })
+  return guvenlikEkle(yanit, csp, gizliYol)
 }
 
 export const config = {
