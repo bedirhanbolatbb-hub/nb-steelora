@@ -21,7 +21,23 @@ export type InstagramPaylasimi = {
   barkodlar: string[]
 }
 
-export const INSTAGRAM_PAYLASIMLARI: InstagramPaylasimi[] = []
+export const INSTAGRAM_PAYLASIMLARI: InstagramPaylasimi[] = [
+  {
+    yayin: '2026-11-07T20:30:00+03:00',
+    baslik: 'Yeni charm bileklikler',
+    barkodlar: ['NBB128', 'NBB130', 'NBB131', 'NBB132', 'NBB126', 'NBB135'],
+  },
+  {
+    yayin: '2026-11-08T20:30:00+03:00',
+    baslik: 'İnci Kalp Kolye',
+    barkodlar: ['NBK012'],
+  },
+  {
+    yayin: '2026-11-09T20:30:00+03:00',
+    baslik: 'Gold tonlarında üç küpe',
+    barkodlar: ['NBKP044', 'NBKP069', 'NBKP030'],
+  },
+]
 
 /** Yayın saati gelmiş paylaşımlar, en yenisi başta. */
 export function yayindakiPaylasimlar(simdi: number = Date.now()): InstagramPaylasimi[] {
