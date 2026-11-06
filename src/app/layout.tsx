@@ -8,6 +8,12 @@ const display = Playfair_Display({
   weight: ['600', '700'],
   display: 'swap',
   variable: '--font-display',
+  // Faz 36 (ikinci adım): Inter'in ön yüklemesi kapatılınca mobil LCP
+  // 4,4 → 3,3 sn oldu; kalan iki Playfair dosyası da ana fotoğrafla aynı
+  // anda yüksek öncelikle iniyordu. Başlıkların ölçü ayarlı yedek fontu var
+  // (kayma 0); hero başlığı zaten giriş animasyonuyla göründüğü için font
+  // değişimi çoğu bağlantıda fark edilmiyor.
+  preload: false,
 })
 
 const sans = Inter({
