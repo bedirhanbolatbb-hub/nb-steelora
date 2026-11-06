@@ -219,13 +219,13 @@ const ODAK_SINIFI = { ust: 'object-top', orta: 'object-center', alt: 'object-bot
  * telefonda görselin altında, masaüstünde solunda, koyulaşan bir perdenin
  * üstünde beyaz. Kontrast perdeden gelir, fotoğrafın tonuna bağlı değil.
  *
- * Telefonda 4:5: görsel ilk ekranın çoğunu alır ama altındaki kategori
- * şeridinin başı görünür kalır (ziyaretçi sayfanın devam ettiğini görür).
+ * Telefonda 3:4: görsel ilk ekranın çoğunu alır ama altındaki kategori
+ * başlığı görünür kalır (ziyaretçi sayfanın devam ettiğini görür).
  */
 function TamSlayt({ slayt: s, ilk, etkin }: { slayt: Slayt; ilk: boolean; etkin: boolean }) {
   const Baslik = ilk ? 'h1' : 'h2'
   return (
-    <div className="relative aspect-[4/5] w-full overflow-hidden bg-ink sm:aspect-[16/10] md:aspect-auto md:h-[min(78vh,760px)] md:min-h-[520px]">
+    <div className="relative aspect-[3/4] w-full overflow-hidden bg-ink sm:aspect-[16/10] md:aspect-auto md:h-[min(78vh,760px)] md:min-h-[520px]">
       {s.href ? (
         <Link href={s.href} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
           <SanatYonetimliGorsel slayt={s} ilk={ilk} />
@@ -256,8 +256,10 @@ function TamSlayt({ slayt: s, ilk, etkin }: { slayt: Slayt; ilk: boolean; etkin:
             {s.title}
           </Baslik>
           {s.subtitle && (
+            // Telefonda alt metin gizli: görselin alt kısmındaki takıyı
+            // (kolyenin ucu, bileklik) yazı bloğu örtmesin.
             <p
-              className="hero-line mt-3 max-w-md font-body text-[13px] leading-relaxed text-white/85 lg:text-[15px]"
+              className="hero-line mt-3 hidden max-w-md font-body text-[13px] leading-relaxed text-white/85 sm:block lg:text-[15px]"
               style={{ '--hero-delay': '140ms' } as React.CSSProperties}
             >
               {s.subtitle}
@@ -316,9 +318,36 @@ function SanatYonetimliGorsel({ slayt, ilk }: { slayt: Slayt; ilk: boolean }) {
 
   const bulanik = (slayt.image_mobil_url ? slayt.image_mobil_blur : null) || slayt.image_blur || BLUR_PLACEHOLDER
   const { style: mobilStil, ...mobilOzellik } = mobil
+  const ayri = Boolean(slayt.image_mobil_url)
 
   return (
     <picture>
+      {/* LCP: <picture> içindeki görsel gövdede geç keşfediliyordu (PageSpeed
+          "kaynak yükleme gecikmesi" 480 ms, LCP 2,0 → 3,0 sn). İlk slaytın
+          görselleri <head>'de, ekrana göre AYRI ön yüklenir — telefon yalnız
+          kendi görselini indirir. React 19 <link>'i head'e taşır. */}
+      {ilk && (
+        <link
+          rel="preload"
+          as="image"
+          href={mobil.src}
+          imageSrcSet={mobil.srcSet}
+          imageSizes={mobil.sizes}
+          fetchPriority="high"
+          media={ayri ? '(max-width: 767px)' : undefined}
+        />
+      )}
+      {ilk && ayri && (
+        <link
+          rel="preload"
+          as="image"
+          href={masaustu.src}
+          imageSrcSet={masaustu.srcSet}
+          imageSizes={masaustu.sizes}
+          fetchPriority="high"
+          media="(min-width: 768px)"
+        />
+      )}
       {slayt.image_mobil_url && (
         <source media="(min-width: 768px)" srcSet={masaustu.srcSet ?? masaustu.src} sizes={masaustu.sizes} />
       )}
