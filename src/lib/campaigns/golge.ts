@@ -31,20 +31,24 @@ export type GolgeKampanyasi = {
   minSepet: number
 }
 
+const sinir = (t: string | null, bos: number) => (t ? new Date(t).getTime() : bos)
+
 /**
- * İki tarih aralığı kesişiyor mu? Boş sınır "sonsuz" demektir.
+ * Aday, hedefin uygulanabileceği İLK anda yürürlükte mi?
  *
- * Karşılaştırma KATI (`<`): biri tam diğerinin bittiği anda başlıyorsa
- * çakışmazlar. Faz 25'te HOSGELDIN10'un başlangıcı NB30'un bitişine
- * ayarlandı; gevşek karşılaştırma bu ikisini hâlâ "çakışıyor" sayıp yanlış
- * gölgeleme uyarısı basardı.
+ * O an = şimdi ile hedefin başlangıcından geç olanı. Eskiden yalnız "tarih
+ * aralıkları kesişiyor mu" bakılıyordu; süresi dolmuş kampanya da kesiştiği
+ * için uyarı sonsuza kadar kalıyordu (Kasım 2026: 31 Ekim'de biten NB25,
+ * HOSGELDIN10'u hâlâ "hiçbir sepette uygulanmıyor" diye gösteriyordu — kod
+ * çalıştığı hâlde). Uyarı ŞİMDİKİ durumu anlatır; aday bitince kalkar.
+ *
+ * Bitiş KATI (`<`): aday tam hedefin başladığı anda bitiyorsa gölgelemez
+ * (Faz 25'te HOSGELDIN10'un başlangıcı NB30'un bitişine ayarlanmıştı).
  */
-function araliklarKesisiyorMu(a: GolgeKampanyasi, b: GolgeKampanyasi): boolean {
-  const aBas = a.baslangic ? new Date(a.baslangic).getTime() : -Infinity
-  const aBit = a.bitis ? new Date(a.bitis).getTime() : Infinity
-  const bBas = b.baslangic ? new Date(b.baslangic).getTime() : -Infinity
-  const bBit = b.bitis ? new Date(b.bitis).getTime() : Infinity
-  return aBas < bBit && bBas < aBit
+function ilkAndaYururlukte(hedef: GolgeKampanyasi, aday: GolgeKampanyasi, simdi: number): boolean {
+  const an = Math.max(simdi, sinir(hedef.baslangic, -Infinity))
+  if (an >= sinir(hedef.bitis, Infinity)) return false
+  return sinir(aday.baslangic, -Infinity) <= an && an < sinir(aday.bitis, Infinity)
 }
 
 export type GolgeSonucu = { golgeliMi: boolean; golgeleyenAd?: string; golgeleyenId?: string }
@@ -58,11 +62,16 @@ export type GolgeSonucu = { golgeliMi: boolean; golgeleyenAd?: string; golgeleye
  *  - sepet alt sınırı YOKTUR (varsa küçük sepetlerde hedef kazanabilir),
  *  - birleşmez (birleşebilseydi ikisi birden uygulanır, gölgeleme olmazdı),
  *  - yüzdesi hedefin yüzdesine eşit ya da ondan büyüktür,
- *  - tarih aralıkları kesişir.
+ *  - hedefin uygulanabileceği ilk anda (şimdi ya da hedefin başlangıcı)
+ *    yürürlüktedir.
  *
  * Hedef de aynı ölçüde geniş olmalı: kapsamı 'cart' ve yüzde tipinde.
  */
-export function golgeDurumu(hedef: GolgeKampanyasi, hepsi: GolgeKampanyasi[]): GolgeSonucu {
+export function golgeDurumu(
+  hedef: GolgeKampanyasi,
+  hepsi: GolgeKampanyasi[],
+  simdi: number = Date.now()
+): GolgeSonucu {
   if (!hedef.aktif) return { golgeliMi: false }
   if (hedef.birlesebilir) return { golgeliMi: false }
   if (hedef.indirimTipi !== 'percent') return { golgeliMi: false }
@@ -80,7 +89,7 @@ export function golgeDurumu(hedef: GolgeKampanyasi, hepsi: GolgeKampanyasi[]): G
     if (Number(aday.minSepet) > 0) continue
     const adayDeger = Number(aday.deger)
     if (!Number.isFinite(adayDeger) || adayDeger < hedefDeger) continue
-    if (!araliklarKesisiyorMu(hedef, aday)) continue
+    if (!ilkAndaYururlukte(hedef, aday, simdi)) continue
     return { golgeliMi: true, golgeleyenAd: aday.ad, golgeleyenId: aday.id }
   }
   return { golgeliMi: false }

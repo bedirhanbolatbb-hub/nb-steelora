@@ -89,11 +89,31 @@ esit(
   false
 )
 esit(
-  'tarihler KESİŞİYORSA gölgeleme var',
-  golgeDurumu(K({ id: 'h', koduVar: true, baslangic: '2026-08-15', bitis: null }), [
-    K({ id: 'h', koduVar: true, baslangic: '2026-08-15' }),
-    eskiNb,
-  ]).golgeliMi,
+  'aday ŞU AN yürürlükteyse gölgeleme var',
+  golgeDurumu(
+    K({ id: 'h', koduVar: true, baslangic: '2026-08-15', bitis: null }),
+    [K({ id: 'h', koduVar: true, baslangic: '2026-08-15' }), eskiNb],
+    Date.parse('2026-08-20T12:00:00Z')
+  ).golgeliMi,
+  true
+)
+// Kasım 2026 canlı durumu: NB25 31 Ekim'de bitti, HOSGELDIN10 sürüyor.
+esit(
+  'aday SÜRESİ DOLMUŞSA gölgeleme yok (uyarı kalıcı kalmıyor)',
+  golgeDurumu(
+    K({ id: 'h', koduVar: true, baslangic: '2026-08-15', bitis: null }),
+    [K({ id: 'h', koduVar: true, baslangic: '2026-08-15' }), eskiNb],
+    Date.parse('2026-09-05T12:00:00Z')
+  ).golgeliMi,
+  false
+)
+esit(
+  'hedef İLERİDE başlıyorsa o anda yürürlükteki aday gölgeler',
+  golgeDurumu(
+    K({ id: 'j', koduVar: true, baslangic: '2026-08-20', bitis: null }),
+    [K({ id: 'j', koduVar: true, baslangic: '2026-08-20' }), eskiNb],
+    Date.parse('2026-07-01T12:00:00Z')
+  ).golgeliMi,
   true
 )
 esit('PASİF kampanya için uyarı basılmaz', golgeDurumu(K({ id: 'i', aktif: false }), [K({ id: 'i', aktif: false }), nb30]).golgeliMi, false)
