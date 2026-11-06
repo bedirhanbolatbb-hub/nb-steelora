@@ -1,9 +1,39 @@
 import { NextResponse } from 'next/server'
-import { filtreIcinTemizle } from '@/lib/guvenlik/girdi'
 import { createClient } from '@/lib/supabase/server'
-import { groupProducts } from '@/lib/catalog/variants'
+import { groupProducts, type GroupableProduct } from '@/lib/catalog/variants'
+import { kelimeEslesir, kelimelereAyir } from '@/lib/catalog/aramaMetni'
 
 const RESULT_LIMIT = 8
+const DIZIN_OMRU_MS = 5 * 60 * 1000
+const KOLONLAR =
+  'id, slug, display_title, trendyol_title, display_price, display_images, trendyol_category, trendyol_stock, gender, created_at, variant_label'
+
+type AramaSatiri = GroupableProduct & {
+  trendyol_title?: string | null
+  display_images?: string[] | null
+}
+type Dizinli = { satir: AramaSatiri; ad: string[]; uzun: string[]; kategori: string[] }
+
+// Salt okunur katalog önbelleği (kişiye özel bir şey yok). Fonksiyon örneği
+// başına tutulur; en kötü durumda 5 dakika eski ad/stok gösterir.
+const kuresel = globalThis as unknown as { __nbAramaDizini?: { zaman: number; dizin: Dizinli[] } }
+
+async function aramaDizini(): Promise<Dizinli[]> {
+  const onbellek = kuresel.__nbAramaDizini
+  if (onbellek && Date.now() - onbellek.zaman < DIZIN_OMRU_MS) return onbellek.dizin
+  const supabase = await createClient()
+  // Pasif ürün listelenmez: sayfası 404 döner (eski arama süzmüyordu).
+  const { data, error } = await supabase.from('products_display').select(KOLONLAR).eq('is_active', true).limit(2000)
+  if (error || !data) return onbellek?.dizin ?? []
+  const dizin = (data as AramaSatiri[]).map((satir) => ({
+    satir,
+    ad: kelimelereAyir(String(satir.display_title ?? '')),
+    uzun: kelimelereAyir(String(satir.trendyol_title ?? '')),
+    kategori: kelimelereAyir(String(satir.trendyol_category ?? '')),
+  }))
+  kuresel.__nbAramaDizini = { zaman: Date.now(), dizin }
+  return dizin
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -12,8 +42,6 @@ export async function GET(request: Request) {
   if (!q || q.length < 2) {
     return NextResponse.json([])
   }
-
-  const supabase = await createClient()
 
   // Arama hem görünen (kısa) ad hem de uzun Trendyol başlığı üzerinde çalışır:
   // kısa adlar devreye girince "zirkon taşlı", "figürlü" gibi kelimelerle
@@ -38,32 +66,37 @@ export async function GET(request: Request) {
    * Faz 27 güvenliği aynen duruyor: `filtreIcinTemizle` virgül, parantez ve
    * joker karakterleri ayıklar — arama kutusu filtrenin yapısını değiştiremez.
    */
-  const kelimeler = q
-    .split(/\s+/)
-    .map((k) => filtreIcinTemizle(k))
+  const sorgu = kelimelereAyir(q)
     .filter((k) => k.length >= 2)
     .slice(0, 6)
+  if (sorgu.length === 0) return NextResponse.json([])
 
-  // Tek harflik ya da tamamen ayıklanmış girdide eski davranışa düşülür.
-  const aranacak = kelimeler.length > 0 ? kelimeler : [filtreIcinTemizle(q)]
+  // Faz 36: eşleştirme artık veritabanında değil burada (lib/catalog/aramaMetni):
+  // Türkçe ekler ve İ/i/ı denkliği SQL'de güvenle kurulamıyordu. Katalog küçük
+  // (≈500 satır) ve 5 dakika önbellekte; her tuş vuruşunda sorgu atılmaz.
+  const dizin = await aramaDizini()
 
-  let query = supabase
-    .from('products_display')
-    .select(
-      'id, slug, display_title, display_price, display_images, trendyol_category, trendyol_stock, gender, created_at, variant_label'
-    )
-
-  // Zincirlenen `.or()` çağrıları PostgREST'te VE ile birleşir: her kelime
-  // kendi içinde üç alana bakar, kelimeler arası koşul VE olur.
-  for (const kelime of aranacak) {
-    query = query.or(
-      `display_title.ilike.%${kelime}%,trendyol_title.ilike.%${kelime}%,trendyol_category.ilike.%${kelime}%`
-    )
+  const puanli: { satir: AramaSatiri; puan: number }[] = []
+  for (const d of dizin) {
+    let puan = 0
+    let hepsi = true
+    for (const k of sorgu) {
+      const adda = d.ad.some((w) => kelimeEslesir(k, w))
+      if (!adda && !d.uzun.some((w) => kelimeEslesir(k, w)) && !d.kategori.some((w) => kelimeEslesir(k, w))) {
+        hepsi = false
+        break
+      }
+      // Görünen adda geçen kelime pazaryeri başlığında geçenden önce gelir;
+      // kelimenin tam kendisi ek almış hâlinden önce.
+      puan += adda ? 3 : 1
+      if (d.ad.includes(k)) puan += 1
+    }
+    if (hepsi) puanli.push({ satir: d.satir, puan: puan + (Number(d.satir.trendyol_stock) > 0 ? 0.5 : 0) })
   }
+  puanli.sort((a, b) => b.puan - a.puan)
 
-  const { data } = await query.limit(RESULT_LIMIT * 8)
-
-  const results = groupProducts(data || [])
+  // Gruplama ilk görülme sırasını korur — sıralama puanla kalır.
+  const results = groupProducts(puanli.slice(0, RESULT_LIMIT * 8).map((p) => p.satir))
     .slice(0, RESULT_LIMIT)
     .map((group) => ({ ...group.cover, option_count: group.optionCount }))
 
