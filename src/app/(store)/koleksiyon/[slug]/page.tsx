@@ -85,6 +85,7 @@ export default async function KoleksiyonPage({
                   placeholder="blur"
                   blurDataURL={BLUR_PLACEHOLDER}
                   priority
+                  fetchPriority="high"
                 />
               </div>
             )}

@@ -106,6 +106,8 @@ export default function ProductImage({
         placeholder="blur"
         blurDataURL={BLUR_PLACEHOLDER}
         priority={priority}
+        // Faz 36: Next 16'da `priority` öncelik istemiyor (yalnız ön yükleme).
+        fetchPriority={priority ? 'high' : undefined}
         className={className}
         onLoad={() => setYuklendi(true)}
         onError={() => setFailed(true)}

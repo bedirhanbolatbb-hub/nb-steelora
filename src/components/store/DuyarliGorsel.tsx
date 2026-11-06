@@ -40,6 +40,7 @@ export default function DuyarliGorsel({ src, alt, sizes, className, priority, ka
       placeholder="blur"
       blurDataURL={BLUR_PLACEHOLDER}
       priority={priority}
+      fetchPriority={priority ? 'high' : undefined}
       className={className}
     />
   )

@@ -221,6 +221,11 @@ function Gorsel({ slayt, ilk }: { slayt: Slayt; ilk: boolean }) {
       alt={slayt.title || ''}
       fill
       priority={ilk}
+      // Faz 36: Next 16'da `priority` yalnız ön yükleme bağlantısı basıyor,
+      // öncelik İSTEMİYOR — bağlantı ve <img> "düşük" öncelikle sıraya
+      // giriyordu (PageSpeed: "LCP isteği keşfi — fetchpriority=high yok",
+      // mobil LCP 4,4 sn). Yüksek öncelik hem bağlantıya hem görsele geçer.
+      fetchPriority={ilk ? 'high' : undefined}
       quality={IMAGE_QUALITY}
       // Fotoğraf artık tam genişlik değil: masaüstünde sütunun payı kadar.
       sizes="(max-width: 767px) 100vw, 60vw"

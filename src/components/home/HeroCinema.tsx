@@ -97,6 +97,7 @@ export default function HeroCinema({
             alt=""
             fill
             priority
+            fetchPriority="high"
             quality={IMAGE_QUALITY}
             sizes="100vw"
             placeholder="blur"
@@ -111,6 +112,7 @@ export default function HeroCinema({
           alt=""
           fill
           priority
+          fetchPriority="high"
           quality={IMAGE_QUALITY}
           sizes="100vw"
           placeholder="blur"

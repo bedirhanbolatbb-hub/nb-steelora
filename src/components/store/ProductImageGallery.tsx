@@ -89,7 +89,12 @@ export default function ProductImageGallery({ images, title, morphAd }: ProductI
                 <ProductImage
                   src={img}
                   alt={`${title} ${i + 1}`}
-                  sizes="100vw"
+                  // Faz 36: telefon şeridi ile masaüstü ana görseli AYNI ANDA
+                  // DOM'da (biri CSS'le gizli) ve ikisi de ön yükleniyordu —
+                  // telefonda görünmeyen masaüstü görseli de inip asıl görselle
+                  // bant genişliği paylaşıyordu. Gizli olduğu genişlikte `sizes`
+                  // 1px der: tarayıcı en küçük adayı (birkaç KB) seçer.
+                  sizes="(min-width: 640px) 1px, 100vw"
                   enBoy={900}
                   bulanik
                   priority={i === 0}
@@ -132,7 +137,7 @@ export default function ProductImageGallery({ images, title, morphAd }: ProductI
           <ProductImage
             src={currentImage}
             alt={title}
-            sizes="(max-width: 1024px) 100vw, 640px"
+            sizes="(max-width: 639px) 1px, (max-width: 1024px) 100vw, 640px"
             enBoy={1200}
             bulanik
             priority
