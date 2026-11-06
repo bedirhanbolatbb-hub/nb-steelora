@@ -15,6 +15,13 @@ const sans = Inter({
   weight: ['400', '500', '600'],
   display: 'swap',
   variable: '--font-sans',
+  // Faz 36: ön yükleme kapalı. Ölçüm (6 Kas, ana sayfa): Next ilk baytla
+  // dört font dosyasını (2 yazı tipi × 2 alt küme) yüksek öncelikle ön
+  // yüklüyordu; mobilde ana sayfa fotoğrafı bu dosyalarla bant genişliği
+  // paylaşıyordu. Gövde yazısının ölçüsü ayarlı yedek fontu var (kayma
+  // olmaz), Inter geldiğinde yerine geçer. Başlık fontu (Playfair) ön
+  // yüklenmeye devam eder — marka görünümü ilk ekranda ondan gelir.
+  preload: false,
 })
 
 export const metadata: Metadata = {
