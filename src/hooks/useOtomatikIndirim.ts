@@ -47,6 +47,8 @@ export function useOtomatikIndirim(
   const [kuponUygulandi, setKuponUygulandi] = useState(false)
   /** Kupon kutusu altındaki hatırlatma — sunucu karar verir, istemci basar. */
   const [ilkSiparisMetni, setIlkSiparisMetni] = useState<string | null>(null)
+  /** Ek havale/EFT indirimi (7 Kas 2026) — sunucu hesaplar; yoksa null. */
+  const [havale, setHavale] = useState<{ oran: number; tutar: number } | null>(null)
   const anahtar =
     kalemler.map((k) => `${k.productId}x${k.adet}`).join('|') + `|${kod ?? ''}|${eposta ?? ''}`
 
@@ -54,6 +56,7 @@ export function useOtomatikIndirim(
     if (kalemler.length === 0) {
       setOzet(BOS)
       setKodHatasi(null)
+      setHavale(null)
       return
     }
     let iptal = false
@@ -75,6 +78,7 @@ export function useOtomatikIndirim(
           setKuponBilgiMi(d?.kuponDurumu?.tip === 'golgelendi')
           setKuponUygulandi(d?.kuponDurumu?.tip === 'uygulandi')
           setIlkSiparisMetni(d?.ilkSiparisMetni ?? null)
+          setHavale(d?.havale && Number(d.havale.tutar) > 0 ? d.havale : null)
         })
         .catch(() => {
           if (!iptal) setOzet(BOS)
@@ -89,5 +93,5 @@ export function useOtomatikIndirim(
   }, [anahtar])
 
   const indirim = ozet.uygulananlar[0] ?? null
-  return { ozet, indirim, kodHatasi, kuponBilgiMi, kuponUygulandi, ilkSiparisMetni }
+  return { ozet, indirim, kodHatasi, kuponBilgiMi, kuponUygulandi, ilkSiparisMetni, havale }
 }

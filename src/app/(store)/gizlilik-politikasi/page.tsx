@@ -50,15 +50,13 @@ export default function GizlilikPolitikasiPage() {
       <p>Verilerinizin güvenliği için aşağıdaki önlemleri alıyoruz:</p>
       <ul>
         <li><strong>SSL Sertifikası:</strong> Tüm veri iletişimi 256-bit SSL ile şifrelenir</li>
-        <li><strong>iyzico PCI DSS:</strong> Ödeme altyapımız iyzico tarafından sağlanır ve PCI DSS uyumludur</li>
-        <li><strong>Kart bilgisi saklanmaz:</strong> Kredi kartı bilgileriniz sunucularımızda kesinlikle saklanmaz; tüm ödeme işlemleri iyzico üzerinden güvenli şekilde gerçekleştirilir</li>
-        <li><strong>3D Secure:</strong> Tüm ödemeler 3D Secure doğrulaması ile yapılır</li>
+        <li><strong>Kart bilgisi istenmez:</strong> Ödemeler havale/EFT ile alınır; sitemizde kart bilgisi girilmez ve saklanmaz</li>
       </ul>
 
       <h2>5. Üçüncü Taraf Hizmetler</h2>
       <p>Hizmetlerimizi sunmak için aşağıdaki üçüncü taraf sağlayıcılarla çalışıyoruz:</p>
       <ul>
-        <li><strong>iyzico:</strong> Ödeme işlemleri</li>
+        <li><strong>Bankalar:</strong> Havale/EFT ödemeleri</li>
         <li><strong>Kargo firmaları:</strong> Teslimat hizmetleri</li>
         <li><strong>Supabase:</strong> Veri depolama altyapısı</li>
       </ul>
@@ -70,7 +68,7 @@ export default function GizlilikPolitikasiPage() {
       </p>
 
       <p>
-        <em>Son güncelleme: Mart 2026</em>
+        <em>Son güncelleme: Kasım 2026</em>
       </p>
     </LegalPageLayout>
   )

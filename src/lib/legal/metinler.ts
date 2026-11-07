@@ -10,7 +10,7 @@
  *   - Supabase: eu-central-1 (Frankfurt) — proje bilgisinden okundu
  *   - Resend: ABD merkezli altyapı
  *   - Cloudflare: küresel anycast ağ (DNS/CDN)
- *   - iyzico: Türkiye (yurt içi)
+ *   - Bankalar (havale/EFT): Türkiye (yurt içi) — 7 Kas 2026'da iyzico kalktı
  */
 
 /** KVKK m.11 haklarının tamamı. */
@@ -119,8 +119,8 @@ aktarılmaktadır:
 </table>
 </div>
 <p>
-<strong>Yurt içinde kalan aktarımlar:</strong> Ödeme işlemleri iyzico Ödeme Hizmetleri A.Ş.
-(Türkiye) üzerinden yürütülür; kart bilgileriniz tarafımızca görülmez ve saklanmaz. Kargo
+<strong>Yurt içinde kalan aktarımlar:</strong> Ödemeler havale/EFT ile Türkiye'deki bankalar
+üzerinden alınır; kart bilgisi istenmez ve saklanmaz. Kargo
 gönderileriniz, anlaşmalı kargo firmalarına (Türkiye) yalnız teslimat için gereken ad, adres ve
 telefon bilgisiyle iletilir.
 </p>

@@ -21,6 +21,14 @@ export type SiparisSatiri = {
   takipVar: boolean
   /** Sipariş notu olan satırlar listede işaretlenir (Faz 15). */
   notVar?: boolean
+  /** Havale/EFT siparişi (7 Kas 2026): bekliyorsa "Havale bekleniyor" yazar. */
+  havale?: boolean
+}
+
+/** Durum rozeti — bekleyen havale siparişi "yarım ödeme" ile karışmasın. */
+function durumRozeti(s: SiparisSatiri) {
+  if (s.havale && s.durum === 'pending') return { label: 'Havale bekleniyor', tone: 'warning' as const }
+  return ORDER_STATUS[s.durum] ?? { label: s.durum, tone: 'neutral' as const }
 }
 
 export type TalepSatiri = {
@@ -208,7 +216,7 @@ export default function SiparislerClient({
               </thead>
               <tbody>
                 {satirlar.map((s) => {
-                  const d = ORDER_STATUS[s.durum] ?? { label: s.durum, tone: 'neutral' as const }
+                  const d = durumRozeti(s)
                   return (
                     <tr
                       key={s.id}
@@ -239,7 +247,7 @@ export default function SiparislerClient({
           {/* Mobil kartlar */}
           <div className="space-y-2 sm:hidden">
             {satirlar.map((s) => {
-              const d = ORDER_STATUS[s.durum] ?? { label: s.durum, tone: 'neutral' as const }
+              const d = durumRozeti(s)
               return (
                 <Link
                   key={s.id}

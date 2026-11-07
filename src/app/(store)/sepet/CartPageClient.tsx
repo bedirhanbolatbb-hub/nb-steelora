@@ -41,7 +41,7 @@ export default function CartPageClient({
   const [kod, setKod] = useKuponKodu()
   const kadrajMi = useKadrajSorgu()
   const kampanyaIndirimi = useVitrinIndirimi()
-  const { ozet, indirim, kodHatasi, kuponBilgiMi, kuponUygulandi, ilkSiparisMetni } = useOtomatikIndirim(
+  const { ozet, indirim, kodHatasi, kuponBilgiMi, kuponUygulandi, ilkSiparisMetni, havale } = useOtomatikIndirim(
     items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 })),
     kod || null
   )
@@ -228,6 +228,12 @@ export default function CartPageClient({
                   <span>−{formatPrice(indirimTutari)}</span>
                 </div>
               )}
+              {havale && havale.tutar > 0 && (
+                <div className="flex justify-between text-[13px] font-body text-accent-deep">
+                  <span>Havale/EFT indirimi (%{havale.oran})</span>
+                  <span>−{formatPrice(havale.tutar)}</span>
+                </div>
+              )}
               {ozet.yaklasanlar.length > 0 && (
                 <p className="text-[11px] font-body text-accent-deep">
                   {formatPrice(ozet.yaklasanlar[0].kalanTutar)} daha ekleyin,{' '}
@@ -238,11 +244,11 @@ export default function CartPageClient({
               )}
               <div className="flex justify-between text-[15px] font-body text-ink font-medium pt-3 border-t border-line">
                 <span>Toplam</span>
-                <span>{formatPrice(Math.max(0, subtotal - indirimTutari) + shipping)}</span>
+                <span>{formatPrice(Math.max(0, subtotal - indirimTutari - (havale?.tutar ?? 0)) + shipping)}</span>
               </div>
-              {indirim && (
+              {(indirim || (havale?.tutar ?? 0) > 0) && (
                 <p className="text-[11px] font-body text-accent-deep">
-                  {formatPrice(indirimTutari)} kazandınız
+                  {formatPrice(indirimTutari + (havale?.tutar ?? 0))} kazandınız
                   {ozet.tavanUygulandi && (
                     <span className="text-muted"> · indirim tavanı uygulandı</span>
                   )}

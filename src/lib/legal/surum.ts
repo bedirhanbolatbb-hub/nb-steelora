@@ -34,8 +34,9 @@ export const CEREZ_SURUMU: MetinSurumu = {
 export const KVKK_SURUMU: MetinSurumu = {
   // Faz 28: T.C. kimlik numarası toplanmadığı açıkça yazıldı, kurumsal fatura
   // verisi eklendi.
-  surum: 'v1.2',
-  yururluk: '2026-08-24',
+  surum: 'v1.3',
+  // 7 Kas 2026: ödeme aracısı (iyzico) kalktı; ödeme havale/EFT ile banka üzerinden.
+  yururluk: '2026-11-07',
 }
 
 /** Mesafeli satış sözleşmesi ve ön bilgilendirme formu. */
@@ -45,7 +46,8 @@ export const MESAFELI_SURUMU: MetinSurumu = {
   // değişiklik sayıldı (BB kararı). Damga sipariş anında orders.metadata'ya
   // YAZILDIĞI için eski siparişlerin onay kaydı olduğu gibi kalır.
   // 5 Eyl 2026: üretim toleransı maddesindeki "el işçiliği" dayanağı düzeltildi.
-  yururluk: '2026-09-05',
+  // 7 Kas 2026: ödeme maddesi — kart (iyzico) yerine havale/EFT.
+  yururluk: '2026-11-07',
 }
 
 /** ISO tarihi GG.AA.YYYY biçimine çevirir. Geçersizse olduğu gibi döner. */

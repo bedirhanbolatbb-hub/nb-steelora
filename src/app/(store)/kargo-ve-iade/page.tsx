@@ -111,7 +111,8 @@ export default async function KargoVeIadePage() {
         seferde iade edilir. Kredi kartı ile ödediyseniz bankanız, bize ulaşan tutarı
         kullanılabilir limitinize tek seferde eklemekle yükümlüdür;{' '}
         <strong>kartınıza yansıması bankanıza bağlı olarak {BANKA_YANSIMA_LABEL} sürebilir</strong> ve
-        bu süre bizim kontrolümüzde değildir.
+        bu süre bizim kontrolümüzde değildir. Havale/EFT ile ödediyseniz tutar, ödemeyi
+        gönderdiğiniz hesaba havale ile iade edilir.
       </p>
 
       <h2>Cayma Hakkının Kullanılamadığı Ürünler</h2>

@@ -55,7 +55,7 @@ Marka adı TÜRKPATENT'te tescillidir (2025 163503).
 - İade kargo ücreti satıcıya aittir; müşteriden alınmaz.
 - Geri ödeme: ürün kargoya verildikten sonra en geç ${GERI_ODEME_GUN} gün içinde başlatılır; karta yansıması bankaya bağlı olarak ${BANKA_YANSIMA_LABEL} sürer.
 - Cayma hakkı yalnız iki durumda kullanılamaz: kişiye özel hazırlanan ürünler ve hijyen mührü açılmış küpe/piercing.
-- Ödeme iyzico altyapısıyla alınır. Kart bilgisi mağazada saklanmaz.
+- Ödeme havale/EFT ile, sitedeki satıcı adına kayıtlı hesaba alınır. Kart bilgisi istenmez.
 - Her sipariş ücretsiz hediye kutusunda gönderilir.
 
 ## Kategoriler

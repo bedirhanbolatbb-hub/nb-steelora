@@ -20,6 +20,9 @@ import KuponKutusu, { useKuponKodu } from '@/components/store/KuponKutusu'
 import { kucukResim } from '@/lib/gorsel/kadraj'
 import { useKadrajSorgu } from '@/components/store/KadrajContext'
 
+/** Kart ödemesi kapalıyken kartla almak isteyene gösterilen mağaza (7 Kas 2026). */
+const TRENDYOL_MAGAZA_URL = 'https://www.trendyol.com/magaza/nb-steelora-m-1181208'
+
 export default function OdemePage() {
   const { items, totalPrice, clearCart } = useCart()
   const router = useRouter()
@@ -66,11 +69,6 @@ export default function OdemePage() {
     district: '',
     address: '',
     zipCode: '',
-    cardHolderName: '',
-    cardNumber: '',
-    expireMonth: '',
-    expireYear: '',
-    cvc: '',
   })
   const [giftNote, setGiftNote] = useState('')
   /**
@@ -110,16 +108,20 @@ export default function OdemePage() {
     kuponBilgiMi,
     kuponUygulandi,
     ilkSiparisMetni,
+    havale,
   } = useOtomatikIndirim(
     items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 })),
     kod || null,
     form.email || null
   )
   const totalDiscount = ozet.indirimToplami
+  // Ek havale/EFT indirimi (7 Kas 2026) — sunucu hesaplar, sipariş ucu aynı
+  // fonksiyonla yeniden hesaplar; ekrandaki tutar siparişe yazılan tutardır.
+  const havaleIndirimi = havale?.tutar ?? 0
 
   // Kargo eşiği indirimli ara toplam üzerinden — sunucudaki hesapla birebir
   // aynı olmalı, yoksa ekrandaki toplam ile çekilen tutar ayrışır (Faz 11).
-  const discountedSubtotal = Math.max(0, subtotal - totalDiscount)
+  const discountedSubtotal = Math.max(0, subtotal - totalDiscount - havaleIndirimi)
   // Kargo koşulsuz ücretsiz — sunucudaki hesapla birebir aynı tek kaynaktan.
   const shipping = shippingCostFor(discountedSubtotal)
   const total = discountedSubtotal + shipping
@@ -131,62 +133,25 @@ export default function OdemePage() {
   const updateField = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }))
 
-  // Format card number display: 4-digit groups
-  const formatCardDisplay = (value: string) => {
-    const digits = value.replace(/\D/g, '').substring(0, 16)
-    return digits.replace(/(.{4})/g, '$1 ').trim()
-  }
-
-  const handleCardNumberChange = (value: string) => {
-    const digits = value.replace(/\D/g, '').substring(0, 16)
-    updateField('cardNumber', formatCardDisplay(digits))
-  }
-
-  const handleExpireMonthChange = (value: string) => {
-    const digits = value.replace(/\D/g, '').substring(0, 2)
-    updateField('expireMonth', digits)
-  }
-
-  const handleExpireYearChange = (value: string) => {
-    const digits = value.replace(/\D/g, '').substring(0, 4)
-    updateField('expireYear', digits)
-  }
-
   /**
-   * Kart yılı iki haneli girildiğinde (29) dört haneye tamamlanır (2029).
-   * Önceden "29" yazan müşterinin düğmesi sessizce pasif kalıyordu — neyin
-   * eksik olduğunu gösteren hiçbir uyarı yoktu (Faz 15).
+   * Havale/EFT bilgisi (7 Kas 2026). Kart ödemesi kapalı: iyzico hesabı
+   * kapatılan eski firmaya aitti, yeni firmanın ödeme kuruluşu onay bekliyor.
+   * Hesap sahibi sitedeki satıcıyla aynı kişidir; müşteri parayı kime
+   * göndereceğini sipariş ÖNCESİ görür.
    */
-  const yiliTamamla = () => {
-    const d = form.expireYear.replace(/\D/g, '')
-    if (d.length === 2) updateField('expireYear', String(2000 + Number(d)))
-  }
-
-  const rawCardNumber = form.cardNumber.replace(/\s/g, '')
-  const rawCardNumberLen = rawCardNumber.length
-
-  /** Alan bazlı hata metinleri — boş alanlar için değil, YANLIŞ değerler için. */
-  const alanHatalari: Record<string, string | null> = {
-    cardNumber:
-      rawCardNumberLen > 0 && rawCardNumberLen < 16 ? 'Kart numarası 16 haneli olmalı' : null,
-    expireMonth:
-      form.expireMonth.length > 0 && (Number(form.expireMonth) < 1 || Number(form.expireMonth) > 12)
-        ? 'Ay 01–12 arasında olmalı'
-        : null,
-    expireYear:
-      form.expireYear.length > 0 && form.expireYear.length !== 4 && form.expireYear.length !== 2
-        ? 'Yıl 4 haneli olmalı — örn. 2029'
-        : form.expireYear.length === 4 && Number(form.expireYear) < new Date().getFullYear()
-          ? 'Kartın süresi dolmuş görünüyor'
-          : null,
-    cvc: form.cvc.length > 0 && form.cvc.length < 3 ? 'CVV en az 3 haneli olmalı' : null,
-  }
-
-  const handleCvcChange = (value: string) => {
-    const digits = value.replace(/\D/g, '').substring(0, 4)
-    updateField('cvc', digits)
-  }
-
+  const [havaleBilgi, setHavaleBilgi] = useState<{
+    hazir: boolean
+    banka?: string
+    alici?: string
+    iban?: string
+  } | null>(null)
+  useEffect(() => {
+    fetch('/api/odeme/havale-bilgisi', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => setHavaleBilgi(d && typeof d.hazir === 'boolean' ? d : { hazir: false }))
+      .catch(() => setHavaleBilgi({ hazir: false }))
+  }, [])
+  const havaleHazir = havaleBilgi?.hazir === true
 
   const isFormValid =
     form.firstName &&
@@ -196,11 +161,7 @@ export default function OdemePage() {
     form.city &&
     form.district &&
     form.address &&
-    form.cardHolderName &&
-    rawCardNumber.length === 16 &&
-    form.expireMonth.length >= 1 &&
-    form.expireYear.length === 4 &&
-    form.cvc.length >= 3 &&
+    havaleHazir &&
     sozlesmeOnay &&
     (!kurumsalFatura ||
       (fatura.firma.trim() && fatura.vergiDairesi.trim() && fatura.vergiNo.trim()))
@@ -214,11 +175,6 @@ export default function OdemePage() {
     !form.city && 'il',
     !form.district && 'ilçe',
     !form.address && 'adres',
-    !form.cardHolderName && 'kart üzerindeki isim',
-    rawCardNumber.length !== 16 && 'kart numarası',
-    !(form.expireMonth.length >= 1) && 'son kullanma ayı',
-    form.expireYear.length !== 4 && 'son kullanma yılı',
-    form.cvc.length < 3 && 'CVV',
     !sozlesmeOnay && 'sözleşme onayı',
     kurumsalFatura &&
       !(fatura.firma.trim() && fatura.vergiDairesi.trim() && fatura.vergiNo.trim()) &&
@@ -246,16 +202,17 @@ export default function OdemePage() {
     setPaymentError('')
     setLoading(true)
     try {
-      const res = await fetch('/api/payment/initialize', {
+      const res = await fetch('/api/odeme/havale', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          // Fiyat sunucuda DB'den okunur (Faz 17/22); istemcinin gördüğü fiyat
+          // yalnız KARŞILAŞTIRMA için gider — farklıysa sipariş açılmaz (409),
+          // müşteriye "sepeti yenileyin" denir (kartlı akışla aynı davranış).
           items: items.map((i) => ({
             productId: i.product.id,
-            name: i.product.display_title,
-            price: i.product.display_price,
             quantity: i.quantity,
-            category: i.product.trendyol_category,
+            price: i.product.display_price,
           })),
           buyer: {
             firstName: form.firstName,
@@ -269,53 +226,29 @@ export default function OdemePage() {
             address: form.address,
             zipCode: form.zipCode,
           },
-          paymentCard: {
-            cardHolderName: form.cardHolderName,
-            cardNumber: rawCardNumber,
-            expireMonth: form.expireMonth.padStart(2, '0'),
-            expireYear: form.expireYear,
-            cvc: form.cvc,
-            registerCard: '0',
-          },
           userId,
           giftNote: giftNote || null,
-          // Yalnız işaretlendiyse gönderilir; işaretlenmediyse hiçbir vergi
-          // bilgisi toplanmaz.
           fatura: kurumsalFatura
             ? { firma: fatura.firma, vergiDairesi: fatura.vergiDairesi, vergiNo: fatura.vergiNo }
             : null,
-          // Faz 11: kod sunucuya gönderilir ve orada YENİDEN doğrulanır;
-          // tutar istemciden taşınmaz.
           discountCode: kod || null,
-          // Mesafeli satış onayı — sunucu bunu ZORUNLU tutar ve siparişe
-          // sürüm + zaman damgasıyla yazar (Faz 19).
           sozlesmeOnay: true,
           sozlesmeSurumu: SOZLESME_SURUMU,
+          // Ekranda gösterilen tutar: sunucu farklı hesaplarsa sipariş açılmaz
+          // ve müşteriye güncel tutar söylenir.
+          beklenenToplam: Math.round(total * 100) / 100,
         }),
       })
 
-      const data = await res.json()
-      if (data.success && data.htmlContent) {
-        const form = document.createElement('form')
-        form.method = 'POST'
-        form.action = '/api/3ds-redirect'
-        const input = document.createElement('input')
-        input.type = 'hidden'
-        input.name = 'htmlContent'
-        input.value = data.htmlContent
-        form.appendChild(input)
-        // Sunucunun ürettiği imza — ara sayfa bunu doğrulamadan hiçbir şey
-        // basmaz (Faz 27).
-        const imzaInput = document.createElement('input')
-        imzaInput.type = 'hidden'
-        imzaInput.name = 'imza'
-        imzaInput.value = data.imza ?? ''
-        form.appendChild(imzaInput)
-        document.body.appendChild(form)
-        form.submit()
-      } else {
-        setPaymentError(data.error ? `Ödeme başlatılamadı: ${data.error}` : 'Ödeme başlatılamadı.')
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.success && data.orderNumber) {
+        clearCart()
+        router.push(
+          `/siparis-tamamlandi?siparis=${encodeURIComponent(data.orderNumber)}&odeme=havale`
+        )
+        return
       }
+      setPaymentError(data.error ? String(data.error) : 'Sipariş oluşturulamadı.')
     } catch {
       setPaymentError('Bir hata oluştu, lütfen tekrar deneyin.')
     } finally {
@@ -451,78 +384,51 @@ export default function OdemePage() {
           </div>
           </section>
 
-          {/* Kart Bilgileri */}
+          {/* Ödeme: Havale / EFT (7 Kas 2026) — kart ödemesi geçici olarak kapalı. */}
           <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
             <p className="eyebrow">Adım 2</p>
-            <h2 className="font-heading text-[20px] font-semibold text-ink mt-1 mb-5">
-              Kart Bilgileri
+            <h2 className="font-heading text-[20px] font-semibold text-ink mt-1 mb-3">
+              Ödeme: Havale / EFT
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <Input
-                  placeholder="Kart Üzerindeki İsim *"
-                  value={form.cardHolderName}
-                  onChange={(e) => updateField('cardHolderName', e.target.value.toUpperCase())}
-                  autoComplete="cc-name"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <Input
-                  placeholder="Kart Numarası *"
-                  value={form.cardNumber}
-                  onChange={(e) => handleCardNumberChange(e.target.value)}
-                  autoComplete="cc-number"
-                  inputMode="numeric"
-                  maxLength={19}
-                />
-                {alanHatalari.cardNumber && (
-                  <p className="mt-1 text-[11px] font-body text-red-600">{alanHatalari.cardNumber}</p>
+            {havaleBilgi === null ? (
+              <p className="text-[13px] font-body text-muted">Ödeme bilgileri yükleniyor…</p>
+            ) : havaleHazir ? (
+              <>
+                <p className="text-[13px] font-body text-ink-soft leading-relaxed">
+                  Siparişinizi onayladığınızda ödeme bilgileri bu ekranda ve e-postanızda yer alır.
+                  Ödemeniz hesabımıza geçince siparişinizi onaylayıp kargoya hazırlarız.
+                </p>
+                <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-[4px] border border-line bg-bg px-4 py-3 text-[13px] font-body">
+                  <dt className="text-muted">Alıcı</dt>
+                  <dd className="text-ink">{havaleBilgi.alici}</dd>
+                  <dt className="text-muted">Banka</dt>
+                  <dd className="text-ink">{havaleBilgi.banka}</dd>
+                  <dt className="text-muted">IBAN</dt>
+                  <dd className="text-ink font-mono text-[12px] sm:text-[13px] break-all">{havaleBilgi.iban}</dd>
+                </dl>
+                {havaleIndirimi > 0 && havale && (
+                  <p className="mt-3 text-[12px] font-body text-accent-deep">
+                    Havale/EFT ile ödemede ek %{havale.oran} indirim sepetinize uygulandı.
+                  </p>
                 )}
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:col-span-1">
-                <div>
-                  <Input
-                    placeholder="Ay (MM) *"
-                    value={form.expireMonth}
-                    onChange={(e) => handleExpireMonthChange(e.target.value)}
-                    autoComplete="cc-exp-month"
-                    inputMode="numeric"
-                    maxLength={2}
-                  />
-                  {alanHatalari.expireMonth && (
-                    <p className="mt-1 text-[11px] font-body text-red-600">{alanHatalari.expireMonth}</p>
-                  )}
-                </div>
-                <div>
-                  <Input
-                    placeholder="Yıl (YY veya YYYY) *"
-                    value={form.expireYear}
-                    onChange={(e) => handleExpireYearChange(e.target.value)}
-                    onBlur={yiliTamamla}
-                    autoComplete="cc-exp-year"
-                    inputMode="numeric"
-                    maxLength={4}
-                  />
-                  {alanHatalari.expireYear && (
-                    <p className="mt-1 text-[11px] font-body text-red-600">{alanHatalari.expireYear}</p>
-                  )}
-                </div>
-              </div>
-              <div>
-                <Input
-                  placeholder="CVV *"
-                  value={form.cvc}
-                  onChange={(e) => handleCvcChange(e.target.value)}
-                  autoComplete="cc-csc"
-                  inputMode="numeric"
-                  maxLength={4}
-                  type="password"
-                />
-                {alanHatalari.cvc && (
-                  <p className="mt-1 text-[11px] font-body text-red-600">{alanHatalari.cvc}</p>
-                )}
-              </div>
-            </div>
+              </>
+            ) : (
+              <p className="text-[13px] font-body text-ink-soft leading-relaxed">
+                Ödeme sistemimizi yeniliyoruz; havale/EFT ile ödeme kısa süre içinde açılıyor.
+              </p>
+            )}
+            <p className="mt-3 text-[12px] font-body text-muted">
+              Kartla ödemek isterseniz ürünlerimiz{' '}
+              <a
+                href={TRENDYOL_MAGAZA_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent-deep underline underline-offset-2"
+              >
+                Trendyol mağazamızda
+              </a>{' '}
+              da satışta.
+            </p>
           </section>
 
           {/* Faz 11E: misafir ödemede nazik hatırlatma — akışı KESMEZ, tek
@@ -690,28 +596,35 @@ export default function OdemePage() {
                 Sönük görünüm hazır olmadığını gösterir, engel koymaz. */}
             <button
               onClick={handlePayment}
-              disabled={loading}
+              disabled={loading || !havaleHazir}
               aria-describedby={denendi && !isFormValid ? 'odeme-eksikler' : undefined}
               className={`w-full py-4 bg-ink text-bg font-body font-medium text-[12px] tracking-[0.15em] uppercase rounded-[4px] hover:bg-accent-deep transition-colors disabled:cursor-not-allowed ${
                 isFormValid ? '' : 'opacity-60'
               }`}
             >
-              {loading ? 'İşleniyor...' : `${formatPrice(total)} Öde`}
+              {loading
+                ? 'İşleniyor...'
+                : havaleHazir
+                  ? `Siparişi onayla · ${formatPrice(total)}`
+                  : 'Ödeme kısa süre içinde açılıyor'}
             </button>
+            {/* Mesafeli Sözleşmeler Yön.: sipariş onayının ödeme yükümlülüğü
+                doğurduğu açıkça söylenir (kartlı akışta düğme "Öde" diyordu). */}
+            {havaleHazir && (
+              <p className="mt-2 text-center text-[11px] font-body text-muted">
+                Siparişi onayladığınızda ödeme yükümlülüğü doğar; ödemeyi havale/EFT ile yaparsınız.
+              </p>
+            )}
           </div>
 
           <div>
-            {/* Güven satırı — tek satır, yeni iddia yok; logolar footer'daki set */}
-            <div className="mt-3 flex items-center justify-center gap-2 sm:gap-3">
-              <span className="text-[10px] sm:text-[11px] font-body text-muted whitespace-nowrap">
-                iyzico ile güvenli ödeme
-              </span>
-              <img
-                src="/badges/iyzico-logo-pack/iyzico-logo-pack/footer_iyzico_ile_ode/Colored/logo_band_colored.svg"
-                alt="iyzico, Visa, Mastercard, Troy"
-                className="h-4 sm:h-5 object-contain shrink"
-              />
-            </div>
+            {/* Güven satırı — yeni iddia yok: alıcı adı sitedeki satıcı bilgisiyle
+                aynı, iade vaadi /kargo-ve-iade ile aynı. */}
+            {havaleHazir && (
+              <p className="mt-3 text-center text-[11px] font-body text-muted">
+                Ödemeniz yalnız satıcının hesabına ({havaleBilgi?.alici}) yapılır · 14 gün içinde iade
+              </p>
+            )}
           </div>
         </div>
 
@@ -769,9 +682,15 @@ export default function OdemePage() {
                 <dd className="price text-[13px] text-accent-deep shrink-0">-{formatPrice(u.tutar)}</dd>
               </div>
             ))}
-            {totalDiscount > 0 && (
+            {havale && havaleIndirimi > 0 && (
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-[12px] font-body text-accent-deep">Havale/EFT indirimi (%{havale.oran})</dt>
+                <dd className="price text-[13px] text-accent-deep shrink-0">-{formatPrice(havaleIndirimi)}</dd>
+              </div>
+            )}
+            {totalDiscount + havaleIndirimi > 0 && (
               <p className="text-[11px] font-body text-accent-deep">
-                {formatPrice(totalDiscount)} kazandınız
+                {formatPrice(totalDiscount + havaleIndirimi)} kazandınız
                 {ozet.tavanUygulandi && <span className="text-muted"> · indirim tavanı uygulandı</span>}
                 {kod && !kuponUygulandi && (
                   <span className="text-muted"> · en avantajlı kampanya uygulandı, indirimler toplanmaz</span>

@@ -99,16 +99,8 @@ export const CEREZ_ENVANTERI: CerezSatiri[] = [
     kategori: 'Analitik — gelişmiş',
     kosul: 'YALNIZ açık rızanız varsa yazılır; rızayı geri alırsanız silinir',
   },
-  {
-    ad: 'iyzico ödeme çerezleri',
-    tur: 'Çerez',
-    taraf: 'Üçüncü taraf',
-    amac:
-      'Ödeme adımında 3D Secure doğrulaması ve dolandırıcılık önleme (iyzico Ödeme Hizmetleri A.Ş.)',
-    sure: 'iyzico tarafından belirlenir',
-    kategori: 'Zorunlu',
-    kosul: 'Yalnız ödeme adımına geçtiğinizde, iyzico alan adında yazılır',
-  },
+  // 7 Kas 2026: iyzico ödeme çerezleri kaldırıldı — kart ödemesi kapalı,
+  // ödeme adımında artık hiçbir üçüncü taraf alan adına gidilmiyor.
 ]
 
 /** Politika sayfasında basılan HTML tablosu. */

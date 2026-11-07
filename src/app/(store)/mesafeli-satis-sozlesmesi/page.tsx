@@ -64,9 +64,11 @@ export default async function MesafeliSatisSozlesmesiPage() {
 
       <h2>4. Fiyat ve Ödeme</h2>
       <p>
-        Tüm fiyatlar Türk Lirası (TRY) cinsindendir ve KDV dahildir. Ödeme, iyzico altyapısı
-        üzerinden 3D Secure güvenlikli kredi/banka kartı ile yapılır. SATICI, sipariş
-        onaylanmadan önce fiyat değişikliği yapma hakkını saklı tutar.
+        Tüm fiyatlar Türk Lirası (TRY) cinsindendir ve KDV dahildir. Ödeme, sipariş onayından
+        sonra ALICI&apos;ya ekranda ve e-postayla bildirilen SATICI hesabına havale/EFT ile yapılır;
+        sipariş, ödeme SATICI hesabına ulaştığında onaylanır. Ödemesi iki gün içinde ulaşmayan
+        siparişi SATICI iptal edebilir. SATICI, sipariş onaylanmadan önce fiyat değişikliği yapma
+        hakkını saklı tutar.
       </p>
 
       <h2>5. Teslimat</h2>

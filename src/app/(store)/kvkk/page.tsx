@@ -58,8 +58,10 @@ veri sorumlusu sıfatıyla tarafımızca işlenmesine ilişkin sizleri bilgilend
 <li><strong>Üyelik hareketleri:</strong> Üyeyseniz ve giriş yapmışsanız; hangi ürünleri görüntülediğiniz, favorilediğiniz, sepete eklediğiniz ve site içi arama sorgularınız</li>
 </ul>
 <p>
-Ödeme kartı bilgileriniz tarafımızca <strong>görülmez ve saklanmaz</strong>; doğrudan iyzico
-Ödeme Hizmetleri A.Ş. altyapısında işlenir.
+Ödemeler havale/EFT ile alınır; ödeme kartı bilgisi <strong>istenmez ve saklanmaz</strong>.
+Havale/EFT ile gönderdiğiniz ödemede gönderen adı ve hesap bilgisi bankanın hesap hareketinde
+görünür; bu bilgi yalnız ödemenin siparişle eşleştirilmesi ve olası iadenin aynı hesaba
+yapılması için kullanılır.
 </p>`,
     `<h2>İşleme Amaçları ve Hukuki Sebepler</h2>
 <ul>
@@ -92,7 +94,7 @@ paylaşılmaz. Ayrıntılar için
 </p>`,
     `<h2>Kişisel Verilerin Aktarıldığı Taraflar</h2>
 <ul>
-<li><strong>iyzico Ödeme Hizmetleri A.Ş.:</strong> Ödeme işleminin güvenli şekilde yürütülmesi (yurt içi).</li>
+<li><strong>Bankalar:</strong> Havale/EFT ödemesinin alınması ve olası iadenin yapılması (yurt içi).</li>
 <li><strong>Anlaşmalı kargo firmaları:</strong> Gönderinin teslim edilmesi; yalnız ad, adres ve telefon bilgisi (yurt içi).</li>
 <li><strong>Barındırma, veritabanı ve e-posta hizmet sağlayıcıları:</strong> Sitenin ve bildirim e-postalarının çalışabilmesi (aşağıdaki bölüme bakınız).</li>
 <li><strong>Yetkili kamu kurum ve kuruluşları:</strong> Mevzuattan doğan talep hâlinde.</li>

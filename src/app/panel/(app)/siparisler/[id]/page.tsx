@@ -245,6 +245,20 @@ export default async function PanelSiparisDetayPage({
           : null,
         acikTalepVar: Boolean(acikIadeTalebi),
         iyzicoId: o.iyzico_payment_id ?? null,
+        // Havale/EFT siparişi (7 Kas 2026) — panelde onay bloğu çıkar.
+        havale:
+          (o.metadata as any)?.odeme_yontemi === 'havale'
+            ? {
+                durum: o.status ?? 'pending',
+                tutar: Number((o.metadata as any)?.havale?.tutar ?? o.total) || 0,
+                banka: String((o.metadata as any)?.havale?.banka ?? ''),
+                alici: String((o.metadata as any)?.havale?.alici ?? ''),
+                iban: String((o.metadata as any)?.havale?.iban_bicimli ?? (o.metadata as any)?.havale?.iban ?? ''),
+                sonOdeme: (o.metadata as any)?.havale?.son_odeme ?? null,
+                onaylandi: (o.metadata as any)?.havale?.odeme_onaylandi ?? null,
+                indirim: (o.metadata as any)?.havale?.indirim ?? null,
+              }
+            : null,
         takipNo: o.tracking_number ?? null,
         createdAt: o.created_at,
         updatedAt: o.updated_at,

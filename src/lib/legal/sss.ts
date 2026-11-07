@@ -67,8 +67,8 @@ export const SSS_TAMAMI: SssSorusu[] = [
       'Katalogdaki malzemeler 316L paslanmaz çelik, premium kaplama pirinç ve boncuk & doğal taştır. Her ürünün malzemesi kendi sayfasında yazılıdır.',
   },
   {
-    soru: 'Ödeme güvenli mi?',
+    soru: 'Nasıl ödeme yapabilirim?',
     cevap:
-      'Ödemeler iyzico altyapısı üzerinden 3D Secure ile alınır. Kart bilgileriniz tarafımızca görülmez ve saklanmaz.',
+      'Şu an ödemeler havale/EFT ile alınıyor. Siparişi onayladığınızda alıcı, banka, IBAN ve tutar ekranda ve e-postanızda yer alır; açıklamaya sipariş numaranızı yazmanız yeterli. Ödemeniz hesabımıza geçince siparişiniz onaylanır ve hazırlanır. Hesap sahibi, sitedeki satıcı bilgisiyle aynı kişidir; kart bilgisi istenmez. Kartla ödemek isterseniz ürünlerimiz Trendyol mağazamızda (NB STEELORA) da satışta.',
   },
 ]

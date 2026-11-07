@@ -120,8 +120,10 @@ export default async function HakkimizdaPage() {
           </p>
         </div>
         <div className="bg-surface-muted/30 p-6">
-          <p className="text-[14px] font-heading text-ink mb-2">Güvenli Ödeme</p>
-          <p className="text-[12px] text-muted">iyzico altyapısı ile 3D Secure güvenlikli ödeme.</p>
+          <p className="text-[14px] font-heading text-ink mb-2">Kayıtlı Satıcı</p>
+          <p className="text-[12px] text-muted">
+            Ticaret Bakanlığı ETBİS kayıtlı satıcı; ödemeniz yalnız satıcının kendi hesabına yapılır.
+          </p>
         </div>
         <div className="bg-surface-muted/30 p-6">
           <p className="text-[14px] font-heading text-ink mb-2">Hızlı Kargo</p>

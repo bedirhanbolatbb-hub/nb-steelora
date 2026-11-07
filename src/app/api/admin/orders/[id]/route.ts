@@ -55,6 +55,23 @@ export async function PATCH(
     updateData.tracking_number = body.tracking_number
   }
 
+  // Havale/EFT (7 Kas 2026): bekleyen havale siparişi durum listesinden
+  // "Ödendi"ye çekilirse stok düşmez, Trendyol stoğu yazılmaz, müşteriye onay
+  // maili gitmez. Ödeme onayı yalnız "Ödeme geldi, onayla" düğmesinden.
+  if (
+    body.status === 'paid' &&
+    existing.status === 'pending' &&
+    (existing.metadata as any)?.odeme_yontemi === 'havale'
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Havale siparişini "Havale / EFT" kutusundaki "Ödeme geldi, onayla" düğmesiyle onaylayın.',
+      },
+      { status: 400 }
+    )
+  }
+
   if (body.status === 'cancelled') {
     const cancelResult = await executeAdminOrderCancellation(serviceClient, id)
     if (!cancelResult.ok) {

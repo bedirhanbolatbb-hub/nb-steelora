@@ -69,8 +69,10 @@ export default async function OnBilgilendirmeFormuPage() {
         yansıtılmaz.
       </p>
       <p>
-        Ödeme, iyzico altyapısı üzerinden 3D Secure doğrulamalı kredi/banka kartı ile
-        alınır. Kart bilgileriniz tarafımızca saklanmaz.
+        Ödeme <strong>havale/EFT</strong> ile yapılır: siparişi onayladığınızda satıcının hesap
+        bilgileri (alıcı, banka, IBAN) ve ödenecek tutar ekranda ve e-postanızda bildirilir.
+        Sipariş, ödeme satıcı hesabına ulaştığında onaylanır ve hazırlanır; iki gün içinde
+        ödemesi ulaşmayan sipariş iptal edilebilir. Kart bilgisi istenmez.
       </p>
 
       <h2>4. Teslimat</h2>
@@ -148,7 +150,8 @@ export default async function OnBilgilendirmeFormuPage() {
         seferde iade edilir. Ödemeniz kredi kartıyla yapılmışsa, kart çıkaran kuruluş
         tarafımızca aktarılan tutarı kendisine ulaşmasını takiben kullanılabilir limitinize{' '}
         <strong>tek seferde</strong> ilave etmekle yükümlüdür; bankanın hesabınıza yansıtma
-        süresi (genellikle {BANKA_YANSIMA_LABEL}) bizim kontrolümüzde değildir.
+        süresi (genellikle {BANKA_YANSIMA_LABEL}) bizim kontrolümüzde değildir. Ödemeniz
+        havale/EFT ile yapılmışsa tutar, ödemeyi gönderdiğiniz hesaba havale ile iade edilir.
       </p>
 
       <h2>6. Cayma Hakkının Kullanılamayacağı Haller</h2>

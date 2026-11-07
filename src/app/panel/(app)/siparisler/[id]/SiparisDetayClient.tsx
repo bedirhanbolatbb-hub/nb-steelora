@@ -13,6 +13,7 @@ import KargoBlogu, { type KargoBloguProps } from './KargoBlogu'
 import MailGecmisi from './MailGecmisi'
 import type { BaskiKaydi } from '@/lib/emails/baskiListesi'
 import IcNotlar from './IcNotlar'
+import HavaleBlogu, { type HavaleBilgisi } from './HavaleBlogu'
 
 type Kalem = { productId: string; ad: string; adet: number; birim: number; slug: string | null; image: string | null }
 
@@ -58,6 +59,8 @@ export type SiparisDetay = {
   /** Bu siparişte şu an açık (sonuçlanmamış) bir iade/iptal talebi var mı. */
   acikTalepVar: boolean
   iyzicoId: string | null
+  /** Havale/EFT siparişiyse ödeme bilgisi (7 Kas 2026); değilse null. */
+  havale?: HavaleBilgisi | null
   takipNo: string | null
   createdAt: string
   updatedAt: string | null
@@ -494,6 +497,8 @@ export default function SiparisDetayClient({
           {/* Kargo (Faz 10A) — sipariş durum akışının hemen üstünde, çünkü
               gönderi oluşturulup takip kodu alındıktan sonra durum «Kargoya
               verildi»ye çekiliyor. */}
+          {siparis.havale && <HavaleBlogu siparisId={siparis.id} siparisNo={siparis.no} h={siparis.havale} />}
+
           <KargoBlogu {...kargo} />
 
           {/* Durum akışı */}
@@ -579,7 +584,13 @@ export default function SiparisDetayClient({
           </>
         }
       >
-        <p>{GERI_ALINAMAZ[hedefDurum]}</p>
+        <p>
+          {hedefDurum === 'cancelled' && siparis.havale
+            ? siparis.havale.durum === 'pending'
+              ? 'Ödemesi gelmemiş havale siparişi iptal edilecek; müşteriye iptal maili gider. Bu geçiş geri alınamaz.'
+              : 'Sipariş iptal edilecek ve stok geri yüklenecek. Havale ile ödendiği için para otomatik dönmez: tutarı müşterinin para gönderdiği hesaba bankadan geri gönderin. Bu geçiş geri alınamaz.'
+            : GERI_ALINAMAZ[hedefDurum]}
+        </p>
       </PDialog>
     </div>
   )

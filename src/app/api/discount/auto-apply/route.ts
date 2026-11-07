@@ -3,6 +3,8 @@ import { cokFazlaIstek, hizSiniri, istekKimligi } from '@/lib/guvenlik/hizSiniri
 import { createServiceClient } from '@/lib/supabase/service'
 import { sepetOzetiHesapla, musteriDurumu } from '@/lib/campaigns/sepetOzeti'
 import { ilkSiparisDuyurusu } from '@/lib/campaigns/ilkSiparisKuponu'
+import { havaleAyariOku } from '@/lib/odeme/havaleAyari'
+import { havaleIndirimiHesapla } from '@/lib/odeme/havale'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,8 +62,19 @@ export async function POST(request: Request) {
   // davet etmemek için (indirimler birleşmiyor, motor en yükseğini uyguluyor).
   const duyuru = await ilkSiparisDuyurusu()
 
+  // Ek havale/EFT indirimi (7 Kas 2026): sipariş ucuyla AYNI fonksiyon —
+  // sepette ve ödeme adımında gösterilen tutar ile siparişe yazılan tutar
+  // ayrışamaz. Ürün kartında gösterilmez (BB kararı).
+  const havale = havaleIndirimiHesapla({
+    araToplam: ozet.araToplam,
+    kampanyaIndirimi: Math.min(ozet.indirimToplami, ozet.araToplam),
+    ayar: await havaleAyariOku(),
+    simdi: new Date(),
+  })
+
   return NextResponse.json({
     ozet,
+    havale: havale.tutar > 0 ? havale : null,
     kodHatasi,
     // Ekran mesajın TONUNU buradan öğrenir: "daha avantajlı kampanya var"
     // kırmızı basılmamalı, o iyi haber (Faz 25).

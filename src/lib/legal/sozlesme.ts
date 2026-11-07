@@ -15,7 +15,9 @@
 // süresi: Sipariş onayından itibaren 1-5 iş günü" diyerek taşıma süresini
 // toplam gibi sunuyordu; hazırlık (1–2 iş günü) ve taşıma (1–5 iş günü) ayrı
 // ve sıralı yazıldı. Banka yansıma süresi de tek değere (3–7) oturtuldu.
-export const SOZLESME_SURUMU = '2026-09-05.1'
+// 07.11.2026 — ESASA İLİŞKİN: ödeme yöntemi. Kart ödemesi (iyzico) kapatıldı;
+// ödeme, sipariş sonrası bildirilen satıcı hesabına havale/EFT ile yapılır.
+export const SOZLESME_SURUMU = '2026-11-07.1'
 
 /**
  * Yasal süreler ve eşikler — TEK KAYNAK (Faz 20'de mevzuattan doğrulandı).

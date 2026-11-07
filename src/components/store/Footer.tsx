@@ -217,17 +217,8 @@ export default function Footer({
       {/* Alt Şerit */}
       <div className="border-t border-line/10">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 flex flex-col items-center gap-4">
-          <div className="flex items-center justify-center mb-4">
-            <img
-              src="/badges/iyzico-logo-pack/iyzico-logo-pack/footer_iyzico_ile_ode/White/logo_band_white.svg"
-              alt="iyzico ile öde"
-              // Alt şeritte, ekranın çok altında duruyor; öncelikli yüklenip
-              // kapak görseliyle yarışmasın.
-              loading="lazy"
-              decoding="async"
-              className="h-8 object-contain opacity-80 hover:opacity-100 transition-opacity"
-            />
-          </div>
+          {/* 7 Kas 2026: iyzico/kart logoları kalktı — kart ödemesi kapalı
+              (iyzico hesabı kapatılan eski firmaya aitti); ödeme havale/EFT. */}
           <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
           <p className="text-[10px] font-body text-line/50 tracking-wider">
             {/* Satıcı künyesi — E-Ticaret Kanunu gereği; boş alanlar basılmaz. */}

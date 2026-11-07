@@ -122,12 +122,21 @@ export function orderConfirmationEmail(order: OrderLike) {
     .join('')
 
   const shipping = Number(order.shipping_cost ?? 0)
+  // Havale/EFT (7 Kas 2026): müşteri sipariş anında "ödeme bilgileri" mailini
+  // aldı; bu mail ödeme hesaba geçip panelden onaylanınca gider.
+  const havale = (order.metadata as any)?.odeme_yontemi === 'havale'
 
   return {
-    subject: `Siparişiniz Alındı — ${order.order_number}`,
+    subject: havale
+      ? `Ödemeniz alındı, siparişiniz onaylandı — ${order.order_number}`
+      : `Siparişiniz Alındı — ${order.order_number}`,
     html: shell(
-      'Siparişiniz Alındı 🎁',
-      `<p style="color: #7A5048; margin-bottom: 30px;">Siparişiniz için teşekkür ederiz. En kısa sürede kargoya vereceğiz.</p>
+      havale ? 'Ödemeniz Alındı' : 'Siparişiniz Alındı 🎁',
+      `<p style="color: #7A5048; margin-bottom: 30px;">${
+        havale
+          ? 'Havale/EFT ödemeniz hesabımıza ulaştı ve siparişiniz onaylandı. En kısa sürede kargoya vereceğiz.'
+          : 'Siparişiniz için teşekkür ederiz. En kısa sürede kargoya vereceğiz.'
+      }</p>
     ${orderNumberBox(order.order_number)}
     <h3 style="font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A5048; margin-bottom: 16px;">Sipariş Detayları</h3>
     ${lines}
@@ -355,7 +364,10 @@ export function orderCancelledEmail(
   // bayrak yalnız aynı istekte yapılan iadeyi eklemek için kullanılır. Böylece
   // "tahsilat yapılmadı" metni, parası çekilmiş bir siparişte asla çıkmaz.
   const iadeEdildi = Boolean(order.payment_refunded_at) || Boolean(iadeEdildiParam)
-  const tahsilatVardi = Boolean(order.iyzico_payment_id) || iadeEdildi
+  // Havale/EFT (7 Kas 2026): ödeme panelden onaylandıysa tahsilat VAR —
+  // iyzico kimliği olmadığı için eski kural "tahsilat yapılmadı" derdi.
+  const havaleOdendi = Boolean((order.metadata as any)?.havale?.odeme_onaylandi)
+  const tahsilatVardi = Boolean(order.iyzico_payment_id) || iadeEdildi || havaleOdendi
   return {
     subject: `Siparişiniz İptal Edildi — ${order.order_number}`,
     html: shell(
@@ -367,7 +379,10 @@ export function orderCancelledEmail(
           iadeEdildi
             ? `Ödemeniz (<strong>${formatPrice(Number(order.total) || 0)}</strong>) bankanıza iade edildi.
                Kartınıza yansıması bankanıza göre <strong>${BANKA_YANSIMA_LABEL}</strong> sürebilir.`
-            : tahsilatVardi
+            : havaleOdendi
+              ? `Ödemeniz (<strong>${formatPrice(Number(order.total) || 0)}</strong>) en geç 14 gün içinde,
+                 havale/EFT yaptığınız hesaba geri gönderilecek.`
+              : tahsilatVardi
               ? `Ödemenizin (<strong>${formatPrice(Number(order.total) || 0)}</strong>) iadesi işleme alındı;
                  sonucu ayrıca bildireceğiz.`
               : 'Tahsilat yapılmadığı için iade işlemi gerekmedi.'
@@ -945,6 +960,104 @@ export function kalemIptalEmail(
       </p>
       <p style="color:#7A5048;font-size:14px;line-height:1.8;margin:0;">
         Siparişinizin güncel tutarı: <strong>${formatPrice(Number(order.total) || 0)}</strong>
+      </p>`
+    ),
+  }
+}
+
+/**
+ * Havale/EFT · müşteriye ÖDEME BİLGİLERİ (7 Kas 2026).
+ *
+ * Sipariş anında gider. Sözleşme bu anda kuruluyor; ön bilgilendirmenin
+ * kalıcı veri saklayıcısıyla verilmesi gereği (Mesafeli Sözleşmeler Yön.)
+ * bu mailin içindeki özetle karşılanır — kart siparişinde bunu onay maili
+ * yapıyordu.
+ */
+export function havaleTalimatiEmail(order: OrderLike & { metadata?: any }) {
+  const h = (order.metadata as any)?.havale ?? {}
+  const items = Array.isArray(order.items) ? order.items : []
+  const lines = items
+    .map((item: any) => {
+      const line = (Number(item.price) || 0) * (Number(item.quantity) || 1)
+      return `<div style="padding: 10px 0; border-bottom: 1px solid #F0E8E0;">
+        <p style="margin: 0; font-size: 14px;">${htmlKacir(String(item.name ?? 'Ürün'))}${Number(item.quantity) > 1 ? ` × ${Number(item.quantity)}` : ''}</p>
+        <p style="margin: 4px 0 0; font-size: 12px; color: #7A5048;">${formatPrice(line)}</p>
+      </div>`
+    })
+    .join('')
+  const satir = (etiket: string, deger: string) =>
+    `<tr><td style="padding:6px 0;color:#7A5048;font-size:13px;width:110px;vertical-align:top;">${etiket}</td><td style="padding:6px 0;font-size:15px;font-weight:600;">${deger}</td></tr>`
+
+  return {
+    subject: `Siparişiniz alındı, ödeme bilgileri — ${order.order_number}`,
+    html: shell(
+      'Siparişiniz Alındı',
+      `<p style="color: #7A5048; margin-bottom: 24px; line-height: 1.7;">
+        Siparişiniz için teşekkür ederiz. Ödemenizi aşağıdaki hesaba havale/EFT ile
+        gönderdiğinizde siparişinizi onaylayıp kargoya hazırlıyoruz. Onaylandığında
+        size ayrıca e-posta göndereceğiz.
+      </p>
+      ${orderNumberBox(order.order_number)}
+      <div style="background:#FFFFFF;border:2px solid #2A1E1E;padding:20px;margin-bottom:24px;">
+        <p style="margin:0 0 12px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#C89080;">Ödeme bilgileri</p>
+        <table style="border-collapse:collapse;width:100%;">
+          ${satir('Tutar', formatPrice(order.total ?? 0))}
+          ${satir('Alıcı', htmlKacir(String(h.alici ?? '')))}
+          ${satir('Banka', htmlKacir(String(h.banka ?? '')))}
+          ${satir('IBAN', `<span style="font-family:Menlo,Consolas,monospace;letter-spacing:.04em;">${htmlKacir(String(h.iban_bicimli ?? h.iban ?? ''))}</span>`)}
+          ${satir('Açıklama', htmlKacir(order.order_number))}
+        </table>
+        <p style="margin:14px 0 0;font-size:13px;line-height:1.7;color:#2A1E1E;">
+          Açıklama alanına yalnız sipariş numaranızı yazın; ödemenizi bununla eşleştiriyoruz.
+          Ödemenizi 2 gün içinde yapmanızı rica ederiz; ödemesi ulaşmayan siparişler iptal edilir.
+        </p>
+      </div>
+      <h3 style="font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A5048; margin-bottom: 12px;">Sipariş Detayları</h3>
+      ${lines}
+      ${
+        Number(h?.indirim?.tutar) > 0
+          ? `<p style="margin:10px 0 0;font-size:13px;color:#7A5048;">Havale/EFT indirimi (%${Number(h.indirim.oran)}): −${formatPrice(Number(h.indirim.tutar))}</p>`
+          : ''
+      }
+      <div style="padding: 14px 0; border-top: 2px solid #E8D8D0; margin-top: 8px;">
+        <p style="margin:0 0 6px;color:#7A5048;">Kargo: ${SHIPPING_LINE_LABEL}</p>
+        <p style="margin:0;font-size:18px;font-weight:600;">Ödenecek tutar: ${formatPrice(order.total ?? 0)}</p>
+      </div>
+      ${onBilgilendirmeOzeti(order)}`
+    ),
+  }
+}
+
+/** Havale/EFT · yöneticiye "ödeme bekleniyor" bildirimi (7 Kas 2026). */
+export function adminHavaleSiparisiEmail(order: any) {
+  const adres = order?.shipping_address ?? {}
+  const musteri = htmlKacir(adres.fullName || adres.full_name || order?.guest_email || 'Müşteri')
+  return {
+    subject: `Havale bekleniyor — ${order.order_number} · ${formatPrice(Number(order.total) || 0)}`,
+    html: shell(
+      'Yeni sipariş: havale bekleniyor',
+      `${orderNumberBox(order.order_number)}
+      <p style="color:#7A5048;line-height:1.8;margin:0 0 12px;">
+        <strong>${musteri}</strong> · ${htmlKacir(order?.guest_email ?? '—')}<br>
+        Beklenen tutar: <strong>${formatPrice(Number(order.total) || 0)}</strong> · açıklama: <strong>${htmlKacir(order.order_number)}</strong>
+      </p>
+      <ul style="color:#7A5048;line-height:1.7;font-size:14px;padding-left:18px;margin:0 0 16px;">
+        ${satirlarHtml(order?.items)}
+      </ul>
+      ${
+        order?.gift_note
+          ? `<div style="background:#FFF8E6;border:1px solid #E8D8A0;padding:14px;margin-bottom:16px;">
+               <p style="margin:0 0 4px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#A88070;">Sipariş notu</p>
+               <p style="margin:0;color:#2A1E1E;">${htmlKacir(order.gift_note)}</p>
+             </div>`
+          : ''
+      }
+      <p style="color:#7A5048;line-height:1.7;margin:0 0 16px;">
+        Para hesaba geçince panelde siparişi açıp <strong>"Ödeme geldi, onayla"</strong> düğmesine basın:
+        stok düşer, müşteriye onay maili gider. Ödeme gelmezse siparişi iptal edin.
+      </p>
+      <p style="text-align:center;margin:24px 0 0;">
+        <a href="${PANEL}/siparisler/${order.id}" style="display:inline-block;background:#2A1E1E;color:#FFF8F6;padding:14px 32px;text-decoration:none;font-size:12px;letter-spacing:.15em;text-transform:uppercase;">Siparişi aç</a>
       </p>`
     ),
   }

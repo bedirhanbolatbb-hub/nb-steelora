@@ -9,5 +9,7 @@
 export const GUVEN_METNI = {
   iade: '14 gün iade',
   hediye: 'Hediye kutusu',
-  odeme: 'iyzico güvencesi',
+  // 7 Kas 2026: kart ödemesi kapalı (iyzico kaldırıldı). ETBİS kaydı footer'dan
+  // doğrulanabilir; yeni iddia değil.
+  odeme: 'ETBİS kayıtlı satıcı',
 } as const

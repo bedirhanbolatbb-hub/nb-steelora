@@ -19,7 +19,7 @@ export default async function PanelSiparislerPage({
   let query = supabase
     .from('orders')
     .select(
-      'id, order_number, guest_email, total, status, created_at, tracking_number, shipping_address, iyzico_payment_id, gift_note'
+      'id, order_number, guest_email, total, status, created_at, tracking_number, shipping_address, iyzico_payment_id, gift_note, metadata'
     )
     .order('created_at', { ascending: false })
     .limit(200)
@@ -43,6 +43,7 @@ export default async function PanelSiparislerPage({
     tarih: o.created_at,
     takipVar: Boolean(o.tracking_number),
     notVar: Boolean((o.gift_note ?? '').trim()),
+    havale: (o.metadata as any)?.odeme_yontemi === 'havale',
   }))
 
   // Müşteri talepleri (iptal/iade) — salt okunur liste.
@@ -98,7 +99,8 @@ export default async function PanelSiparislerPage({
 
   // "Yarım kalan ödemeler": 3DS başlatılmış ama tamamlanmamış siparişler
   // (status=pending). order_requests bu değil — keşif notu raporda.
-  const yarimKalan = satirlar.filter((s) => s.durum === 'pending')
+  // Havale/EFT siparişi yarım ödeme değildir: ödemesi bekleniyor (7 Kas 2026).
+  const yarimKalan = satirlar.filter((s) => s.durum === 'pending' && !s.havale)
 
   return (
     <SiparislerClient

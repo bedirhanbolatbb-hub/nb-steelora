@@ -1,15 +1,7 @@
 import { NextResponse, after } from 'next/server'
-import { bildirimDamgala } from '@/lib/emails/bildirimSuprugu'
 import { completeThreeDS } from '@/lib/iyzico/client'
 import { createServiceClient } from '@/lib/supabase/service'
-import { decreaseStock } from '@/lib/trendyol/stockUpdate'
-import { kuyrugaEkle, kuyrugaIsle } from '@/lib/trendyol/stokKuyrugu'
-import { orderConfirmationEmail, adminNewOrderEmail } from '@/lib/emails/templates'
-import { bildirimAdresi } from '@/lib/emails/bildirim'
-import { musteriMailiGonder } from '@/lib/emails/musteriMaili'
-import { sendMail } from '@/lib/emails/send'
-import { kullanimArtir } from '@/lib/campaigns/pricing'
-import { olayYaz } from '@/lib/analytics/track'
+import { odemeBildirimleriniGonder, odemeSonrasiIsle } from '@/lib/odeme/odemeSonrasi'
 
 /**
  * Faz 29: rotada süre sınırı TANIMLI DEĞİLDİ. Zincir uzun (iyzico + stok +
@@ -30,14 +22,6 @@ function itemsFromIyzicoTransactions(transactions: unknown) {
       quantity: 1,
       price: parseFloat(String(t.price ?? 0)) || 0,
     }))
-}
-
-function lineProductId(item: any): string | null {
-  const id = item?.productId ?? item?.product_id ?? item?.itemId ?? item?.item_id
-  if (id == null || id === '') return null
-  const s = String(id).trim()
-  if (!s || s === 'KARGO') return null
-  return s
 }
 
 const emptyShippingAddress = {
@@ -202,181 +186,14 @@ export async function POST(request: Request) {
       return NextResponse.redirect(`${siteUrl}/odeme/basarisiz`, { status: 302 })
     }
 
-    // Satın alma ölçümü (Faz 12) — order_id üzerinde benzersiz indeks olduğu
-    // için callback tekrar çalışsa bile ikinci satır yazılmaz (çift sayım yok).
-    await olayYaz({
-      event: 'purchase',
-      sessionId: `order:${order.order_number ?? order.id}`,
-      path: '/odeme',
-      device: 'desktop',
-      value: paidTotal,
-      orderId: order.id,
-      meta: { kalem: Array.isArray(order.items) ? order.items.length : 0 },
-    })
+    // Ödeme sonrası zincir ve bildirimler tek kaynakta (7 Kas 2026):
+    // havale onayı da aynı fonksiyonları çağırır — bkz. lib/odeme/odemeSonrasi.ts.
+    await odemeSonrasiIsle(serviceClient, order, paidTotal, '[callback]')
 
-    // Kupon kullanım sayacı — ödeme başarılıysa bir kez (Faz 11).
-    // Sayaç hiç artmıyordu, bu yüzden max_uses limiti pratikte işlemiyordu.
-    // Tek seferlik olması stok damgasıyla aynı kapıya bağlanır: damga zaten
-    // varsa bu blok da atlanır (callback tekrar çağrılırsa çift saymaz).
-    if (order.applied_campaign_id) {
-      const { data: sayacKapisi } = await serviceClient
-        .from('orders')
-        .select('stock_deducted_at')
-        .eq('id', order.id)
-        .single()
-      if (!sayacKapisi?.stock_deducted_at) {
-        await kullanimArtir(serviceClient, order.applied_campaign_id).catch((e: any) =>
-          console.error('[callback] kupon sayacı artırılamadı:', e?.message)
-        )
-      }
-    }
-
-    // Stok düş — sadece ödeme başarılı ve sipariş satırı yüklendikten sonra; stock_deducted_at ile tek sefer
-    const { data: stockGate, error: stockGateErr } = await serviceClient
-      .from('orders')
-      .select('stock_deducted_at')
-      .eq('id', order.id)
-      .single()
-
-    if (stockGateErr) {
-      console.error('[callback] stock gate select error:', stockGateErr.message, stockGateErr)
-    }
-
-    const itemsArr = Array.isArray(order.items) ? (order.items as any[]) : []
-
-    const alreadyDeducted = Boolean(stockGate?.stock_deducted_at)
-    if (alreadyDeducted) {
-      console.log('[callback] stock: skip (stock_deducted_at already set)', order.id)
-    } else if (itemsArr.length > 0) {
-      let stockDecreaseOk = true
-      let linesWithProduct = 0
-      for (const item of itemsArr) {
-        const productId = lineProductId(item)
-        if (!productId) {
-          console.log('[callback] stock: skip line (no productId)', JSON.stringify(item))
-          continue
-        }
-        linesWithProduct += 1
-        const qty = Math.max(1, Number(item.quantity) || 1)
-        console.log('[callback] stock: decreaseStock call', { productId, quantity: qty })
-        const dec = await decreaseStock(productId, qty)
-        console.log('[callback] stock: decreaseStock result', { productId, quantity: qty, success: dec.success, error: dec.error })
-        if (!dec.success) {
-          stockDecreaseOk = false
-          console.error('[callback] stock: decreaseStock failed', { productId, quantity: qty, error: dec.error })
-        }
-      }
-      if (linesWithProduct === 0) {
-        console.error('[callback] stock: no line items with productId; order.items:', JSON.stringify(itemsArr).slice(0, 500))
-      }
-      if (stockDecreaseOk && linesWithProduct > 0) {
-        const { error: stampErr } = await serviceClient
-          .from('orders')
-          .update({ stock_deducted_at: new Date().toISOString() })
-          .eq('id', order.id)
-        if (stampErr) {
-          console.error('[callback] stock: failed to set stock_deducted_at:', stampErr.message)
-        }
-      }
-    } else {
-      console.warn('[callback] stock: order.items missing or empty; cannot decrease stock', order.id)
-    }
-
-    // Kişisel kupon: ödeme ONAYLANDI, kupon şimdi harcanır (Faz 17).
-    // Rezervasyon yerine bu sıra seçildi: ödeme yarıda kalan müşteri kuponunu
-    // kaybetmez, çünkü kupon yalnız buraya ulaşan siparişte tüketilir.
-    try {
-      const kuponId = (order as any)?.metadata?.kisisel_kupon_id
-      if (kuponId) {
-        const { data: kupon } = await serviceClient
-          .from('campaign_coupons')
-          .select('id, used_count, max_uses')
-          .eq('id', kuponId)
-          .maybeSingle()
-        if (kupon && (kupon.used_count ?? 0) < (kupon.max_uses ?? 1)) {
-          await serviceClient
-            .from('campaign_coupons')
-            .update({
-              used_count: (kupon.used_count ?? 0) + 1,
-              redeemed_at: new Date().toISOString(),
-              redeemed_order_id: order.id,
-              is_active: (kupon.used_count ?? 0) + 1 < (kupon.max_uses ?? 1),
-            })
-            .eq('id', kupon.id)
-            // Yarış koruması: iki eşzamanlı callback'ten yalnız biri sayacı
-            // artırabilsin diye mevcut değer koşulu.
-            .eq('used_count', kupon.used_count ?? 0)
-          console.log('[callback] kişisel kupon harcandı:', kupon.id)
-        }
-      }
-    } catch (kuponHata: any) {
-      console.error('[callback] kupon harcanamadı:', kuponHata?.message)
-    }
-
-    // Trendyol stok kuyruğu (Faz 16B): yazım kuyruğa alınır, hemen işlenmeye
-    // çalışılır. Her hata yutulur — Trendyol'daki bir gecikme ödemeyi bozmaz.
-    try {
-      const kalemler = Array.isArray(order?.items) ? (order.items as any[]) : []
-      await kuyrugaEkle({
-        orderId: order.id,
-        items: kalemler.map((k) => ({
-          productId: k?.productId ?? k?.product_id ?? null,
-          quantity: Number(k?.quantity) || 1,
-        })),
-        yon: 'satis',
-      })
-      const kuyrukSonuc = await kuyrugaIsle()
-      console.log('[callback] stok kuyruğu:', JSON.stringify(kuyrukSonuc))
-    } catch (kuyrukHata: any) {
-      console.error('[callback] stok kuyruğu hatası (ödeme etkilenmedi):', kuyrukHata?.message)
-    }
-
-    /**
-     * ── Faz 29 · bildirimler yeniden düzenlendi ────────────────────────
-     *
-     * İlk gerçek siparişte (NBS-…3108) BB'ye bildirim maili GİTMEDİ. Mail
-     * hattı, bildirim adresi ve şablonun kendisi ayrı ayrı sınandı ve üçü de
-     * SAĞLAM çıktı — kusur sıradaydı: bildirim, callback'in EN SONUNDAKİ
-     * adımdı. Önünde iyzico çağrısı, sipariş güncellemesi, dört kalemlik stok
-     * düşümü, kupon işlemi, Trendyol kuyruğu (dış API) ve bir Resend çağrısı
-     * daha vardı. Bu zincirin herhangi bir yerinde işlev süresi dolarsa
-     * kaybolan tam olarak SON adım oluyor. Üstelik rotada `maxDuration`
-     * tanımlı değildi, yani varsayılan (kısa) sınırla çalışıyordu.
-     *
-     * Üç değişiklik:
-     *  1. YÖNETİCİ bildirimi önce gönderiliyor — BB'nin siparişten haberi
-     *     olması, müşteri mailinden daha önceliklidir.
-     *  2. İkisi de `after()` içinde: yanıt (müşteriye "teşekkürler" sayfası)
-     *     maillerin tamamlanmasını BEKLEMİYOR.
-     *  3. Gönderim siparişe damgalanıyor; damgasız kalan siparişleri gecelik
-     *     sağlık işi süpürüp gönderiyor (lib/emails/bildirimSuprugu.ts).
-     */
+    // Faz 29: bildirimler yanıtı (müşterinin "teşekkürler" sayfası) bekletmez.
+    const tamamlanan = order
     after(async () => {
-      if (!order) return
-      try {
-        const alici = await bildirimAdresi()
-        const bildirim = adminNewOrderEmail(order)
-        const sonuc = await sendMail({ to: alici, ...bildirim, label: 'Admin new order' })
-        if (!sonuc.error) await bildirimDamgala(order.id, 'yeni_siparis', sonuc.id)
-      } catch (bildirimHata: any) {
-        console.error('[callback] yönetici bildirimi gönderilemedi:', bildirimHata?.message)
-      }
-
-      try {
-        const { subject, html } = orderConfirmationEmail(order as any)
-        const onay = await musteriMailiGonder({
-          eposta: order.guest_email,
-          orderNumber: order.order_number,
-          subject,
-          html,
-          label: 'Order confirmation',
-        })
-        // Faz 11C: onay maili damgalanmıyordu — panelde "Sipariş onayı"
-        // satırı gerçek siparişte bile boş görünüyordu. Damga + Resend id.
-        if (onay.gonderildi) await bildirimDamgala(order.id, 'onay', onay.id ?? null)
-      } catch (e: any) {
-        console.error('[callback] sipariş onayı gönderilemedi:', e?.message)
-      }
+      await odemeBildirimleriniGonder(tamamlanan, { yonetici: true })
     })
 
     return NextResponse.redirect(

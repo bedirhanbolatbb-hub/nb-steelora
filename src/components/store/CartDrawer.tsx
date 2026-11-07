@@ -42,10 +42,14 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
   const kampanyaIndirimi = useVitrinIndirimi()
   const subtotal = totalPrice()
   // İndirim artık ödeme adımını beklemeden burada görünüyor (Faz 15).
-  const { ozet, indirim } = useOtomatikIndirim(
+  const { ozet, indirim, havale } = useOtomatikIndirim(
     items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 }))
   )
-  const indirimliToplam = Math.max(0, subtotal - ozet.indirimToplami)
+  // Ek havale/EFT indirimi (7 Kas 2026) — sunucudan; ürün kartında yok,
+  // yalnız sepette ve ödeme adımında görünür (BB kararı).
+  const havaleTutari = havale?.tutar ?? 0
+  const indirimVar = Boolean(indirim) || havaleTutari > 0
+  const indirimliToplam = Math.max(0, subtotal - ozet.indirimToplami - havaleTutari)
   const hasItems = items.length > 0
   // Faz 36: teslim süresi tarih olarak (panel her açıldığında yeniden hesap).
   const teslimEtiketi = useMemo(() => (isOpen ? tahminiTeslimEtiketi() : ''), [isOpen])
@@ -230,20 +234,28 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                     Ara Toplam
                   </span>
                   <span
-                    className={`text-[14px] font-body ${indirim ? 'text-muted line-through' : 'text-accent-deep font-medium text-[16px]'}`}
+                    className={`text-[14px] font-body ${indirimVar ? 'text-muted line-through' : 'text-accent-deep font-medium text-[16px]'}`}
                   >
                     {formatPrice(subtotal)}
                   </span>
                 </div>
 
-                {indirim && (
+                {indirimVar && (
                   <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[12px] font-body text-ink-soft">{kampanyaEtiketi(indirim.ad)}</span>
-                      <span className="text-[13px] font-body text-accent-deep">
-                        −{formatPrice(indirim.tutar)}
-                      </span>
-                    </div>
+                    {indirim && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[12px] font-body text-ink-soft">{kampanyaEtiketi(indirim.ad)}</span>
+                        <span className="text-[13px] font-body text-accent-deep">
+                          −{formatPrice(indirim.tutar)}
+                        </span>
+                      </div>
+                    )}
+                    {havale && havaleTutari > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[12px] font-body text-ink-soft">Havale/EFT indirimi (%{havale.oran})</span>
+                        <span className="text-[13px] font-body text-accent-deep">−{formatPrice(havaleTutari)}</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between border-t border-line pt-1.5">
                       <span className="text-[12px] font-body uppercase tracking-wider text-ink">
                         Toplam
@@ -253,7 +265,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                       </span>
                     </div>
                     <p className="text-[11px] font-body text-accent-deep">
-                      {formatPrice(ozet.indirimToplami)} kazandınız
+                      {formatPrice(ozet.indirimToplami + havaleTutari)} kazandınız
                       {ozet.tavanUygulandi && (
                         <span className="text-muted"> · indirim tavanı uygulandı</span>
                       )}

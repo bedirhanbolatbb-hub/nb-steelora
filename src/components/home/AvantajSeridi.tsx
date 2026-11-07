@@ -20,7 +20,9 @@ const MADDELER = [
   // ürünlerde cayma hakkı yok (bkz. /kargo-ve-iade). Doğru ve güçlü olan iki
   // vaat: sebep sorulmaz, iade kargosu bizden.
   { Icon: RotateCcw, baslik: '14 gün iade', metin: 'Sebep göstermeden, iade kargosu bizden', vurgulu: false },
-  { Icon: ShieldCheck, baslik: 'Güvenli ödeme', metin: 'iyzico güvencesiyle', vurgulu: false },
+  // 7 Kas 2026: "iyzico güvencesiyle" kalktı (kart ödemesi kapalı, havale/EFT).
+  // ETBİS kaydı sitede zaten doğrulanabilir (footer bağlantısı) — yeni iddia değil.
+  { Icon: ShieldCheck, baslik: 'Kayıtlı satıcı', metin: 'Ticaret Bakanlığı ETBİS kaydı', vurgulu: false },
 ] as const
 
 export default function AvantajSeridi() {

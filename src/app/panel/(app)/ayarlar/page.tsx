@@ -5,6 +5,8 @@ import { formatPrice } from '@/lib/utils'
 import { PCard, PSayfaNotu } from '../_components/ui'
 import KopyalanabilirAlan from './KopyalanabilirAlan'
 import KvkkBlogu from './KvkkBlogu'
+import HavaleAyarKarti from './HavaleAyarKarti'
+import { havaleAyariOku } from '@/lib/odeme/havaleAyari'
 
 export const metadata: Metadata = { title: 'Ayarlar' }
 export const dynamic = 'force-dynamic'
@@ -12,9 +14,10 @@ export const dynamic = 'force-dynamic'
 export default async function PanelAyarlarPage() {
   const supabase = createServiceClient()
 
-  const [{ count: aktif }, { count: siparis }] = await Promise.all([
+  const [{ count: aktif }, { count: siparis }, havaleAyari] = await Promise.all([
     supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
     supabase.from('orders').select('id', { count: 'exact', head: true }),
+    havaleAyariOku(),
   ])
 
   const satirlar = [
@@ -35,6 +38,8 @@ export default async function PanelAyarlarPage() {
       <PSayfaNotu>
         Kargo, iade ve sistem bilgilerinin özeti; buradaki değerler başka ekranlardan yönetilir, bu sayfa kontrol içindir.
       </PSayfaNotu>
+      <HavaleAyarKarti ayar={havaleAyari} />
+
       <PCard title="Sistem özeti">
         <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
           {satirlar.map((s) => (
