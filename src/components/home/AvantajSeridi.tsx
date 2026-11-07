@@ -14,7 +14,8 @@ import { Gift, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
  */
 const MADDELER = [
   { Icon: Truck, baslik: 'Ücretsiz kargo', metin: 'Tüm siparişlerde, alt limit yok', vurgulu: true },
-  { Icon: Gift, baslik: 'Hediye kutusunda', metin: 'Her sipariş kutusunda gönderilir', vurgulu: false },
+  // Hediye notu ödeme adımında, ücretsiz (lib/legal/sss.ts ile aynı vaat).
+  { Icon: Gift, baslik: 'Hediye kutusunda', metin: 'Her siparişte, hediye notu ücretsiz', vurgulu: false },
   // "Koşulsuz" yazılmaz: hijyen mührü açılmış küpe/piercing ve kişiye özel
   // ürünlerde cayma hakkı yok (bkz. /kargo-ve-iade). Doğru ve güçlü olan iki
   // vaat: sebep sorulmaz, iade kargosu bizden.

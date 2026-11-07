@@ -532,7 +532,7 @@ export default function OdemePage() {
           {/* Hediye Notu */}
           <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
             <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
-              Hediye Notu (isteğe bağlı)
+              Hediye Notu (isteğe bağlı, ücretsiz)
             </label>
             <textarea
               placeholder="Sevdiklerinize özel bir not bırakın..."
