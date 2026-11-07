@@ -98,3 +98,23 @@ export async function vitrinIndirimiGetir(simdi?: Date): Promise<VitrinIndirimi 
     return null
   }
 }
+
+/**
+ * Panel önizlemesi (Kasım 2026): henüz başlamamış bir kampanyanın vitrinde
+ * nasıl görüneceği. Kampanya başlangıcından bir dakika sonrası simüle edilir;
+ * canlı veriye dokunulmaz, hiçbir müşteri bunu görmez (çağıran taraf panel
+ * oturumunu doğrular). O anda yürürlükte olacak kampanya döner — başka bir
+ * kampanyayla çakışıyorsa vitrinde gerçekten görünecek olan hangisiyse o.
+ */
+export async function kampanyaOnizlemesiGetir(id: string): Promise<VitrinIndirimi | null> {
+  try {
+    const supabase = createServiceClient()
+    const { data } = await supabase.from('campaigns').select('id, starts_at').eq('id', id).maybeSingle()
+    if (!data) return null
+    const baslangic = data.starts_at ? new Date(data.starts_at).getTime() : Date.now()
+    const simdi = new Date(Math.max(Date.now(), baslangic + 60_000))
+    return await vitrinIndirimiGetir(simdi)
+  } catch {
+    return null
+  }
+}

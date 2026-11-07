@@ -7,6 +7,7 @@ import { oncelikliVesile, ELLE_VESILELER, VESILE_ADLARI, type Vesile } from '@/l
 import { CATEGORIES } from '@/lib/catalog/categories'
 import { vitrinMetni, vitrinHedefi } from '@/lib/campaigns/vitrinMetni'
 import { tipCevir, kapsamCevir } from '@/lib/campaigns/yukle'
+import { herkeseIndirimMi, onGunCakismasi, type IndirimSatiri } from '@/lib/campaigns/onGunKurali'
 import UrunSecici from './UrunSecici'
 import { useState, useMemo, useEffect } from 'react'
 import { Plus } from 'lucide-react'
@@ -863,6 +864,14 @@ export default function KampanyalarClient({
             </div>
           </div>
 
+          {/* Kasım 2026 · on gün kuralı ve ilk ekran notu */}
+          <OnGunUyarisi
+            form={form}
+            satirlar={satirlar}
+            duzenlenen={duzenlenen}
+            onDuzelt={(yerel) => setForm((f) => ({ ...f, starts_at: yerel }))}
+          />
+
           {/* Koşul anahtarları (Faz 17) */}
           <div className="space-y-2.5 rounded-[4px] border border-[var(--p-line)] p-3 text-[12px]">
             <label className="flex items-start gap-1.5">
@@ -1256,5 +1265,116 @@ function KapsamSayaci({ form }: { form: Form }) {
         </>
       )}
     </p>
+  )
+}
+
+/** "31 Ekim 23:59" — İstanbul saatiyle. */
+const tarihSaat = (d: Date) =>
+  new Intl.DateTimeFormat('tr-TR', {
+    timeZone: 'Europe/Istanbul',
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(d)
+
+/** Panel satırını on gün kuralının okuduğu biçime çevirir. */
+function indirimSatiri(c: KampanyaSatiri): IndirimSatiri {
+  return {
+    id: c.id,
+    name: c.name,
+    type: c.type,
+    code: c.code,
+    requires_code: c.type === 'discount_code',
+    discount_value: c.discountValue,
+    min_cart_amount: c.minCart,
+    min_item_count: c.minItemCount,
+    scope: c.scope,
+    first_order_only: c.firstOrderOnly,
+    members_only: c.membersOnly,
+    is_active: c.isActive,
+    starts_at: c.startsAt,
+    ends_at: c.endsAt,
+  }
+}
+
+/**
+ * On gün kuralı (Kasım 2026) — bkz. lib/campaigns/onGunKurali.ts.
+ *
+ * Yönetmelik (1 Ağustos 2026'dan beri): indirimden önceki fiyat, indirimin
+ * başladığı tarihten önceki son on günün en düşük fiyatıdır. Bir önceki
+ * indirim bittikten sonraki on gün içinde başlayan yeni indirim, üstü çizili
+ * fiyatı ve oranı yanlış göstermiş olur. Ölçülen olay: NB25 31 Ekim'de bitti,
+ * Kasım indirimi 7 Kasım'da başlatılmak istendi.
+ *
+ * Yalnız uyarır, kaydı engellemez; tek tıkla başlangıcı en erken temiz ana
+ * çeker. Herkese açık, koşulsuz indirimlerde ayrıca ilk ekran notu ve
+ * önizleme bağlantısı gösterilir.
+ */
+function OnGunUyarisi({
+  form,
+  satirlar,
+  duzenlenen,
+  onDuzelt,
+}: {
+  form: Form
+  satirlar: KampanyaSatiri[]
+  duzenlenen: string | 'yeni' | null
+  onDuzelt: (yerel: string) => void
+}) {
+  const bu: IndirimSatiri = {
+    type: form.type,
+    requires_code: form.type === 'discount_code',
+    discount_value: form.discount_value,
+    min_cart_amount: form.min_cart_amount,
+    min_item_count: form.min_item_count,
+    scope: form.scope,
+    first_order_only: form.first_order_only,
+    members_only: form.members_only,
+  }
+  if (!herkeseIndirimMi(bu)) return null
+
+  const baslangic = dtIso(form.starts_at) || new Date().toISOString()
+  const kendisi = duzenlenen && duzenlenen !== 'yeni' ? duzenlenen : null
+  const cakisma = onGunCakismasi(baslangic, satirlar.map(indirimSatiri), kendisi)
+
+  if (cakisma) {
+    return (
+      <div className="rounded-[4px] border border-[var(--p-danger)]/40 bg-[var(--p-danger-bg)] p-3 text-[12px] leading-relaxed">
+        <p className="font-semibold text-[var(--p-danger)]">Bu başlangıç tarihinde indirim yanıltıcı sayılır</p>
+        <p className="mt-1 text-[var(--p-ink)]">
+          «{cakisma.ad}» {cakisma.bitis ? `${tarihSaat(cakisma.bitis)} tarihinde bitti` : 'hâlâ sürüyor'}. 1 Ağustos
+          2026&apos;dan beri indirimden önceki fiyat, son 10 günün en düşük fiyatı sayılıyor. Bu tarihte başlarsa
+          ürünlerdeki üstü çizili fiyat ve oran gerçeği göstermez; para cezası 108.370 TL&apos;den başlıyor.
+        </p>
+        {cakisma.enErken && (
+          <div className="mt-2">
+            <PButton variant="ghost" onClick={() => onDuzelt(dtLocal(cakisma.enErken!.toISOString()))}>
+              Başlangıcı {tarihSaat(cakisma.enErken)} yap
+            </PButton>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-[4px] border border-[var(--p-line)] p-3 text-[12px] leading-relaxed text-[var(--p-muted)]">
+      Tüm ürünlerde geçerli bu indirim yürürlükteyken ana sayfanın ilk ekranında ve en üstteki şeritte
+      oranı ve tarih aralığıyla yazılır; ürünlerde üstü çizili fiyat görünür.
+      {kendisi && (
+        <>
+          {' '}
+          <a
+            href={`/?kampanya_onizleme=${kendisi}`}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-[var(--p-ink)] underline underline-offset-4"
+          >
+            Ana sayfada önizle
+          </a>
+        </>
+      )}
+    </div>
   )
 }

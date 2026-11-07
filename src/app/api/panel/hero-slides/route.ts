@@ -121,6 +121,9 @@ export async function POST(request: Request) {
       image_mobil_url: image_mobil_url || null,
       image_mobil_blur,
       image_mobil_varyant,
+      // Kasım 2026: yapay zekâ ile üretilmiş görselde vitrinde açıklama notu
+      // basılır (1 Ağustos 2026 yönetmelik değişikliği). Yalnız açık true.
+      yapay_zeka: s?.yapay_zeka === true,
       eyebrow: typeof s?.eyebrow === 'string' ? s.eyebrow.trim() : '',
       title,
       subtitle: typeof s?.subtitle === 'string' ? s.subtitle.trim() : '',

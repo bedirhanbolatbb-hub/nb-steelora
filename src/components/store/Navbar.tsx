@@ -14,7 +14,9 @@ import CartDrawer from './CartDrawer'
 import SearchModal from './SearchModal'
 import DuyuruSeridi from './DuyuruSeridi'
 import { MENU_LINKS } from '@/lib/catalog/categories'
-import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
+import { FREE_SHIPPING_EMPHASIS, FREE_SHIPPING_LABEL } from '@/lib/shipping'
+import { useVitrinIndirimi } from './KampanyaContext'
+import { seritKampanyaMesaji } from '@/lib/campaigns/kampanyaVitrini'
 import type { CouponReminder } from '@/lib/campaigns'
 
 // Menü tek kaynaktan gelir: src/lib/catalog/categories.ts (7 kategori + Blog)
@@ -60,6 +62,10 @@ interface NavbarProps {
  * (motion-safe). Mobil tek sıra: hamburger · logo · arama+sepet.
  */
 export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, ilkSiparisSeridi, koleksiyonlar = [] }: NavbarProps) {
+  // Kasım 2026: tüm ürünlerde geçerli koşulsuz indirim yürürlükteyse şeridin
+  // ilk mesajı o olur (oran + tarih aralığı). Kaynak, kartlarda üstü çizili
+  // fiyatı basan bağlamın ta kendisi — şerit ile fiyat çelişemez.
+  const kampanyaMesaji = seritKampanyaMesaji(useVitrinIndirimi())
   const [condensed, setCondensed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   // Faz 11B: mobil üst bant kaydırınca tek satıra iner. Duyuru şeridinin
@@ -199,14 +205,21 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
         <DuyuruSeridi
           metin={
             bannerText ||
-            (ilkSiparisSeridi
+            (kampanyaMesaji
+              ? `${kampanyaMesaji} • ${FREE_SHIPPING_EMPHASIS}`
+              : ilkSiparisSeridi
               ? `${FREE_SHIPPING_LABEL} • ${ilkSiparisSeridi}`
               /* "Premium Çelik Takılar" idi (5 Eyl 2026): katalogda kaplama
                  pirinç ürünler de var, her sayfanın tepesinde tüm ürünlere
                  "çelik" demek yanlış beyan. Yerine her ürün için DOĞRU olan
                  iki vaat yazıyor. */
-              : `${FREE_SHIPPING_LABEL} • Hediye kutusunda gönderilir`)
+              : `${FREE_SHIPPING_EMPHASIS} • Hediye kutusunda gönderilir`)
           }
+          /* Kasım 2026: varsayılan koyu zeminde koyu altın yazı 2,9:1
+             kontrastla okunmuyordu (ölçüldü) — şerit kampanyayı ve ücretsiz
+             kargoyu taşıyor, görünmesi gerekiyor. Açık altın ~9:1. Panelden
+             özel zemin rengi seçilmişse dokunulmaz. */
+          className={bannerColor ? undefined : 'text-[#E9D3A3]'}
         />
       </div>
 

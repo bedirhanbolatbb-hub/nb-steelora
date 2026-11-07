@@ -15,6 +15,10 @@ import BlogPreview from '@/components/home/BlogPreview'
 import Newsletter from '@/components/home/Newsletter'
 import ProductCardV2 from '@/components/store/ProductCardV2'
 import JsonLd from '@/components/seo/JsonLd'
+import AvantajSeridi from '@/components/home/AvantajSeridi'
+import { isAdminRequest } from '@/lib/admin/requireAdmin'
+import { ilkEkranKampanyasi } from '@/lib/campaigns/kampanyaVitrini'
+import { kampanyaOnizlemesiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo'
 
 /**
@@ -34,9 +38,28 @@ import { organizationJsonLd, websiteJsonLd } from '@/lib/seo'
  */
 export const metadata: Metadata = { alternates: { canonical: '/' } }
 
-export default async function HomePage() {
-  const veri = await getHomeData()
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [veri, sp] = await Promise.all([getHomeData(), searchParams])
   const c = veri.content
+
+  // Kasım 2026 · panel önizlemesi: `?kampanya_onizleme=<kimlik>` YALNIZ panel
+  // oturumu açıkken işler; henüz başlamamış kampanyanın ilk ekranı gösterilir.
+  // Müşteri bu parametreyle hiçbir şey göremez (oturum yoksa yok sayılır).
+  const onizlemeKimligi =
+    typeof sp?.kampanya_onizleme === 'string' && /^[0-9a-f-]{36}$/i.test(sp.kampanya_onizleme)
+      ? sp.kampanya_onizleme
+      : null
+  const onizleme =
+    onizlemeKimligi && (await isAdminRequest()) ? await kampanyaOnizlemesiGetir(onizlemeKimligi) : null
+
+  // Tüm ürünlerde geçerli koşulsuz indirim → ilk ekranın kendisi kampanya
+  // olur (oran + tarih + düğme). Koşullu kampanyada ilk ekran değişmez,
+  // bant eskisi gibi altında durur.
+  const ilkEkran = ilkEkranKampanyasi(onizleme ?? veri.kampanya)
 
   // Faz 12: editoryal düzen (2 büyük + 3'lü sıra) en az 5 ürünle anlamlı.
   // Ölçülen kusur: panelde 3 ürün seçiliyken 2 dev kart + tek başına kalan
@@ -60,15 +83,28 @@ export default async function HomePage() {
       />
       <JsonLd data={websiteJsonLd()} />
 
+      {onizleme && (
+        <div className="fixed bottom-4 left-4 z-[60] max-w-[calc(100vw-2rem)] rounded-[4px] bg-ink px-4 py-3 font-body text-[12px] text-bg shadow-lg">
+          Önizleme: kampanya başladığında ilk ekran böyle görünecek.{' '}
+          <Link href="/" className="underline underline-offset-4">
+            Kapat
+          </Link>
+        </div>
+      )}
+
       {/* 1 · Hero — kampanya bandı (slayt yoksa tipografik fallback) */}
       {veri.slides.length > 0 ? (
-        <HeroSlider slides={veri.slides} />
+        <HeroSlider slides={veri.slides} kampanya={ilkEkran} />
       ) : (
         <HeroCinema c={c} image={null} imageHref={null} />
       )}
 
-      {/* 2 · Promo şeridi */}
-      <PromoStrip bant={veri.bant} />
+      {/* 2 · Promo şeridi — kampanya ilk ekrandaysa tekrar basılmaz */}
+      {!(ilkEkran && veri.slides.length > 0) && <PromoStrip bant={veri.bant} />}
+
+      {/* 2b · Fayda şeridi: ücretsiz kargo (alt limit yok), hediye kutusu,
+          iade, güvenli ödeme — ilk ekranın hemen altında. Kasım 2026. */}
+      <AvantajSeridi />
 
       {/* 3 · Kategoriler */}
       <CategoryRail categoryImages={veri.categoryImages} />

@@ -3,7 +3,7 @@ import { MAX_SECTION_ITEMS } from './sections'
 import { LISTING_COLUMNS } from '@/lib/catalog/listing'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import { firstSentence, type CollectionCard } from '@/lib/collections'
-import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
+import { vitrinIndirimiGetir, type VitrinIndirimi } from '@/lib/campaigns/vitrinIndirimi'
 
 /**
  * Anasayfanın TEK veri katmanı (Faz 9A — logo gecikmesi düzeltmesi).
@@ -36,6 +36,13 @@ export type HeroSlide = {
   image_mobil_url?: string | null
   image_mobil_blur?: string | null
   image_mobil_varyant?: { w: number; url: string }[] | null
+  /**
+   * Görsel yapay zekâ ile üretildiyse true (Kasım 2026). Vitrinde görselin
+   * köşesinde "Görsel yapay zekâ ile üretilmiştir" notu basılır: 1 Ağustos
+   * 2026'dan beri reklamda insandan ayırt edilemeyen yapay zekâ karakteri
+   * kullanılıyorsa bunun açıkça belirtilmesi zorunlu. Panel: Kürasyon.
+   */
+  yapay_zeka?: boolean | null
   eyebrow: string
   title: string
   subtitle: string
@@ -53,6 +60,11 @@ export type HomeData = {
   collections: CollectionCard[]
   /** Vitrin bandı — kampanya değil, basılacak metin/hedef (Faz 20). */
   bant: { metin: string; hedef: string; bitis: string | null } | null
+  /**
+   * Bandın kaynağı olan kampanyanın kendisi (Kasım 2026): ilk ekran, tüm
+   * ürünlerde geçerli koşulsuz indirimi tarihleriyle birlikte büyük yazar.
+   */
+  kampanya: VitrinIndirimi | null
   categoryImages: Record<string, string | null>
   blogPosts: any[]
   /** Onaylı gerçek yorumlar (Faz 11D) — 3'ten azsa vitrin bölümü basılmaz. */
@@ -287,6 +299,7 @@ async function yukle(): Promise<HomeData> {
     // kişiye özel kupon şablonları zaten dışarıda kalır, en avantajlısı
     // seçilir, hiçbiri yoksa null döner.
     bant: vitrin ? { metin: vitrin.metin, hedef: vitrin.hedef, bitis: vitrin.bitis } : null,
+    kampanya: vitrin ?? null,
     categoryImages,
     blogPosts: blogRes.data || [],
     yorumlar,

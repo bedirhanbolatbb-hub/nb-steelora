@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { kampanyalariYukle } from './yukle'
 import { vitrinIndirimiGetir } from './vitrinIndirimi'
 import { ILK_SIPARIS_ANAHTARLARI, ilkSiparisMetni } from './ilkSiparisMetinleri'
+import { ON_GUN_MS, indirimDuyurusuSerbestMi, type IndirimSatiri } from './onGunKurali'
 
 export { ILK_SIPARIS_ANAHTARLARI } from './ilkSiparisMetinleri'
 
@@ -53,6 +54,19 @@ export async function ilkSiparisDuyurusu(
     if (vitrin) return null
 
     const supabase = createServiceClient()
+
+    // 1b) On gün kuralı (Kasım 2026): son on gün içinde herkese açık bir
+    //     indirim yürürlükteyse "%10 indirim" duyurulmaz. Yönetmeliğe göre
+    //     indirimden önceki fiyat son on günün en düşük fiyatıdır; o fiyat
+    //     eski kampanyanın indirimli fiyatı olduğu için "%10" iddiası
+    //     yanıltıcı sayılır. Kod çalışmaya devam eder, yalnız duyurulmaz.
+    //     Bkz. onGunKurali.ts.
+    const an = simdi ?? new Date()
+    const { data: yakinlar } = await supabase
+      .from('campaigns')
+      .select('*')
+      .gte('ends_at', new Date(an.getTime() - ON_GUN_MS).toISOString())
+    if (!indirimDuyurusuSerbestMi((yakinlar ?? []) as IndirimSatiri[], an)) return null
 
     let metinler = icerik
     if (!metinler) {

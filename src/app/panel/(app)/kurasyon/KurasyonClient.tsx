@@ -41,6 +41,8 @@ export type PanelSlayt = {
   yerlesim?: 'tam' | 'bolunmus'
   /** Tam düzende telefona ayrı dikey görsel (isteğe bağlı). */
   image_mobil_url?: string | null
+  /** Kasım 2026: görsel yapay zekâ ile üretildiyse vitrinde açıklama notu. */
+  yapay_zeka?: boolean
 }
 
 const KATEGORILER = [
@@ -285,6 +287,11 @@ export default function KurasyonClient({
           Anasayfada 1–4 slayt gösterilir; yalnız «aktif» ve görseli olan slaytlar basılır.
           {slides.length > 1 && ' Ziyaretçi ok, nokta, klavye ve kaydırmayla gezer — otomatik dönme yok.'}
         </p>
+        <p className="mb-3 text-[12px] leading-relaxed text-[var(--p-muted)]">
+          Tüm ürünlerde geçerli bir indirim (Kampanyalar → sepet indirimi, koşulsuz) yürürlükteyken
+          ilk slaytın yazısı yerine kampanya yazılır: oran, tarih aralığı ve «Alışverişe başlayın»
+          düğmesi. Görsel aynı kalır; kampanya bitince bu yazılar kendiliğinden geri gelir.
+        </p>
         {slides.length === 0 ? (
           <div className="rounded-[4px] border border-dashed border-[var(--p-line)] px-3 py-6 text-center">
             <p className="text-[13px] font-medium text-[var(--p-ink)]">
@@ -394,6 +401,23 @@ export default function KurasyonClient({
                         </p>
                       </div>
                     )}
+                    <div className="sm:col-span-2">
+                      <label className="flex min-h-[44px] cursor-pointer items-start gap-2 text-[13px]">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(s.yapay_zeka)}
+                          onChange={(e) => slaytGuncelle(s.id, { yapay_zeka: e.target.checked })}
+                          className="mt-0.5 h-4 w-4 accent-[var(--p-accent-line)]"
+                        />
+                        <span>
+                          Görsel yapay zekâ ile üretildi
+                          <span className="mt-0.5 block text-[11px] leading-relaxed text-[var(--p-muted)]">
+                            İşaretliyse görselin köşesinde &quot;Görsel yapay zekâ ile üretilmiştir&quot; notu çıkar. 1 Ağustos
+                            2026&apos;dan beri reklamda yapay zekâ ile üretilmiş insan görseli kullanılıyorsa bunu belirtmek zorunlu.
+                          </span>
+                        </span>
+                      </label>
+                    </div>
                     <div>
                       <label className="mb-1 block text-[12px] text-[var(--p-muted)]">Hedef tipi</label>
                       <PSelect

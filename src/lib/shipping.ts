@@ -24,6 +24,14 @@ export const FREE_SHIPPING_MIN_LABEL = 'Tüm siparişlerde'
 /** Tam etiket — "Tüm siparişlerde ücretsiz kargo" */
 export const FREE_SHIPPING_LABEL = 'Tüm siparişlerde ücretsiz kargo'
 
+/**
+ * Vurgulu etiket — ana sayfa ilk ekranı ve duyuru şeridi (Kasım 2026).
+ * BB: "alt limit olmaksızın kargo ücretsiz; ana sayfada dikkat çekici
+ * görülmeli." Eşik olmadığını açıkça söylemek, müşterinin aklındaki
+ * "kaç liradan sonra?" sorusunu baştan kapatır.
+ */
+export const FREE_SHIPPING_EMPHASIS = 'Tüm siparişlerde ücretsiz kargo, alt limit yok'
+
 /** Sipariş özetinde kargo satırında basılan değer. */
 export const SHIPPING_LINE_LABEL = 'Ücretsiz'
 

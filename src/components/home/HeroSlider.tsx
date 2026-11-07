@@ -3,10 +3,12 @@
 import Image, { getImageProps } from 'next/image'
 import Link from 'next/link'
 import { createElement, useCallback, useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Truck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia, varyantSec } from '@/lib/images'
 import type { HeroSlide } from '@/lib/home/homeData'
+import type { IlkEkranKampanyasi } from '@/lib/campaigns/kampanyaVitrini'
+import { FREE_SHIPPING_EMPHASIS } from '@/lib/shipping'
 
 type Slayt = HeroSlide & { href: string | null }
 
@@ -33,7 +35,19 @@ type Slayt = HeroSlide & { href: string | null }
  * transform, reduced-motion'da anlık. Slayt yoksa sayfa zaten HeroCinema
  * tipografi düzenine düşüyor (page.tsx) — o davranış korundu.
  */
-export default function HeroSlider({ slides }: { slides: Slayt[] }) {
+export default function HeroSlider({
+  slides,
+  kampanya = null,
+}: {
+  slides: Slayt[]
+  /**
+   * Kasım 2026: tüm ürünlerde geçerli koşulsuz indirim yürürlükteyse İLK
+   * slaytın yazısı yerine kampanya yazılır (oran, tarih aralığı, düğme).
+   * Görsel aynı kalır. Kampanya bitince slaytın kendi yazısı kendiliğinden
+   * döner — kodda tarih yok, kaynak kampanya kaydı.
+   */
+  kampanya?: IlkEkranKampanyasi | null
+}) {
   const [aktif, setAktif] = useState(0)
   const dokunusX = useRef<number | null>(null)
   const coklu = slides.length > 1
@@ -92,12 +106,16 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
             {/* Faz 11A-FIX (F7): sütun payı 58/42 idi, fotoğraf yazıdan
                 dardı. Vitrin fotoğrafı satmalı — 40/60'a çevrildi. */}
             {s.yerlesim === 'tam' ? (
-              <TamSlayt slayt={s} ilk={i === 0} etkin={i === aktif} />
+              <TamSlayt slayt={s} ilk={i === 0} etkin={i === aktif} kampanya={i === 0 ? kampanya : null} />
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr]">
               {/* ── Yazı: fildişi zemin, fotoğrafın üstünde DEĞİL ── */}
               <div className="order-1 flex items-center bg-bg px-5 py-8 sm:px-8 sm:py-10 md:px-10 md:py-14 lg:px-16 lg:py-20">
                 <div className="max-w-lg">
+                  {i === 0 && kampanya ? (
+                    <KampanyaYazisi k={kampanya} Baslik="h1" etkin={i === aktif} ton="koyu" />
+                  ) : (
+                  <>
                   {s.eyebrow && (
                     <p className="eyebrow hero-line" style={{ '--hero-delay': '0ms' } as React.CSSProperties}>
                       {s.eyebrow}
@@ -137,6 +155,9 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
                       {s.cta_label}
                     </Link>
                   )}
+                  </>
+                  )}
+                  <KargoSatiri ton="koyu" />
                 </div>
               </div>
 
@@ -156,6 +177,7 @@ export default function HeroSlider({ slides }: { slides: Slayt[] }) {
                     <Gorsel slayt={s} ilk={i === 0} />
                   </div>
                 )}
+                {s.yapay_zeka && <YapayZekaNotu />}
               </div>
             </div>
             )}
@@ -222,12 +244,22 @@ const ODAK_SINIFI = { ust: 'object-top', orta: 'object-center', alt: 'object-bot
  * Telefonda 3:4: görsel ilk ekranın çoğunu alır ama altındaki kategori
  * başlığı görünür kalır (ziyaretçi sayfanın devam ettiğini görür).
  */
-function TamSlayt({ slayt: s, ilk, etkin }: { slayt: Slayt; ilk: boolean; etkin: boolean }) {
+function TamSlayt({
+  slayt: s,
+  ilk,
+  etkin,
+  kampanya,
+}: {
+  slayt: Slayt
+  ilk: boolean
+  etkin: boolean
+  kampanya: IlkEkranKampanyasi | null
+}) {
   const Baslik = ilk ? 'h1' : 'h2'
   return (
     <div className="relative aspect-[3/4] w-full overflow-hidden bg-ink sm:aspect-[16/10] md:aspect-auto md:h-[min(78vh,760px)] md:min-h-[520px]">
       {s.href ? (
-        <Link href={s.href} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
+        <Link href={kampanya ? kampanya.hedef : s.href} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
           <SanatYonetimliGorsel slayt={s} ilk={ilk} />
         </Link>
       ) : (
@@ -235,49 +267,178 @@ function TamSlayt({ slayt: s, ilk, etkin }: { slayt: Slayt; ilk: boolean; etkin:
           <SanatYonetimliGorsel slayt={s} ilk={ilk} />
         </div>
       )}
+      {/* Kampanyada perde biraz daha koyu: büyük oran ve tarih satırı her
+          fotoğraf tonunda okunmalı. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent md:bg-gradient-to-r md:from-black/55 md:via-black/10 md:to-transparent"
+        className={cn(
+          'pointer-events-none absolute inset-0 bg-gradient-to-t to-transparent md:bg-gradient-to-r md:to-transparent',
+          kampanya
+            ? 'from-black/75 via-black/25 md:from-black/65 md:via-black/15'
+            : 'from-black/65 via-black/15 md:from-black/55 md:via-black/10'
+        )}
       />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-8 sm:px-8 sm:pb-10 md:inset-y-0 md:right-auto md:flex md:w-[min(56%,760px)] md:items-center md:px-14 md:pb-0 lg:px-20">
+      {s.yapay_zeka && <YapayZekaNotu />}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-7 sm:px-8 sm:pb-10 md:inset-y-0 md:right-auto md:flex md:w-[min(56%,760px)] md:items-center md:px-14 md:pb-0 lg:px-20">
         <div className="pointer-events-auto max-w-xl text-white">
-          {s.eyebrow && (
-            <p
-              className="hero-line font-body text-[10px] font-semibold uppercase tracking-[0.28em] text-white/80"
-              style={{ '--hero-delay': '0ms' } as React.CSSProperties}
-            >
-              {s.eyebrow}
-            </p>
+          {kampanya ? (
+            <KampanyaYazisi k={kampanya} Baslik={Baslik} etkin={etkin} ton="acik" />
+          ) : (
+            <>
+              {s.eyebrow && (
+                <p
+                  className="hero-line font-body text-[10px] font-semibold uppercase tracking-[0.28em] text-white/80"
+                  style={{ '--hero-delay': '0ms' } as React.CSSProperties}
+                >
+                  {s.eyebrow}
+                </p>
+              )}
+              <Baslik
+                className="hero-line mt-2 font-heading text-[30px] font-medium leading-[1.08] text-white sm:text-[40px] lg:text-[56px]"
+                style={{ '--hero-delay': '70ms' } as React.CSSProperties}
+              >
+                {s.title}
+              </Baslik>
+              {s.subtitle && (
+                // Telefonda alt metin gizli: görselin alt kısmındaki takıyı
+                // (kolyenin ucu, bileklik) yazı bloğu örtmesin.
+                <p
+                  className="hero-line mt-3 hidden max-w-md font-body text-[13px] leading-relaxed text-white/85 sm:block lg:text-[15px]"
+                  style={{ '--hero-delay': '140ms' } as React.CSSProperties}
+                >
+                  {s.subtitle}
+                </p>
+              )}
+              {s.href && s.cta_label && (
+                <Link
+                  href={s.href}
+                  tabIndex={etkin ? 0 : -1}
+                  className="hero-line mt-6 inline-flex min-h-[44px] items-center rounded-[4px] bg-white px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:bg-bg"
+                  style={{ '--hero-delay': '210ms' } as React.CSSProperties}
+                >
+                  {s.cta_label}
+                </Link>
+              )}
+            </>
           )}
-          <Baslik
-            className="hero-line mt-2 font-heading text-[30px] font-medium leading-[1.08] text-white sm:text-[40px] lg:text-[56px]"
-            style={{ '--hero-delay': '70ms' } as React.CSSProperties}
-          >
-            {s.title}
-          </Baslik>
-          {s.subtitle && (
-            // Telefonda alt metin gizli: görselin alt kısmındaki takıyı
-            // (kolyenin ucu, bileklik) yazı bloğu örtmesin.
-            <p
-              className="hero-line mt-3 hidden max-w-md font-body text-[13px] leading-relaxed text-white/85 sm:block lg:text-[15px]"
-              style={{ '--hero-delay': '140ms' } as React.CSSProperties}
-            >
-              {s.subtitle}
-            </p>
-          )}
-          {s.href && s.cta_label && (
-            <Link
-              href={s.href}
-              tabIndex={etkin ? 0 : -1}
-              className="hero-line mt-6 inline-flex min-h-[44px] items-center rounded-[4px] bg-white px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:bg-bg"
-              style={{ '--hero-delay': '210ms' } as React.CSSProperties}
-            >
-              {s.cta_label}
-            </Link>
-          )}
+          <KargoSatiri ton="acik" />
         </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * Kampanya yazısı (Kasım 2026) — ilk ekranın tamamı tek mesaja hizmet eder:
+ * büyük oran, ne olduğu, ne zamana kadar, nereye tıklanacağı.
+ *
+ * Tarih satırı ZORUNLU: indirimli satış reklamında başlangıç ve bitiş tarihi
+ * yazılmalı (bkz. lib/campaigns/kampanyaVitrini.ts). Telefonda da görünür.
+ * Ekran okuyucu başlığı tek cümle olarak okur ("Tüm ürünlerde %25 indirim");
+ * görsel bölünme ona yansımaz.
+ */
+function KampanyaYazisi({
+  k,
+  Baslik,
+  etkin,
+  ton,
+}: {
+  k: IlkEkranKampanyasi
+  Baslik: 'h1' | 'h2'
+  etkin: boolean
+  ton: 'acik' | 'koyu'
+}) {
+  const acik = ton === 'acik'
+  const kalan = k.baslik.replace(k.vurgu, '').replace(/\s{2,}/g, ' ').trim()
+  return (
+    <>
+      <p
+        className={cn(
+          'hero-line font-body text-[10px] font-semibold uppercase tracking-[0.28em] sm:text-[11px]',
+          acik ? 'text-white/90' : 'text-accent-deep'
+        )}
+        style={{ '--hero-delay': '0ms' } as React.CSSProperties}
+      >
+        {k.ustBaslik} · {k.tarih}
+      </p>
+      <Baslik className="hero-line mt-2" style={{ '--hero-delay': '70ms' } as React.CSSProperties}>
+        <span className="sr-only">{k.baslik}</span>
+        <span aria-hidden="true" className="block">
+          <span
+            className={cn(
+              'block font-heading text-[60px] font-medium leading-[0.95] tracking-[-0.01em] sm:text-[84px] lg:text-[112px]',
+              acik ? 'text-[#EBD5A6]' : 'text-accent-deep'
+            )}
+          >
+            {k.vurgu}
+          </span>
+          <span
+            className={cn(
+              'mt-1 block font-heading text-[26px] font-medium leading-[1.1] sm:text-[34px] lg:text-[44px]',
+              acik ? 'text-white' : 'text-ink'
+            )}
+          >
+            {kalan.charAt(0).toLocaleUpperCase('tr-TR') + kalan.slice(1)}
+          </span>
+        </span>
+      </Baslik>
+      <p
+        className={cn(
+          'hero-line mt-3 hidden max-w-md font-body text-[13px] leading-relaxed sm:block lg:text-[15px]',
+          acik ? 'text-white/85' : 'text-ink-soft'
+        )}
+        style={{ '--hero-delay': '140ms' } as React.CSSProperties}
+      >
+        {k.aciklama}
+      </p>
+      <Link
+        href={k.hedef}
+        tabIndex={etkin ? 0 : -1}
+        className={cn(
+          'hero-line mt-5 inline-flex min-h-[48px] items-center rounded-[4px] px-9 py-4 font-body text-[12px] font-semibold uppercase tracking-[0.18em] transition-colors sm:mt-6',
+          acik ? 'bg-white text-ink hover:bg-bg' : 'bg-ink text-bg hover:bg-accent-deep'
+        )}
+        style={{ '--hero-delay': '210ms' } as React.CSSProperties}
+      >
+        {k.cta}
+      </Link>
+    </>
+  )
+}
+
+/**
+ * Ücretsiz kargo satırı (Kasım 2026) — kampanya olsun olmasın ilk ekranda,
+ * telefonda da görünür. BB: "alt limit olmaksızın kargo ücretsiz; ana
+ * sayfada dikkat çekici görülmeli." Metin tek kaynaktan (lib/shipping.ts).
+ */
+function KargoSatiri({ ton }: { ton: 'acik' | 'koyu' }) {
+  const acik = ton === 'acik'
+  return (
+    <p
+      className={cn(
+        'hero-line mt-4 flex items-center gap-2 font-body text-[12px] font-medium tracking-[0.02em] sm:text-[13px]',
+        acik ? 'text-white/90' : 'text-ink-soft'
+      )}
+      style={{ '--hero-delay': '280ms' } as React.CSSProperties}
+    >
+      <Truck size={16} strokeWidth={1.6} aria-hidden="true" className={acik ? 'text-[#EBD5A6]' : 'text-accent-deep'} />
+      {FREE_SHIPPING_EMPHASIS}
+    </p>
+  )
+}
+
+/**
+ * Yapay zekâ açıklaması (Kasım 2026). 1 Ağustos 2026'dan beri reklamda
+ * insandan ayırt edilemeyen yapay zekâ karakteri kullanılıyorsa bunun açık,
+ * anlaşılır ve ayırt edilebilir biçimde belirtilmesi zorunlu (Ticari Reklam
+ * ve Haksız Ticari Uygulamalar Yönetmeliği değişikliği, RG 1 Temmuz 2026).
+ * Panel: Kürasyon → slayt → "Görsel yapay zekâ ile üretildi".
+ */
+function YapayZekaNotu() {
+  return (
+    <p className="pointer-events-none absolute right-3 top-3 z-[1] rounded-[3px] bg-black/45 px-2 py-1 font-body text-[10px] leading-none tracking-[0.04em] text-white/90 sm:right-4 sm:top-4 sm:text-[11px]">
+      Görsel yapay zekâ ile üretilmiştir
+    </p>
   )
 }
 
