@@ -26,6 +26,21 @@ export async function POST(request: Request) {
   const _sinir = await hizSiniri(`odeme:${istekKimligi(request)}`, 10, 3600)
   if (!_sinir.gecer) return cokFazlaIstek(_sinir.bekleSaniye)
 
+  // 7 Kas 2026 · KART ÖDEMESİ KAPALI. iyzico üye işyeri kapatılan eski şahıs
+  // firmasına (Nalan Bolat) ait; satıcı artık İsa Bolat. Bu firmaya ait yeni
+  // ödeme kuruluşu (PayTR / Tosla) onaylanana dek karttan tahsilat YAPILMAZ —
+  // kapalı firmanın hesabına para alınamaz. Yerine havale/EFT akışı gelir.
+  if (process.env.IYZICO_ODEME_ACIK !== 'evet') {
+    return NextResponse.json(
+      {
+        error:
+          'Kartla ödeme geçici olarak kapalı. Havale/EFT ile ödeme kısa süre içinde açılıyor; dilerseniz ürünlerimizi Trendyol mağazamızdan (NB STEELORA) da alabilirsiniz.',
+        code: 'KART_KAPALI',
+      },
+      { status: 503 }
+    )
+  }
+
   try {
     const body = await request.json()
     const { items, buyer, shippingAddress, paymentCard, userId, discountCode, giftNote, sozlesmeOnay } =
