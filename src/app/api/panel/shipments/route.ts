@@ -22,10 +22,23 @@ export async function POST(request: Request) {
   const supabase = createServiceClient()
   const { data: order } = await supabase
     .from('orders')
-    .select('id, order_number, shipping_address, items')
+    .select('id, order_number, shipping_address, items, status')
     .eq('id', orderId)
     .maybeSingle()
   if (!order) return NextResponse.json({ error: 'Sipariş bulunamadı' }, { status: 404 })
+  // 7 Kas 2026 · havale/EFT: ödemesi onaylanmamış (pending) ya da iptal
+  // edilmiş siparişe gönderi açılmaz — para gelmeden ürün yola çıkmasın.
+  if (order.status === 'pending' || order.status === 'cancelled') {
+    return NextResponse.json(
+      {
+        error:
+          order.status === 'pending'
+            ? 'Ödemesi henüz onaylanmamış siparişe gönderi oluşturulamaz. Havale geldiyse önce "Ödeme geldi, onayla"ya basın.'
+            : 'İptal edilmiş siparişe gönderi oluşturulamaz.',
+      },
+      { status: 409 }
+    )
+  }
 
   const mevcut = await gonderiGetir(orderId)
   if (mevcut && mevcut.status !== 'iptal') {

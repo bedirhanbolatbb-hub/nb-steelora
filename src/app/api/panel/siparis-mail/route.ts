@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 import {
+  havaleTalimatiEmail,
   orderCancelledEmail,
   orderConfirmationEmail,
   reviewInviteEmail,
@@ -22,7 +23,8 @@ export const dynamic = 'force-dynamic'
  * göndermeye çalışmaz.
  */
 
-const TURLER = ['onay', 'kargo', 'teslimat', 'iptal'] as const
+// havale_talimati (7 Kas 2026): müşteri "IBAN maili gelmedi" derse tekrar gönderilir.
+const TURLER = ['onay', 'kargo', 'teslimat', 'iptal', 'havale_talimati'] as const
 type Tur = (typeof TURLER)[number]
 
 export async function POST(request: Request) {
@@ -45,7 +47,12 @@ export async function POST(request: Request) {
   let subject = ''
   let html = ''
 
-  if (tur === 'onay') {
+  if (tur === 'havale_talimati') {
+    if ((order.metadata as any)?.odeme_yontemi !== 'havale') {
+      return NextResponse.json({ error: 'Bu sipariş havale siparişi değil' }, { status: 400 })
+    }
+    ;({ subject, html } = havaleTalimatiEmail(order as any))
+  } else if (tur === 'onay') {
     ;({ subject, html } = orderConfirmationEmail(order as any))
   } else if (tur === 'kargo') {
     const kod = order.tracking_number

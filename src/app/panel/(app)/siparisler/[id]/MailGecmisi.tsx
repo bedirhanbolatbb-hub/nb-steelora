@@ -24,6 +24,9 @@ const TURLER: { anahtar: string; ad: string; aciklama: string }[] = [
   { anahtar: 'iptal', ad: 'İptal / iade', aciklama: 'Yalnız iptal edilen siparişlerde' },
 ]
 
+/** Havale/EFT siparişinde en üstte: sipariş anında giden ödeme bilgileri (7 Kas 2026). */
+const HAVALE_TURU = { anahtar: 'havale_talimati', ad: 'Ödeme bilgileri', aciklama: 'Havale siparişinde, sipariş anında' }
+
 const zamanYaz = (iso: string) =>
   new Date(iso).toLocaleString('tr-TR', {
     timeZone: 'Europe/Istanbul',
@@ -41,6 +44,7 @@ export default function MailGecmisi({
   durumKisitli = false,
   baski = null,
   eposta = null,
+  havale = false,
 }: {
   siparisId: string
   gecmis: Record<string, string>
@@ -51,6 +55,8 @@ export default function MailGecmisi({
   baski?: BaskiKaydi | null
   /** Siparişteki müşteri adresi — düzeltme kutusunun başlangıç değeri. */
   eposta?: string | null
+  /** Havale/EFT siparişi mi — "Ödeme bilgileri" satırı yalnız onda çıkar. */
+  havale?: boolean
 }) {
   const router = useRouter()
   const { push: toast } = useToast()
@@ -209,7 +215,7 @@ export default function MailGecmisi({
         </div>
       )}
       <ul className="divide-y divide-[var(--p-line)]">
-        {TURLER.map((t) => {
+        {(havale ? [HAVALE_TURU, ...TURLER] : TURLER).map((t) => {
           const damga = gecmis?.[t.anahtar]
           return (
             <li key={t.anahtar} className="flex flex-wrap items-center gap-2 py-2.5">

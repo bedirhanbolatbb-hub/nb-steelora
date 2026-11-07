@@ -392,6 +392,7 @@ export default function SiparisDetayClient({
         durumKisitli={Boolean(siparis.mailDurumuKisitli)}
         baski={siparis.mailBaskisi ?? null}
         eposta={siparis.email}
+        havale={Boolean(siparis.havale)}
       />
 
       <IcNotlar siparisId={siparis.id} notlar={siparis.icNotlar ?? []} />
