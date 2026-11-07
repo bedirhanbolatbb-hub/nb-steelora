@@ -10,7 +10,7 @@ export default async function PanelBlogPage() {
 
   const { data } = await supabase
     .from('blog_posts')
-    .select('id, title, slug, excerpt, content, cover_image, published, published_at, read_time')
+    .select('id, title, slug, excerpt, content, cover_image, published, published_at, read_time, meta_title, meta_description')
     .order('published_at', { ascending: false })
 
   const yazilar: YaziSatiri[] = (data || []).map((p: any) => ({
@@ -23,6 +23,8 @@ export default async function PanelBlogPage() {
     published: Boolean(p.published),
     publishedAt: p.published_at,
     readTime: Number(p.read_time || 4),
+    metaTitle: p.meta_title ?? '',
+    metaDescription: p.meta_description ?? '',
   }))
 
   return <BlogClient yazilar={yazilar} />

@@ -10,6 +10,7 @@ import { useCart } from '@/hooks/useCart'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
+import { TRENDYOL_MAGAZA_URL } from '@/lib/kanallar'
 import { SOZLESME_SURUMU, SOZLESME_YOLLARI } from '@/lib/legal/sozlesme'
 import Input from '@/components/ui/Input'
 import CheckoutSteps from '@/components/store/CheckoutSteps'
@@ -21,7 +22,6 @@ import { kucukResim } from '@/lib/gorsel/kadraj'
 import { useKadrajSorgu } from '@/components/store/KadrajContext'
 
 /** Kart ödemesi kapalıyken kartla almak isteyene gösterilen mağaza (7 Kas 2026). */
-const TRENDYOL_MAGAZA_URL = 'https://www.trendyol.com/magaza/nb-steelora-m-1181208'
 
 export default function OdemePage() {
   const { items, totalPrice, clearCart } = useCart()

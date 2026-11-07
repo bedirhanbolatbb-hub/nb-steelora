@@ -1,4 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
+import { indexNowBildir } from '@/lib/indexnow'
+import { SITE_URL } from '@/lib/seo'
 import { gonderileriYokla } from '@/lib/shipping/yoklama'
 import { adminIstegiMi, cronIstegiMi } from '@/lib/admin/requireAdmin'
 import { revalidatePath } from 'next/cache'
@@ -54,6 +56,17 @@ async function runSync() {
       console.warn('[sync] besleme/harita tazeleme işareti konamadı:', e?.message)
     }
 
+    // IndexNow (Kasım 2026): yeni, fiyatı ya da stok durumu değişen ve satıştan
+    // kalkan ürünlerin adresleri Bing/Yandex'e bildirilir. Yanıttan sonra
+    // çalışır; bildirim düşerse senkron sonucu etkilenmez.
+    if (result.degisenSluglar.length > 0) {
+      const adresler = result.degisenSluglar.map((s) => `${SITE_URL}/urun/${s}`)
+      after(async () => {
+        const sonuc = await indexNowBildir(adresler)
+        if (!sonuc.durum || sonuc.durum >= 300) console.warn('[sync] IndexNow bildirimi:', sonuc)
+      })
+    }
+
     // Faz 30: günlük senkron ikinci yoklama turu. Webhook düşerse sipariş
     // durumu en geç burada ilerler.
     try {
@@ -73,6 +86,7 @@ async function runSync() {
       products_updated: result.updated,
       skipped: result.skipped,
       deactivated: result.deactivated,
+      indexnow_adres: result.degisenSluglar.length,
       totalPages: result.totalPages,
       totalElements: result.totalElements,
       duration_ms: result.durationMs,

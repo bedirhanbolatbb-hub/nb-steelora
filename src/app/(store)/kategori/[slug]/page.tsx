@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { kategoriTanitimi } from '@/lib/metin/kategoriMetni'
+import { kategoriMetaAciklamasi, kategoriSeoBasligi, kategoriTanitimi } from '@/lib/metin/kategoriMetni'
+import { FREE_SHIPPING_LABEL } from '@/lib/shipping'
+import { CAYMA_SURESI_GUN } from '@/lib/legal/sozlesme'
 import type { Metadata } from 'next'
 import ProductsClient from '@/components/store/ProductsClient'
 import { notFound } from 'next/navigation'
@@ -49,8 +51,11 @@ export async function generateMetadata({
   // Paylaşım görseli de sayfaUstVerisi'nden gelir: Next, sayfa kendi openGraph
   // nesnesini tanımladığında dosya tabanlı opengraph-image'i o nesneye EKLEMİYOR.
   return sayfaUstVerisi({
-    tamBaslik: `Çelik ${def.title} Modelleri | NB Steelora`,
-    aciklama: tanitim.slice(0, 158),
+    tamBaslik: `${kategoriSeoBasligi(slug, def.title)} | NB Steelora`,
+    aciklama: kategoriMetaAciklamasi(
+      tanitim,
+      `${FREE_SHIPPING_LABEL}, hediye kutusu ve ${CAYMA_SURESI_GUN} gün iade.`
+    ),
     yol,
   })
 }
@@ -131,7 +136,7 @@ export default async function KategoriPage({
       <JsonLd
         data={webPageJsonLd({
           tip: 'CollectionPage',
-          ad: `Çelik ${kategori} Modelleri`,
+          ad: kategoriSeoBasligi(slug, kategori),
           aciklama: tanitimMetni,
           path: `/kategori/${slug}`,
         })}

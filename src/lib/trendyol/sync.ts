@@ -180,6 +180,10 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
   let added = 0
   let updated = 0
   let skipped = 0
+  // IndexNow (Kasım 2026): arama sonucunu değiştiren farklar — yeni ürün,
+  // fiyat değişimi, stokta/tükendi geçişi. updated_at her koşuda yenilendiği
+  // için değişim ondan okunamıyor; mevcut satır zaten elde, burada karşılaştırılır.
+  const degisenSluglar: string[] = []
 
   for (const row of rows) {
     const inventory = stockMap.get(row.barcode)
@@ -225,6 +229,15 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
       slug: existing ? existing.slug : generateSlug(row.title, row.barcode),
       trendyol_id: existing ? existing.trendyol_id : row.variantId,
     })
+
+    const yazilan = payload[payload.length - 1]
+    if (
+      !existing ||
+      Number(existing.trendyol_price) !== Number(yazilan.trendyol_price) ||
+      (Number(existing.trendyol_stock) > 0) !== (Number(yazilan.trendyol_stock) > 0)
+    ) {
+      if (yazilan.slug) degisenSluglar.push(String(yazilan.slug))
+    }
 
     if (existing) updated++
     else added++
@@ -288,5 +301,5 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
 
   // Pasife çekme ve sync_log kaydı koşu sahibindedir (lib/trendyol/syncRun.ts):
   // tek sayfa değil, koşunun tamamı bittiğinde karar verilmesi gerekiyor.
-  return { page, added, updated, skipped, totalPages, totalElements, done, runStartedAt: runStart }
+  return { page, added, updated, skipped, totalPages, totalElements, done, runStartedAt: runStart, degisenSluglar }
 }

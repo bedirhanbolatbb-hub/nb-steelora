@@ -19,7 +19,13 @@ import AvantajSeridi from '@/components/home/AvantajSeridi'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { ilkEkranKampanyasi } from '@/lib/campaigns/kampanyaVitrini'
 import { kampanyaOnizlemesiGetir } from '@/lib/campaigns/vitrinIndirimi'
-import { organizationJsonLd, websiteJsonLd } from '@/lib/seo'
+import {
+  ANA_SAYFA_ACIKLAMASI,
+  ANA_SAYFA_BASLIGI,
+  organizationJsonLd,
+  sayfaUstVerisi,
+  websiteJsonLd,
+} from '@/lib/seo'
 
 /**
  * Anasayfa — "Sessiz Atölye" (Faz 9A veri katmanıyla).
@@ -36,7 +42,15 @@ import { organizationJsonLd, websiteJsonLd } from '@/lib/seo'
  * Kök layout'a KONULMAZ: alternates miras alınır ve canonical'ı olmayan her
  * sayfa (/giris, /sepet, /favorilerim …) kendini ana sayfa ilan ederdi.
  */
-export const metadata: Metadata = { alternates: { canonical: '/' } }
+//
+// Kasım 2026: başlık, açıklama ve paylaşım kartı da sayfanın kendisinde
+// (sayfaUstVerisi → canonical '/' dahil). Önceden başlık kök layout'un
+// "Fine Jewellery" varsayılanından geliyordu.
+export const metadata: Metadata = sayfaUstVerisi({
+  tamBaslik: ANA_SAYFA_BASLIGI,
+  aciklama: ANA_SAYFA_ACIKLAMASI,
+  yol: '/',
+})
 
 export default async function HomePage({
   searchParams,

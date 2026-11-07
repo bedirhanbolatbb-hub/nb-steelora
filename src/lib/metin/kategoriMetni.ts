@@ -98,6 +98,41 @@ const KATEGORI_METINLERI: Record<string, string[]> = {
   ],
 }
 
+/**
+ * Kategori sayfasının arama başlığı — marka soneki HARİÇ (Kasım 2026).
+ *
+ * ÖLÇÜLEN KUSUR: tek kalıp "Çelik {Kategori} Modelleri" idi; erkek ve setler
+ * için "Çelik Erkek Modelleri / Çelik Setler Modelleri" gibi bozuk başlık
+ * üretiyordu. Bileklik başlığında en çok aranan "charm bileklik" ifadesi
+ * geçmiyordu. "ve Fiyatları" Türkçe alışveriş aramalarının yaygın kalıbı.
+ * Yalnız sattığımız ürün türleri yazılır; listede olmayan tür eklenmez.
+ */
+const KATEGORI_SEO_BASLIKLARI: Record<string, string> = {
+  kolye: 'Çelik Kolye Modelleri ve Fiyatları',
+  kupe: 'Çelik Küpe Modelleri ve Fiyatları',
+  bileklik: 'Bileklik Modelleri: Çelik ve Charm Bileklik',
+  yuzuk: 'Çelik Yüzük Modelleri ve Fiyatları',
+  piercing: 'Çelik Piercing Modelleri ve Fiyatları',
+  erkek: 'Erkek Takı: Çelik Kolye, Bileklik ve Küpe',
+  setler: 'Takı Setleri ve Kombin Setler',
+}
+
+export function kategoriSeoBasligi(slug: string, baslik: string): string {
+  return KATEGORI_SEO_BASLIKLARI[slug] ?? `${baslik} Modelleri`
+}
+
+/**
+ * Kategori meta açıklaması: sayfanın kendi tanıtım cümlesi + hizmet cümlesi.
+ * Önceden yalnız tanıtım cümlesi basılıyordu ("Zincir ve charm detaylı
+ * bileklikler." — 36 karakter); arama sonucunda alanın üçte biri boş kalıyordu.
+ * Hizmet cümlesi çağırandan gelir (kargo/iade tek kaynaktan okunur).
+ */
+export function kategoriMetaAciklamasi(tanitim: string, hizmet: string): string {
+  const t = tanitim.trim()
+  const birlesik = `${t}${/[.!?…]$/.test(t) ? '' : '.'} ${hizmet}`.trim()
+  return birlesik.length <= 160 ? birlesik : t.slice(0, 158)
+}
+
 /** Kategori tanıtımı — slug'a özel metin yoksa genel kalıp. TÜM adaylar döner. */
 export function kategoriTanitimi(slug: string, baslik: string, adet?: number): string[] {
   const ozel = KATEGORI_METINLERI[slug]

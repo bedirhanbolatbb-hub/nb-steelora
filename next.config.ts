@@ -50,7 +50,18 @@ const nextConfig: NextConfig = {
    * "site tam çalışmıyor" işareti; içerik zaten Kargo & İade sayfasında.
    */
   async redirects() {
-    return [{ source: '/garanti', destination: '/kargo-ve-iade', permanent: true }]
+    return [
+      { source: '/garanti', destination: '/kargo-ve-iade', permanent: true },
+      // Kasım 2026 blog birleştirmesi. Aynı aramayı birden çok kısa yazı
+      // paylaşıyordu (Google "bijuteri nedir" için ikinci yazıyı seçiyordu);
+      // iki "test" yazısı ise yapılmamış denemeleri anlatıyordu. İçerik tek
+      // kapsamlı rehberde toplandı; eski adresler oraya kalıcı yönlenir.
+      { source: '/blog/bijuteri-nedir', destination: '/blog/bijuteri-ile-celik-taki-farki', permanent: true },
+      { source: '/blog/takilar-neden-kararir', destination: '/blog/celik-taki-kararir-mi', permanent: true },
+      { source: '/blog/celik-taki-kararmaz-mi-gercek-test', destination: '/blog/celik-taki-kararir-mi', permanent: true },
+      { source: '/blog/1-yil-ccelik-taki-kullandik', destination: '/blog/celik-taki-kararir-mi', permanent: true },
+      { source: '/blog/gunluk-kullanim-icin-en-iyi-taki', destination: '/blog/en-iyi-gunluk-takilar', permanent: true },
+    ]
   },
 
   images: {

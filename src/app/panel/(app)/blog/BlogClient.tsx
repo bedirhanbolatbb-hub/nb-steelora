@@ -19,9 +19,15 @@ export type YaziSatiri = {
   published: boolean
   publishedAt: string | null
   readTime: number
+  /** Google'da görünen başlık/açıklama; boşsa yazı başlığı ve özeti kullanılır. */
+  metaTitle: string
+  metaDescription: string
 }
 
-type Form = Pick<YaziSatiri, 'title' | 'excerpt' | 'content' | 'coverImage' | 'readTime' | 'published'> & {
+type Form = Pick<
+  YaziSatiri,
+  'title' | 'excerpt' | 'content' | 'coverImage' | 'readTime' | 'published' | 'metaTitle' | 'metaDescription'
+> & {
   publishedAt: string
 }
 
@@ -49,7 +55,17 @@ export default function BlogClient({ yazilar }: { yazilar: YaziSatiri[] }) {
     setSekme('duzenle')
     if (!y) {
       setAcik('yeni')
-      setForm({ title: '', excerpt: '', content: '', coverImage: '', readTime: 4, published: true, publishedAt: dLocal(null) })
+      setForm({
+        title: '',
+        excerpt: '',
+        content: '',
+        coverImage: '',
+        readTime: 4,
+        published: true,
+        publishedAt: dLocal(null),
+        metaTitle: '',
+        metaDescription: '',
+      })
       return
     }
     setAcik(y.id)
@@ -61,6 +77,8 @@ export default function BlogClient({ yazilar }: { yazilar: YaziSatiri[] }) {
       readTime: y.readTime,
       published: y.published,
       publishedAt: dLocal(y.publishedAt),
+      metaTitle: y.metaTitle,
+      metaDescription: y.metaDescription,
     })
   }
 
@@ -80,6 +98,8 @@ export default function BlogClient({ yazilar }: { yazilar: YaziSatiri[] }) {
           read_time: form.readTime,
           published: form.published,
           published_at: new Date(`${form.publishedAt}T09:00:00+03:00`).toISOString(),
+          meta_title: form.metaTitle,
+          meta_description: form.metaDescription,
         }),
       })
       const data = await res.json()
@@ -172,6 +192,33 @@ export default function BlogClient({ yazilar }: { yazilar: YaziSatiri[] }) {
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]">Özet</label>
                 <PTextarea rows={2} value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]">
+                  Google başlığı{' '}
+                  <span className="font-normal text-[var(--p-muted)]">
+                    ({form.metaTitle.length}/60 · boş bırakılırsa yazı başlığı kullanılır)
+                  </span>
+                </label>
+                <PInput
+                  value={form.metaTitle}
+                  maxLength={70}
+                  onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]">
+                  Google açıklaması{' '}
+                  <span className="font-normal text-[var(--p-muted)]">
+                    ({form.metaDescription.length}/155 · boş bırakılırsa özet kullanılır)
+                  </span>
+                </label>
+                <PTextarea
+                  rows={2}
+                  maxLength={170}
+                  value={form.metaDescription}
+                  onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
+                />
               </div>
               <div>
                 <label className="mb-1 block text-[12px] font-medium text-[var(--p-ink-soft)]">Kapak görseli URL</label>

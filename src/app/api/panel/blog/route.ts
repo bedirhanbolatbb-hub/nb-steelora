@@ -1,4 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
+import { indexNowBildir } from '@/lib/indexnow'
+import { SITE_URL } from '@/lib/seo'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 
@@ -14,6 +16,17 @@ function slugla(title: string): string {
       .replace(/-+/g, '-')
       .slice(0, 60) || 'yazi'
   )
+}
+
+/**
+ * Yayımlanan yazıyı Bing/Yandex'e bildirir (IndexNow, Kasım 2026). Yanıt
+ * gönderildikten sonra çalışır; bildirim düşerse kayıt etkilenmez.
+ */
+function yayinlananiBildir(slug: string) {
+  after(async () => {
+    const sonuc = await indexNowBildir([`${SITE_URL}/blog/${slug}`, `${SITE_URL}/blog`])
+    if (!sonuc.durum || sonuc.durum >= 300) console.warn('[blog] IndexNow bildirimi:', sonuc)
+  })
 }
 
 /**
@@ -43,7 +56,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const alanlar = {
+  const alanlar: Record<string, unknown> = {
     title,
     content,
     excerpt: typeof body?.excerpt === 'string' ? body.excerpt.trim() || null : null,
@@ -53,6 +66,12 @@ export async function POST(request: Request) {
     published_at: body?.published_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }
+
+  // Arama sonucu başlığı/açıklaması (Kasım 2026). Boş bırakılırsa yazı sayfası
+  // başlığı ve özeti kullanır. Alanı hiç göndermeyen eski istemci değeri ezmez.
+  if (typeof body?.meta_title === 'string') alanlar.meta_title = body.meta_title.trim().slice(0, 70) || null
+  if (typeof body?.meta_description === 'string')
+    alanlar.meta_description = body.meta_description.trim().slice(0, 170) || null
 
   const supabase = createServiceClient()
 
@@ -65,6 +84,7 @@ export async function POST(request: Request) {
       .maybeSingle()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     if (!data) return NextResponse.json({ error: 'Yazı bulunamadı' }, { status: 404 })
+    if (alanlar.published) yayinlananiBildir(data.slug)
     return NextResponse.json({ ok: true, slug: data.slug })
   }
 
@@ -79,5 +99,6 @@ export async function POST(request: Request) {
     .select('id, slug')
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (alanlar.published) yayinlananiBildir(data.slug)
   return NextResponse.json({ ok: true, id: data.id, slug: data.slug })
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Playfair_Display, Inter } from 'next/font/google'
 import './globals.css'
+import { ANA_SAYFA_ACIKLAMASI, ANA_SAYFA_BASLIGI } from '@/lib/seo'
 
 // latin-ext olmadan ğ/ş/ı/İ gibi karakterler fallback fonta düşer.
 const display = Playfair_Display({
@@ -32,10 +33,10 @@ const sans = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'NB Steelora | Fine Jewellery',
+    default: ANA_SAYFA_BASLIGI,
     template: '%s | NB Steelora',
   },
-  description: '316L çelik ve kaplama takı markası. Güvenli ödeme ve hızlı kargo ile Türkiye\'nin dört bir yanına teslimat.',
+  description: ANA_SAYFA_ACIKLAMASI,
   keywords: ['takı', 'kolye', 'küpe', 'yüzük', 'bileklik', 'premium takı', 'NB Steelora'],
   authors: [{ name: 'NB Steelora' }],
   creator: 'NB Steelora',
@@ -45,13 +46,13 @@ export const metadata: Metadata = {
     locale: 'tr_TR',
     url: 'https://www.nbsteelora.com',
     siteName: 'NB Steelora',
-    title: 'NB Steelora | Fine Jewellery',
-    description: '316L çelik ve kaplama takı markası. Güvenli ödeme ve hızlı kargo.',
+    title: ANA_SAYFA_BASLIGI,
+    description: ANA_SAYFA_ACIKLAMASI,
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'NB Steelora | Fine Jewellery',
-    description: '316L çelik ve kaplama takı markası. Güvenli ödeme ve hızlı kargo.',
+    title: ANA_SAYFA_BASLIGI,
+    description: ANA_SAYFA_ACIKLAMASI,
   },
   robots: {
     index: true,

@@ -113,6 +113,8 @@ export type RunResult = {
   totalElements: number
   durationMs: number
   note: string | null
+  /** Yeni / fiyatı ya da stok durumu değişen / pasife çekilen ürünlerin slug'ları (IndexNow). */
+  degisenSluglar: string[]
 }
 
 /**
@@ -136,12 +138,14 @@ export async function processRun(params: {
   let totalPages = 0
   let totalElements = 0
   let note: string | null = null
+  const degisenler = new Set<string>()
 
   while (page < MAX_PAGES) {
     const result = await syncTrendyolPage(page, PAGE_SIZE, runStartedAt)
     added += result.added
     updated += result.updated
     skipped += result.skipped
+    for (const s of result.degisenSluglar ?? []) degisenler.add(s)
     totalPages = result.totalPages
     totalElements = result.totalElements
     pagesDone++
@@ -169,8 +173,10 @@ export async function processRun(params: {
       .update({ is_active: false })
       .eq('is_active', true)
       .lt('last_synced_at', runStartedAt)
-      .select('id')
+      .select('id, slug')
     deactivated = stale?.length ?? 0
+    // Satıştan kalkan ürünün sayfası da değişti (artık listelenmiyor).
+    for (const r of (stale ?? []) as { slug: string | null }[]) if (r.slug) degisenler.add(r.slug)
     if (deactivated > 0) console.log(`Sync: ${deactivated} ürün pasife çekildi (bu koşuda görülmedi)`)
   } else if (done) {
     note = `Koşu ${Math.round(elapsedBeforeDeactivate / 1000)} sn sürdü (sınır ${DEACTIVATE_BUDGET_MS / 1000} sn); pasife çekme atlandı.`
@@ -213,6 +219,7 @@ export async function processRun(params: {
     totalElements,
     durationMs,
     note,
+    degisenSluglar: [...degisenler],
   }
 }
 

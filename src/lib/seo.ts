@@ -9,7 +9,9 @@
  * Tüm çıktı sunucuda üretilir; istemciye tek satır JS eklemez.
  */
 import type { Metadata } from 'next'
-import { HAZIRLIK_IS_GUNU, TASIMA_IS_GUNU } from './shipping'
+import { FREE_SHIPPING_LABEL, HAZIRLIK_IS_GUNU, TASIMA_IS_GUNU } from './shipping'
+import { CAYMA_SURESI_GUN } from './legal/sozlesme'
+import { TRENDYOL_MAGAZA_URL } from './kanallar'
 
 /**
  * Pazartesi–Cuma. schema.org'da hem handlingTime hem transitTime bu pencerede
@@ -29,6 +31,26 @@ const IS_GUNLERI = {
 export const SITE_URL = 'https://www.nbsteelora.com'
 export const ORG_NAME = 'NB Steelora'
 export const ORG_EMAIL = 'info@nbsteelora.com'
+
+/**
+ * Kurumun kalıcı kimliği (schema.org @id), Kasım 2026.
+ *
+ * Organization bloğu, WebSite.publisher ve yazıların yayımcısı aynı varlığı
+ * bu adresle gösterir; arama motoru ve yapay zekâ aramaları ayrı bloklardaki
+ * "NB Steelora"yı tek marka olarak birleştirir.
+ */
+export const ORG_ID = `${SITE_URL}/#organization`
+
+/**
+ * Ana sayfa başlığı ve açıklaması (Kasım 2026).
+ *
+ * ÖLÇÜLEN KUSUR: başlık "NB Steelora | Fine Jewellery" idi. Türkçe aramada
+ * kimsenin yazmadığı bir ifade; arama sonucunda sitenin ne sattığını da
+ * söylemiyordu. Açıklamadaki "güvenli ödeme ve hızlı kargo" ise ölçülebilir
+ * bir bilgi vermiyordu. Süre ve kargo cümlesi tek kaynaktan okunur.
+ */
+export const ANA_SAYFA_BASLIGI = 'NB Steelora | Çelik Takı, Kolye, Küpe ve Bileklik Modelleri'
+export const ANA_SAYFA_ACIKLAMASI = `316L paslanmaz çelik ve premium kaplama kolye, küpe, bileklik, yüzük ve piercing modelleri. ${FREE_SHIPPING_LABEL}, hediye kutusu ve ${CAYMA_SURESI_GUN} gün iade.`
 
 /**
  * Marka logosu — KARE (512×512), app/logo/route.tsx üretir.
@@ -92,6 +114,7 @@ function organizationVarligi(
   // hiç yoksa alan hiç eklenmez.
   const data: Record<string, unknown> = {
     '@type': 'Organization',
+    '@id': ORG_ID,
     name: ORG_NAME,
     url: SITE_URL,
     logo: (kunye.logo ?? '').trim() || ORG_LOGO,
@@ -141,7 +164,11 @@ function organizationVarligi(
   const vergi = (kunye.vergi ?? '').trim()
   if (/^\d{10,16}$/.test(vergi)) data.vatID = vergi
 
-  const dolu = sameAs.map((s) => (s ?? '').trim()).filter(Boolean)
+  // Trendyol mağazası markanın resmî satış kanalı; panelde ayrı alanı olmadığı
+  // için sabitten eklenir (Kasım 2026). Aynı adres iki kez basılmaz.
+  const dolu = [
+    ...new Set([...sameAs.map((s) => (s ?? '').trim()), TRENDYOL_MAGAZA_URL].filter(Boolean)),
+  ]
   if (dolu.length > 0) data.sameAs = dolu
   return data
 }
@@ -153,10 +180,11 @@ export function websiteJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
+    '@id': `${SITE_URL}/#website`,
     name: ORG_NAME,
     url: SITE_URL,
     inLanguage: 'tr-TR',
-    publisher: { '@type': 'Organization', name: ORG_NAME, url: SITE_URL },
+    publisher: { '@type': 'Organization', '@id': ORG_ID, name: ORG_NAME, url: SITE_URL },
   }
 }
 
@@ -269,8 +297,8 @@ export function webPageJsonLd(s: {
     url,
     name: s.ad,
     inLanguage: 'tr-TR',
-    isPartOf: { '@type': 'WebSite', name: ORG_NAME, url: SITE_URL },
-    publisher: { '@type': 'Organization', name: ORG_NAME, url: SITE_URL },
+    isPartOf: { '@type': 'WebSite', '@id': `${SITE_URL}/#website`, name: ORG_NAME, url: SITE_URL },
+    publisher: { '@type': 'Organization', '@id': ORG_ID, name: ORG_NAME, url: SITE_URL },
   }
   const aciklama = (s.aciklama ?? '').trim()
   if (aciklama) data.description = truncate(aciklama, 300)
@@ -450,9 +478,10 @@ export function articleJsonLd(a: ArticleSeoInput) {
     '@type': 'Article',
     headline: a.title,
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/blog/${a.slug}` },
-    author: { '@type': 'Organization', name: ORG_NAME, url: SITE_URL },
+    author: { '@type': 'Organization', '@id': ORG_ID, name: ORG_NAME, url: SITE_URL },
     publisher: {
       '@type': 'Organization',
+      '@id': ORG_ID,
       name: ORG_NAME,
       logo: { '@type': 'ImageObject', url: ORG_LOGO },
     },
