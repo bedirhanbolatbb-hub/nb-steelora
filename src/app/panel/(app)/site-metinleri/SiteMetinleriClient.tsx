@@ -136,6 +136,7 @@ const GRUPLAR: Grup[] = [
     neyiEtkiler: 'Alt bilgide simge olarak görünür. Boş bıraktığınız hesap hiç basılmaz.',
     alanlar: [
       { anahtar: 'instagram_url', etiket: 'Instagram', yardim: 'Tam adres. Örnek: https://instagram.com/nbsteelora' },
+      { anahtar: 'tiktok_url', etiket: 'TikTok', yardim: 'Tam adres. Örnek: https://www.tiktok.com/@nbsteelora' },
       { anahtar: 'facebook_url', etiket: 'Facebook', yardim: 'Tam adres.' },
       { anahtar: 'x_url', etiket: 'X', yardim: 'Tam adres.' },
     ],

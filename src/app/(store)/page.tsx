@@ -71,7 +71,7 @@ export default async function HomePage({
   return (
     <>
       <JsonLd
-        data={organizationJsonLd([c.instagram_url, c.facebook_url, c.x_url], {
+        data={organizationJsonLd([c.instagram_url, c.tiktok_url, c.facebook_url, c.x_url], {
           // Künye /iletisim'de zaten yayında ve panelden yönetiliyor; aynı
           // site_content kaydından okunuyor, ek sorgu yok (Faz 11F denetimi).
           unvan: c.veri_sorumlusu_unvan,
