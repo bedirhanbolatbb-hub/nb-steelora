@@ -61,6 +61,16 @@ const nextConfig: NextConfig = {
       { source: '/blog/celik-taki-kararmaz-mi-gercek-test', destination: '/blog/celik-taki-kararir-mi', permanent: true },
       { source: '/blog/1-yil-ccelik-taki-kullandik', destination: '/blog/celik-taki-kararir-mi', permanent: true },
       { source: '/blog/gunluk-kullanim-icin-en-iyi-taki', destination: '/blog/en-iyi-gunluk-takilar', permanent: true },
+      // İkinci tur (aynı gün): kısa ve birbirini tekrarlayan yazılar konu
+      // rehberlerine toplandı. Kaplama üzerine dört yazı tek rehberde.
+      { source: '/blog/kaliteli-bijuteri-nasil-secilir', destination: '/blog/bijuteri-ile-celik-taki-farki', permanent: true },
+      { source: '/blog/en-iyi-kararmayan-takilar-2026', destination: '/blog/kararmayan-taki-nasil-anlasilir', permanent: true },
+      { source: '/blog/neden-celik-takiya-gecmelisiniz', destination: '/blog/paslanmaz-celik-taki-nedir', permanent: true },
+      { source: '/blog/50-tl-vs-500-tl-taki-farki', destination: '/blog/premium-kaplama-taki-nedir', permanent: true },
+      { source: '/blog/ucuz-taki-mi-premium-kaplama-mi', destination: '/blog/premium-kaplama-taki-nedir', permanent: true },
+      { source: '/blog/altin-kaplama-taki-kararir-mi', destination: '/blog/premium-kaplama-taki-nedir', permanent: true },
+      { source: '/blog/en-uzun-omurlu-kolyeler', destination: '/blog/uzun-omurlu-kolye-nasil-secilir', permanent: true },
+      { source: '/blog/en-dayanikli-bileklik-modelleri', destination: '/blog/celik-bileklik-nasil-secilir', permanent: true },
     ]
   },
 
