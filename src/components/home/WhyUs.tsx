@@ -11,7 +11,9 @@ const MADDELER = [
   // küçük harfle başlıyordu. Diğer üç maddenin hepsi büyük harfle başlıyor;
   // tek bu satır bozuktu. Sabit olduğu gibi basılır.
   { Icon: Truck, baslik: 'Ücretsiz Kargo', metin: `${FREE_SHIPPING_MIN_LABEL}.` },
-  { Icon: RotateCcw, baslik: 'Kolay İade', metin: 'Koşulsuz 14 gün iade hakkı.' },
+  // Kasım 2026: "Koşulsuz" kalktı — hijyen mührü açılmış küpe/piercing ve
+  // kişiye özel ürünlerde cayma hakkı yok; vaat gerçeği aşmasın.
+  { Icon: RotateCcw, baslik: 'Kolay İade', metin: '14 gün içinde, sebep göstermeden; iade kargosu bizden.' },
   // Faz 11D: "Hediye Paketi" hediye ürün algısı yaratıyordu; tek anlam —
   // her sipariş kutuda gelir. Kutunun görünümüne dair sıfat da yazılmıyor.
   { Icon: Gift, baslik: 'Hediye Kutusu', metin: 'Her sipariş hediye kutusunda gönderilir.' },

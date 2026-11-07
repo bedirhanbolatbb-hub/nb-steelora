@@ -8,7 +8,7 @@ import { ORG_EMAIL, sayfaUstVerisi } from '@/lib/seo'
 
 export const metadata: Metadata = sayfaUstVerisi({
   baslik: 'Kargo, İade ve Değişim',
-  aciklama: 'Ücretsiz kargo, hazırlık ve taşıma süreleri, 14 gün koşulsuz cayma hakkı, iade ve değişim adımları.',
+  aciklama: 'Ücretsiz kargo, hazırlık ve taşıma süreleri, 14 gün cayma (iade) hakkı, iade ve değişim adımları.',
   yol: '/kargo-ve-iade',
 })
 export const dynamic = 'force-dynamic'
@@ -33,7 +33,7 @@ export default async function KargoVeIadePage() {
   const iadeFirmasi = (icerik.iade_kargo_firmasi ?? '').trim()
 
   return (
-    <LegalPageLayout eyebrow="Yardım" title="Kargo, İade ve Değişim" path="/kargo-ve-iade" aciklama="Ücretsiz kargo, hazırlık ve taşıma süreleri, 14 gün koşulsuz cayma hakkı, iade ve değişim adımları.">
+    <LegalPageLayout eyebrow="Yardım" title="Kargo, İade ve Değişim" path="/kargo-ve-iade" aciklama="Ücretsiz kargo, hazırlık ve taşıma süreleri, 14 gün cayma (iade) hakkı, iade ve değişim adımları.">
       <h2>Kargo</h2>
 
       {/* İki süre ART ARDA işler; tek bir toplam gibi okunmasın diye tablodan
@@ -73,7 +73,7 @@ export default async function KargoVeIadePage() {
         sonucunu doğurmaz; böyle bir durumda sizinle iletişime geçeriz.
       </p>
 
-      <h2>Cayma Hakkı (Koşulsuz İade)</h2>
+      <h2>Cayma Hakkı (14 Gün İçinde İade)</h2>
       <p>
         Ürünü teslim aldığınız günden itibaren <strong>{CAYMA_SURESI_GUN} gün</strong>{' '}
         içinde, hiçbir gerekçe göstermeden ve cezai şart ödemeden siparişinizden

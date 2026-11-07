@@ -27,7 +27,7 @@ export default async function PanelAyarlarPage() {
   const sabitler = [
     { ad: 'Kargo politikası', deger: 'Tüm siparişlerde ücretsiz' },
     { ad: 'Müşteriden alınan kargo bedeli', deger: formatPrice(SHIPPING_COST) },
-    { ad: 'İade süresi', deger: '14 gün (koşulsuz)' },
+    { ad: 'İade süresi', deger: '14 gün (sebep gerekmez)' },
   ]
 
   return (

@@ -86,7 +86,7 @@ const ACIKLAMALAR: Record<HeroSablonu['kimlik'], string[]> = {
     'Tek başına ya da katmanlı kullanılabilen yeni modeller.',
   ],
   kampanya: [
-    'Tüm siparişlerde kargo ücretsiz, 14 gün koşulsuz iade.',
+    'Tüm siparişlerde kargo ücretsiz, 14 gün içinde iade.',
     'İndirim sepette otomatik uygulanır.',
     'Seçtiğiniz parçalar, beklediğiniz fiyata.',
   ],

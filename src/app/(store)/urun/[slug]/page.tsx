@@ -84,7 +84,7 @@ export async function generateMetadata({
   const seoTitle = data.trendyol_title || data.display_title
   const description = `${seoTitle} — ${data.trendyol_category ?? 'NB Steelora'}. ${formatPrice(
     odenecekFiyat
-  )}. ${FREE_SHIPPING_LABEL}, ${CAYMA_SURESI_GUN} gün koşulsuz iade.`
+  )}. ${FREE_SHIPPING_LABEL}, ${CAYMA_SURESI_GUN} gün içinde iade.`
 
   return sayfaUstVerisi({
     baslik: seoTitle,
@@ -445,8 +445,8 @@ export default async function UrunDetayPage({
                       {TESLIM_CUMLESI}
                     </p>
                     <p>
-                      Teslimattan itibaren {CAYMA_SURESI_GUN} gün içinde koşulsuz iade
-                      hakkınız vardır; <strong>iade kargo ücreti bize aittir</strong>.
+                      Teslimattan itibaren {CAYMA_SURESI_GUN} gün içinde, sebep göstermeden
+                      iade edebilirsiniz; <strong>iade kargo ücreti bize aittir</strong>.
                       Ayrıntılar için{' '}
                       <Link href="/kargo-ve-iade" className="text-accent-deep underline underline-offset-2">
                         Kargo ve İade

@@ -15,7 +15,10 @@ import { Gift, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
 const MADDELER = [
   { Icon: Truck, baslik: 'Ücretsiz kargo', metin: 'Tüm siparişlerde, alt limit yok', vurgulu: true },
   { Icon: Gift, baslik: 'Hediye kutusunda', metin: 'Her sipariş kutusunda gönderilir', vurgulu: false },
-  { Icon: RotateCcw, baslik: '14 gün iade', metin: 'Koşulsuz iade hakkı', vurgulu: false },
+  // "Koşulsuz" yazılmaz: hijyen mührü açılmış küpe/piercing ve kişiye özel
+  // ürünlerde cayma hakkı yok (bkz. /kargo-ve-iade). Doğru ve güçlü olan iki
+  // vaat: sebep sorulmaz, iade kargosu bizden.
+  { Icon: RotateCcw, baslik: '14 gün iade', metin: 'Sebep göstermeden, iade kargosu bizden', vurgulu: false },
   { Icon: ShieldCheck, baslik: 'Güvenli ödeme', metin: 'iyzico güvencesiyle', vurgulu: false },
 ] as const
 

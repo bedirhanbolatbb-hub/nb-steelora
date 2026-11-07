@@ -433,11 +433,15 @@ function KargoSatiri({ ton }: { ton: 'acik' | 'koyu' }) {
  * anlaşılır ve ayırt edilebilir biçimde belirtilmesi zorunlu (Ticari Reklam
  * ve Haksız Ticari Uygulamalar Yönetmeliği değişikliği, RG 1 Temmuz 2026).
  * Panel: Kürasyon → slayt → "Görsel yapay zekâ ile üretildi".
+ *
+ * BB (7 Kas): "bu yazıyı kaldıralım" → KALDIRILMADI, sadeleştirildi: kutu
+ * yok, küçük ve yumuşak; masaüstünde köşede, yüzden uzakta. Yasal şart
+ * "açık, anlaşılır ve ayırt edilebilir" — okunur kalması gerekiyor.
  */
 function YapayZekaNotu() {
   return (
-    <p className="pointer-events-none absolute right-3 top-3 z-[1] rounded-[3px] bg-black/45 px-2 py-1 font-body text-[10px] leading-none tracking-[0.04em] text-white/90 sm:right-4 sm:top-4 sm:text-[11px]">
-      Görsel yapay zekâ ile üretilmiştir
+    <p className="pointer-events-none absolute right-3 top-3 z-[1] font-body text-[10px] leading-none tracking-[0.03em] text-white/80 [text-shadow:0_1px_3px_rgba(0,0,0,0.55)] md:bottom-4 md:right-5 md:top-auto">
+      Yapay zekâ ile üretilmiş görsel
     </p>
   )
 }
