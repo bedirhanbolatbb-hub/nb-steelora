@@ -366,7 +366,7 @@ function KampanyaYazisi({
         <span aria-hidden="true" className="block">
           <span
             className={cn(
-              'block font-heading text-[60px] font-medium leading-[0.95] tracking-[-0.01em] sm:text-[84px] lg:text-[112px]',
+              'block font-heading text-[56px] font-medium leading-none tracking-[-0.01em] sm:text-[84px] lg:text-[112px]',
               acik ? 'text-[#EBD5A6]' : 'text-accent-deep'
             )}
           >
@@ -374,7 +374,7 @@ function KampanyaYazisi({
           </span>
           <span
             className={cn(
-              'mt-1 block font-heading text-[26px] font-medium leading-[1.1] sm:text-[34px] lg:text-[44px]',
+              'mt-2 block font-heading text-[26px] font-medium leading-[1.1] sm:mt-3 sm:text-[34px] lg:text-[44px]',
               acik ? 'text-white' : 'text-ink'
             )}
           >

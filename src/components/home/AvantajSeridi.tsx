@@ -22,20 +22,20 @@ const MADDELER = [
 export default function AvantajSeridi() {
   return (
     <section aria-label="Alışveriş güvenceleri" className="border-b border-line bg-bg">
-      <ul className="mx-auto grid max-w-[1400px] grid-cols-2 gap-x-4 gap-y-4 px-4 py-5 lg:grid-cols-4 lg:gap-8 lg:px-8 lg:py-6">
+      <ul className="mx-auto grid max-w-[1400px] grid-cols-2 gap-x-3 gap-y-4 px-4 py-5 lg:grid-cols-4 lg:gap-8 lg:px-8 lg:py-6">
         {MADDELER.map(({ Icon, baslik, metin, vurgulu }) => (
-          <li key={baslik} className="flex items-start gap-3">
+          <li key={baslik} className="flex items-start gap-2.5 sm:gap-3">
             <span
               className={
                 vurgulu
-                  ? 'mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-bg'
-                  : 'mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-accent-line/40 text-accent-deep'
+                  ? 'mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink text-bg sm:h-9 sm:w-9'
+                  : 'mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent-line/40 text-accent-deep sm:h-9 sm:w-9'
               }
             >
               <Icon size={17} strokeWidth={1.5} aria-hidden="true" />
             </span>
             <span className="min-w-0">
-              <span className="block font-body text-[12px] font-semibold uppercase tracking-[0.12em] text-ink">
+              <span className="block font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-ink sm:text-[12px] sm:tracking-[0.12em]">
                 {baslik}
               </span>
               <span className="mt-0.5 block font-body text-[12px] leading-snug text-ink-soft">{metin}</span>
