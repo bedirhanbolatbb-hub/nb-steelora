@@ -3,6 +3,7 @@
 import Image, { getImageProps } from 'next/image'
 import Link from 'next/link'
 import { createElement, useCallback, useEffect, useRef, useState } from 'react'
+import { preload } from 'react-dom'
 import { ChevronLeft, ChevronRight, Truck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia, varyantSec } from '@/lib/images'
@@ -485,34 +486,37 @@ function SanatYonetimliGorsel({ slayt, ilk }: { slayt: Slayt; ilk: boolean }) {
   const { style: mobilStil, ...mobilOzellik } = mobil
   const ayri = Boolean(slayt.image_mobil_url)
 
+  // LCP: <picture> içindeki görsel gövdede geç keşfediliyordu (PageSpeed
+  // "kaynak yükleme gecikmesi" 480 ms). İlk slaytın görselleri ekrana göre
+  // AYRI ön yüklenir — telefon yalnız kendi görselini indirir.
+  //
+  // 8 Kas 2026: JSX <link> yerine react-dom `preload()`. Ölçüm: JSX bağlantı
+  // <head>'in SONUNA düşüyordu — stil dosyası, 10 betik ve tüm meta
+  // etiketlerinden sonra (36. sıra); tarayıcı önce betikleri istiyor, hero
+  // görseli bant genişliği için sıra bekliyordu. `preload()` ile React
+  // yüksek öncelikli görsel ön yüklemesini <head>'in EN BAŞINA, stil ve
+  // betiklerden önce koyar (React 19 kaynak sırası; yerelde doğrulandı).
+  if (ilk) {
+    preload(mobil.src, {
+      as: 'image',
+      fetchPriority: 'high',
+      imageSrcSet: mobil.srcSet,
+      imageSizes: mobil.sizes,
+      media: ayri ? '(max-width: 767px)' : undefined,
+    })
+    if (ayri) {
+      preload(masaustu.src, {
+        as: 'image',
+        fetchPriority: 'high',
+        imageSrcSet: masaustu.srcSet,
+        imageSizes: masaustu.sizes,
+        media: '(min-width: 768px)',
+      })
+    }
+  }
+
   return (
     <picture>
-      {/* LCP: <picture> içindeki görsel gövdede geç keşfediliyordu (PageSpeed
-          "kaynak yükleme gecikmesi" 480 ms, LCP 2,0 → 3,0 sn). İlk slaytın
-          görselleri <head>'de, ekrana göre AYRI ön yüklenir — telefon yalnız
-          kendi görselini indirir. React 19 <link>'i head'e taşır. */}
-      {ilk && (
-        <link
-          rel="preload"
-          as="image"
-          href={mobil.src}
-          imageSrcSet={mobil.srcSet}
-          imageSizes={mobil.sizes}
-          fetchPriority="high"
-          media={ayri ? '(max-width: 767px)' : undefined}
-        />
-      )}
-      {ilk && ayri && (
-        <link
-          rel="preload"
-          as="image"
-          href={masaustu.src}
-          imageSrcSet={masaustu.srcSet}
-          imageSizes={masaustu.sizes}
-          fetchPriority="high"
-          media="(min-width: 768px)"
-        />
-      )}
       {slayt.image_mobil_url && (
         <source media="(min-width: 768px)" srcSet={masaustu.srcSet ?? masaustu.src} sizes={masaustu.sizes} />
       )}
