@@ -86,7 +86,13 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
   const setCartOpen = (v: boolean) =>
     v ? useSepetPaneli.getState().ac() : useSepetPaneli.getState().kapat()
   const [searchOpen, setSearchOpen] = useState(false)
-  const totalItems = useCart((s) => s.totalItems())
+  // Hidrasyon (8 Kas 2026): s.totalItems() içeride get() ile CANLI sepeti
+  // okuyor, zustand'ın ilk çizim için verdiği boş sepeti atlıyordu. Sepetinde
+  // ürün olan ziyaretçide rozet ilk çizimde sunucu HTML'inden farklı çıkıyor,
+  // React her açılışta sayfanın tamamını tarayıcıda baştan kuruyordu (#418).
+  // Adet artık seçicinin verdiği durumdan sayılır: ilk çizim sunucuyla aynı,
+  // gerçek adet hemen ardından gelir.
+  const totalItems = useCart((s) => s.items.reduce((sum, i) => sum + i.quantity, 0))
   const wishlistCount = useWishlist((s) => s.items.length)
 
   useKatmanKlavyesi(mobileOpen, () => setMobileOpen(false), menuRef)

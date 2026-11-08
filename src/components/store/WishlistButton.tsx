@@ -14,8 +14,13 @@ export default function WishlistButton({
   productId: string
   gorunum?: 'ikon' | 'kutu'
 }) {
-  const { toggleItem, isInWishlist } = useWishlist()
-  const inWishlist = isInWishlist(productId)
+  const toggleItem = useWishlist((s) => s.toggleItem)
+  // Hidrasyon (8 Kas 2026): isInWishlist() get() ile CANLI listeyi okuyordu;
+  // ilk çizim sunucudan farklı çıkıyor, React bu öznitelik farkını düzeltmediği
+  // için favorideki ürünün kalbi boş görünüyordu (müşteri basınca ürün
+  // favoriden ÇIKIYORDU). Seçicinin verdiği durumdan okunur: ilk çizim
+  // sunucuyla aynı, gerçek durum hemen ardından gelir.
+  const inWishlist = useWishlist((s) => s.items.includes(productId))
   const kutu = gorunum === 'kutu'
 
   return (
