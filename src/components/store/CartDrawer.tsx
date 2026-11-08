@@ -17,6 +17,7 @@ import { useCart } from '@/hooks/useCart'
 import Button from '@/components/ui/Button'
 import { FREE_SHIPPING_LABEL, tahminiTeslimEtiketi } from '@/lib/shipping'
 import { GUVEN_METNI } from '@/lib/metin/guven'
+import { BaglamliSaticiPuaniSatiri } from '@/components/store/SaticiPuaniContext'
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
 import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
 import { SepetiPaylasDugmesi } from '@/components/store/SepetPaylasim'
@@ -286,20 +287,26 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
               >
                 Alışverişe Devam Et
               </button>
-              {/* Faz 36: güven satırı ürün sayfasında vardı, ödeme düğmesinin
-                  yanında yoktu. Metinler tek kaynaktan (lib/metin/guven). */}
-              <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[10px] font-body text-ink-soft">
-                {[
-                  { Icon: ShieldCheck, metin: GUVEN_METNI.odeme },
-                  { Icon: RotateCcw, metin: GUVEN_METNI.iade },
-                  { Icon: Gift, metin: GUVEN_METNI.hediye },
-                ].map(({ Icon, metin }) => (
-                  <li key={metin} className="flex items-center gap-1.5 whitespace-nowrap">
-                    <Icon size={12} strokeWidth={1.5} className="text-accent-deep shrink-0" aria-hidden />
-                    {metin}
-                  </li>
-                ))}
-              </ul>
+              {/* 8 Kas 2026: Trendyol satıcı puanı — ödeme kararının yanında.
+                  Bağlamdan okunur; puan yoksa/eskiyse satır hiç basılmaz
+                  (space-y: satır yoksa güven listesinin boşluğu değişmez). */}
+              <div className="mt-4 space-y-2.5">
+                <BaglamliSaticiPuaniSatiri />
+                {/* Faz 36: güven satırı ürün sayfasında vardı, ödeme düğmesinin
+                    yanında yoktu. Metinler tek kaynaktan (lib/metin/guven). */}
+                <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[10px] font-body text-ink-soft">
+                  {[
+                    { Icon: ShieldCheck, metin: GUVEN_METNI.odeme },
+                    { Icon: RotateCcw, metin: GUVEN_METNI.iade },
+                    { Icon: Gift, metin: GUVEN_METNI.hediye },
+                  ].map(({ Icon, metin }) => (
+                    <li key={metin} className="flex items-center gap-1.5 whitespace-nowrap">
+                      <Icon size={12} strokeWidth={1.5} className="text-accent-deep shrink-0" aria-hidden />
+                      {metin}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </>
         ) : (

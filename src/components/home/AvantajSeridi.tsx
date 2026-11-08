@@ -1,4 +1,6 @@
 import { Gift, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
+import { SaticiPuaniBandi } from '@/components/store/SaticiPuani'
+import type { SaticiPuani } from '@/lib/metin/saticiPuani'
 
 /**
  * İlk ekranın hemen altındaki fayda şeridi (Kasım 2026).
@@ -11,6 +13,9 @@ import { Gift, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
  *
  * YENİ İDDİA YOK: dördü de sitede zaten yazan vaatler (lib/shipping.ts,
  * WhyUs, sepet güven satırı). Panel karşılığı gerekmiyor — sabit vaatler.
+ *
+ * 8 Kas 2026: şeridin altında Trendyol satıcı puanı bandı (panel: Site
+ * Metinleri → Trendyol satıcı puanı). Puan yoksa/eskiyse bant hiç basılmaz.
  */
 const MADDELER = [
   { Icon: Truck, baslik: 'Ücretsiz kargo', metin: 'Tüm siparişlerde, alt limit yok', vurgulu: true },
@@ -25,7 +30,7 @@ const MADDELER = [
   { Icon: ShieldCheck, baslik: 'Kayıtlı satıcı', metin: 'Ticaret Bakanlığı ETBİS kaydı', vurgulu: false },
 ] as const
 
-export default function AvantajSeridi() {
+export default function AvantajSeridi({ saticiPuani = null }: { saticiPuani?: SaticiPuani | null }) {
   return (
     <section aria-label="Alışveriş güvenceleri" className="border-b border-line bg-bg">
       <ul className="mx-auto grid max-w-[1400px] grid-cols-2 gap-x-3 gap-y-4 px-4 py-5 lg:grid-cols-4 lg:gap-8 lg:px-8 lg:py-6">
@@ -49,6 +54,7 @@ export default function AvantajSeridi() {
           </li>
         ))}
       </ul>
+      {saticiPuani && <SaticiPuaniBandi veri={saticiPuani} />}
     </section>
   )
 }

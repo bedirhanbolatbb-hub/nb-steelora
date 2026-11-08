@@ -10,6 +10,13 @@ import { kategoriTanitimi } from '@/lib/metin/kategoriMetni'
 import { hediyeMetinleri, HEDIYE_VARSAYILAN } from '@/lib/metin/hediyeMetni'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import HeroCinema from '@/components/home/HeroCinema'
+import { SaticiPuaniKarti, SaticiPuaniSatiri } from '@/components/store/SaticiPuani'
+import {
+  SATICI_PUANI_ALT_SINIR,
+  SATICI_PUANI_ANAHTARLARI,
+  SATICI_PUANI_EN_ESKI_GUN,
+  saticiPuaniDurumu,
+} from '@/lib/metin/saticiPuani'
 import {
   HERO_SABLONLARI,
   heroSablonuUygula,
@@ -43,8 +50,9 @@ type Alan = {
   yardim: string
   ornek?: string
   cokSatir?: boolean
-  /** 'gorsel' → metin kutusu yerine yükleyici + önizleme (Faz 11B). */
-  tur?: 'metin' | 'gorsel'
+  /** 'gorsel' → metin kutusu yerine yükleyici + önizleme (Faz 11B).
+   *  'tarih' → takvim seçici; değer YYYY-AA-GG olarak saklanır (8 Kas 2026). */
+  tur?: 'metin' | 'gorsel' | 'tarih'
 }
 
 type Grup = {
@@ -83,6 +91,28 @@ const GRUPLAR: Grup[] = [
         cokSatir: true,
       },
       { anahtar: 'hero_cta', etiket: 'Düğme yazısı', yardim: 'Fotoğrafın üzerindeki düğme. Örnek: Koleksiyonu Keşfet' },
+    ],
+  },
+  {
+    baslik: 'Trendyol satıcı puanı',
+    neyiEtkiler: `Ürün sayfasında, ana sayfadaki güvence şeridinde, sepette ve ödeme adımında "Trendyol satıcı puanımız" rozeti olarak görünür. Trendyol puanı her çarşamba gece yeniler; otomatik görev aynı sabah buraya işler. Puan boşsa, ${SATICI_PUANI_ALT_SINIR.toFixed(1).replace('.', ',')}'ın altındaysa ya da tarih ${SATICI_PUANI_EN_ESKI_GUN} günden eskiyse rozet hiçbir yerde görünmez.`,
+    alanlar: [
+      {
+        anahtar: SATICI_PUANI_ANAHTARLARI.puan,
+        etiket: 'Satıcı puanı',
+        yardim: 'Trendyol mağaza sayfasında müşterinin gördüğü puan, 10 üzerinden. Örnek: 9,7',
+      },
+      {
+        anahtar: SATICI_PUANI_ANAHTARLARI.takipci,
+        etiket: 'Takipçi sayısı',
+        yardim: 'Mağaza sayfasındaki takipçi sayısı. Boş bırakılırsa yazılmaz. Örnek: 2,3 bin',
+      },
+      {
+        anahtar: SATICI_PUANI_ANAHTARLARI.tarih,
+        etiket: 'Puanın tarihi',
+        yardim: 'Puanın Trendyol\'da güncellendiği gün (çarşamba). Rozette "… itibarıyla" diye yazar; boşsa rozet basılmaz.',
+        tur: 'tarih',
+      },
     ],
   },
   {
@@ -315,6 +345,14 @@ function AlanKutusu({
             etiket={deger ? 'Fotoğrafı değiştir' : 'Fotoğraf yükle'}
           />
         </div>
+      ) : alan.tur === 'tarih' ? (
+        <PInput
+          id={`alan-${alan.anahtar}`}
+          type="date"
+          value={deger}
+          onChange={(e) => onDegis(alan.anahtar, e.target.value)}
+          className="max-w-[220px]"
+        />
       ) : alan.cokSatir ? (
         <PTextarea id={`alan-${alan.anahtar}`} rows={2} value={deger} onChange={(e) => onDegis(alan.anahtar, e.target.value)} />
       ) : (
@@ -446,6 +484,30 @@ function HeroSablonKutusu({
   )
 }
 
+/**
+ * Trendyol satıcı puanı önizlemesi (8 Kas 2026). Vitrindeki bileşenlerin ta
+ * kendisi — "panelde başka, sitede başka" ihtimali yok. Rozet gizliyse
+ * nedenini söyler (boş puan, eski tarih …).
+ */
+function SaticiPuaniOnizleme({ degerler }: { degerler: Record<string, string> }) {
+  const { veri, neden } = saticiPuaniDurumu(degerler)
+  return (
+    <div className="mt-4 rounded-[4px] border border-[var(--p-line)] bg-[var(--p-surface-muted)] p-3">
+      <p className="text-[11px] text-[var(--p-muted)]">
+        {veri ? 'Önizleme — vitrinde böyle görünür' : 'Rozet şu an vitrinde görünmüyor'}
+      </p>
+      {veri ? (
+        <div className="mt-2 space-y-3 rounded-[4px] bg-white p-3">
+          <SaticiPuaniKarti veri={veri} />
+          <SaticiPuaniSatiri veri={veri} />
+        </div>
+      ) : (
+        <p className="mt-1 text-[12px] text-[var(--p-ink)]">{neden}</p>
+      )}
+    </div>
+  )
+}
+
 export default function SiteMetinleriClient({
   metinler,
   heroBaglami,
@@ -516,6 +578,7 @@ export default function SiteMetinleriClient({
         <section key={grup.baslik} className="rounded-[6px] border border-[var(--p-line)] bg-[var(--p-surface)] p-4">
           <h2 className="text-[14px] font-medium text-[var(--p-ink)]">{grup.baslik}</h2>
           <p className="mt-1 text-[12px] leading-relaxed text-[var(--p-muted)]">{grup.neyiEtkiler}</p>
+          {grup.baslik === 'Trendyol satıcı puanı' && <SaticiPuaniOnizleme degerler={degerler} />}
           {grup.baslik === 'Ana sayfa — açılış bölümü' && (
             <div className="mt-4">
               <HeroSablonKutusu

@@ -19,6 +19,7 @@ import { PaylasilanSepet, SepetiPaylasDugmesi } from '@/components/store/SepetPa
 import type { PaylasilanKalem } from './page'
 import { kucukResim } from '@/lib/gorsel/kadraj'
 import { useKadrajSorgu } from '@/components/store/KadrajContext'
+import { BaglamliSaticiPuaniSatiri } from '@/components/store/SaticiPuaniContext'
 
 // Sepet localStorage'da tutuluyor; ilk sunucu çıktısıyla uyumsuzluk olmasın diye
 // içerik yalnızca hidrasyondan sonra basılır.
@@ -267,6 +268,8 @@ export default function CartPageClient({
               >
                 Alışverişe devam et
               </Link>
+              {/* 8 Kas 2026: Trendyol satıcı puanı (bağlamdan; yoksa basılmaz). */}
+              <BaglamliSaticiPuaniSatiri className="pt-2" />
             </div>
           </aside>
         </div>

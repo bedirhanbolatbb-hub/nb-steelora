@@ -13,6 +13,8 @@ import { UyelikTesvikSaglayici } from '@/components/store/UyelikTesvikContext'
 import { uyelikTesvikiGetir } from '@/lib/campaigns/uyelikTesviki'
 import { KadrajSaglayici } from '@/components/store/KadrajContext'
 import { kadrajAyariniOku } from '@/lib/gorsel/kadrajAyari'
+import { SaticiPuaniSaglayici } from '@/components/store/SaticiPuaniContext'
+import { saticiPuaniOku } from '@/lib/metin/saticiPuani'
 
 export default async function StoreLayout({
   children,
@@ -52,6 +54,9 @@ export default async function StoreLayout({
       <UyelikTesvikSaglayici tesvik={uyelikTesviki}>
       {/* Faz 35: kart görsellerinin takıya göre kadrajlanması (ayar site_content'te). */}
       <KadrajSaglayici {...kadrajAyariniOku(veri.content)}>
+      {/* 8 Kas 2026: Trendyol satıcı puanı — sepet paneli, /sepet ve ödeme
+          buradan okur (lib/metin/saticiPuani; panel: Site Metinleri). */}
+      <SaticiPuaniSaglayici veri={saticiPuaniOku(veri.content)}>
       <Navbar
         bannerText={veri.bannerText}
         bannerColor={veri.bannerColor}
@@ -66,6 +71,7 @@ export default async function StoreLayout({
       <RevealController />
       <ConsentGate />
       <TarayiciDogrula />
+      </SaticiPuaniSaglayici>
       </KadrajSaglayici>
       </UyelikTesvikSaglayici>
     </KampanyaSaglayici>

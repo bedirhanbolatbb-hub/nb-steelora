@@ -11,6 +11,8 @@ import { formatPrice } from '@/lib/utils'
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import { FREE_SHIPPING_LABEL, TESLIM_CUMLESI, tahminiTeslimEtiketi } from '@/lib/shipping'
 import { GUVEN_METNI } from '@/lib/metin/guven'
+import { saticiPuaniOku } from '@/lib/metin/saticiPuani'
+import { SaticiPuaniKarti } from '@/components/store/SaticiPuani'
 import { cleanDescription, iddiaTemizle, hasContent } from '@/lib/catalog/description'
 import { materialCare, materialLabel } from '@/lib/catalog/material'
 import { SSS_URUN } from '@/lib/legal/sss'
@@ -145,6 +147,8 @@ export default async function UrunDetayPage({
   // Faz 11D: hediye kutusu görseli panelden (Hakkımızda ile aynı tek kaynak).
   const icerik = await getSiteContent()
   const hediyeGorseli = (icerik.hakkimizda_gorsel_paket || '').trim() || '/hediye-paketi.jpg'
+  // 8 Kas 2026: Trendyol satıcı puanı (panel: Site Metinleri). Boş/eski/düşükse null.
+  const saticiPuani = saticiPuaniOku(icerik)
   const stock = Number(product.trendyol_stock) || 0
   // Vitrin kampanyası (kart ile aynı kaynak).
   const vitrinIndirimi = await vitrinIndirimiGetir()
@@ -353,6 +357,10 @@ export default async function UrunDetayPage({
               </li>
             ))}
           </ul>
+
+          {/* Trendyol satıcı puanı — karar düğmesinin hemen altındaki güven
+              katmanı. Yalnız herkese açık, tarihli veri; JSON-LD'ye girmez. */}
+          {saticiPuani && <SaticiPuaniKarti veri={saticiPuani} className="mt-5" />}
 
           {/* Hediye satırı — görsel panelden (Faz 11D), boşsa eski dosya */}
           <div className="mt-5 flex items-center gap-3.5 rounded-[4px] bg-surface-muted/60 p-3.5">

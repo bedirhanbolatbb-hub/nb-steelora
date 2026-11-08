@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
+import { SATICI_PUANI_ANAHTARLARI, puanSayisi, puanTarihi } from '@/lib/metin/saticiPuani'
 
 /**
  * Panelde alanı olup tabloda satırı henüz bulunmayan anahtarlar. Yalnız bunlar
  * ilk kayıtta oluşturulur; geri kalan her anahtar için kural aynı: anahtar
  * mevcutsa yazar, yeni anahtar üretmez (yazım hatası tabloyu kirletmesin).
  */
-const ILK_KAYITTA_OLUSUR = new Set(['tiktok_url'])
+const ILK_KAYITTA_OLUSUR = new Set<string>(['tiktok_url', ...Object.values(SATICI_PUANI_ANAHTARLARI)])
 
 /** Site metni güncelleme — anahtar mevcutsa yazar, yeni anahtar üretmez. */
 export async function PATCH(request: Request) {
@@ -28,6 +29,16 @@ export async function PATCH(request: Request) {
     } catch {
       return NextResponse.json({ error: 'Geçerli bir adres girin (https://…)' }, { status: 400 })
     }
+  }
+
+  // Trendyol satıcı puanı (8 Kas 2026): vitrinde iddia olarak basıldığı için
+  // biçim burada da denetlenir — yanlış yazım rozetin sessizce kaybolmasına
+  // ya da tuhaf bir sayıya dönüşmesine yol açmasın.
+  if (key === SATICI_PUANI_ANAHTARLARI.puan && value.trim() && puanSayisi(value) === null) {
+    return NextResponse.json({ error: 'Puanı 10 üzerinden sayı olarak yazın (örnek: 9,7)' }, { status: 400 })
+  }
+  if (key === SATICI_PUANI_ANAHTARLARI.tarih && value.trim() && puanTarihi(value) === null) {
+    return NextResponse.json({ error: 'Tarihi gün-ay-yıl seçicisinden seçin' }, { status: 400 })
   }
 
   const supabase = createServiceClient()

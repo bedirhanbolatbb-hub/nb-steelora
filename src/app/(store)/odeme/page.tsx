@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { TRENDYOL_MAGAZA_URL } from '@/lib/kanallar'
+import { BaglamliSaticiPuaniSatiri } from '@/components/store/SaticiPuaniContext'
 import { SOZLESME_SURUMU, SOZLESME_YOLLARI } from '@/lib/legal/sozlesme'
 import Input from '@/components/ui/Input'
 import CheckoutSteps from '@/components/store/CheckoutSteps'
@@ -625,6 +626,9 @@ export default function OdemePage() {
                 Ödemeniz yalnız satıcının hesabına ({havaleBilgi?.alici}) yapılır · 14 gün içinde iade
               </p>
             )}
+            {/* 8 Kas 2026: havale/EFT kararında en çok aranan güven — aynı
+                satıcının Trendyol'daki tarihli puanı (bağlamdan; yoksa basılmaz). */}
+            <BaglamliSaticiPuaniSatiri className="mt-2.5" />
           </div>
         </div>
 

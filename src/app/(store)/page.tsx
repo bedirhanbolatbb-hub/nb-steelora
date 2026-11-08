@@ -16,6 +16,7 @@ import Newsletter from '@/components/home/Newsletter'
 import ProductCardV2 from '@/components/store/ProductCardV2'
 import JsonLd from '@/components/seo/JsonLd'
 import AvantajSeridi from '@/components/home/AvantajSeridi'
+import { saticiPuaniOku } from '@/lib/metin/saticiPuani'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { ilkEkranKampanyasi } from '@/lib/campaigns/kampanyaVitrini'
 import { kampanyaOnizlemesiGetir } from '@/lib/campaigns/vitrinIndirimi'
@@ -117,8 +118,9 @@ export default async function HomePage({
       {!(ilkEkran && veri.slides.length > 0) && <PromoStrip bant={veri.bant} />}
 
       {/* 2b · Fayda şeridi: ücretsiz kargo (alt limit yok), hediye kutusu,
-          iade, güvenli ödeme — ilk ekranın hemen altında. Kasım 2026. */}
-      <AvantajSeridi />
+          iade, güvenli ödeme — ilk ekranın hemen altında. Kasım 2026.
+          8 Kas: altında Trendyol satıcı puanı bandı (panelden; yoksa basılmaz). */}
+      <AvantajSeridi saticiPuani={saticiPuaniOku(c)} />
 
       {/* 3 · Kategoriler */}
       <CategoryRail categoryImages={veri.categoryImages} />

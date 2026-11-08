@@ -4,6 +4,7 @@ import SiparisNoKarti from '@/components/store/SiparisNoKarti'
 import HavaleBilgiKarti from '@/components/store/HavaleBilgiKarti'
 import { createServiceClient } from '@/lib/supabase/service'
 import { ibanBicimle } from '@/lib/odeme/havale'
+import { BaglamliSaticiPuaniSatiri } from '@/components/store/SaticiPuaniContext'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,10 +59,15 @@ export default async function SiparisTamamlandiPage({
           <strong>Açıklama alanına yalnız sipariş numaranızı yazın;</strong> ödemenizi bununla
           eşleştiriyoruz. Ödemenizi 2 gün içinde yapmanızı rica ederiz.
         </p>
-        <p className="text-[12px] font-body text-muted mb-8">
-          Bu bilgiler e-postanıza da gönderildi — birkaç dakika içinde gelmezse gereksiz (spam)
-          klasörünü kontrol edin.
-        </p>
+        {/* 8 Kas 2026: ödemeyi göndermeden önceki son güven anı (bağlamdan;
+            puan yoksa satır basılmaz, boşluk değişmez). */}
+        <div className="mb-8 space-y-5">
+          <p className="text-[12px] font-body text-muted">
+            Bu bilgiler e-postanıza da gönderildi — birkaç dakika içinde gelmezse gereksiz (spam)
+            klasörünü kontrol edin.
+          </p>
+          <BaglamliSaticiPuaniSatiri />
+        </div>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href="/urunler"
