@@ -28,12 +28,12 @@ function redDinle(olay: PromiseRejectionEvent) {
 }
 
 function baslat() {
-  Promise.all([import('@sentry/nextjs'), import('@/lib/izleme/sentryOrtak')])
-    .then(([Sentry, { SENTRY_ORTAK }]) => {
-      Sentry.init(SENTRY_ORTAK)
+  // Paketin tamamı değil, yalnız init + captureException (lib/izleme/sentryIstemci).
+  import('@/lib/izleme/sentryIstemci')
+    .then(({ sentryBaslat }) => {
       window.removeEventListener('error', hataDinle)
       window.removeEventListener('unhandledrejection', redDinle)
-      for (const hata of bekleyen.splice(0)) Sentry.captureException(hata)
+      sentryBaslat(bekleyen.splice(0))
     })
     .catch(() => {
       // SDK inmediyse sessiz kal: hata gözcüsü sayfayı asla bozmaz.
