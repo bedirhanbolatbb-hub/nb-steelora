@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState } from 'react'
 import Input from '@/components/ui/Input'
 
 interface ReviewFormProps {
@@ -25,14 +24,9 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
   const [foto, setFoto] = useState<File | null>(null)
   const [fotoHata, setFotoHata] = useState('')
   const [error, setError] = useState('')
-  const [isUser, setIsUser] = useState(false)
-  const supabase = createClient()
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setIsUser(!!user)
-    })
-  }, [])
+  // 8 Kas 2026: oturum kontrolü (auth.getUser) kaldırıldı — sonucu hiçbir
+  // yerde kullanılmıyordu, ama form her açıldığında Supabase kütüphanesini
+  // indirip kimlik sunucusuna istek atıyordu.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

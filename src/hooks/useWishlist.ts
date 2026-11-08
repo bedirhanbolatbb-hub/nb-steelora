@@ -1,7 +1,19 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createClient } from '@/lib/supabase/client'
 import { izle } from '@/lib/analytics/izle'
+
+/**
+ * Supabase istemcisi yalnız gerektiğinde iner (8 Kas 2026, ana sayfa hızı).
+ * Bu dosya Navbar'daki favori sayacı ve her ürün kartındaki kalp yüzünden
+ * vitrinin HER sayfasında yükleniyor. Statik içe aktarma Supabase
+ * kütüphanesini ilk yüke ekliyordu (ölçüm: ana sayfada ~60 KB sıkıştırılmış,
+ * ~220 KB açık JS — sayfanın tüm JS'inin beşte biri). Oysa sunucuya yalnız
+ * oturum açık müşteri favoriye dokunduğunda gidilir.
+ */
+async function supabaseIstemcisi() {
+  const { createClient } = await import('@/lib/supabase/client')
+  return createClient()
+}
 
 interface WishlistStore {
   items: string[]
@@ -24,7 +36,7 @@ export const useWishlist = create<WishlistStore>()(
         izle('favorite_add', { productId })
         set((state) => ({ items: [...state.items, productId] }))
         try {
-          const supabase = createClient()
+          const supabase = await supabaseIstemcisi()
           const {
             data: { user },
           } = await supabase.auth.getUser()
@@ -44,7 +56,7 @@ export const useWishlist = create<WishlistStore>()(
           items: state.items.filter((id) => id !== productId),
         }))
         try {
-          const supabase = createClient()
+          const supabase = await supabaseIstemcisi()
           const {
             data: { user },
           } = await supabase.auth.getUser()
@@ -71,7 +83,7 @@ export const useWishlist = create<WishlistStore>()(
 
       syncWithServer: async () => {
         try {
-          const supabase = createClient()
+          const supabase = await supabaseIstemcisi()
           const {
             data: { user },
           } = await supabase.auth.getUser()

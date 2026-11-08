@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import ReviewForm from './ReviewForm'
 
 function StarRating({
@@ -50,10 +49,10 @@ export default function ReviewList({ productId }: { productId: string }) {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const supabase = createClient()
-
   const fetchReviews = async () => {
-    const { data } = await supabase
+    // 8 Kas 2026 (hız): Supabase istemcisi ilk yükte değil, burada iner.
+    const { createClient } = await import('@/lib/supabase/client')
+    const { data } = await createClient()
       .from('reviews')
       .select('*')
       .eq('product_id', productId)

@@ -2,7 +2,6 @@
 
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import ProductCardV2 from './ProductCardV2'
 
 export default function RecentlyViewed({ currentSlug }: { currentSlug: string }) {
@@ -13,20 +12,24 @@ export default function RecentlyViewed({ currentSlug }: { currentSlug: string })
     const slugsToShow = items.filter((s) => s !== currentSlug).slice(0, 4)
     if (slugsToShow.length === 0) return
 
-    const supabase = createClient()
-    supabase
-      .from('products_display')
-      .select('*')
-      .in('slug', slugsToShow)
-      .then(({ data }) => {
-        if (data) {
-          // Keep the order from slugsToShow
-          const sorted = slugsToShow
-            .map((slug) => data.find((p) => p.slug === slug))
-            .filter(Boolean)
-          setProducts(sorted)
-        }
-      })
+    // 8 Kas 2026 (hız): Supabase istemcisi ilk yükte değil, burada iner.
+    let iptal = false
+    ;(async () => {
+      const { createClient } = await import('@/lib/supabase/client')
+      const { data } = await createClient()
+        .from('products_display')
+        .select('*')
+        .in('slug', slugsToShow)
+      if (iptal || !data) return
+      // Keep the order from slugsToShow
+      const sorted = slugsToShow
+        .map((slug) => data.find((p) => p.slug === slug))
+        .filter(Boolean)
+      setProducts(sorted)
+    })()
+    return () => {
+      iptal = true
+    }
   }, [items, currentSlug])
 
   if (products.length === 0) return null
