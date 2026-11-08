@@ -15,7 +15,17 @@ import type { BaskiKaydi } from '@/lib/emails/baskiListesi'
 import IcNotlar from './IcNotlar'
 import HavaleBlogu, { type HavaleBilgisi } from './HavaleBlogu'
 
-type Kalem = { productId: string; ad: string; adet: number; birim: number; slug: string | null; image: string | null }
+type Kalem = {
+  productId: string
+  ad: string
+  adet: number
+  birim: number
+  slug: string | null
+  image: string | null
+  /** Trendyol barkodu ve model kodu — ürünü Trendyol'da bulmak için, yalnız panelde. */
+  barkod?: string | null
+  model?: string | null
+}
 
 export type SiparisDetay = {
   id: string
@@ -450,6 +460,12 @@ export default function SiparisDetayClient({
                       <span className="block truncate text-[13px]">{k.ad}</span>
                     )}
                     <span className="text-[12px] text-[var(--p-muted)]">{k.adet} × {formatPrice(k.birim)}</span>
+                    {(k.barkod || k.model) && (
+                      <span className="block truncate text-[11px] tabular-nums text-[var(--p-ink-soft)]">
+                        Barkod {k.barkod ?? '—'}
+                        {k.model ? ` · Model ${k.model}` : ''}
+                      </span>
+                    )}
                   </span>
                   <span className="tabular-nums text-[13px]">{formatPrice(k.adet * k.birim)}</span>
                   {siparis.kalemIptalMumkun && (

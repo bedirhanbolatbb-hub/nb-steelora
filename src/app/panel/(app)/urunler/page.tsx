@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createServiceClient } from '@/lib/supabase/service'
+import { modelKoduKolonuVar } from '@/lib/catalog/urunKodlari'
 import UrunlerClient, { type UrunSatiri } from './UrunlerClient'
 
 export const metadata: Metadata = { title: 'Ürünler' }
@@ -17,6 +18,9 @@ export default async function PanelUrunlerPage({
 
   const q = (sp.q || '').trim()
 
+  // Model kodu kolonu DDL'i inmeden aranmaz ve okunmaz (lib/catalog/urunKodlari).
+  const modelVar = await modelKoduKolonuVar(supabase)
+
   /**
    * Durum DIŞINDAKİ tüm filtreler (Faz 23-C).
    *
@@ -29,7 +33,8 @@ export default async function PanelUrunlerPage({
     if (q.length >= 2) {
       const like = `%${q.replace(/[%_]/g, '')}%`
       x = x.or(
-        `override_title.ilike.${like},trendyol_title.ilike.${like},trendyol_barcode.ilike.${like}`
+        `override_title.ilike.${like},trendyol_title.ilike.${like},trendyol_barcode.ilike.${like}` +
+          (modelVar ? `,trendyol_model_code.ilike.${like}` : '')
       )
     }
     if (sp.kategori) x = x.eq('trendyol_category', sp.kategori)
@@ -52,7 +57,8 @@ export default async function PanelUrunlerPage({
     supabase
       .from('products')
       .select(
-        'id, slug, override_title, trendyol_title, trendyol_barcode, trendyol_category, override_price, trendyol_price, trendyol_stock, is_active, badge, is_featured, gender, override_images, trendyol_images, updated_at',
+        'id, slug, override_title, trendyol_title, trendyol_barcode, trendyol_category, override_price, trendyol_price, trendyol_stock, is_active, badge, is_featured, gender, override_images, trendyol_images, updated_at' +
+          (modelVar ? ', trendyol_model_code' : ''),
         { count: 'exact' }
       )
   )
@@ -97,6 +103,7 @@ export default async function PanelUrunlerPage({
     title: p.override_title || p.trendyol_title,
     tyTitle: p.trendyol_title,
     barcode: p.trendyol_barcode,
+    modelCode: modelVar ? (p.trendyol_model_code ?? null) : null,
     category: p.trendyol_category,
     price: Number(p.override_price ?? p.trendyol_price ?? 0),
     stock: p.trendyol_stock ?? 0,

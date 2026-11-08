@@ -23,6 +23,8 @@ export type UrunDetay = {
   trendyolStock: number
   trendyolCategory: string | null
   trendyolBarcode: string | null
+  /** Trendyol "Model Kodu" — barkoddan farklı olabilir; kolon yokken null. */
+  trendyolModelCode: string | null
   trendyolImages: string[]
   variantLabel: string | null
   lastSyncedAt: string | null
@@ -149,6 +151,12 @@ export default function UrunDetayClient({ urun, kadrajKarti }: { urun: UrunDetay
         <Link href="/panel/urunler" className="flex min-h-[44px] items-center gap-1 text-[13px] text-[var(--p-muted)] hover:text-[var(--p-ink)]">
           <ArrowLeft size={14} /> Ürünler
         </Link>
+        {(urun.trendyolBarcode || urun.trendyolModelCode) && (
+          <span className="text-[12px] tabular-nums text-[var(--p-ink-soft)]">
+            Barkod {urun.trendyolBarcode ?? '—'}
+            {urun.trendyolModelCode ? ` · Model ${urun.trendyolModelCode}` : ''}
+          </span>
+        )}
         <span className="ml-auto flex items-center gap-2">
           {!urun.active && <PBadge tone="danger">pasif</PBadge>}
           <a
@@ -335,7 +343,8 @@ export default function UrunDetayClient({ urun, kadrajKarti }: { urun: UrunDetay
               <div><dt className="text-[11px] uppercase tracking-[0.08em] text-[var(--p-muted)]">Fiyat</dt><dd className="tabular-nums">{formatPrice(urun.trendyolPrice)}</dd></div>
               <div><dt className="text-[11px] uppercase tracking-[0.08em] text-[var(--p-muted)]">Stok</dt><dd className="tabular-nums">{urun.trendyolStock}</dd></div>
               <div><dt className="text-[11px] uppercase tracking-[0.08em] text-[var(--p-muted)]">Kategori</dt><dd>{urun.trendyolCategory ?? '—'}</dd></div>
-              <div><dt className="text-[11px] uppercase tracking-[0.08em] text-[var(--p-muted)]">Barkod</dt><dd>{urun.trendyolBarcode ?? '—'}</dd></div>
+              <div><dt className="text-[11px] uppercase tracking-[0.08em] text-[var(--p-muted)]">Barkod</dt><dd className="tabular-nums">{urun.trendyolBarcode ?? '—'}</dd></div>
+              <div><dt className="text-[11px] uppercase tracking-[0.08em] text-[var(--p-muted)]">Model kodu</dt><dd className="tabular-nums">{urun.trendyolModelCode ?? '—'}</dd></div>
               <div><dt className="text-[11px] uppercase tracking-[0.08em] text-[var(--p-muted)]">Varyant etiketi</dt><dd>{urun.variantLabel ?? '—'}</dd></div>
               <div><dt className="text-[11px] uppercase tracking-[0.08em] text-[var(--p-muted)]">Son sync</dt><dd>{sonSync}</dd></div>
             </dl>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { gonderiyiYokla } from '@/lib/shipping/yoklama'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
+import { modelKoduKolonuVar } from '@/lib/catalog/urunKodlari'
 import { getAdminSelectableOrderStatuses } from '@/lib/orders/statusTransitions'
 import { getCarrierProvider } from '@/lib/shipping/providers'
 import { gonderiGetir, olaylariGetir } from '@/lib/shipping/shipments'
@@ -60,14 +61,23 @@ export default async function PanelSiparisDetayPage({
     .in('status', ['pending', 'cargo_pending', 'cargo_sent', 'inspecting'])
     .maybeSingle()
 
-  // Kalemlerdeki ürünlerin güncel görsel/slug bilgisi (görüntüleme için).
+  // Kalemlerdeki ürünlerin güncel görsel/slug bilgisi ve Trendyol kodları
+  // (barkod + model kodu: siparişi hazırlarken ürünü Trendyol'da bulmak için).
+  // Kodlar ürünün GÜNCEL kaydından okunur; sipariş kaydına dokunulmaz.
   const itemler = Array.isArray(o.items) ? (o.items as any[]) : []
   const productIds = itemler.map((i) => i?.productId ?? i?.product_id).filter((x) => x && x !== 'KARGO')
-  let urunler: Record<string, { slug: string; image: string | null }> = {}
+  let urunler: Record<
+    string,
+    { slug: string; image: string | null; barkod: string | null; model: string | null }
+  > = {}
   if (productIds.length > 0) {
+    const modelVar = await modelKoduKolonuVar(supabase)
     const { data } = await supabase
       .from('products')
-      .select('id, slug, override_images, trendyol_images')
+      .select(
+        'id, slug, override_images, trendyol_images, trendyol_barcode' +
+          (modelVar ? ', trendyol_model_code' : '')
+      )
       .in('id', productIds)
     urunler = Object.fromEntries(
       (data || []).map((p: any) => [
@@ -78,6 +88,8 @@ export default async function PanelSiparisDetayPage({
             (p.override_images as string[] | null)?.[0] ??
             (p.trendyol_images as string[] | null)?.[0] ??
             null,
+          barkod: p.trendyol_barcode ?? null,
+          model: modelVar ? (p.trendyol_model_code ?? null) : null,
         },
       ])
     )
@@ -184,6 +196,8 @@ export default async function PanelSiparisDetayPage({
               birim: Number(i?.price || 0),
               slug: urunler[pid]?.slug ?? null,
               image: urunler[pid]?.image ?? null,
+              barkod: urunler[pid]?.barkod ?? null,
+              model: urunler[pid]?.model ?? null,
             }
           }),
         araToplam: Number(o.subtotal || 0),

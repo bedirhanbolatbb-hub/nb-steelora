@@ -2,12 +2,38 @@ import type { Metadata } from 'next'
 import { beyanEdilenMalzemeMi } from '@/lib/catalog/material'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
+import { modelKoduKolonuVar } from '@/lib/catalog/urunKodlari'
 import UrunDetayClient from './UrunDetayClient'
 import VitrinKadraji from './VitrinKadraji'
 import { KADRAJ_ANAHTARI, KADRAJ_KAPALI_ANAHTARI, kadrajAyariniOku } from '@/lib/gorsel/kadrajAyari'
 
 export const metadata: Metadata = { title: 'Ürün düzenle' }
 export const dynamic = 'force-dynamic'
+
+/** Bu sayfanın okuduğu ürün satırı (kolon listesi model koduna göre değişiyor). */
+type UrunKaydi = {
+  id: string
+  slug: string
+  trendyol_title: string
+  trendyol_price: number | null
+  trendyol_stock: number | null
+  trendyol_category: string | null
+  trendyol_barcode: string | null
+  trendyol_images: string[] | null
+  variant_label: string | null
+  last_synced_at: string | null
+  is_active: boolean | null
+  override_title: string | null
+  override_price: number | null
+  override_description: string | null
+  override_images: string[] | null
+  badge: string | null
+  is_featured: boolean | null
+  material_type: string | null
+  gender: string | null
+  note: string | null
+  trendyol_model_code?: string | null
+}
 
 export default async function PanelUrunDetayPage({
   params,
@@ -16,14 +42,18 @@ export default async function PanelUrunDetayPage({
 }) {
   const { id } = await params
   const supabase = createServiceClient()
+  const modelVar = await modelKoduKolonuVar(supabase)
 
-  const { data: p } = await supabase
+  // Kolon listesi model kodu kolonuna göre değiştiği için sorgu metni sabit
+  // değil; supabase-js tipi çıkaramaz, satır elle tiplenir.
+  const { data: p } = (await supabase
     .from('products')
     .select(
-      'id, slug, trendyol_title, trendyol_price, trendyol_stock, trendyol_category, trendyol_barcode, trendyol_images, variant_label, last_synced_at, is_active, override_title, override_price, override_description, override_images, badge, is_featured, material_type, gender, note'
+      'id, slug, trendyol_title, trendyol_price, trendyol_stock, trendyol_category, trendyol_barcode, trendyol_images, variant_label, last_synced_at, is_active, override_title, override_price, override_description, override_images, badge, is_featured, material_type, gender, note' +
+        (modelVar ? ', trendyol_model_code' : '')
     )
     .eq('id', id)
-    .maybeSingle()
+    .maybeSingle()) as { data: UrunKaydi | null }
 
   if (!p) notFound()
 
@@ -54,6 +84,7 @@ export default async function PanelUrunDetayPage({
         trendyolStock: p.trendyol_stock ?? 0,
         trendyolCategory: p.trendyol_category,
         trendyolBarcode: p.trendyol_barcode,
+        trendyolModelCode: modelVar ? (p.trendyol_model_code ?? null) : null,
         trendyolImages: (p.trendyol_images as string[] | null) ?? [],
         variantLabel: p.variant_label,
         lastSyncedAt: p.last_synced_at,

@@ -16,6 +16,8 @@ export type UrunSatiri = {
   title: string
   tyTitle: string
   barcode: string | null
+  /** Trendyol "Model Kodu" — barkoddan farklı olabilir; kolon yokken null. */
+  modelCode: string | null
   category: string | null
   price: number
   stock: number
@@ -34,6 +36,22 @@ type Params = {
   stok: string
   isaret: string
   sira: string
+}
+
+/**
+ * Trendyol kodları — barkod ve model kodu. Trendyol satıcı panelinde ürün
+ * ikisiyle de aranabiliyor; raporlar model koduyla listeliyor. Yalnız panelde.
+ */
+function UrunKodlari({ p }: { p: UrunSatiri }) {
+  if (!p.barcode && !p.modelCode) return <>—</>
+  return (
+    <span className="block leading-snug">
+      <span className="block tabular-nums">{p.barcode ?? '—'}</span>
+      {p.modelCode && (
+        <span className="block text-[11px] tabular-nums text-[var(--p-muted)]">Model {p.modelCode}</span>
+      )}
+    </span>
+  )
 }
 
 /** Satır rozetleri — liste ve mobil kartta aynı. */
@@ -267,7 +285,7 @@ export default function UrunlerClient({
       {/* Arama + sıralama + mobil filtre girişi */}
       <div className="flex flex-wrap items-center gap-2">
         <PInput
-          placeholder="Ara: ad, Trendyol adı, barkod…"
+          placeholder="Ara: ad, barkod, model kodu…"
           value={arama}
           onChange={(e) => aramaDegisti(e.target.value)}
           className="w-full sm:max-w-xs"
@@ -331,7 +349,7 @@ export default function UrunlerClient({
                 <input type="checkbox" checked={hepsiSecili} onChange={toggleHepsi} aria-label="Tümünü seç" className="h-4 w-4 accent-[var(--p-accent-line)]" />
               </th>
               <th className="px-3 py-2.5 font-semibold">Ürün</th>
-              <th className="px-3 py-2.5 font-semibold">Barkod</th>
+              <th className="px-3 py-2.5 font-semibold">Barkod / Model</th>
               <th className="px-3 py-2.5 font-semibold">Kategori</th>
               <th className="px-3 py-2.5 text-right font-semibold">Fiyat</th>
               <th className="px-3 py-2.5 text-right font-semibold">Stok</th>
@@ -357,7 +375,7 @@ export default function UrunlerClient({
                     </span>
                   </Link>
                 </td>
-                <td className="px-3 py-2 text-[12px] text-[var(--p-ink-soft)]">{p.barcode ?? '—'}</td>
+                <td className="px-3 py-2 text-[12px] text-[var(--p-ink-soft)]"><UrunKodlari p={p} /></td>
                 <td className="px-3 py-2 text-[12px] text-[var(--p-ink-soft)]">{p.category ?? '—'}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{formatPrice(p.price)}</td>
                 <td className={cn('px-3 py-2 text-right tabular-nums', p.stock === 0 && 'text-[var(--p-danger)]', p.stock === 1 && 'text-[var(--p-warning)]')}>{p.stock}</td>
@@ -385,6 +403,12 @@ export default function UrunlerClient({
                 <span className="mt-0.5 block text-[12px] tabular-nums text-[var(--p-ink-soft)]">
                   {formatPrice(p.price)} · stok {p.stock}
                 </span>
+                {(p.barcode || p.modelCode) && (
+                  <span className="mt-0.5 block truncate text-[11px] tabular-nums text-[var(--p-muted)]">
+                    Barkod {p.barcode ?? '—'}
+                    {p.modelCode ? ` · Model ${p.modelCode}` : ''}
+                  </span>
+                )}
                 <span className="mt-1 block"><DurumRozetleri p={p} /></span>
               </span>
             </Link>

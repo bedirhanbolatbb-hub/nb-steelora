@@ -1,6 +1,7 @@
 import { fetchApprovedProducts, fetchStockAndPriceMap } from './client'
 import { malzemeCoz, malzemeYazilacak, type MalzemeTipi } from '@/lib/catalog/material'
 import { sonYazilanBarkodlar } from './stokKuyrugu'
+import { modelKoduKolonuVar, modelKoduTemizle } from '@/lib/catalog/urunKodlari'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 function getServiceClient() {
@@ -29,6 +30,8 @@ function generateSlug(title: string, barcode: string): string {
 type VariantRow = {
   barcode: string
   variantId: string
+  /** Trendyol "Model Kodu" (content.productMainId); barkoddan farklı olabilir. */
+  modelCode: string | null
   title: string
   description: string
   images: string[]
@@ -94,6 +97,7 @@ function flattenContents(contents: any[]): VariantRow[] {
       rows.push({
         barcode: variant.barcode,
         variantId: String(variant.variantId ?? ''),
+        modelCode: modelKoduTemizle(content.productMainId),
         title: content.title || '',
         description: content.description || '',
         images,
@@ -170,6 +174,11 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
   // Son 15 dakikada Trendyol'a yazdığımız barkodlar — bu koşuda ezilmezler.
   const tazeYazilan = await sonYazilanBarkodlar(15)
 
+  // Model kodu kolonu (docs/urun-kodlari/01) DDL'i inmeden yazılmaz: bilinmeyen
+  // bir kolon toplu yazmayı düşürür ve sayfadaki ürünler koşu sonunda pasife
+  // çekilir. Kolon yoksa alan yükte hiç yer almaz.
+  const modelKoduYaz = await modelKoduKolonuVar(supabase)
+
   const existingByBarcode = new Map(
     (existingRows || []).map((r: any) => [r.trendyol_barcode, r])
   )
@@ -228,6 +237,7 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
       // Mevcut satırda ikisi de değişmeden geri yazılır; yeni satırda üretilir.
       slug: existing ? existing.slug : generateSlug(row.title, row.barcode),
       trendyol_id: existing ? existing.trendyol_id : row.variantId,
+      ...(modelKoduYaz ? { trendyol_model_code: row.modelCode } : {}),
     })
 
     const yazilan = payload[payload.length - 1]
@@ -261,6 +271,21 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
         let { error: rowError } = await supabase
           .from('products')
           .upsert([item], { onConflict: 'trendyol_barcode' })
+
+        // GÜVENLİK AĞI: model kodu yüzünden reddedilen satır (ör. kolon şema
+        // önbelleğine henüz girmemiş) model kodu olmadan yazılır. Kodun bir tur
+        // eksik kalması, ürünün pasife düşmesinden iyidir.
+        if (rowError && 'trendyol_model_code' in item) {
+          const kodsuz: UpsertRow = { ...item }
+          delete kodsuz.trendyol_model_code
+          const { error: kodsuzHata } = await supabase
+            .from('products')
+            .upsert([kodsuz], { onConflict: 'trendyol_barcode' })
+          if (!kodsuzHata) {
+            console.warn(`Model kodu yazılamadı (${item.trendyol_barcode}); satır kodsuz yazıldı.`)
+            rowError = null
+          }
+        }
 
         // GÜVENLİK AĞI: DB'nin CHECK kısıtı henüz tanımadığı bir malzeme tipini
         // reddediyorsa (kodda yeni tip var ama DDL inmemiş) satırı MALZEMESİZ
