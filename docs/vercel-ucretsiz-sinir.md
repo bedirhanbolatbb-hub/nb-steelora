@@ -51,11 +51,30 @@
 4. Kök sebep: **vitrinin her sayfası dinamik** — `proxy.ts` istek başı nonce'lu
    CSP, `(store)/layout.tsx` sunucu `page_view` + `getSession`, ana sayfada
    `searchParams`. Hiçbir vitrin sayfası önbellekten verilemiyor.
+5. **Üst menü / alt bilgi bağlantıları her sayfa açılışında arka planda sayfa
+   kuruyor** (12 Kas 09:55 UTC, istek günlüğü, tek ana sayfa açılışı, aynı
+   saniye içinde `isPrefetchRequest`): `/odeme` ×2, `/urunler` ×2, `/` ×1 ve
+   bir ürün (`…-NBH008`) ×2. Sayfalar dinamik olduğu için her biri tam sunucu
+   kurulumu. Ürün kartı dışındaki bir bileşen de ürün önyüklüyor — hangisi
+   olduğunu bul.
+6. **`/api/gorsel/kadraj` ikinci büyük kalem**: Observability 12 saat →
+   198 çağrı, ~1 dk işlemci (`/` 584 çağrı ~1 dk, `/urun/[slug]` 138 / 12 sn,
+   `/api/health` 111 / 10 sn, `/kategori/[slug]` 120 / 3,6 sn). Gelenler
+   gerçek ziyaretçi (Facebook/Instagram reklamı, `fbclid`). Yanıt zaten
+   `s-maxage=1 yıl, immutable` ve 5 sabit genişlik; yine de 50 örnekten 17'si
+   önbellekte yok, her biri 0,4–1,4 sn. 50 örneğin hepsi 10:58 yayınından
+   sonra → muhtemel sebep: her yayında uç önbellek sıfırlanıyor ve tüm
+   görseller yeniden üretiliyor. Doğrula; doğruysa üretilen görseli kalıcı bir
+   depoya yazıp oradan ver (yayından etkilenmesin) ve gereksiz yayından kaçın.
 
 ## Yapılanlar
 
 - `4cc9a8b`: izleyiciye ara katmanda kısa 200 (`proxy.ts`, `IZLEYICI`);
   ürün kartı `prefetch={false}` + imleç/parmak değince `router.prefetch`.
+- Canlı doğrulama (12 Kas, `dpl_4tEdqn`, 61ef0af, 10:58 TR yayını):
+  SentryUptimeBot istekleri yalnız ara katmanda ~20 ms, sayfa kurulmuyor;
+  ana sayfa, ürün sayfası, `/api/health` 200. Gündüz yayınına rağmen
+  12:00 TR `/api/sync` çalıştı (zamanlanmış görevler yeni yayına bağlandı).
 
 ## Sıradaki (NB Steelora oturumunun işi)
 
