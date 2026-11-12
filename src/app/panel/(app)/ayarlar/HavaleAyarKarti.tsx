@@ -21,8 +21,9 @@ function isoYap(yerelDeger: string): string | null {
 /**
  * Panel · Havale / EFT (7 Kas 2026).
  *
- * Kart ödemesi kapalıyken sitedeki tek ödeme yolu. Hesap sahibi sitedeki
- * satıcıyla aynı kişi olmalı. Ek indirim dönemi on gün kuralı yüzünden Kasım
+ * Kart ödemesi kapalıyken sitedeki tek ödeme yolu; kart (Tosla) açıkken
+ * müşterinin seçebileceği ikinci yol. Hesap sahibi sitedeki satıcıyla aynı
+ * kişi olmalı. Ek indirim dönemi on gün kuralı yüzünden Kasım
  * indirimiyle aynı anda başlar (bkz. lib/odeme/havale.ts).
  */
 export default function HavaleAyarKarti({ ayar }: { ayar: HavaleAyari | null }) {
@@ -62,8 +63,8 @@ export default function HavaleAyarKarti({ ayar }: { ayar: HavaleAyari | null }) 
   return (
     <PCard title="Havale / EFT">
       <p className="mb-3 text-[13px] text-[var(--p-ink-soft)]">
-        Kartla ödeme kapalıyken müşteri bu hesaba havale/EFT ile öder. Hesap sahibi, sitedeki satıcı
-        bilgisiyle aynı kişi olmalı. Para hesaba geçince siparişi açıp &quot;Ödeme geldi, onayla&quot;
+        Müşteri ödeme adımında havale/EFT&apos;yi seçerse bu hesaba öder (kartla ödeme kapalıyken tek
+        yol budur). Hesap sahibi, sitedeki satıcı bilgisiyle aynı kişi olmalı. Para hesaba geçince siparişi açıp &quot;Ödeme geldi, onayla&quot;
         düğmesine basın.
       </p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

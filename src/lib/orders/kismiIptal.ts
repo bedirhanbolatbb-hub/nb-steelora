@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { refundPaymentLine, retrievePaymentDetail } from '@/lib/iyzico/client'
+import { ToslaHatasi, toslaKimligi, toslaOdemesiMi } from '@/lib/tosla/client'
+import { ayniTrGunu, kalemIadePayi, kartOdemesiniGeriVer } from '@/lib/tosla/kartOdemesi'
 import { increaseStock } from '@/lib/trendyol/stockUpdate'
 import { kuyrugaEkle, kuyrugaIsle } from '@/lib/trendyol/stokKuyrugu'
 import { kalemIptalEmail } from '@/lib/emails/templates'
@@ -12,7 +14,13 @@ import { musteriMailiGonder } from '@/lib/emails/musteriMaili'
  * tedarik edilemeyen kalemi çıkarıp bedelini iade edebilsin, kalan ürünler
  * yola çıksın.
  *
- * KISMİ İADE DESTEKLENİYOR (canlı ödemeyle doğrulandı): iyzico
+ * TOSLA (12 Kas 2026): Tosla sepet kalemi tutmaz; iade tutarı kalemin brüt
+ * bedelinin ödenen tutardaki payıdır (lib/tosla/kartOdemesi · kalemIadePayi).
+ * Kısmi tutar her zaman "iade" yoluyla gider (iptal yalnız tam tutar);
+ * Tosla ödeme günü kapanmadan kısmi iadeyi reddederse BB'ye açık bir mesaj
+ * döner, hiçbir şey değişmez.
+ *
+ * ESKİ iyzico SİPARİŞİ (7 Kas 2026 öncesi): iyzico
  * `/payment/refund` ucu SEPET KALEMİ bazında çalışıyor. `payment/detail`
  * her kalem için ayrı bir `paymentTransactionId` ve `paidPrice` (indirim
  * düşülmüş, gerçekten tahsil edilen tutar) döndürüyor; `itemId` alanı da
@@ -86,27 +94,66 @@ export async function kalemIptalEt(
     return { ok: false, status: 400, hata: 'Ödeme kaydı yok — iade yapılamaz' }
   }
 
-  const detay = await retrievePaymentDetail(String(order.iyzico_payment_id))
-  if (detay.status !== 'success') {
-    return { ok: false, status: 502, hata: detay.errorMessage || 'Ödeme sorgulanamadı' }
-  }
-  const satir = (detay.itemTransactions ?? []).find((t: any) => String(t.itemId) === productId)
-  if (!satir?.paymentTransactionId) {
-    return { ok: false, status: 502, hata: 'Bu kalemin ödeme satırı bulunamadı' }
-  }
+  let iadeTutari: number
+  let odemeIzi: Record<string, unknown>
+  if (toslaOdemesiMi(order.iyzico_payment_id)) {
+    const kimlik = toslaKimligi()
+    if (!kimlik) return { ok: false, status: 503, hata: 'Kart ödeme bilgileri (Tosla) tanımlı değil — iade yapılamaz' }
+    const brut = (k: any) => (Number(k?.price) || 0) * (Number(k?.quantity) || 1)
+    iadeTutari = kalemIadePayi({
+      kalemBrut: brut(kalem),
+      kalanKalemlerBrut: kalemler.reduce((t, k) => t + brut(k), 0),
+      odenenToplam: Number(order.total) || 0,
+      kargo: Number(order.shipping_cost) || 0,
+    })
+    if (!Number.isFinite(iadeTutari) || iadeTutari <= 0) {
+      return { ok: false, status: 400, hata: 'İade tutarı hesaplanamadı' }
+    }
+    try {
+      const g = await kartOdemesiniGeriVer(kimlik, order, { tutarTl: iadeTutari })
+      odemeIzi = { saglayici: 'tosla', yol: g.yol, ...(g.zaten ? { zaten: true } : {}) }
+    } catch (e) {
+      const mesaj = e instanceof Error ? e.message : String(e)
+      if (e instanceof ToslaHatasi && !e.gecici) {
+        // "Yarın deneyin" yalnız ödeme BUGÜN alındıysa anlamlı: bankalar gün
+        // sonundan önce kısmi iadeyi kabul etmeyebiliyor. Tutar uyuşmazlığı
+        // gibi bir sebep başka günde de aynı kalır, ipucu basılmaz.
+        const odendi = (order as any)?.metadata?.kart?.odendi_at
+        const bugun = odendi ? ayniTrGunu(new Date(odendi), new Date()) : false
+        return {
+          ok: false,
+          status: 409,
+          hata: `Kart iadesi yapılamadı: ${mesaj}${
+            bugun ? '. Ödeme bugün alındı; banka gün sonundan önce kısmi iadeyi kabul etmeyebilir, yarın tekrar deneyin' : ''
+          }.`,
+        }
+      }
+      return { ok: false, status: 502, hata: `Tosla'ya ulaşılamadı, birkaç dakika sonra tekrar deneyin (${mesaj})` }
+    }
+  } else {
+    const detay = await retrievePaymentDetail(String(order.iyzico_payment_id))
+    if (detay.status !== 'success') {
+      return { ok: false, status: 502, hata: detay.errorMessage || 'Ödeme sorgulanamadı' }
+    }
+    const satir = (detay.itemTransactions ?? []).find((t: any) => String(t.itemId) === productId)
+    if (!satir?.paymentTransactionId) {
+      return { ok: false, status: 502, hata: 'Bu kalemin ödeme satırı bulunamadı' }
+    }
 
-  const iadeTutari = Number(satir.paidPrice)
-  if (!Number.isFinite(iadeTutari) || iadeTutari <= 0) {
-    return { ok: false, status: 502, hata: 'İade tutarı okunamadı' }
-  }
+    iadeTutari = Number(satir.paidPrice)
+    if (!Number.isFinite(iadeTutari) || iadeTutari <= 0) {
+      return { ok: false, status: 502, hata: 'İade tutarı okunamadı' }
+    }
 
-  const iade = await refundPaymentLine({
-    paymentTransactionId: String(satir.paymentTransactionId),
-    price: String(iadeTutari),
-    currency: detay.currency || 'TRY',
-  })
-  if (iade.status !== 'success') {
-    return { ok: false, status: 502, hata: iade.errorMessage || 'iyzico iadesi başarısız' }
+    const iade = await refundPaymentLine({
+      paymentTransactionId: String(satir.paymentTransactionId),
+      price: String(iadeTutari),
+      currency: detay.currency || 'TRY',
+    })
+    if (iade.status !== 'success') {
+      return { ok: false, status: 502, hata: iade.errorMessage || 'iyzico iadesi başarısız' }
+    }
+    odemeIzi = { saglayici: 'iyzico', paymentTransactionId: String(satir.paymentTransactionId) }
   }
 
   // ── 2) Stok geri ────────────────────────────────────────────────────
@@ -138,7 +185,7 @@ export async function kalemIptalEt(
     iadeTutari,
     sebep: sebep ?? null,
     zaman: new Date().toISOString(),
-    paymentTransactionId: String(satir.paymentTransactionId),
+    ...odemeIzi,
   })
 
   await supabase

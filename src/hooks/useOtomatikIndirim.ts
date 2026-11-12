@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 export type SepetOzeti = {
   araToplam: number
@@ -49,8 +49,22 @@ export function useOtomatikIndirim(
   const [ilkSiparisMetni, setIlkSiparisMetni] = useState<string | null>(null)
   /** Ek havale/EFT indirimi (7 Kas 2026) — sunucu hesaplar; yoksa null. */
   const [havale, setHavale] = useState<{ oran: number; tutar: number } | null>(null)
+  /**
+   * Kartla ödeme açık mı (12 Kas 2026) — sunucu söyler (lib/tosla/client
+   * `kartOdemesiKimligi`), istemci tahmin etmez. Kart açıkken sepet KART
+   * tutarını gösterir; havale indirimi yalnız müşteri havaleyi seçince düşer.
+   */
+  const [kartAcik, setKartAcik] = useState(false)
+  /** İlk özet geldi mi — ödeme seçenekleri ondan önce çizilmez (sıçrama olmasın). */
+  const [yuklendi, setYuklendi] = useState(false)
+  /**
+   * Tutar sunucuda değiştiyse (409 TUTAR_DEGISTI) ekrandaki özeti yeniler.
+   * Sepet ve kod aynı kaldığı için anahtar değişmez; sayaç olmadan müşteri
+   * eski tutarı görüp her denemede aynı uyarıyı alırdı.
+   */
+  const [yenileme, setYenileme] = useState(0)
   const anahtar =
-    kalemler.map((k) => `${k.productId}x${k.adet}`).join('|') + `|${kod ?? ''}|${eposta ?? ''}`
+    kalemler.map((k) => `${k.productId}x${k.adet}`).join('|') + `|${kod ?? ''}|${eposta ?? ''}|${yenileme}`
 
   useEffect(() => {
     if (kalemler.length === 0) {
@@ -79,9 +93,13 @@ export function useOtomatikIndirim(
           setKuponUygulandi(d?.kuponDurumu?.tip === 'uygulandi')
           setIlkSiparisMetni(d?.ilkSiparisMetni ?? null)
           setHavale(d?.havale && Number(d.havale.tutar) > 0 ? d.havale : null)
+          setKartAcik(d?.kartAcik === true)
+          setYuklendi(true)
         })
         .catch(() => {
-          if (!iptal) setOzet(BOS)
+          if (iptal) return
+          setOzet(BOS)
+          setYuklendi(true)
         })
     }, 180)
 
@@ -93,5 +111,17 @@ export function useOtomatikIndirim(
   }, [anahtar])
 
   const indirim = ozet.uygulananlar[0] ?? null
-  return { ozet, indirim, kodHatasi, kuponBilgiMi, kuponUygulandi, ilkSiparisMetni, havale }
+  const yenile = useCallback(() => setYenileme((n) => n + 1), [])
+  return {
+    ozet,
+    indirim,
+    kodHatasi,
+    kuponBilgiMi,
+    kuponUygulandi,
+    ilkSiparisMetni,
+    havale,
+    kartAcik,
+    yuklendi,
+    yenile,
+  }
 }

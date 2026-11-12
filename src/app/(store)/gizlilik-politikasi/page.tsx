@@ -50,12 +50,13 @@ export default function GizlilikPolitikasiPage() {
       <p>Verilerinizin güvenliği için aşağıdaki önlemleri alıyoruz:</p>
       <ul>
         <li><strong>SSL Sertifikası:</strong> Tüm veri iletişimi 256-bit SSL ile şifrelenir</li>
-        <li><strong>Kart bilgisi istenmez:</strong> Ödemeler havale/EFT ile alınır; sitemizde kart bilgisi girilmez ve saklanmaz</li>
+        <li><strong>Kart bilgileri sitemize girilmez:</strong> Kartla ödeme seçeneği sunulduğunda kart bilgilerinizi Tosla&apos;nın güvenli ödeme sayfasında, 3D Secure ile girersiniz; kart numaranızın tamamı ve güvenlik kodunuz bize ulaşmaz ve saklanmaz. Havale/EFT ile ödemede kart bilgisi istenmez</li>
       </ul>
 
       <h2>5. Üçüncü Taraf Hizmetler</h2>
       <p>Hizmetlerimizi sunmak için aşağıdaki üçüncü taraf sağlayıcılarla çalışıyoruz:</p>
       <ul>
+        <li><strong>Aköde Elektronik Para ve Ödeme Hizmetleri A.Ş. (Tosla):</strong> Kartla ödemelerin alınması (bu yöntem sunulduğunda)</li>
         <li><strong>Bankalar:</strong> Havale/EFT ödemeleri</li>
         <li><strong>Kargo firmaları:</strong> Teslimat hizmetleri</li>
         <li><strong>Supabase:</strong> Veri depolama altyapısı</li>

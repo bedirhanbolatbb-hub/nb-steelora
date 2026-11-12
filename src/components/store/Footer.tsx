@@ -224,8 +224,10 @@ export default function Footer({
       {/* Alt Şerit */}
       <div className="border-t border-line/10">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 flex flex-col items-center gap-4">
-          {/* 7 Kas 2026: iyzico/kart logoları kalktı — kart ödemesi kapalı
-              (iyzico hesabı kapatılan eski firmaya aitti); ödeme havale/EFT. */}
+          {/* 7 Kas 2026: iyzico/kart logoları kalktı (iyzico hesabı kapatılan
+              eski firmaya aitti). 12 Kas 2026: kart (Tosla) açılsa da kart
+              şeması logosu basılmaz — hangi şemaların kabul edildiği Tosla
+              sözleşmesiyle doğrulanmadan iddia edilmez. */}
           <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
           <p className="text-[10px] font-body text-line/50 tracking-wider">
             {/* Satıcı künyesi — E-Ticaret Kanunu gereği; boş alanlar basılmaz. */}

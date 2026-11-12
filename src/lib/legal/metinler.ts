@@ -11,6 +11,7 @@
  *   - Resend: ABD merkezli altyapı
  *   - Cloudflare: küresel anycast ağ (DNS/CDN)
  *   - Bankalar (havale/EFT): Türkiye (yurt içi) — 7 Kas 2026'da iyzico kalktı
+ *   - Aköde / Tosla (kartla ödeme, sunulduğunda): Türkiye (yurt içi) — 12 Kas 2026
  */
 
 /** KVKK m.11 haklarının tamamı. */
@@ -119,8 +120,11 @@ aktarılmaktadır:
 </table>
 </div>
 <p>
-<strong>Yurt içinde kalan aktarımlar:</strong> Ödemeler havale/EFT ile Türkiye'deki bankalar
-üzerinden alınır; kart bilgisi istenmez ve saklanmaz. Kargo
+<strong>Yurt içinde kalan aktarımlar:</strong> Havale/EFT ödemeleri Türkiye'deki bankalar
+üzerinden alınır. Kartla ödeme seçeneği sunulduğunda kartla ödemeler, Türkiye'de yerleşik
+elektronik para kuruluşu Aköde Elektronik Para ve Ödeme Hizmetleri A.Ş. (Tosla) aracılığıyla
+alınır; kart bilgileriniz bu kuruluşun ödeme sayfasında girilir, kart numaranızın tamamı ve
+güvenlik kodunuz tarafımıza ulaşmaz ve saklanmaz. Kargo
 gönderileriniz, anlaşmalı kargo firmalarına (Türkiye) yalnız teslimat için gereken ad, adres ve
 telefon bilgisiyle iletilir.
 </p>

@@ -408,7 +408,7 @@ export default function SiparislerClient({
         <p>
           {talepIslem?.talep.siparisNo} — {TALEP_TIP[talepIslem?.talep.tip ?? ''] ?? talepIslem?.talep.tip}.{' '}
           {talepIslem?.action === 'approve' && talepIslem?.talep.tip === 'cancel'
-            ? 'Onay, iyzico iadesini ve stok geri yüklemesini otomatik çalıştırır.'
+            ? 'Onay siparişi iptal eder ve stoku geri yükler. Kartla ödendiyse para karta otomatik geri verilir; havale/EFT ile ödendiyse tutarı müşterinin hesabına bankadan sizin göndermeniz gerekir.'
             : talepIslem?.action === 'approve'
               ? 'Müşteriye iade kodu ve kargo talimatı e-postayla gönderilir. PARA ŞİMDİ İADE EDİLMEZ — ürün elimize ulaşınca ayrıca iade edeceksiniz.'
               : talepIslem?.action === 'received'

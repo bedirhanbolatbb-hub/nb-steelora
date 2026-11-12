@@ -38,8 +38,13 @@ const SOSYAL = [
   'telegram.',
   't.me',
 ]
-/** Ziyaretçi bize dışarıdan gelmiş sayılmaz: kendi alan adımız ve ödeme dönüşü. */
-const IC = ['nbsteelora.com', 'iyzipay.com', 'iyzico.com', 'localhost', 'vercel.app']
+/**
+ * Ziyaretçi bize dışarıdan gelmiş sayılmaz: kendi alan adımız ve ödeme dönüşü.
+ * 12 Kas 2026: kartla ödemede müşteri Tosla'nın sayfasından teşekkür
+ * sayfasına döner (`entegrasyon.tosla.com`); bu bir trafik kaynağı değildir.
+ * iyzico alan adları eski (7 Kas 2026 öncesi) ziyaretler için duruyor.
+ */
+const IC = ['nbsteelora.com', 'tosla.com', 'iyzipay.com', 'iyzico.com', 'localhost', 'vercel.app']
 
 /** Alan adının sonundaki nokta ve `www.` öneki normalize edilir. */
 function sadelestir(host: string): string {

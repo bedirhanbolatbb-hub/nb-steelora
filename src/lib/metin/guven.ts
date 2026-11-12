@@ -10,6 +10,7 @@ export const GUVEN_METNI = {
   iade: '14 gün iade',
   hediye: 'Hediye kutusu',
   // 7 Kas 2026: kart ödemesi kapalı (iyzico kaldırıldı). ETBİS kaydı footer'dan
-  // doğrulanabilir; yeni iddia değil.
+  // doğrulanabilir; yeni iddia değil. 12 Kas 2026: kart (Tosla) açılınca da
+  // doğru kalır — ödeme yönteminden bağımsız bir kayıt.
   odeme: 'ETBİS kayıtlı satıcı',
 } as const

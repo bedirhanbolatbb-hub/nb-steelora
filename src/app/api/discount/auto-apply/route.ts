@@ -5,6 +5,7 @@ import { sepetOzetiHesapla, musteriDurumu } from '@/lib/campaigns/sepetOzeti'
 import { ilkSiparisDuyurusu } from '@/lib/campaigns/ilkSiparisKuponu'
 import { havaleAyariOku } from '@/lib/odeme/havaleAyari'
 import { havaleIndirimiHesapla } from '@/lib/odeme/havale'
+import { kartOdemesiAcikMi } from '@/lib/tosla/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
       },
       kodHatasi: null,
       ilkSiparisMetni: (await ilkSiparisDuyurusu())?.sepet ?? null,
+      kartAcik: kartOdemesiAcikMi(),
     })
   }
 
@@ -80,5 +82,10 @@ export async function POST(request: Request) {
     // kırmızı basılmamalı, o iyi haber (Faz 25).
     kuponDurumu,
     ilkSiparisMetni: duyuru?.sepet ?? null,
+    // Kartla ödeme açık mı (12 Kas 2026): ödeme başlatma ucuyla AYNI karar
+    // (lib/tosla/client). Kart açıkken sepet kart tutarını gösterir, havale
+    // indirimi ödeme adımında havale seçilince düşer. Yalnız evet/hayır
+    // döner; kimlik bilgisinin hiçbir parçası istemciye gitmez.
+    kartAcik: kartOdemesiAcikMi(),
   })
 }

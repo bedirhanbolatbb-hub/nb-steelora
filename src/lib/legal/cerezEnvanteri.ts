@@ -99,8 +99,10 @@ export const CEREZ_ENVANTERI: CerezSatiri[] = [
     kategori: 'Analitik — gelişmiş',
     kosul: 'YALNIZ açık rızanız varsa yazılır; rızayı geri alırsanız silinir',
   },
-  // 7 Kas 2026: iyzico ödeme çerezleri kaldırıldı — kart ödemesi kapalı,
-  // ödeme adımında artık hiçbir üçüncü taraf alan adına gidilmiyor.
+  // 7 Kas 2026: iyzico ödeme çerezleri kaldırıldı.
+  // 12 Kas 2026: kartla ödeme (Tosla) bu sitede çerez YAZMAZ — müşteri kartı
+  // Tosla'nın kendi alan adındaki sayfada girer; o sayfanın çerezleri
+  // Tosla'nındır, bu envanterin konusu değildir.
 ]
 
 /** Politika sayfasında basılan HTML tablosu. */

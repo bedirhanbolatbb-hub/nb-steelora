@@ -6,6 +6,8 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { sendMail } from '@/lib/emails/send'
 import { bildirimAdresi } from '@/lib/emails/bildirim'
 import { saglikRaporuEmail } from '@/lib/emails/templates'
+import { toslaKimligi } from '@/lib/tosla/client'
+import { bekleyenKartOdemeleriniSupur } from '@/lib/tosla/kartOdemesi'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -111,7 +113,23 @@ async function calistir(gonder: boolean) {
     )
   }
 
-  const veri = await raporVerisi()
+  // 12 Kas 2026 · Tosla: dönüşü hiç gelmeyen kart ödemeleri yeniden sorulur.
+  // Müşteri ödeyip sekmeyi kapattıysa sipariş burada açılır ve onay maili
+  // gider; 24 saattir sonuçlanmayan deneme "tamamlanmadı" diye kapanır.
+  // Ödenmiş bir sipariş yalnızca önizlemede de açılır — bu bir okuma değil,
+  // gerçek bir düzeltmedir ve tekrar çalıştırılması zararsızdır.
+  const kimlik = toslaKimligi()
+  const kartSupurgesi = kimlik ? await bekleyenKartOdemeleriniSupur(createServiceClient(), { kimlik }) : null
+  if (kartSupurgesi && (kartSupurgesi.odendi > 0 || kartSupurgesi.inceleme > 0 || kartSupurgesi.hata > 0)) {
+    console.warn('[sağlık] kart süpürgesi:', JSON.stringify(kartSupurgesi))
+  }
+
+  const ham = await raporVerisi()
+  const kartUyarilari: string[] = []
+  if (kartSupurgesi?.odendi) kartUyarilari.push(`Kart: dönüşü gelmeyen ${kartSupurgesi.odendi} ödeme bu sabah onaylandı ve sipariş açıldı.`)
+  if (kartSupurgesi?.inceleme) kartUyarilari.push(`Kart: ${kartSupurgesi.inceleme} ödeme incelemede — ayrı e-postaya bakın.`)
+  if (kartSupurgesi?.hata) kartUyarilari.push(`Kart: ${kartSupurgesi.hata} ödeme Tosla'ya sorulamadı; yarın yeniden denenecek.`)
+  const veri = { ...ham, uyarilar: [...ham.uyarilar, ...kartUyarilari], kartSupurgesi }
   if (!gonder) return { ...veri, mail: 'gönderilmedi (önizleme)' }
 
   const alici = await bildirimAdresi()

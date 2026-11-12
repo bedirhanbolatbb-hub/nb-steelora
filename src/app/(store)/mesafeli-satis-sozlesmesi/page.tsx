@@ -63,13 +63,27 @@ export default async function MesafeliSatisSozlesmesiPage() {
       </p>
 
       <h2>4. Fiyat ve Ödeme</h2>
+      {/* 12 Kas 2026 · ESASA İLİŞKİN: kartla ödeme (Tosla) eklendi. Metin, kart
+          seçeneği açık da kapalı da olsa doğru kalacak biçimde yazıldı. */}
       <p>
-        Tüm fiyatlar Türk Lirası (TRY) cinsindendir ve KDV dahildir. Ödeme, sipariş onayından
-        sonra ALICI&apos;ya ekranda ve e-postayla bildirilen SATICI hesabına havale/EFT ile yapılır;
-        sipariş, ödeme SATICI hesabına ulaştığında onaylanır. Ödemesi iki gün içinde ulaşmayan
-        siparişi SATICI iptal edebilir. SATICI, sipariş onaylanmadan önce fiyat değişikliği yapma
-        hakkını saklı tutar.
+        Tüm fiyatlar Türk Lirası (TRY) cinsindendir ve KDV dahildir. Ödeme, ödeme adımında
+        ALICI&apos;ya sunulan yöntemlerden biriyle yapılır; yalnız belirli bir ödeme yöntemine
+        tanınan indirim, o yöntem seçildiğinde uygulanır.
       </p>
+      <ul>
+        <li>
+          <strong>Kredi veya banka kartı:</strong> Bu yöntem sunulduğunda ödeme, elektronik para
+          kuruluşu Aköde Elektronik Para ve Ödeme Hizmetleri A.Ş.&apos;nin (Tosla) güvenli ödeme
+          sayfasında, 3D Secure doğrulamasıyla ve tek çekim olarak alınır; kart numarasının
+          tamamı ve güvenlik kodu SATICI&apos;ya iletilmez. Sipariş, ödeme onaylandığında kesinleşir.
+        </li>
+        <li>
+          <strong>Havale/EFT:</strong> Ödeme, sipariş onayından sonra ALICI&apos;ya ekranda ve
+          e-postayla bildirilen SATICI hesabına yapılır; sipariş, ödeme SATICI hesabına
+          ulaştığında onaylanır. Ödemesi iki gün içinde ulaşmayan siparişi SATICI iptal edebilir.
+        </li>
+      </ul>
+      <p>SATICI, sipariş onaylanmadan önce fiyat değişikliği yapma hakkını saklı tutar.</p>
 
       <h2>5. Teslimat</h2>
       <ul>

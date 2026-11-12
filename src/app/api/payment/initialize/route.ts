@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { metinAlani } from '@/lib/guvenlik/girdi'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { cokFazlaIstek, hizSiniri, istekKimligi } from '@/lib/guvenlik/hizSiniri'
-import { redirectImzala } from '@/lib/iyzico/redirectImza'
-import { initializeThreeDS, generateConversationId } from '@/lib/iyzico/client'
+import { kartOdemesiKimligi, kurusa, odemeOturumuAc, ortakOdemeSayfasi } from '@/lib/tosla/client'
+import type { KartIzi } from '@/lib/tosla/kartOdemesi'
 import { createServiceClient } from '@/lib/supabase/service'
 import { sozlesmeOnayiDamgasi } from '@/lib/legal/sozlesme'
 import { kritikUyari } from '@/lib/izleme/uyari'
@@ -11,14 +11,12 @@ import { sepetOzetiHesapla, musteriDurumu } from '@/lib/campaigns/sepetOzeti'
 import { sepetiDogrula } from '@/lib/campaigns/sepetDogrula'
 import { shippingCostFor } from '@/lib/shipping'
 
-function toAscii(str: string): string {
-  return str
-    .replace(/[ğĞ]/g, (c) => c === 'ğ' ? 'g' : 'G')
-    .replace(/[üÜ]/g, (c) => c === 'ü' ? 'u' : 'U')
-    .replace(/[şŞ]/g, (c) => c === 'ş' ? 's' : 'S')
-    .replace(/[ıİ]/g, (c) => c === 'ı' ? 'i' : 'I')
-    .replace(/[öÖ]/g, (c) => c === 'ö' ? 'o' : 'O')
-    .replace(/[çÇ]/g, (c) => c === 'ç' ? 'c' : 'C')
+/** Tosla'nın dönüşü buraya gelir (bkz. api/payment/tosla-donus). */
+function donusAdresi(): string {
+  const taban = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.nbsteelora.com')
+    .replace('://nbsteelora.com', '://www.nbsteelora.com')
+    .replace(/\/+$/, '')
+  return `${taban}/api/payment/tosla-donus`
 }
 
 export async function POST(request: Request) {
@@ -26,15 +24,15 @@ export async function POST(request: Request) {
   const _sinir = await hizSiniri(`odeme:${istekKimligi(request)}`, 10, 3600)
   if (!_sinir.gecer) return cokFazlaIstek(_sinir.bekleSaniye)
 
-  // 7 Kas 2026 · KART ÖDEMESİ KAPALI. iyzico üye işyeri kapatılan eski şahıs
-  // firmasına (Nalan Bolat) ait; satıcı artık İsa Bolat. Bu firmaya ait yeni
-  // ödeme kuruluşu (PayTR / Tosla) onaylanana dek karttan tahsilat YAPILMAZ —
-  // kapalı firmanın hesabına para alınamaz. Yerine havale/EFT akışı gelir.
-  if (process.env.IYZICO_ODEME_ACIK !== 'evet') {
+  // 12 Kas 2026 · KART ÖDEMESİ TOSLA İŞİM ÜZERİNDEN. Kimlik (Vercel ortam
+  // değişkenleri) tam VE TOSLA_ODEME_ACIK=evet değilse kart kapalıdır;
+  // müşteri havale/EFT ile öder. 7 Kas'ta kapatılan iyzico (eski firmanın
+  // üye işyeri) bir daha kullanılmaz.
+  const kimlik = kartOdemesiKimligi()
+  if (!kimlik) {
     return NextResponse.json(
       {
-        error:
-          'Kartla ödeme geçici olarak kapalı. Havale/EFT ile ödeme kısa süre içinde açılıyor; dilerseniz ürünlerimizi Trendyol mağazamızdan (NB STEELORA) da alabilirsiniz.',
+        error: 'Kartla ödeme şu an kapalı. Havale/EFT ile ödeyebilirsiniz.',
         code: 'KART_KAPALI',
       },
       { status: 503 }
@@ -43,8 +41,8 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { items, buyer, shippingAddress, paymentCard, userId, discountCode, giftNote, sozlesmeOnay } =
-      body
+    // Kart bilgisi bu uca HİÇ gelmez: müşteri kartını Tosla'nın sayfasında girer.
+    const { items, buyer, shippingAddress, discountCode, giftNote, sozlesmeOnay } = body
 
     /**
      * Kurumsal fatura bilgisi (Faz 28) — isteğe bağlı.
@@ -72,17 +70,13 @@ export async function POST(request: Request) {
       )
     }
 
-    const safeName = (buyer?.firstName || buyer?.full_name || '').trim().split(/\s+/)
-    const firstName = toAscii(String(buyer?.firstName || safeName[0] || 'Musteri')).substring(0, 30)
-    const lastName = toAscii(String(buyer?.lastName || safeName.slice(1).join(' ') || 'Kullanici')).substring(0, 30)
-    const phone = (buyer?.phone || '05000000000').replace(/\s/g, '')
-    const safeAddress = toAscii(String(shippingAddress?.address || '-')).substring(0, 60)
-    const safeCity = toAscii(String(shippingAddress?.city || 'Istanbul')).substring(0, 30)
-    const safeZip = shippingAddress?.zipCode || '00000'
-    const safeContactName = `${firstName} ${lastName}`.substring(0, 60)
+    const adParcalari = String(buyer?.firstName || buyer?.full_name || '').trim().split(/\s+/)
+    const firstName = String(buyer?.firstName || adParcalari[0] || '').trim()
+    const lastName = String(buyer?.lastName || adParcalari.slice(1).join(' ') || '').trim()
+    const phone = String(buyer?.phone || '').replace(/\s/g, '')
 
+    // NBS-<13 hane> = 17 karakter; Tosla sipariş numarası ≤ 20 (ölçüldü, 12 Kas).
     const orderNumber = `NBS-${Date.now()}`
-    const conversationId = generateConversationId()
 
     // ── Sepet SUNUCUDA doğrulanır (Faz 17) ────────────────────────────────
     // Ara toplam istemciden gelen fiyatla hesaplanıyordu; istekte fiyatı
@@ -131,7 +125,14 @@ export async function POST(request: Request) {
     // misafir, "yalnız üyelere" ve "ilk alışveriş" kampanyalarını alabiliyordu.
     const { data: oturum } = await (await createServerClient()).auth.getUser()
     const gercekUserId = oturum?.user?.id ?? null
-    const gercekEposta = oturum?.user?.email ?? (typeof buyer?.email === 'string' ? buyer.email : null)
+    const gercekEposta = (
+      oturum?.user?.email ?? (typeof buyer?.email === 'string' ? buyer.email : '')
+    ).trim()
+    // Kartta da e-posta zorunlu (havaleyle aynı kural): sipariş onayı ve
+    // olası iade bilgisi ancak oraya gider.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gercekEposta)) {
+      return NextResponse.json({ error: 'Geçerli bir e-posta adresi yazın.' }, { status: 400 })
+    }
 
     const musteri = await musteriDurumu(serviceClient, {
       userId: gercekUserId,
@@ -154,31 +155,9 @@ export async function POST(request: Request) {
     // Kargo koşulsuz ücretsiz (lib/shipping tek kaynağı) — kampanya bayrağı da
     // aynı sonucu verir, hesap tek yerden okunur.
     const shippingCost = shippingCostFor(indirimliAraToplam)
-    // iyzico'da price = sepet kalemlerinin toplamı, paidPrice = tahsil edilen.
-    const grossTotal = Math.round((subtotal + shippingCost) * 100) / 100
     const total = Math.round((indirimliAraToplam + shippingCost) * 100) / 100
 
-    const productItems = items.map((item: any) => {
-      const rawName = item.trendyol_title || item.name || item.title || 'Celik Taki'
-      const name = toAscii(String(rawName))
-        .replace(/[^a-zA-Z0-9\s]/g, '')
-        .substring(0, 60)
-        .padEnd(3, ' ')
-      return {
-        id: String(item.productId || 'ITEM').substring(0, 40),
-        name,
-        category1: toAscii(item.category || 'Diger').substring(0, 50),
-        itemType: 'PHYSICAL',
-        price: (item.price * item.quantity).toFixed(2),
-      }
-    })
-
-    // Kargo'yu basketItems'a ekle — price = basketItems toplamı = paidPrice
-    const basketItems = shippingCost > 0
-      ? [...productItems, { id: 'KARGO', name: 'Kargo Ucreti', category1: 'Kargo', itemType: 'PHYSICAL', price: shippingCost.toFixed(2) }]
-      : productItems
-
-    const fullName = [buyer?.firstName, buyer?.lastName].filter(Boolean).join(' ').trim() || safeContactName
+    const fullName = [firstName, lastName].filter(Boolean).join(' ').trim()
     // Faz 27: adres alanları SINIRSIZDI — megabaytlık bir "adres" doğrudan
     // siparişe yazılabiliyordu. Sınırlar kargo etiketinin taşıyabileceği
     // uzunluklara göre seçildi.
@@ -189,8 +168,32 @@ export async function POST(request: Request) {
       district: metinAlani(shippingAddress?.district, 50),
       neighborhood: metinAlani(shippingAddress?.neighborhood, 80),
       address: metinAlani(shippingAddress?.address, 500),
-      zip_code: metinAlani(shippingAddress?.zipCode ?? safeZip, 10),
+      zip_code: metinAlani(shippingAddress?.zipCode, 10),
     }
+    if (
+      !shipping_address.full_name ||
+      !shipping_address.phone ||
+      !shipping_address.city ||
+      !shipping_address.district ||
+      !shipping_address.address
+    ) {
+      return NextResponse.json({ error: 'Teslimat bilgilerinde eksik alan var.' }, { status: 400 })
+    }
+
+    // Ekranda gösterilen tutar ile karttan çekilecek tutar ayrışamaz (havale
+    // akışıyla aynı kural): sayfa açıkken kampanya başlamış/bitmiş olabilir.
+    const beklenen = Number(body?.beklenenToplam)
+    if (Number.isFinite(beklenen) && Math.abs(beklenen - total) > 0.009) {
+      return NextResponse.json(
+        {
+          error: `Sepet tutarı güncellendi (${total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL). Lütfen kontrol edip tekrar onaylayın.`,
+          code: 'TUTAR_DEGISTI',
+          toplam: total,
+        },
+        { status: 409 }
+      )
+    }
+
     // Siparişe yazılan fiyatlar da doğrulanmış (DB) fiyatlardır.
     const orderItems = dogrulanmis.kalemler.map((k) => ({
       productId: k.productId,
@@ -199,6 +202,23 @@ export async function POST(request: Request) {
       price: k.fiyat,
       category: k.kategori ?? null,
     }))
+
+    const kartIzi: KartIzi = {
+      saglayici: 'tosla',
+      ortam: kimlik.ortam,
+      durum: 'bekliyor',
+      oturum_at: new Date().toISOString(),
+    }
+    const siparisMetadata = {
+      ...(kisiselKuponId ? { kisisel_kupon_id: kisiselKuponId } : {}),
+      sozlesme_onayi: sozlesmeOnayiDamgasi(),
+      // Faz 28: kurumsal fatura YALNIZ müşteri istediyse saklanır. Yeni
+      // sütun açmak yerine metadata: bu veri her siparişte yok ve yalnız
+      // fatura düzenlemek için okunuyor.
+      ...(kurumsalFatura ? { fatura: kurumsalFatura } : {}),
+      odeme_yontemi: 'kart' as const,
+      kart: kartIzi,
+    }
 
     const { error: pendingOrderError } = await serviceClient.from('orders').insert({
       order_number: orderNumber,
@@ -221,14 +241,7 @@ export async function POST(request: Request) {
       // metadata KOŞULSUZ yazılır: eskiden yalnız kişisel kupon varken
       // ekleniyordu, o yüzden kuponsuz siparişlerde sözleşme onayı da
       // kaybolurdu.
-      metadata: {
-        ...(kisiselKuponId ? { kisisel_kupon_id: kisiselKuponId } : {}),
-        sozlesme_onayi: sozlesmeOnayiDamgasi(),
-        // Faz 28: kurumsal fatura YALNIZ müşteri istediyse saklanır. Yeni
-        // sütun açmak yerine metadata: bu veri her siparişte yok ve yalnız
-        // fatura düzenlemek için okunuyor.
-        ...(kurumsalFatura ? { fatura: kurumsalFatura } : {}),
-      },
+      metadata: siparisMetadata,
       total,
       iyzico_payment_id: null,
     })
@@ -239,88 +252,52 @@ export async function POST(request: Request) {
     }
     console.log('PENDING ORDER CREATED')
 
-    const result = await initializeThreeDS({
-      paymentCard: {
-        cardHolderName: String(paymentCard?.cardHolderName || '').substring(0, 60),
-        cardNumber: String(paymentCard?.cardNumber || '').replace(/\s/g, ''),
-        expireMonth: String(paymentCard?.expireMonth || '').padStart(2, '0'),
-        expireYear: String(paymentCard?.expireYear || ''),
-        cvc: String(paymentCard?.cvc || ''),
-        registerCard: '0',
-      },
-      locale: 'tr',
-      conversationId,
-      // price = basketItems toplamı (brüt), paidPrice = indirim sonrası tahsil.
-      price: grossTotal.toFixed(2),
-      paidPrice: total.toFixed(2),
-      currency: 'TRY',
-      installment: '1',
-      basketId: orderNumber,
-      paymentChannel: 'WEB',
-      paymentGroup: 'PRODUCT',
-      callbackUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.nbsteelora.com').replace('://nbsteelora.com', '://www.nbsteelora.com')}/api/payment/callback`,
-
-      buyer: {
-        id: (gercekUserId || gercekEposta || 'user_001').replace(/[@.]/g, '_'),
-        name: firstName,
-        surname: lastName,
-        gsmNumber: phone,
-        email: gercekEposta || 'musteri@nbsteelora.com',
-        // Faz 28: STANDART DOLGU. Müşterinin gerçek TC kimlik numarası
-        // iyzico'ya HİÇBİR ZAMAN gönderilmez ve bizde saklanmaz.
-        //
-        // Ölçüm (24.08.2026, canlı iyzico API'sine dört varyantla): alan hiç
-        // gönderilmediğinde, boş gönderildiğinde, '11111111110' ve
-        // '11111111111' ile gönderildiğinde iyzico'nun yanıtı BİREBİR AYNI
-        // (errorCode 5152 — kart aşamasına geçilmiş demektir). Yani alan
-        // istek doğrulamasında zorunlu tutulmuyor. Yine de akışın ilerleyen
-        // adımlarında istenmesi ihtimaline karşı dolgu gönderilmeye devam
-        // ediyor; ölçüm ikisinin de eşdeğer olduğunu gösterdiği için
-        // mevzuatta standart kabul edilen değer seçildi.
-        identityNumber: '11111111111',
-        registrationAddress: safeAddress,
-        ip: request.headers.get('x-forwarded-for') || '85.34.78.112',
-        city: safeCity,
-        country: 'Turkey',
-      },
-
-      shippingAddress: {
-        contactName: safeContactName,
-        city: safeCity,
-        country: 'Turkey',
-        address: safeAddress,
-        zipCode: safeZip,
-      },
-
-      billingAddress: {
-        contactName: safeContactName,
-        city: safeCity,
-        country: 'Turkey',
-        address: safeAddress,
-        zipCode: safeZip,
-      },
-
-      basketItems,
-    })
-
-    if (result.status !== 'success') {
-      console.error('[iyzico] full error:', JSON.stringify(result))
-      return NextResponse.json(
-        { error: result.errorMessage, errorCode: result.errorCode, errorGroup: result.errorGroup },
-        { status: 400 }
-      )
+    // ── Tosla ödeme oturumu ────────────────────────────────────────────
+    // Tutar SUNUCUDA hesaplanan `total`; kuruşa çevrilip gider. Tosla
+    // sonucu müşterinin tarayıcısıyla dönüş ucuna yollar, karar orada
+    // Tosla'ya yeniden sorularak verilir (lib/tosla/kartOdemesi).
+    let odemeOturumu: { oturumId: string; islemNo: string | null }
+    try {
+      odemeOturumu = await odemeOturumuAc(kimlik, {
+        siparisNo: orderNumber,
+        tutarKurus: kurusa(total),
+        aciklama: `NB Steelora siparişi ${orderNumber}`,
+        donusAdresi: donusAdresi(),
+      })
+    } catch (e: any) {
+      // Oturum açılamadı: sipariş "yarım kalan" olarak işaretlenir, hata
+      // aşağıda BB'ye uyarı olarak gider. Müşteriden para alınmadı.
+      const kartBasarisiz: KartIzi = {
+        ...kartIzi,
+        durum: 'basarisiz',
+        neden: `oturum açılamadı: ${String(e?.message ?? e).slice(0, 200)}`,
+        sonuc_at: new Date().toISOString(),
+      }
+      await serviceClient
+        .from('orders')
+        .update({ metadata: { ...siparisMetadata, kart: kartBasarisiz } })
+        .eq('order_number', orderNumber)
+        .eq('status', 'pending')
+      throw e
     }
-    
+
+    // Oturumun işlem numarası destek için saklanır (Tosla sorgusu ödenmiş
+    // işlemde bunu 0 döndürüyor — ölçüldü). Yazılamazsa ödeme etkilenmez.
+    if (odemeOturumu.islemNo) {
+      await serviceClient
+        .from('orders')
+        .update({ metadata: { ...siparisMetadata, kart: { ...kartIzi, islem_no: odemeOturumu.islemNo } } })
+        .eq('order_number', orderNumber)
+        .eq('status', 'pending')
+        .eq('metadata->kart->>durum', 'bekliyor')
+    }
+
     return NextResponse.json({
       success: true,
-      htmlContent: result.threeDSHtmlContent,
-      // Faz 27: ara sayfa imzasız içerik basmıyor. İmza SUNUCUDA üretilir;
-      // istemci onu olduğu gibi geri gönderir.
-      imza: redirectImzala(result.threeDSHtmlContent ?? ''),
+      // Müşteri bu adrese gider; kartı Tosla'nın sayfasında girer.
+      yonlendir: ortakOdemeSayfasi(kimlik, odemeOturumu.oturumId),
       orderNumber,
-      conversationId,
     })
-        
   } catch (error: any) {
     console.error('Payment init error:', error)
     // Ödeme başlatma çökmesi sessiz kalmamalı: müşteri ödeyemiyor demektir.

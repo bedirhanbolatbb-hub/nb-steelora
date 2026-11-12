@@ -120,7 +120,7 @@ export async function PATCH(
 
     const refundResult = await executeAdminOrderRefund(service, row.order_id)
     if (!refundResult.ok) {
-      console.error('[admin-order-requests] iyzico iadesi başarısız', {
+      console.error('[admin-order-requests] kart iadesi başarısız', {
         requestId,
         orderId: row.order_id,
         error: refundResult.error,
@@ -128,7 +128,7 @@ export async function PATCH(
       // Sessiz kalmaz: para müşteriye gitmedi, birinin haberi olmalı.
       await kritikUyari({
         tip: 'odeme_baslatma',
-        baslik: 'İyzico iadesi başarısız',
+        baslik: 'Kart iadesi başarısız',
         mesaj: refundResult.error ?? 'bilinmeyen hata',
         detay: { talep_id: requestId, siparis_id: row.order_id },
       })
@@ -173,7 +173,7 @@ export async function PATCH(
     await adimKaydet(service, row.order_id, 'iade_edildi', {
       mailId: (mailSonucu as any)?.id ?? null,
       mailNotu: (mailSonucu as any)?.sebep ?? null,
-      not: refundResult.iadeEdildi ? 'iyzico iadesi yapıldı' : 'ödeme kaydı yok, yalnız durum güncellendi',
+      not: refundResult.iadeEdildi ? 'kart iadesi yapıldı' : 'kart ödemesi yok (havale ise para bankadan elle iade edilir), yalnız durum güncellendi',
     })
 
     return NextResponse.json({

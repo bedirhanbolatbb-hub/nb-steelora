@@ -21,6 +21,7 @@ import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
 import KuponKutusu, { useKuponKodu } from '@/components/store/KuponKutusu'
 import { kucukResim } from '@/lib/gorsel/kadraj'
 import { useKadrajSorgu } from '@/components/store/KadrajContext'
+import { toslaOdemeSayfasiMi } from '@/lib/tosla/ortak'
 
 /** Kart ödemesi kapalıyken kartla almak isteyene gösterilen mağaza (7 Kas 2026). */
 
@@ -110,35 +111,19 @@ export default function OdemePage() {
     kuponUygulandi,
     ilkSiparisMetni,
     havale,
+    kartAcik,
+    yuklendi: ozetYuklendi,
+    yenile: ozetiYenile,
   } = useOtomatikIndirim(
     items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 })),
     kod || null,
     form.email || null
   )
   const totalDiscount = ozet.indirimToplami
-  // Ek havale/EFT indirimi (7 Kas 2026) — sunucu hesaplar, sipariş ucu aynı
-  // fonksiyonla yeniden hesaplar; ekrandaki tutar siparişe yazılan tutardır.
-  const havaleIndirimi = havale?.tutar ?? 0
-
-  // Kargo eşiği indirimli ara toplam üzerinden — sunucudaki hesapla birebir
-  // aynı olmalı, yoksa ekrandaki toplam ile çekilen tutar ayrışır (Faz 11).
-  const discountedSubtotal = Math.max(0, subtotal - totalDiscount - havaleIndirimi)
-  // Kargo koşulsuz ücretsiz — sunucudaki hesapla birebir aynı tek kaynaktan.
-  const shipping = shippingCostFor(discountedSubtotal)
-  const total = discountedSubtotal + shipping
-
-  // Faz 25: ayrı bir /api/discount/apply çağrısı KALDIRILDI. Kod artık
-  // doğrudan sepet özeti ucuna gidiyor; kabul/ret kararı ve mesajı tek
-  // yerden geliyor. İki uç iki farklı cevap verebiliyordu.
-
-  const updateField = (field: string, value: string) =>
-    setForm((prev) => ({ ...prev, [field]: value }))
 
   /**
-   * Havale/EFT bilgisi (7 Kas 2026). Kart ödemesi kapalı: iyzico hesabı
-   * kapatılan eski firmaya aitti, yeni firmanın ödeme kuruluşu onay bekliyor.
-   * Hesap sahibi sitedeki satıcıyla aynı kişidir; müşteri parayı kime
-   * göndereceğini sipariş ÖNCESİ görür.
+   * Havale/EFT bilgisi (7 Kas 2026). Hesap sahibi sitedeki satıcıyla aynı
+   * kişidir; müşteri parayı kime göndereceğini sipariş ÖNCESİ görür.
    */
   const [havaleBilgi, setHavaleBilgi] = useState<{
     hazir: boolean
@@ -154,6 +139,51 @@ export default function OdemePage() {
   }, [])
   const havaleHazir = havaleBilgi?.hazir === true
 
+  /**
+   * Ödeme yöntemi (12 Kas 2026). Kart (Tosla) açık mı sorusunu sunucu
+   * cevaplar (sepet özeti `kartAcik`); ödeme başlatma ucu aynı kararı
+   * yeniden verir. Müşteri seçmediyse kart öne gelir; seçtiği yol kapanırsa
+   * açık olana düşülür. İki kaynak da gelmeden seçenek çizilmez — aksi hâlde
+   * sayfa açılırken seçim ve tutar bir kez sıçrardı.
+   */
+  const [secilenYontem, setSecilenYontem] = useState<'kart' | 'havale' | null>(null)
+  /** Sunucu ödeme anında "kart kapalı" dediyse (503) bu sayfada kart gizlenir. */
+  const [kartKapandi, setKartKapandi] = useState(false)
+  const kartKullanilabilir = kartAcik && !kartKapandi
+  const odemeSecenekleriHazir = havaleBilgi !== null && ozetYuklendi
+  const yontem: 'kart' | 'havale' | null = !odemeSecenekleriHazir
+    ? null
+    : secilenYontem === 'havale' && havaleHazir
+      ? 'havale'
+      : secilenYontem === 'kart' && kartKullanilabilir
+        ? 'kart'
+        : kartKullanilabilir
+          ? 'kart'
+          : havaleHazir
+            ? 'havale'
+            : null
+  const ikiYolAcik = kartKullanilabilir && havaleHazir
+
+  // Ek havale/EFT indirimi (7 Kas 2026) — sunucu hesaplar, sipariş ucu aynı
+  // fonksiyonla yeniden hesaplar; ekrandaki tutar siparişe yazılan tutardır.
+  // 12 Kas 2026: YALNIZ havale seçiliyken düşer; kartın tutarını ödeme
+  // başlatma ucu indirimsiz hesaplar.
+  const havaleIndirimi = yontem === 'havale' ? (havale?.tutar ?? 0) : 0
+
+  // Kargo eşiği indirimli ara toplam üzerinden — sunucudaki hesapla birebir
+  // aynı olmalı, yoksa ekrandaki toplam ile çekilen tutar ayrışır (Faz 11).
+  const discountedSubtotal = Math.max(0, subtotal - totalDiscount - havaleIndirimi)
+  // Kargo koşulsuz ücretsiz — sunucudaki hesapla birebir aynı tek kaynaktan.
+  const shipping = shippingCostFor(discountedSubtotal)
+  const total = discountedSubtotal + shipping
+
+  // Faz 25: ayrı bir /api/discount/apply çağrısı KALDIRILDI. Kod artık
+  // doğrudan sepet özeti ucuna gidiyor; kabul/ret kararı ve mesajı tek
+  // yerden geliyor. İki uç iki farklı cevap verebiliyordu.
+
+  const updateField = (field: string, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }))
+
   const isFormValid =
     form.firstName &&
     form.lastName &&
@@ -162,7 +192,7 @@ export default function OdemePage() {
     form.city &&
     form.district &&
     form.address &&
-    havaleHazir &&
+    yontem !== null &&
     sozlesmeOnay &&
     (!kurumsalFatura ||
       (fatura.firma.trim() && fatura.vergiDairesi.trim() && fatura.vergiNo.trim()))
@@ -193,67 +223,102 @@ export default function OdemePage() {
   /** İlk "Öde" denemesi yapıldı mı — eksik alan uyarısı ondan sonra çıkar. */
   const [denendi, setDenendi] = useState(false)
 
+  /**
+   * Ödeme Tosla'nın sayfasına geçtikten sonra müşteri tarayıcının "geri"
+   * düğmesine basarsa sayfa önbellekten "yönlendiriliyor" hâlinde döner;
+   * düğme kilitli kalmasın.
+   */
+  useEffect(() => {
+    const geriDonuldu = (e: PageTransitionEvent) => {
+      if (e.persisted) setLoading(false)
+    }
+    window.addEventListener('pageshow', geriDonuldu)
+    return () => window.removeEventListener('pageshow', geriDonuldu)
+  }, [])
+
   const handlePayment = async () => {
     // Faz 11A: düğme artık pasif değil, çünkü pasif düğme tıklanamıyor ve
     // "ilk denemede uyar" kuralı hiç çalışmazdı. Doğrulama AYNEN duruyor:
     // form geçersizse ödeme başlamaz, yalnız uyarı görünür hâle gelir.
     setDenendi(true)
-    if (!isFormValid) return
-    if (!isFormValid) return
+    if (!isFormValid || !yontem) return
     setPaymentError('')
     setLoading(true)
+    // Kartta sayfa Tosla'ya geçerken düğme kilitli kalır (çift sipariş olmasın).
+    let yonlendirildi = false
     try {
-      const res = await fetch('/api/odeme/havale', {
+      // İki yol AYNI gövdeyi gönderir; tutar ve fiyat iki uçta da sunucuda
+      // hesaplanır.
+      const govde = {
+        // Fiyat sunucuda DB'den okunur (Faz 17/22); istemcinin gördüğü fiyat
+        // yalnız KARŞILAŞTIRMA için gider — farklıysa sipariş açılmaz (409),
+        // müşteriye "sepeti yenileyin" denir.
+        items: items.map((i) => ({
+          productId: i.product.id,
+          quantity: i.quantity,
+          price: i.product.display_price,
+        })),
+        buyer: {
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          phone: form.phone,
+        },
+        shippingAddress: {
+          city: form.city,
+          district: form.district,
+          address: form.address,
+          zipCode: form.zipCode,
+        },
+        userId,
+        giftNote: giftNote || null,
+        fatura: kurumsalFatura
+          ? { firma: fatura.firma, vergiDairesi: fatura.vergiDairesi, vergiNo: fatura.vergiNo }
+          : null,
+        discountCode: kod || null,
+        sozlesmeOnay: true,
+        sozlesmeSurumu: SOZLESME_SURUMU,
+        // Ekranda gösterilen tutar: sunucu farklı hesaplarsa sipariş açılmaz
+        // ve müşteriye güncel tutar söylenir.
+        beklenenToplam: Math.round(total * 100) / 100,
+      }
+      const res = await fetch(yontem === 'kart' ? '/api/payment/initialize' : '/api/odeme/havale', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // Fiyat sunucuda DB'den okunur (Faz 17/22); istemcinin gördüğü fiyat
-          // yalnız KARŞILAŞTIRMA için gider — farklıysa sipariş açılmaz (409),
-          // müşteriye "sepeti yenileyin" denir (kartlı akışla aynı davranış).
-          items: items.map((i) => ({
-            productId: i.product.id,
-            quantity: i.quantity,
-            price: i.product.display_price,
-          })),
-          buyer: {
-            firstName: form.firstName,
-            lastName: form.lastName,
-            email: form.email,
-            phone: form.phone,
-          },
-          shippingAddress: {
-            city: form.city,
-            district: form.district,
-            address: form.address,
-            zipCode: form.zipCode,
-          },
-          userId,
-          giftNote: giftNote || null,
-          fatura: kurumsalFatura
-            ? { firma: fatura.firma, vergiDairesi: fatura.vergiDairesi, vergiNo: fatura.vergiNo }
-            : null,
-          discountCode: kod || null,
-          sozlesmeOnay: true,
-          sozlesmeSurumu: SOZLESME_SURUMU,
-          // Ekranda gösterilen tutar: sunucu farklı hesaplarsa sipariş açılmaz
-          // ve müşteriye güncel tutar söylenir.
-          beklenenToplam: Math.round(total * 100) / 100,
-        }),
+        body: JSON.stringify(govde),
       })
 
       const data = await res.json().catch(() => ({}))
-      if (res.ok && data.success && data.orderNumber) {
+      if (yontem === 'kart') {
+        // Sepet BURADA boşaltılmaz: ödeme yarıda kalırsa müşteri aynı sepetle
+        // yeniden dener. Ödeme onaylanınca teşekkür sayfası boşaltır.
+        if (res.ok && data.success && toslaOdemeSayfasiMi(data.yonlendir)) {
+          yonlendirildi = true
+          window.location.assign(data.yonlendir)
+          return
+        }
+        if (data.code === 'KART_KAPALI') setKartKapandi(true)
+      } else if (res.ok && data.success && data.orderNumber) {
         clearCart()
         router.push(
           `/siparis-tamamlandi?siparis=${encodeURIComponent(data.orderNumber)}&odeme=havale`
         )
         return
       }
-      setPaymentError(data.error ? String(data.error) : 'Sipariş oluşturulamadı.')
+      // Tutar sayfa açıkken değiştiyse ekrandaki özet yenilenir; müşteri
+      // güncel tutarı görüp yeniden onaylar (aynı uyarıda takılı kalmaz).
+      if (data.code === 'TUTAR_DEGISTI') ozetiYenile()
+      setPaymentError(
+        data.error
+          ? String(data.error)
+          : yontem === 'kart'
+            ? 'Ödeme sayfası açılamadı. Lütfen tekrar deneyin.'
+            : 'Sipariş oluşturulamadı.'
+      )
     } catch {
       setPaymentError('Bir hata oluştu, lütfen tekrar deneyin.')
     } finally {
-      setLoading(false)
+      if (!yonlendirildi) setLoading(false)
     }
   }
 
@@ -385,51 +450,131 @@ export default function OdemePage() {
           </div>
           </section>
 
-          {/* Ödeme: Havale / EFT (7 Kas 2026) — kart ödemesi geçici olarak kapalı. */}
+          {/* Adım 2 · Ödeme (12 Kas 2026). Kart (Tosla) açıksa iki yol, kart
+              öne gelir; kapalıysa yalnız havale/EFT (7 Kas düzeni) ve kartla
+              almak isteyene Trendyol mağazası gösterilir. */}
           <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
             <p className="eyebrow">Adım 2</p>
             <h2 className="font-heading text-[20px] font-semibold text-ink mt-1 mb-3">
-              Ödeme: Havale / EFT
+              {!odemeSecenekleriHazir
+                ? 'Ödeme'
+                : ikiYolAcik
+                  ? 'Ödeme Yöntemi'
+                  : yontem === 'kart'
+                    ? 'Ödeme: Kart'
+                    : 'Ödeme: Havale / EFT'}
             </h2>
-            {havaleBilgi === null ? (
-              <p className="text-[13px] font-body text-muted">Ödeme bilgileri yükleniyor…</p>
-            ) : havaleHazir ? (
+            {!odemeSecenekleriHazir ? (
+              <p className="text-[13px] font-body text-muted">Ödeme seçenekleri yükleniyor…</p>
+            ) : (
               <>
-                <p className="text-[13px] font-body text-ink-soft leading-relaxed">
-                  Siparişinizi onayladığınızda ödeme bilgileri bu ekranda ve e-postanızda yer alır.
-                  Ödemeniz hesabımıza geçince siparişinizi onaylayıp kargoya hazırlarız.
-                </p>
-                <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-[4px] border border-line bg-bg px-4 py-3 text-[13px] font-body">
-                  <dt className="text-muted">Alıcı</dt>
-                  <dd className="text-ink">{havaleBilgi.alici}</dd>
-                  <dt className="text-muted">Banka</dt>
-                  <dd className="text-ink">{havaleBilgi.banka}</dd>
-                  <dt className="text-muted">IBAN</dt>
-                  <dd className="text-ink font-mono text-[12px] sm:text-[13px] break-all">{havaleBilgi.iban}</dd>
-                </dl>
-                {havaleIndirimi > 0 && havale && (
-                  <p className="mt-3 text-[12px] font-body text-accent-deep">
-                    Havale/EFT ile ödemede ek %{havale.oran} indirim sepetinize uygulandı.
+                {ikiYolAcik && (
+                  <div
+                    role="radiogroup"
+                    aria-label="Ödeme yöntemi"
+                    className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2"
+                  >
+                    {(
+                      [
+                        {
+                          deger: 'kart',
+                          baslik: 'Kart ile öde',
+                          alt: 'Kredi veya banka kartı · tek çekim',
+                        },
+                        {
+                          deger: 'havale',
+                          baslik: 'Havale / EFT',
+                          alt: havale ? `Ek %${havale.oran} indirim` : 'Banka hesabımıza ödeme',
+                        },
+                      ] as const
+                    ).map((y) => {
+                      const secili = yontem === y.deger
+                      return (
+                        <label
+                          key={y.deger}
+                          className={`flex cursor-pointer items-start gap-3 rounded-[4px] border px-4 py-3 transition-colors ${
+                            secili ? 'border-ink bg-bg' : 'border-line hover:border-accent-line'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="odeme-yontemi"
+                            value={y.deger}
+                            checked={secili}
+                            onChange={() => {
+                              setSecilenYontem(y.deger)
+                              setPaymentError('')
+                            }}
+                            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-ink"
+                          />
+                          <span className="font-body">
+                            <span className="block text-[13px] font-medium text-ink">{y.baslik}</span>
+                            <span
+                              className={`mt-0.5 block text-[11px] ${
+                                y.deger === 'havale' && havale ? 'text-accent-deep' : 'text-muted'
+                              }`}
+                            >
+                              {y.alt}
+                            </span>
+                          </span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {yontem === 'kart' && (
+                  <p className="text-[13px] font-body text-ink-soft leading-relaxed">
+                    Siparişinizi onayladığınızda Tosla&apos;nın güvenli ödeme sayfasına geçersiniz.
+                    Kart bilgilerinizi orada girer, bankanızın onayıyla (3D Secure) ödemeyi
+                    tamamlarsınız; kart numaranızın tamamı ve güvenlik kodunuz bize hiç ulaşmaz.
+                    Ödemeniz onaylanınca siparişinizi hazırlamaya başlarız.
+                  </p>
+                )}
+
+                {yontem === 'havale' && havaleBilgi && (
+                  <>
+                    <p className="text-[13px] font-body text-ink-soft leading-relaxed">
+                      Siparişinizi onayladığınızda ödeme bilgileri bu ekranda ve e-postanızda yer alır.
+                      Ödemeniz hesabımıza geçince siparişinizi onaylayıp kargoya hazırlarız.
+                    </p>
+                    <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-[4px] border border-line bg-bg px-4 py-3 text-[13px] font-body">
+                      <dt className="text-muted">Alıcı</dt>
+                      <dd className="text-ink">{havaleBilgi.alici}</dd>
+                      <dt className="text-muted">Banka</dt>
+                      <dd className="text-ink">{havaleBilgi.banka}</dd>
+                      <dt className="text-muted">IBAN</dt>
+                      <dd className="text-ink font-mono text-[12px] sm:text-[13px] break-all">{havaleBilgi.iban}</dd>
+                    </dl>
+                    {havaleIndirimi > 0 && havale && (
+                      <p className="mt-3 text-[12px] font-body text-accent-deep">
+                        Havale/EFT ile ödemede ek %{havale.oran} indirim sepetinize uygulandı.
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {yontem === null && (
+                  <p className="text-[13px] font-body text-ink-soft leading-relaxed">
+                    Ödeme sistemimizi yeniliyoruz; ödeme kısa süre içinde açılıyor.
                   </p>
                 )}
               </>
-            ) : (
-              <p className="text-[13px] font-body text-ink-soft leading-relaxed">
-                Ödeme sistemimizi yeniliyoruz; havale/EFT ile ödeme kısa süre içinde açılıyor.
+            )}
+            {odemeSecenekleriHazir && !kartKullanilabilir && (
+              <p className="mt-3 text-[12px] font-body text-muted">
+                Kartla ödemek isterseniz ürünlerimiz{' '}
+                <a
+                  href={TRENDYOL_MAGAZA_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-deep underline underline-offset-2"
+                >
+                  Trendyol mağazamızda
+                </a>{' '}
+                da satışta.
               </p>
             )}
-            <p className="mt-3 text-[12px] font-body text-muted">
-              Kartla ödemek isterseniz ürünlerimiz{' '}
-              <a
-                href={TRENDYOL_MAGAZA_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-accent-deep underline underline-offset-2"
-              >
-                Trendyol mağazamızda
-              </a>{' '}
-              da satışta.
-            </p>
           </section>
 
           {/* Faz 11E: misafir ödemede nazik hatırlatma — akışı KESMEZ, tek
@@ -597,23 +742,31 @@ export default function OdemePage() {
                 Sönük görünüm hazır olmadığını gösterir, engel koymaz. */}
             <button
               onClick={handlePayment}
-              disabled={loading || !havaleHazir}
+              disabled={loading || yontem === null}
               aria-describedby={denendi && !isFormValid ? 'odeme-eksikler' : undefined}
               className={`w-full py-4 bg-ink text-bg font-body font-medium text-[12px] tracking-[0.15em] uppercase rounded-[4px] hover:bg-accent-deep transition-colors disabled:cursor-not-allowed ${
                 isFormValid ? '' : 'opacity-60'
               }`}
             >
               {loading
-                ? 'İşleniyor...'
-                : havaleHazir
-                  ? `Siparişi onayla · ${formatPrice(total)}`
-                  : 'Ödeme kısa süre içinde açılıyor'}
+                ? yontem === 'kart'
+                  ? 'Ödeme sayfası açılıyor…'
+                  : 'İşleniyor...'
+                : !odemeSecenekleriHazir
+                  ? 'Yükleniyor…'
+                  : yontem === 'kart'
+                    ? `Kartla öde · ${formatPrice(total)}`
+                    : yontem === 'havale'
+                      ? `Siparişi onayla · ${formatPrice(total)}`
+                      : 'Ödeme kısa süre içinde açılıyor'}
             </button>
             {/* Mesafeli Sözleşmeler Yön.: sipariş onayının ödeme yükümlülüğü
-                doğurduğu açıkça söylenir (kartlı akışta düğme "Öde" diyordu). */}
-            {havaleHazir && (
+                doğurduğu açıkça söylenir. */}
+            {yontem && (
               <p className="mt-2 text-center text-[11px] font-body text-muted">
-                Siparişi onayladığınızda ödeme yükümlülüğü doğar; ödemeyi havale/EFT ile yaparsınız.
+                {yontem === 'kart'
+                  ? 'Siparişi onayladığınızda ödeme yükümlülüğü doğar; ödemeyi bir sonraki adımda kartınızla yaparsınız.'
+                  : 'Siparişi onayladığınızda ödeme yükümlülüğü doğar; ödemeyi havale/EFT ile yaparsınız.'}
               </p>
             )}
           </div>
@@ -621,9 +774,14 @@ export default function OdemePage() {
           <div>
             {/* Güven satırı — yeni iddia yok: alıcı adı sitedeki satıcı bilgisiyle
                 aynı, iade vaadi /kargo-ve-iade ile aynı. */}
-            {havaleHazir && (
+            {yontem === 'havale' && (
               <p className="mt-3 text-center text-[11px] font-body text-muted">
                 Ödemeniz yalnız satıcının hesabına ({havaleBilgi?.alici}) yapılır · 14 gün içinde iade
+              </p>
+            )}
+            {yontem === 'kart' && (
+              <p className="mt-3 text-center text-[11px] font-body text-muted">
+                Kartla ödeme Tosla&apos;nın güvenli sayfasında, 3D Secure ile · 14 gün içinde iade
               </p>
             )}
             {/* 8 Kas 2026: havale/EFT kararında en çok aranan güven — aynı

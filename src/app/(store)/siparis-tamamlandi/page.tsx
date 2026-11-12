@@ -1,10 +1,13 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import GiftBoxAnimation from '@/components/store/GiftBoxAnimation'
 import SiparisNoKarti from '@/components/store/SiparisNoKarti'
 import HavaleBilgiKarti from '@/components/store/HavaleBilgiKarti'
 import { createServiceClient } from '@/lib/supabase/service'
 import { ibanBicimle } from '@/lib/odeme/havale'
 import { BaglamliSaticiPuaniSatiri } from '@/components/store/SaticiPuaniContext'
+import SepetiBosalt from '@/components/store/SepetiBosalt'
+import { KART_SIPARIS_DESENI } from '@/lib/tosla/ortak'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +39,29 @@ async function havaleBekleyen(siparisNo: string): Promise<HavaleBekleyen | null>
   }
 }
 
+/**
+ * Kart siparişinin ödeme durumu (12 Kas 2026). Tosla dönüşü buraya YALNIZ
+ * ödeme Tosla'ya sorulup doğrulandıktan sonra yönlendirir; yine de sayfa
+ * kararını kendi verir: adres çubuğuna elle yazılan bir numara sepeti
+ * silmez, ödemesi doğrulanmamış siparişe "ödendi" denmez.
+ */
+async function kartSiparisiDurumu(siparisNo: string): Promise<'odendi' | 'bekliyor' | null> {
+  if (!KART_SIPARIS_DESENI.test(siparisNo)) return null
+  try {
+    const { data } = await createServiceClient()
+      .from('orders')
+      .select('status, metadata')
+      .eq('order_number', siparisNo)
+      .maybeSingle()
+    if (!data || (data.metadata as any)?.odeme_yontemi !== 'kart') return null
+    if (['paid', 'preparing', 'shipped', 'delivered'].includes(String(data.status))) return 'odendi'
+    if (data.status === 'pending') return 'bekliyor'
+    return null
+  } catch {
+    return null
+  }
+}
+
 export default async function SiparisTamamlandiPage({
   searchParams,
 }: {
@@ -43,6 +69,10 @@ export default async function SiparisTamamlandiPage({
 }) {
   const { siparis: orderNumber, odeme } = await searchParams
   const havale = orderNumber && odeme === 'havale' ? await havaleBekleyen(orderNumber) : null
+  const kart = orderNumber && odeme === 'kart' ? await kartSiparisiDurumu(orderNumber) : null
+  if (orderNumber && kart === 'bekliyor') {
+    redirect(`/odeme/basarisiz?durum=kontrol&siparis=${encodeURIComponent(orderNumber)}`)
+  }
 
   if (orderNumber && havale) {
     return (
@@ -82,6 +112,7 @@ export default async function SiparisTamamlandiPage({
 
   return (
     <div className="max-w-lg mx-auto px-4 py-20 text-center">
+      {kart === 'odendi' && <SepetiBosalt />}
       <div className="mb-6">
         <GiftBoxAnimation />
       </div>

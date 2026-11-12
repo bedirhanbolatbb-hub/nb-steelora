@@ -493,7 +493,11 @@ export function adminOrderRequestEmail(order: any, tur: 'cancel' | 'return', mes
       </p>
       ${mesaj ? `<p style="color:#7A5048;line-height:1.8;margin:0 0 12px;">Müşteri mesajı: ${htmlKacir(mesaj)}</p>` : ''}
       <p style="color:#A88070;font-size:13px;line-height:1.7;">
-        Onayladığınızda ödeme iyzico üzerinden iade edilir ve stok geri eklenir.
+        ${
+          tur === 'cancel'
+            ? 'Onayladığınızda sipariş iptal edilir ve stok geri eklenir. Kartla ödendiyse para karta otomatik geri verilir; havale/EFT ile ödendiyse tutarı müşterinin ödeme yaptığı hesaba sizin göndermeniz gerekir.'
+            : 'Ürün size ulaşıp panelde teslim alındı işaretlendikten sonra para iadesi yapılır: kartla ödendiyse karta otomatik, havale/EFT ile ödendiyse müşterinin ödeme yaptığı hesaba sizin göndermenizle.'
+        }
       </p>
       <p style="text-align:center;margin:24px 0 0;">
         <a href="${PANEL}/siparisler" style="display:inline-block;background:#2A1E1E;color:#FFF8F6;padding:14px 32px;text-decoration:none;font-size:12px;letter-spacing:.15em;text-transform:uppercase;">Talebi incele</a>

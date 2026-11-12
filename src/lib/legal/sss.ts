@@ -49,8 +49,8 @@ export const SSS_URUN: SssSorusu[] = [
   },
 ]
 
-/** /sss sayfasında gösterilen tam liste. */
-export const SSS_TAMAMI: SssSorusu[] = [
+/** Ödeme dışındaki sorular — ödeme cevabı aşağıdaki `sssTamami` ile eklenir. */
+const SSS_TAMAMI_SABIT: SssSorusu[] = [
   ...SSS_URUN,
   {
     soru: 'Kargo ücreti var mı?',
@@ -66,9 +66,21 @@ export const SSS_TAMAMI: SssSorusu[] = [
     cevap:
       'Katalogdaki malzemeler 316L paslanmaz çelik, premium kaplama pirinç ve boncuk & doğal taştır. Her ürünün malzemesi kendi sayfasında yazılıdır.',
   },
-  {
-    soru: 'Nasıl ödeme yapabilirim?',
-    cevap:
-      'Şu an ödemeler havale/EFT ile alınıyor. Siparişi onayladığınızda alıcı, banka, IBAN ve tutar ekranda ve e-postanızda yer alır; açıklamaya sipariş numaranızı yazmanız yeterli. Ödemeniz hesabımıza geçince siparişiniz onaylanır ve hazırlanır. Hesap sahibi, sitedeki satıcı bilgisiyle aynı kişidir; kart bilgisi istenmez. Kartla ödemek isterseniz ürünlerimiz Trendyol mağazamızda (NB STEELORA) da satışta.',
-  },
 ]
+
+/**
+ * "Nasıl ödeme yapabilirim?" cevabı (12 Kas 2026). Kart (Tosla) açık mı
+ * sorusunu çağıran sunucudan verir (lib/tosla/client `kartOdemesiAcikMi`);
+ * bu dosya ortam değişkeni okumaz, yalnız iki doğru metinden birini seçer.
+ */
+export function odemeCevabi(kartAcik: boolean): string {
+  if (kartAcik) {
+    return 'Kartla ya da havale/EFT ile ödeyebilirsiniz. Kartla ödemede kart bilgilerinizi Tosla\'nın güvenli ödeme sayfasında girersiniz; ödeme 3D Secure ile tek çekim alınır, kart numaranızın tamamı ve güvenlik kodunuz bize ulaşmaz ve ödemeniz onaylanınca siparişiniz hazırlanmaya başlar. Havale/EFT\'yi seçerseniz siparişi onayladığınızda alıcı, banka, IBAN ve tutar ekranda ve e-postanızda yer alır; açıklamaya sipariş numaranızı yazmanız yeterli. Hesap sahibi, sitedeki satıcı bilgisiyle aynı kişidir.'
+  }
+  return 'Şu an ödemeler havale/EFT ile alınıyor. Siparişi onayladığınızda alıcı, banka, IBAN ve tutar ekranda ve e-postanızda yer alır; açıklamaya sipariş numaranızı yazmanız yeterli. Ödemeniz hesabımıza geçince siparişiniz onaylanır ve hazırlanır. Hesap sahibi, sitedeki satıcı bilgisiyle aynı kişidir; kart bilgisi istenmez. Kartla ödemek isterseniz ürünlerimiz Trendyol mağazamızda (NB STEELORA) da satışta.'
+}
+
+/** /sss sayfasında gösterilen tam liste. */
+export function sssTamami(kartAcik: boolean): SssSorusu[] {
+  return [...SSS_TAMAMI_SABIT, { soru: 'Nasıl ödeme yapabilirim?', cevap: odemeCevabi(kartAcik) }]
+}
