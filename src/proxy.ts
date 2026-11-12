@@ -51,7 +51,29 @@ function guvenlikEkle(yanit: NextResponse, csp: string, gizliYol: boolean): Next
   return yanit
 }
 
+/**
+ * Site izleyicisinin yoklaması (12 Kas 2026).
+ *
+ * Sentry'nin site izleyicisi (SentryUptimeBot) ana sayfayı DAKİKADA BİR
+ * istiyor — Vercel istek günlüğü, 12 Kas 10:04–10:27: her dakikanın 40.
+ * saniyesi. Vitrin her istekte sunucuda kurulduğu için (istek başı nonce'lu
+ * CSP, sunucu page_view) bu ayda ~43 bin sayfa kurulumu ve Vercel'in
+ * ücretsiz aylık sunucu süresinin (4 saat) önemli bir payı demek. Yoklamanın
+ * tek sorusu "site cevap veriyor mu": kısa bir 200 yeterli. Uygulamanın asıl
+ * sağlığı (veritabanı, senkron, kargo, e-posta) /api/health'te ve 5 dakikada
+ * bir ayrıca izleniyor. Dağıtım kapanırsa (10–12 Kas'taki gibi) istek buraya
+ * hiç ulaşmaz ve izleyici yine haber verir.
+ */
+const IZLEYICI = /SentryUptimeBot/i
+
 export async function proxy(request: NextRequest) {
+  if (IZLEYICI.test(request.headers.get('user-agent') || '')) {
+    return new NextResponse('ok', {
+      status: 200,
+      headers: { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
+    })
+  }
+
   const { pathname } = request.nextUrl
   // Faz 27: çerez artık sırrın kendisini değil, ondan türetilmiş özeti
   // taşıyor. Doğrulama route handler'larla AYNI yardımcıdan geçiyor.

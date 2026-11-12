@@ -5,6 +5,7 @@ import { Check, ShoppingBag, Star } from 'lucide-react'
 import { useSepetPaneli } from '@/hooks/useSepetPaneli'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ViewTransition, useState } from 'react'
 import { formatPrice } from '@/lib/utils'
 import { resolveBadge } from '@/lib/catalog/badge'
@@ -60,7 +61,18 @@ export default function ProductCardV2({
   const [hoverIndi, setHoverIndi] = useState(false)
   const hoverImage = hoverFailed || !hoverHazir ? null : images[1] ?? null
   const hoverVar = !hoverFailed && Boolean(images[1])
+  // ─── KART GÖRÜNÜNCE DEĞİL, İMLEÇ/PARMAK GELİNCE ISITILIR (12 Kas 2026) ───
+  // Next, görünür alana giren her bağlantının sayfasını arka planda ister.
+  // Vitrin her istekte sunucuda kurulduğu için bu, kimsenin açmadığı ürün
+  // sayfaları için tam sayfa kurulumu demekti (lib/analytics/server.ts:
+  // "6 dakikada 68 ürün sayfası"). Site 12 Kas'ta Vercel'in ücretsiz aylık
+  // sunucu süresine taşındı (ayda 4 saat); ızgaradaki her kart birkaç yüz
+  // ms yiyordu. Hız korunuyor: imleç ya da parmak karta değdiği an sayfa
+  // ısıtılır — tıklamadan önce.
+  const router = useRouter()
+  const urunAdresi = `/urun/${product.slug}`
   const onPointerEnter = () => {
+    router.prefetch(urunAdresi)
     if (hoverHazir || !hoverVar) return
     if (typeof window !== 'undefined' && !window.matchMedia('(hover: hover)').matches) return
     setHoverHazir(true)
@@ -98,7 +110,7 @@ export default function ProductCardV2({
   }
 
   return (
-    <Link href={`/urun/${product.slug}`} className="group block" onPointerEnter={onPointerEnter}>
+    <Link href={urunAdresi} prefetch={false} className="group block" onPointerEnter={onPointerEnter}>
       {/* Faz 12: paylaşılan öğe geçişi — kart görseli ürün sayfasındaki
           galeriye AKARAK büyür (aynı `name`, ProductImageGallery). Tarayıcı
           desteklemiyorsa ya da hareket azaltma açıksa normal geçiş. */}
