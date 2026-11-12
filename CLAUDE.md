@@ -65,6 +65,15 @@ Vercel Hobby'de çalıştırma logu yok; Sentry tek gerçek gözcü.
 - Süzgeci değiştirdiysen testi çalıştır: `npx tsx src/lib/izleme/__testler__/gizlilik.test.mts`.
 - DSN yoksa SDK sessizce kapalıdır — yerelde ve önizlemede olay gitmez.
 
+## Sunucu süresi sınırı (12 Kas 2026)
+
+Site kendi **ücretsiz** Vercel hesabında (nbsteelora@gmail.com, takım
+`team_HVHATuAyHGEETqip9qnLcps7`). Sınır kayan 30 günde **4 saat** sunucu
+süresi; aşılırsa site 30 gün kapanır (10 Kas'ta ortak hesapta oldu). Hedef ayda
+3 saatin altı. Her sunucu tarafı değişiklikten önce ve sonra ölç; ayrıntı,
+ölçüm yolu ve sıradaki işler: [docs/vercel-ucretsiz-sinir.md](docs/vercel-ucretsiz-sinir.md).
+Yayın yalnız GitHub Actions (`deploy.yml`); GitHub bağlantısı taşımada düştü.
+
 ## Başvurulacak belgeler
 
 | konu | dosya |
@@ -74,5 +83,6 @@ Vercel Hobby'de çalıştırma logu yok; Sentry tek gerçek gözcü.
 | stok senkronu | [docs/stok-senkronu/](docs/stok-senkronu/) |
 | güvenlik DDL | [docs/guvenlik/](docs/guvenlik/) |
 | yedekleme | [docs/yedekleme.md](docs/yedekleme.md) |
+| Vercel ücretsiz sınırı | [docs/vercel-ucretsiz-sinir.md](docs/vercel-ucretsiz-sinir.md) |
 | Supabase taşıma | [docs/supabase-tasima/](docs/supabase-tasima/) |
 | mail şablonları | [docs/auth-mail-sablonlari/](docs/auth-mail-sablonlari/) |
