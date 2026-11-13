@@ -187,7 +187,7 @@ export default async function KargoVeIadePage() {
       <h2>Uyuşmazlık Çözümü</h2>
       <p>
         Anlaşamazsak, değeri{' '}
-        <strong>{HAKEM_HEYETI_SINIRI_TL.toLocaleString('tr-TR')} TL'nin altındaki</strong>{' '}
+        <strong>{HAKEM_HEYETI_SINIRI_TL.toLocaleString('tr-TR')} TL&apos;nin altındaki</strong>{' '}
         uyuşmazlıklarda <strong>yerleşim yerinizin</strong> veya işlemin yapıldığı yerin İl
         ya da İlçe <strong>Tüketici Hakem Heyetine</strong> başvurabilirsiniz
         ({HAKEM_HEYETI_YILI} yılı sınırı; her yıl güncellenir). Başvuru e-Devlet üzerinden{' '}
