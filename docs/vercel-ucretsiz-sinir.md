@@ -87,6 +87,7 @@ BB N11'i KarPanel için sormuş.)
   next 573), çağrı başına ortalama ~85 ms.
 - Günlük kontrol: KarPanel'in 22.37 görevinden NB Steelora çıkarıldı (13 Kas);
   NB Steelora ölçümü bu sohbetin zamanlanmış görevleriyle yapılır.
+- 14 Kas 00.40 TR ölçümü (son 12 saat, 12.40–00.40): Fluid Active CPU 8 dk 50 sn = function 7 dk 03 sn + middleware 1 dk 47 sn → ham öngörü ×60 ≈ 8,8 sa/ay. Pencerede üç yayın var (bc72a23 12.19, 68cb920 ~17.50, 921aa2f ~22.55); yayın saatlerinin çubukları (13:00, 17:00–18:00, 22:00) saat başı ~1–1,5 dk. Yayınsız saatler ~22 sn/sa → ~4,4 sa/ay (gündüz ağırlıklı pencere). 19:00–23:00 dört saat: function 2 dk 17 sn + middleware 36 sn. Middleware 12 sa: next 888 · respond 19 · rewrite 1 (taban 1,3 bin, respond 758) → izleyici yoklaması statiğe geçmiş. Sonuç: 4 saatlik sınırın üstü; vitrin önbelleği (ISR) kararı BB'de bekliyor, hatırlatıldı. Yayın sayısını azalt: belge commit'leri biriktirilsin.
 
 ## Bulunanlar (12 Kas, istek günlüğü + Observability)
 
