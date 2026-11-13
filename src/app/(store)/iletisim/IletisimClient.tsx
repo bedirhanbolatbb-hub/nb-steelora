@@ -1,12 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, MapPin, Clock } from 'lucide-react'
+import { Mail, MapPin, Clock, Phone } from 'lucide-react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { WHATSAPP_URL } from '@/lib/contact'
 
-export default function IletisimClient() {
+/**
+ * Adres ve telefon satıcı künyesinden gelir (site_content veri_sorumlusu_*,
+ * panel → Site Metinleri); Tosla sanal POS şartı: iletişimde açık adres (13 Kas 2026).
+ */
+export default function IletisimClient({ adres, telefon }: { adres?: string; telefon?: string }) {
+  const adresMetni = (adres || '').trim() || 'Mezitli / Mersin / Türkiye'
+  const telefonMetni = (telefon || '').trim()
+  const telefonHref = telefonMetni
+    ? `tel:+90${telefonMetni.replace(/\D/g, '').replace(/^(90)?0?/, '')}`
+    : ''
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -98,13 +107,32 @@ export default function IletisimClient() {
               </div>
               <div>
                 <p className="text-[11px] font-body text-muted uppercase tracking-wider mb-1">
-                  Konum
+                  Adres
                 </p>
                 <p className="text-[13px] font-body text-ink">
-                  Mezitli / Mersin / Türkiye
+                  {adresMetni}
                 </p>
               </div>
             </div>
+
+            {telefonMetni && (
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-surface-muted flex items-center justify-center shrink-0">
+                  <Phone size={16} className="text-accent-deep" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-body text-muted uppercase tracking-wider mb-1">
+                    Telefon
+                  </p>
+                  <a
+                    href={telefonHref}
+                    className="text-[13px] font-body text-ink hover:text-accent-deep transition-colors"
+                  >
+                    {telefonMetni}
+                  </a>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 bg-surface-muted flex items-center justify-center shrink-0">
