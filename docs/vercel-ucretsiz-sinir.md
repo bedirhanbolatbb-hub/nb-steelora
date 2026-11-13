@@ -9,9 +9,26 @@ nbsteelora sohbetine devret") ölçüm kısmı aşağıya işlendi. Açık kalan
    main'e birleştirilmedi; kart anahtarı kapalıyken site bugünkü gibi çalışır.
    Plan ve canlıya alma adımları: `git show tosla-odeme:docs/tosla/PLAN.md`.
    Canlıya alma BB'nin kararı.
-2. Tosla yazışması (Kübra Yılmaz, BB'nin Gmail'inde "TOSLA İŞİM SANAL POS"):
-   12 Kas 20.22'de "nbsteelora.com aynı üye işyerine eklenebilir mi, ayrı
-   başvuru mu" diye soruldu, cevap bekleniyor. Takip BB'ye soruldu (13 Kas).
+2. Tosla yazışması: cevap geldi (13 Kas) — nbsteelora.com için Tosla İşim
+   panelinden AYRI Sanal POS başvurusu. 13 Kas'ta gönderildi ("Başvurunu
+   aldık"): tek çekim komisyon %1,99, ödeme 7 gün sonra, aylık ciro 25.000 TL,
+   sektör Giyim ve Aksesuar. Taksit oranları yüksek (2 taksit %6,35 … 12 taksit
+   %25,04) → açılışta yalnız tek çekim.
+3. Tosla'nın eksik bildirimi ("iletişim adres bilgisi ile VISA, MASTERCARD ve
+   TROY logoları eklenmelidir") 13 Kas 17.50'de giderildi: main 68cb920
+   (GitHub sitesinden PR #1, bilgisayar köprüsü kesikken BB'nin açık onayıyla;
+   Deploy #346). Logolar `public/badges/`, bileşen
+   `src/components/store/OdemeLogolari.tsx` (TOSLA_ODEME_ACIK=evet olunca alt
+   satır kendiliğinden değişir), İletişim + sayfa altı açık adres/telefon
+   künyeden, kargo-ve-iade'de "Sipariş İptali". BB Tosla'ya "tamamlandı"
+   yazacak. YEREL DEPO bu sırada geride kaldı (yerelde 3138ba1 + bu belge
+   commit'i) → sonraki VS Code eşitlemesi önce çeker, sonra gönderir.
+4. Sırada: Tosla onayı → bağlantı bilgileri panelde İşyeri Bilgileri → API
+   Bilgileri → "SMS ile gönder" ile BB'nin telefonuna → BB Vercel'e girer →
+   `tosla-odeme` birleştirilir (Footer Alt Şerit, kargo-ve-iade ve gizlilik
+   metniyle çakışmaya bak; kart logosu/ödeme metni varsa OdemeLogolari ile tek
+   kaynakta birleştir; sözleşme sürüm tarihleri) → kart kapalıyken canlı
+   kontrol → TOSLA_ODEME_ACIK=evet → küçük gerçek alışveriş + panelden iptal.
 
 (KarPanel sohbetindeki "NB Steelora N11'de mağaza açsın" önerisi geçersizdi:
 BB N11'i KarPanel için sormuş.)
