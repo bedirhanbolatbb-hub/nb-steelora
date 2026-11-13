@@ -52,17 +52,19 @@ function guvenlikEkle(yanit: NextResponse, csp: string, gizliYol: boolean): Next
 }
 
 /**
- * Site izleyicisinin yoklaması (12 Kas 2026).
+ * Site izleyicisinin yoklaması (12 Kas 2026; 13 Kas güncellemesi).
  *
  * Sentry'nin site izleyicisi (SentryUptimeBot) ana sayfayı DAKİKADA BİR
  * istiyor — Vercel istek günlüğü, 12 Kas 10:04–10:27: her dakikanın 40.
- * saniyesi. Vitrin her istekte sunucuda kurulduğu için (istek başı nonce'lu
- * CSP, sunucu page_view) bu ayda ~43 bin sayfa kurulumu ve Vercel'in
- * ücretsiz aylık sunucu süresinin (4 saat) önemli bir payı demek. Yoklamanın
- * tek sorusu "site cevap veriyor mu": kısa bir 200 yeterli. Uygulamanın asıl
- * sağlığı (veritabanı, senkron, kargo, e-posta) /api/health'te ve 5 dakikada
- * bir ayrıca izleniyor. Dağıtım kapanırsa (10–12 Kas'taki gibi) istek buraya
- * hiç ulaşmaz ve izleyici yine haber verir.
+ * saniyesi. Yoklamanın tek sorusu "site cevap veriyor mu": kısa bir 200
+ * yeterli. Uygulamanın asıl sağlığı (veritabanı, senkron, kargo, e-posta)
+ * /api/health'te ve 5 dakikada bir ayrıca izleniyor.
+ *
+ * 13 Kas: kısa 200 bile her seferinde bir ara katman çağrısıydı (12 saatte
+ * ~720). Kökteki yoklama artık buraya hiç gelmiyor — matcher kökü bu
+ * tarayıcıya karşı atlıyor, next.config.ts onu statik /izleyici.txt'ye
+ * yönlendiriyor. Bu dal yalnız yedek: izleyici bir gün başka bir yolu
+ * yoklarsa yine sayfa kurulmasın.
  */
 const IZLEYICI = /SentryUptimeBot/i
 
@@ -144,6 +146,16 @@ export const config = {
   matcher: [
     '/admin/:path*',
     '/panel/:path*',
-    '/((?!api|_next/static|_next/image|favicon.ico|icon|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|webp|svg|ico|txt|xml|json|pdf)$).*)',
+    // Kök: site izleyicisi (SentryUptimeBot) HARİÇ her istek. Onun yoklaması
+    // next.config.ts'te statik /izleyici.txt'ye gider; ara katman yönlendirmeden
+    // önce çalıştığı için koşul burada da gerekli. Koşul YALNIZ kökte: o
+    // tarayıcı adını taşıyan istek kökte sayfa değil düz metin alır, başka
+    // hiçbir yolda ara katmanı atlayamaz.
+    {
+      source: '/',
+      missing: [{ type: 'header', key: 'user-agent', value: '.*SentryUptimeBot.*' }],
+    },
+    // Kök dışındaki her şey (`.+`: en az bir karakter).
+    '/((?!api|_next/static|_next/image|favicon.ico|icon|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|webp|svg|ico|txt|xml|json|pdf)$).+)',
   ],
 }

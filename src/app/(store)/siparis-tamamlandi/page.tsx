@@ -70,6 +70,7 @@ export default async function SiparisTamamlandiPage({
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
+            prefetch={false}
             href="/urunler"
             className="inline-block border border-line text-ink-soft text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:border-accent-line hover:text-accent-deep transition-all"
           >
@@ -101,12 +102,14 @@ export default async function SiparisTamamlandiPage({
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
         <Link
+          prefetch={false}
           href="/hesabim"
           className="inline-block bg-ink text-bg text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
         >
           Siparişlerim
         </Link>
         <Link
+          prefetch={false}
           href="/urunler"
           className="inline-block border border-line text-ink-soft text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:border-accent-line hover:text-accent-deep transition-all"
         >

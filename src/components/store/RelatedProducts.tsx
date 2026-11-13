@@ -55,6 +55,7 @@ export default function RelatedProducts({ productId, category }: RelatedProducts
           </h2>
         </div>
         <Link
+          prefetch={false}
           href={`/urunler?kategori=${encodeURIComponent(category)}`}
           className="text-[11px] uppercase tracking-[0.15em] font-body text-muted hover:text-accent-deep transition-colors hidden sm:block"
         >

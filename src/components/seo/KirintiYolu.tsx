@@ -44,6 +44,7 @@ export default function KirintiYolu({
               </span>
             ) : (
               <Link
+                prefetch={false}
                 href={a.path}
                 className="inline-block py-2.5 -my-2.5 hover:text-ink transition-colors"
               >

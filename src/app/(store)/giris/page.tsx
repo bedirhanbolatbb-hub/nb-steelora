@@ -61,6 +61,7 @@ export default function GirisPage() {
 
           <div className="text-right">
             <Link
+              prefetch={false}
               href="/sifremi-unuttum"
               className="text-[12px] font-body text-accent-deep hover:text-ink transition-colors"
             >
@@ -81,6 +82,7 @@ export default function GirisPage() {
           <p className="text-center text-[13px] font-body text-ink-soft">
             Üye değil misiniz?{' '}
             <Link
+              prefetch={false}
               href="/kayit"
               className="text-accent-deep hover:text-ink transition-colors"
             >

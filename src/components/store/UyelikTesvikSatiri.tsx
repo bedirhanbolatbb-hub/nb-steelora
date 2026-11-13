@@ -31,11 +31,11 @@ export default function UyelikTesvikSatiri({
       {baglam !== 'kayit' && (
         <>
           {' '}
-          <Link href="/kayit" className="text-accent-deep underline underline-offset-2 hover:text-ink">
+          <Link prefetch={false} href="/kayit" className="text-accent-deep underline underline-offset-2 hover:text-ink">
             Üye ol
           </Link>
           {' · '}
-          <Link href="/giris" className="text-accent-deep underline underline-offset-2 hover:text-ink">
+          <Link prefetch={false} href="/giris" className="text-accent-deep underline underline-offset-2 hover:text-ink">
             Giriş yap
           </Link>
         </>

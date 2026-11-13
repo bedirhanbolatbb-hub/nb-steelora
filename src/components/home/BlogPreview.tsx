@@ -17,6 +17,7 @@ export default function BlogPreview({ posts }: { posts: any[] }) {
             </h2>
           </div>
           <Link
+            prefetch={false}
             href="/blog"
             className="hidden sm:block text-[11px] uppercase tracking-[0.16em] font-body font-medium text-ink border-b border-accent pb-0.5 hover:text-accent-deep transition-colors"
           >
@@ -27,6 +28,7 @@ export default function BlogPreview({ posts }: { posts: any[] }) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 lg:gap-6">
           {posts.map((post, i) => (
             <Link
+              prefetch={false}
               key={post.id}
               href={`/blog/${post.slug}`}
               className="group block"

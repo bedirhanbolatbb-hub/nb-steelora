@@ -73,6 +73,9 @@ süresi; aşılırsa site 30 gün kapanır (10 Kas'ta ortak hesapta oldu). Hedef
 3 saatin altı. Her sunucu tarafı değişiklikten önce ve sonra ölç; ayrıntı,
 ölçüm yolu ve sıradaki işler: [docs/vercel-ucretsiz-sinir.md](docs/vercel-ucretsiz-sinir.md).
 Yayın yalnız GitHub Actions (`deploy.yml`); GitHub bağlantısı taşımada düştü.
+Vitrinde her `<Link>` önyüklemeyi açıkça belirtir (`prefetch={false}`; ESLint
+kuralı zorlar) ve izleyici yoklaması statik `/izleyici.txt`'ye gider — ikisi de
+sunucu süresi için; geri alma.
 
 ## Başvurulacak belgeler
 

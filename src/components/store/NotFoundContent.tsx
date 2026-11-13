@@ -26,6 +26,7 @@ export default function NotFoundContent() {
       <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
         {CATEGORIES.filter((k) => !k.gender).map((k) => (
           <Link
+            prefetch={false}
             key={k.slug}
             href={`/kategori/${k.slug}`}
             className="inline-flex items-center border border-line text-ink-soft text-[11px] uppercase tracking-[0.12em] font-body px-4 py-2 rounded-[4px] hover:border-ink hover:text-ink transition-colors"
@@ -37,12 +38,14 @@ export default function NotFoundContent() {
 
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
         <Link
+          prefetch={false}
           href="/urunler"
           className="inline-flex items-center bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
         >
           Koleksiyona Dön
         </Link>
         <Link
+          prefetch={false}
           href="/"
           className="inline-flex items-center border border-ink text-ink text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-ink hover:text-bg transition-colors"
         >

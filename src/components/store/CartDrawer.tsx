@@ -109,6 +109,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                     {/* Faz 35: görsel ve ad ürün sayfasına gider (BB: "sepetteki
                         ürüne tıklayınca ürünün içine girmiyor"). */}
                     <Link
+                      prefetch={false}
                       href={`/urun/${item.product.slug}`}
                       onClick={onClose}
                       className="relative w-20 h-24 bg-surface-muted shrink-0 block"
@@ -125,6 +126,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                     <div className="flex-1 min-w-0">
                       <h3 className="font-heading text-[14px] text-ink truncate">
                         <Link
+                          prefetch={false}
                           href={`/urun/${item.product.slug}`}
                           onClick={onClose}
                           className="hover:text-accent-deep transition-colors"
@@ -275,6 +277,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                 )}
               </div>
               <Link
+                prefetch={false}
                 href="/odeme"
                 onClick={onClose}
                 className="basis block w-full py-3.5 bg-ink text-bg text-center text-[11px] uppercase tracking-[0.15em] font-body hover:bg-accent-deep"

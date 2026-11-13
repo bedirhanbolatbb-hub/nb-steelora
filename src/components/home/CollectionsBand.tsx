@@ -20,6 +20,7 @@ export default function CollectionsBand({ collections }: { collections: Collecti
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 lg:gap-8">
           {collections.map((collection, i) => (
             <Link
+              prefetch={false}
               key={collection.slug}
               href={`/koleksiyon/${collection.slug}`}
               className="group block"

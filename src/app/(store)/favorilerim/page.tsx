@@ -46,6 +46,7 @@ export default function FavorilerimPage() {
             Henüz favoriye eklediğiniz ürün yok.
           </p>
           <Link
+            prefetch={false}
             href="/urunler"
             className="inline-block py-3 px-8 bg-ink text-bg text-[11px] tracking-[0.15em] uppercase font-body hover:bg-accent transition-colors"
           >

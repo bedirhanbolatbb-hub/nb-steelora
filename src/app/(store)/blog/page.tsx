@@ -55,6 +55,7 @@ export default async function BlogPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
           {posts.map((post, i) => (
             <Link
+              prefetch={false}
               key={post.id}
               href={`/blog/${post.slug}`}
               className="group flex flex-col bg-surface border border-line rounded-[4px] overflow-hidden hover:border-accent-line/50 transition-colors"

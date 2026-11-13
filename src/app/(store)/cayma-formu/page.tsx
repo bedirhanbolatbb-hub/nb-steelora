@@ -51,8 +51,8 @@ export default async function CaymaFormuPage() {
       <p>
         Cayma süresi, ürünü teslim aldığınız günden itibaren{' '}
         <strong>{CAYMA_SURESI_GUN} gündür</strong>. Ayrıntılar için{' '}
-        <Link href={SOZLESME_YOLLARI.onBilgilendirme}>ön bilgilendirme formuna</Link> ve{' '}
-        <Link href={SOZLESME_YOLLARI.kargoVeIade}>kargo ve iade sayfasına</Link>{' '}
+        <Link prefetch={false} href={SOZLESME_YOLLARI.onBilgilendirme}>ön bilgilendirme formuna</Link> ve{' '}
+        <Link prefetch={false} href={SOZLESME_YOLLARI.kargoVeIade}>kargo ve iade sayfasına</Link>{' '}
         bakabilirsiniz. <strong>İade kargo ücreti tarafımıza aittir.</strong>
       </p>
 

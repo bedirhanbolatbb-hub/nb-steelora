@@ -55,6 +55,7 @@ export default function YorumSeridi({ yorumlar }: { yorumlar: VitrinYorumu[] }) 
                 )}
                 {y.urunSlug && (
                   <Link
+                    prefetch={false}
                     href={`/urun/${y.urunSlug}`}
                     className="ml-auto font-body text-[11px] text-muted underline underline-offset-2 hover:text-accent-deep"
                   >

@@ -36,6 +36,7 @@ export default function PromoStrip({ bant }: { bant: VitrinBandi | null }) {
        yok. Süre kampanya kaydından gelir (ends_at), kodda sabit tarih yok. */
     <section className="bg-accent-soft">
       <Link
+        prefetch={false}
         href={bant.hedef}
         className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 py-4 text-center transition-colors hover:bg-[#efe6d4] lg:px-8"
       >

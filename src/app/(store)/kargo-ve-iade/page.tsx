@@ -68,7 +68,7 @@ export default async function KargoVeIadePage() {
       </div>
 
       <p>
-        Siparişinizi <Link href="/kargo-takip">kargo takip sayfasından</Link> üye olmadan da
+        Siparişinizi <Link prefetch={false} href="/kargo-takip">kargo takip sayfasından</Link> üye olmadan da
         izleyebilirsiniz. Ürünün stokta bulunmaması siparişinizin tek taraflı iptal edilmesi
         sonucunu doğurmaz; böyle bir durumda sizinle iletişime geçeriz.
       </p>
@@ -80,11 +80,11 @@ export default async function KargoVeIadePage() {
         cayabilirsiniz.
       </p>
       <p>
-        <strong>Nasıl yapılır?</strong> <Link href="/kargo-takip">Kargo takip sayfasından</Link>{' '}
+        <strong>Nasıl yapılır?</strong> <Link prefetch={false} href="/kargo-takip">Kargo takip sayfasından</Link>{' '}
         sipariş numaranız ve e-posta adresinizle siparişinizi sorgulayın; teslim edilmiş
         siparişlerde &quot;İade talebi oluştur&quot; düğmesi orada çıkar. Üye olmanız
         gerekmez. Üyeyseniz Hesabım → Siparişlerim ekranından da oluşturabilirsiniz.
-        Dilerseniz <Link href={SOZLESME_YOLLARI.caymaFormu}>örnek cayma formunu</Link>{' '}
+        Dilerseniz <Link prefetch={false} href={SOZLESME_YOLLARI.caymaFormu}>örnek cayma formunu</Link>{' '}
         gönderin ya da {ORG_EMAIL} adresine sipariş numaranızla bir e-posta yazın — form
         doldurmak zorunlu değildir. Talebiniz bize ulaştığında size derhâl teyit bildirimi
         gönderilir.
@@ -182,14 +182,14 @@ export default async function KargoVeIadePage() {
       <h2>İletişim</h2>
       <p>
         Kargo ve iade süreçleri için {ORG_EMAIL} adresinden ya da{' '}
-        <Link href="/iletisim">iletişim sayfamızdan</Link> bize ulaşabilirsiniz.
+        <Link prefetch={false} href="/iletisim">iletişim sayfamızdan</Link> bize ulaşabilirsiniz.
         {yanitSuresi ? ` Mesajlarınıza en geç ${yanitSuresi} içinde dönüyoruz.` : ''}
       </p>
       <p className="text-[12px]">
         Ayrıntılı yasal metinler:{' '}
-        <Link href={SOZLESME_YOLLARI.onBilgilendirme}>Ön Bilgilendirme Formu</Link> ·{' '}
-        <Link href={SOZLESME_YOLLARI.mesafeliSatis}>Mesafeli Satış Sözleşmesi</Link> ·{' '}
-        <Link href={SOZLESME_YOLLARI.caymaFormu}>Örnek Cayma Formu</Link>
+        <Link prefetch={false} href={SOZLESME_YOLLARI.onBilgilendirme}>Ön Bilgilendirme Formu</Link> ·{' '}
+        <Link prefetch={false} href={SOZLESME_YOLLARI.mesafeliSatis}>Mesafeli Satış Sözleşmesi</Link> ·{' '}
+        <Link prefetch={false} href={SOZLESME_YOLLARI.caymaFormu}>Örnek Cayma Formu</Link>
       </p>
     </LegalPageLayout>
   )

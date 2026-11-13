@@ -115,11 +115,11 @@ export default async function BlogPostPage({
         <div className="max-w-[68ch] mx-auto px-4 py-12">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-[10px] font-body text-muted uppercase tracking-wider mb-8 flex-wrap">
-            <Link href="/" className="hover:text-accent-deep transition-colors">
+            <Link prefetch={false} href="/" className="hover:text-accent-deep transition-colors">
               Ana Sayfa
             </Link>
             <span>/</span>
-            <Link href="/blog" className="hover:text-accent-deep transition-colors">
+            <Link prefetch={false} href="/blog" className="hover:text-accent-deep transition-colors">
               Blog
             </Link>
             <span>/</span>
@@ -163,6 +163,7 @@ export default async function BlogPostPage({
               Okuduklarını takıya dönüştür.
             </p>
             <Link
+              prefetch={false}
               href={kesfetYolu}
               className="inline-flex items-center justify-center bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
             >
@@ -183,6 +184,7 @@ export default async function BlogPostPage({
                   </h2>
                 </div>
                 <Link
+                  prefetch={false}
                   href={kesfetYolu}
                   className="text-[11px] uppercase tracking-[0.15em] font-body text-accent-deep hover:text-ink transition-colors"
                 >
@@ -207,6 +209,7 @@ export default async function BlogPostPage({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 lg:gap-6">
                 {related.map((p, i) => (
                   <Link
+                    prefetch={false}
                     key={p.id}
                     href={`/blog/${p.slug}`}
                     className="group bg-surface border border-line rounded-[4px] overflow-hidden hover:border-accent-line/50 transition-colors"

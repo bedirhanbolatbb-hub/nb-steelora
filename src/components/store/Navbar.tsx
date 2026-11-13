@@ -149,7 +149,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
       <button className="-m-3 flex h-11 w-11 items-center justify-center text-ink-soft hover:text-accent-deep transition-colors" aria-label="Ara" onClick={() => setSearchOpen(true)}>
         <Search size={18} strokeWidth={1.6} />
       </button>
-      <Link href="/favorilerim" className="hidden sm:block relative text-ink-soft hover:text-accent-deep transition-colors" aria-label="Favoriler">
+      <Link prefetch={false} href="/favorilerim" className="hidden sm:block relative text-ink-soft hover:text-accent-deep transition-colors" aria-label="Favoriler">
         <Heart size={18} strokeWidth={1.6} />
         {wishlistCount > 0 && (
           <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 min-w-[18px] min-h-[18px] bg-ink text-bg text-[9px] rounded-full flex items-center justify-center font-body font-medium">
@@ -157,7 +157,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
           </span>
         )}
       </Link>
-      <Link href={isLoggedIn ? '/hesabim' : '/giris'} className="hidden sm:block text-ink-soft hover:text-accent-deep transition-colors" aria-label="Hesap">
+      <Link prefetch={false} href={isLoggedIn ? '/hesabim' : '/giris'} className="hidden sm:block text-ink-soft hover:text-accent-deep transition-colors" aria-label="Hesap">
         <User size={18} strokeWidth={1.6} />
       </Link>
       {/* Faz 36: rozet 44px'lik dokunma kutusuna göre konumlanıyordu; kutu
@@ -245,6 +245,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
           {/* Tıklama alanı yazının kutusundan geniş: py/px ile 44px'e tamamlanır
               (negatif margin görsel yerleşimi bozmaz). */}
           <Link
+            prefetch={false}
             href="/"
             aria-label="Anasayfa"
             className="relative justify-self-center text-center flex flex-col justify-center min-h-[44px] px-4 -mx-4 py-1"
@@ -264,6 +265,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
         <div className="max-w-[1400px] mx-auto px-8 grid grid-cols-3 items-center h-[76px]">
           <div />
           <Link
+            prefetch={false}
             href="/"
             aria-label="Anasayfa"
             className="relative justify-self-center text-center px-6 -mx-6 py-3 -my-1 motion-safe:transition-opacity motion-safe:duration-300"
@@ -294,6 +296,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
               tam soluna kaçtığı için ıskalanıyordu; artık dikeyde satırın tamamını
               (44px+) ve sağa doğru bir miktar boşluğu kapsıyor. */}
           <Link
+            prefetch={false}
             href="/"
             aria-hidden={!condensed}
             aria-label="Anasayfa"
@@ -312,6 +315,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
           <div className="flex items-center justify-center gap-7">
             {navLinks.map((link) => (
               <Link
+                prefetch={false}
                 key={link.href}
                 href={link.href}
                 className="nav-cizgi text-[11px] uppercase tracking-[0.16em] font-body text-ink-soft hover:text-ink pb-0.5 transition-colors whitespace-nowrap"
@@ -374,6 +378,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
               koleksiyonların ardına alındı. Görsel yok: menü hızlı açılmalı. */}
           <nav className="flex-1 overflow-y-auto px-5 py-5" aria-label="Menü">
             <Link
+              prefetch={false}
               href="/urunler"
               className="flex min-h-[52px] items-center justify-between border-b border-line font-heading text-[19px] text-ink transition-colors hover:text-accent-deep"
               onClick={() => setMobileOpen(false)}
@@ -381,6 +386,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
               Tüm Ürünler <span aria-hidden className="font-body text-[12px] text-muted">→</span>
             </Link>
             <Link
+              prefetch={false}
               href="/urunler?siralama=yeni"
               className="flex min-h-[52px] items-center justify-between border-b border-line font-heading text-[19px] text-ink transition-colors hover:text-accent-deep"
               onClick={() => setMobileOpen(false)}
@@ -393,6 +399,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
               .filter((l) => l.href !== '/blog')
               .map((link) => (
                 <Link
+                  prefetch={false}
                   key={link.href}
                   href={link.href}
                   className="flex min-h-[46px] items-center border-b border-line/60 font-body text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-accent-deep"
@@ -407,6 +414,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
                 <p className="eyebrow mt-6 mb-1">Koleksiyonlar</p>
                 {koleksiyonlar.map((k) => (
                   <Link
+                    prefetch={false}
                     key={k.slug}
                     href={`/koleksiyon/${k.slug}`}
                     className="flex min-h-[46px] items-center border-b border-line/60 font-heading text-[15px] text-ink transition-colors hover:text-accent-deep"
@@ -419,6 +427,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
             )}
 
             <Link
+              prefetch={false}
               href="/blog"
               className="mt-6 flex min-h-[46px] items-center border-b border-line/60 font-body text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-accent-deep"
               onClick={() => setMobileOpen(false)}
@@ -429,6 +438,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
 
           <div className="flex shrink-0 items-center gap-6 border-t border-line px-5 py-4">
             <Link
+              prefetch={false}
               href="/favorilerim"
               className="flex min-h-[44px] items-center gap-2 font-body text-[12px] text-ink-soft transition-colors hover:text-accent-deep"
               onClick={() => setMobileOpen(false)}
@@ -436,6 +446,7 @@ export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, il
               <Heart size={18} strokeWidth={1.6} /> Favorilerim
             </Link>
             <Link
+              prefetch={false}
               href={isLoggedIn ? '/hesabim' : '/giris'}
               className="flex min-h-[44px] items-center gap-2 font-body text-[12px] text-ink-soft transition-colors hover:text-accent-deep"
               onClick={() => setMobileOpen(false)}

@@ -55,11 +55,11 @@ export default function SssPage() {
 
         <p className="mt-12 border-t border-line pt-6 font-body text-[13px] text-ink-soft">
           Aradığınız cevabı bulamadıysanız{' '}
-          <Link href="/iletisim" className="text-accent-deep underline underline-offset-4">
+          <Link prefetch={false} href="/iletisim" className="text-accent-deep underline underline-offset-4">
             bize yazın
           </Link>
           . Kargo ve iade koşullarının tamamı{' '}
-          <Link href="/kargo-ve-iade" className="text-accent-deep underline underline-offset-4">
+          <Link prefetch={false} href="/kargo-ve-iade" className="text-accent-deep underline underline-offset-4">
             Kargo, İade ve Değişim
           </Link>{' '}
           sayfasında.

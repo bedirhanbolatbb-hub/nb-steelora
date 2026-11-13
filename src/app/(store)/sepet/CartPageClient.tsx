@@ -79,6 +79,7 @@ export default function CartPageClient({
             {BOS_DURUM.sepet.baslik}. {BOS_DURUM.sepet.metin}
           </p>
           <Link
+            prefetch={false}
             href="/urunler"
             className="inline-block bg-ink text-bg text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
           >
@@ -94,7 +95,7 @@ export default function CartPageClient({
                 key={product.id}
                 className="flex gap-4 border-b border-line pb-4"
               >
-                <Link href={`/urun/${product.slug}`} className="relative w-24 aspect-[4/5] rounded-[4px] bg-surface-muted shrink-0 overflow-hidden">
+                <Link prefetch={false} href={`/urun/${product.slug}`} className="relative w-24 aspect-[4/5] rounded-[4px] bg-surface-muted shrink-0 overflow-hidden">
                   {product.display_images?.[0] && (
                     <Image
                       {...kucukResim(product.display_images[0], 256, kadrajMi(product.id))}
@@ -108,6 +109,7 @@ export default function CartPageClient({
 
                 <div className="flex-1 min-w-0">
                   <Link
+                    prefetch={false}
                     href={`/urun/${product.slug}`}
                     className="font-heading text-[17px] font-medium text-ink hover:text-accent-deep transition-colors block leading-snug"
                   >
@@ -257,12 +259,14 @@ export default function CartPageClient({
               )}
 
               <Link
+                prefetch={false}
                 href="/odeme"
                 className="mt-4 block w-full text-center py-4 bg-ink text-bg text-[11px] uppercase tracking-[0.18em] font-body font-medium rounded-[4px] hover:bg-accent-deep transition-colors"
               >
                 Ödemeye Geç
               </Link>
               <Link
+                prefetch={false}
                 href="/urunler"
                 className="block text-center text-[11px] font-body text-muted hover:text-accent-deep transition-colors"
               >

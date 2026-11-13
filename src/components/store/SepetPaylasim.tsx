@@ -92,6 +92,7 @@ export function PaylasilanSepet({ kalemler }: { kalemler: PaylasilanKalem[] }) {
           return (
             <li key={product.id} className="flex items-center gap-3 py-3">
               <Link
+                prefetch={false}
                 href={`/urun/${product.slug}`}
                 className="relative w-14 aspect-[4/5] shrink-0 overflow-hidden rounded-[4px] bg-surface-muted"
               >
@@ -107,6 +108,7 @@ export function PaylasilanSepet({ kalemler }: { kalemler: PaylasilanKalem[] }) {
               </Link>
               <div className="min-w-0 flex-1">
                 <Link
+                  prefetch={false}
                   href={`/urun/${product.slug}`}
                   className="font-heading text-[15px] text-ink hover:text-accent-deep transition-colors block truncate"
                 >

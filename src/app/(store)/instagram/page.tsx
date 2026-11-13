@@ -120,6 +120,7 @@ export default async function InstagramSayfasi() {
 
       <section className="mx-auto max-w-[1400px] px-4 py-12 text-center lg:px-8 lg:py-16">
         <Link
+          prefetch={false}
           href="/urunler"
           className="inline-flex min-h-[44px] items-center justify-center rounded-[4px] bg-ink px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.15em] text-bg transition-colors hover:bg-accent-deep"
         >

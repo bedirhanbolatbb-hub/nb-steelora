@@ -101,7 +101,7 @@ export default async function HomePage({
       {onizleme && (
         <div className="fixed bottom-4 left-4 z-[60] max-w-[calc(100vw-2rem)] rounded-[4px] bg-ink px-4 py-3 font-body text-[12px] text-bg shadow-lg">
           Önizleme: kampanya başladığında ilk ekran böyle görünecek.{' '}
-          <Link href="/" className="underline underline-offset-4">
+          <Link prefetch={false} href="/" className="underline underline-offset-4">
             Kapat
           </Link>
         </div>
@@ -190,6 +190,7 @@ export default async function HomePage({
               </h2>
             </div>
             <Link
+              prefetch={false}
               href="/urunler?siralama=yeni"
               className="hidden sm:block text-[11px] uppercase tracking-[0.16em] font-body font-medium text-ink border-b border-accent pb-0.5 hover:text-accent-deep transition-colors"
             >

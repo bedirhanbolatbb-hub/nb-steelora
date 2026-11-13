@@ -96,7 +96,7 @@ export default async function MesafeliSatisSozlesmesiPage() {
       <ul>
         <li>
           ALICI, Hesabım → Siparişlerim ekranından iade talebi oluşturabilir,{' '}
-          <Link href={SOZLESME_YOLLARI.caymaFormu}>örnek cayma formunu</Link> gönderebilir
+          <Link prefetch={false} href={SOZLESME_YOLLARI.caymaFormu}>örnek cayma formunu</Link> gönderebilir
           ya da açık bir cayma beyanını {ORG_EMAIL} adresine iletebilir. Form kullanmak
           zorunlu değildir; talep SATICI'ya ulaştığında derhâl teyit bildirimi gönderilir.
         </li>

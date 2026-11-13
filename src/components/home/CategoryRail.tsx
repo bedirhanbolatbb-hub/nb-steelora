@@ -26,6 +26,7 @@ export default function CategoryRail({
             const imageUrl = categoryImages[cat.slug]
             return (
               <Link
+                prefetch={false}
                 key={cat.slug}
                 href={`/kategori/${cat.slug}`}
                 className="group w-[150px] lg:w-[164px] shrink-0 snap-start"

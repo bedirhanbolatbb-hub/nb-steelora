@@ -56,6 +56,7 @@ export default function HeroCinema({
           style={{ '--hero-delay': '210ms' } as React.CSSProperties}
         >
           <Link
+            prefetch={false}
             href="/urunler"
             className={`inline-flex items-center text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] transition-colors ${
               image
@@ -66,6 +67,7 @@ export default function HeroCinema({
             {c.hero_cta || 'Koleksiyonu Keşfet'}
           </Link>
           <Link
+            prefetch={false}
             href="/#one-cikanlar"
             className={`text-[11px] uppercase tracking-[0.16em] font-body underline underline-offset-4 transition-colors ${
               image ? 'text-white/80 hover:text-white' : 'text-accent-deep hover:text-ink'
@@ -90,7 +92,7 @@ export default function HeroCinema({
   return (
     <section className="relative min-h-[85vh] lg:min-h-[75vh] flex items-end lg:items-center overflow-hidden">
       {imageHref ? (
-        <Link href={imageHref} className="absolute inset-0" aria-label="Hero ürününe git">
+        <Link prefetch={false} href={imageHref} className="absolute inset-0" aria-label="Hero ürününe git">
           <Image
             src={image}
             unoptimized={isRemoteMedia(image)}

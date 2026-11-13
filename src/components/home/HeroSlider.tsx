@@ -148,6 +148,7 @@ export default function HeroSlider({
                   )}
                   {s.href && s.cta_label && (
                     <Link
+                      prefetch={false}
                       href={s.href}
                       tabIndex={i === aktif ? 0 : -1}
                       className="hero-line basis mt-7 inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.18em] text-bg hover:bg-accent-deep"
@@ -166,6 +167,7 @@ export default function HeroSlider({
               <div className="relative order-2 aspect-[3/4] w-full sm:aspect-[4/3] md:aspect-[4/5] md:max-h-[min(900px,86vh)]">
                 {s.href ? (
                   <Link
+                    prefetch={false}
                     href={s.href}
                     className="absolute inset-0"
                     tabIndex={i === aktif ? 0 : -1}
@@ -260,7 +262,7 @@ function TamSlayt({
   return (
     <div className="relative aspect-[3/4] w-full overflow-hidden bg-ink sm:aspect-[16/10] md:aspect-auto md:h-[min(78vh,760px)] md:min-h-[520px]">
       {s.href ? (
-        <Link href={kampanya ? kampanya.hedef : s.href} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
+        <Link prefetch={false} href={kampanya ? kampanya.hedef : s.href} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
           <SanatYonetimliGorsel slayt={s} ilk={ilk} />
         </Link>
       ) : (
@@ -312,6 +314,7 @@ function TamSlayt({
               )}
               {s.href && s.cta_label && (
                 <Link
+                  prefetch={false}
                   href={s.href}
                   tabIndex={etkin ? 0 : -1}
                   className="hero-line mt-6 inline-flex min-h-[44px] items-center rounded-[4px] bg-white px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:bg-bg"
@@ -393,6 +396,7 @@ function KampanyaYazisi({
         {k.aciklama}
       </p>
       <Link
+        prefetch={false}
         href={k.hedef}
         tabIndex={etkin ? 0 : -1}
         className={cn(

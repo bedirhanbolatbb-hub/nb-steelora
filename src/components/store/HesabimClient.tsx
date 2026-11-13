@@ -413,6 +413,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                         </p>
                         {/* Faz 10A: durum çizelgesi kargo takip sayfasında. */}
                         <Link
+                          prefetch={false}
                           href={`/kargo-takip?kod=${encodeURIComponent(String(order.tracking_number))}`}
                           className="mt-2 inline-block text-[12px] font-body text-accent-deep underline underline-offset-4 hover:text-ink transition-colors"
                         >

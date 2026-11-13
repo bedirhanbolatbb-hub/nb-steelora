@@ -28,6 +28,7 @@ function BasariliContent() {
         gönderilecektir. Teşekkür ederiz!
       </p>
       <Link
+        prefetch={false}
         href="/urunler"
         className="inline-block border border-accent-line text-accent-deep text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:bg-accent-deep hover:text-white transition-all"
       >

@@ -62,6 +62,7 @@ export default function GiftSplit({
               {kMetin}
             </p>
             <Link
+              prefetch={false}
               href="/urunler"
               className="inline-flex items-center mt-8 bg-ink text-bg text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
             >

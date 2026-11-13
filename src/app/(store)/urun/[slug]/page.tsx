@@ -226,9 +226,9 @@ export default async function UrunDetayPage({
 
       {/* Görünür breadcrumb — JSON-LD BreadcrumbList ile eşlenik */}
       <nav aria-label="breadcrumb" className="mb-6 flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-body text-muted">
-        <Link href="/" className="inline-block py-2.5 -my-2.5 hover:text-ink transition-colors">Ana Sayfa</Link>
+        <Link prefetch={false} href="/" className="inline-block py-2.5 -my-2.5 hover:text-ink transition-colors">Ana Sayfa</Link>
         <span aria-hidden>/</span>
-        <Link href="/urunler" className="inline-block py-2.5 -my-2.5 hover:text-ink transition-colors">Ürünler</Link>
+        <Link prefetch={false} href="/urunler" className="inline-block py-2.5 -my-2.5 hover:text-ink transition-colors">Ürünler</Link>
         <span aria-hidden>/</span>
         <span className="text-ink-soft normal-case tracking-normal truncate max-w-[240px]">{product.display_title}</span>
       </nav>
@@ -456,7 +456,7 @@ export default async function UrunDetayPage({
                       Teslimattan itibaren {CAYMA_SURESI_GUN} gün içinde, sebep göstermeden
                       iade edebilirsiniz; <strong>iade kargo ücreti bize aittir</strong>.
                       Ayrıntılar için{' '}
-                      <Link href="/kargo-ve-iade" className="text-accent-deep underline underline-offset-2">
+                      <Link prefetch={false} href="/kargo-ve-iade" className="text-accent-deep underline underline-offset-2">
                         Kargo ve İade
                       </Link>{' '}
                       sayfasına bakabilirsiniz.
@@ -480,7 +480,7 @@ export default async function UrunDetayPage({
                     ))}
                     <p>
                       Tüm sorular için{' '}
-                      <Link href="/sss" className="text-accent-deep underline underline-offset-2">
+                      <Link prefetch={false} href="/sss" className="text-accent-deep underline underline-offset-2">
                         Sık Sorulan Sorular
                       </Link>{' '}
                       sayfasına bakabilirsiniz.

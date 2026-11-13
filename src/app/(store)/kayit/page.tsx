@@ -81,6 +81,7 @@ export default function KayitPage() {
 
           <p className="mt-8 font-body text-[13px]">
             <Link
+              prefetch={false}
               href="/giris"
               className="text-accent-deep transition-colors hover:text-ink"
             >
@@ -151,6 +152,7 @@ export default function KayitPage() {
           <p className="text-center text-[13px] font-body text-ink-soft">
             Zaten üye misiniz?{' '}
             <Link
+              prefetch={false}
               href="/giris"
               className="text-accent-deep hover:text-ink transition-colors"
             >

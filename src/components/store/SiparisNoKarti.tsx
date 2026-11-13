@@ -59,7 +59,7 @@ export default function SiparisNoKarti({ orderNumber }: { orderNumber: string })
       <p className="mt-2 text-center font-body text-[12px] leading-relaxed text-ink-soft">
         <strong>Bu numarayı not alın.</strong> Onay e-postası ulaşmazsa siparişinize bu
         numarayla{' '}
-        <Link href="/kargo-takip" className="text-accent-deep underline underline-offset-2">
+        <Link prefetch={false} href="/kargo-takip" className="text-accent-deep underline underline-offset-2">
           Kargo Takip
         </Link>{' '}
         sayfasından ulaşabilirsiniz.

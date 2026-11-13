@@ -108,7 +108,7 @@ export default async function OnBilgilendirmeFormuPage() {
       <p>
         <strong>Cayma usulü.</strong> Hesabım → Siparişlerim ekranından iade talebi
         oluşturabilir,{' '}
-        <Link href={SOZLESME_YOLLARI.caymaFormu}>örnek cayma formunu</Link> doldurup
+        <Link prefetch={false} href={SOZLESME_YOLLARI.caymaFormu}>örnek cayma formunu</Link> doldurup
         gönderebilir veya açık bir cayma beyanını yazılı olarak ya da kalıcı veri
         saklayıcısı ile (e-posta) {ORG_EMAIL} adresine iletebilirsiniz.{' '}
         <strong>Form kullanmak zorunlu değildir.</strong> Talebiniz bize ulaştığında size

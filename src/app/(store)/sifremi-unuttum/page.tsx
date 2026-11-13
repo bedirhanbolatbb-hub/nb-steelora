@@ -46,12 +46,13 @@ export default function SifremiUnuttumPage() {
           </p>
           <p className="mb-3 font-body text-[13px] text-ink-soft">
             Hesabınız yok mu?{' '}
-            <Link href="/kayit" className="text-accent-deep transition-colors hover:text-ink">
+            <Link prefetch={false} href="/kayit" className="text-accent-deep transition-colors hover:text-ink">
               Üye ol
             </Link>
           </p>
           <p className="font-body text-[13px]">
             <Link
+              prefetch={false}
               href="/giris"
               className="text-accent-deep transition-colors hover:text-ink"
             >
@@ -93,6 +94,7 @@ export default function SifremiUnuttumPage() {
 
           <p className="text-center text-[13px] font-body">
             <Link
+              prefetch={false}
               href="/giris"
               className="text-accent-deep hover:text-ink transition-colors"
             >

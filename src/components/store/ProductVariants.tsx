@@ -40,6 +40,7 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
             const outOfStock = member.trendyol_stock === 0
             return (
               <Link
+                prefetch={false}
                 key={member.id}
                 href={`/urun/${member.slug}`}
                 aria-current={isCurrent ? 'page' : undefined}
@@ -63,6 +64,7 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
             const image = member.display_images?.[0]
             return (
               <Link
+                prefetch={false}
                 key={member.id}
                 href={`/urun/${member.slug}`}
                 aria-current={isCurrent ? 'page' : undefined}

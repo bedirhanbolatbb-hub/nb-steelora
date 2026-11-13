@@ -74,6 +74,34 @@ const nextConfig: NextConfig = {
     ]
   },
 
+  /**
+   * Site izleyicisi (13 Kas 2026 — Vercel ücretsiz sunucu süresi).
+   *
+   * Sentry'nin site izleyicisi (SentryUptimeBot) ana sayfayı DAKİKADA BİR
+   * yokluyor: ayda ~43 bin istek. proxy.ts bu isteğe kısa bir 200 dönüyordu
+   * ama ara katmanın kendisi her seferinde bir sunucu çağrısıydı; 13 Kas
+   * ölçümünde 12 saatte 758 "respond" çağrısının ~720'si bu yoklamaydı ve ara
+   * katman toplam sunucu süresinin %43'ünü yiyordu.
+   *
+   * Artık yoklama Vercel'in yönlendirme katmanında statik /izleyici.txt'ye
+   * gider: ne ara katman ne sayfa kurulumu çalışır, dosya CDN'den döner.
+   * proxy.ts'in matcher'ı kökü (yalnız kökü) bu tarayıcıya karşı atlıyor —
+   * ara katman yönlendirmeden ÖNCE çalıştığı için bu koşul şart. Dağıtım
+   * kapanırsa (10–12 Kas'taki gibi) dosya da döner olmaz, izleyici yine
+   * haber verir. Uygulamanın asıl sağlığı /api/health'te ayrıca izleniyor.
+   */
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/',
+          has: [{ type: 'header', key: 'user-agent', value: '.*SentryUptimeBot.*' }],
+          destination: '/izleyici.txt',
+        },
+      ],
+    }
+  },
+
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'cdn.dsmcdn.com' },

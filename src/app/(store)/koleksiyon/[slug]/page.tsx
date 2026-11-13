@@ -101,6 +101,7 @@ export default async function KoleksiyonPage({
               Bu koleksiyondaki parçalar şu anda stokta değil.
             </p>
             <Link
+              prefetch={false}
               href="/urunler"
               className="inline-flex items-center justify-center bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
             >

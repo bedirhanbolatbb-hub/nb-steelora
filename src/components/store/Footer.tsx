@@ -95,7 +95,7 @@ export default function Footer({
       {/* Ortada marka bloğu — Sessiz Atölye kapanışı */}
       <div className="border-b border-line/10">
         <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-12 text-center">
-          <Link href="/" className="inline-block">
+          <Link prefetch={false} href="/" className="inline-block">
             <span className="font-heading text-[26px] font-light tracking-[0.2em] text-bg block">
               NB STEELORA
             </span>
