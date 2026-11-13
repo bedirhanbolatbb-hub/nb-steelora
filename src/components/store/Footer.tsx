@@ -3,6 +3,7 @@ import { CATEGORIES } from '@/lib/catalog/categories'
 import type { CollectionCard } from '@/lib/collections'
 import { WHATSAPP_URL } from '@/lib/contact'
 import CerezTercihleriDugmesi from './CerezTercihleriDugmesi'
+import OdemeLogolari from './OdemeLogolari'
 import { kunyeSatirlari } from '@/lib/layoutData'
 
 // Menüyle birebir aynı liste — tek kaynak src/lib/catalog/categories.ts
@@ -203,7 +204,7 @@ export default function Footer({
                   0505 198 46 46
                 </a>
               </li>
-              <li>Mezitli / Mersin / Türkiye</li>
+              <li>{(content.veri_sorumlusu_adres || '').trim() || 'Mezitli / Mersin / Türkiye'}</li>
               <li className="text-line/50">Pazartesi — Cuma: 09:00 — 18:00</li>
               <li>
                 <a
@@ -224,8 +225,8 @@ export default function Footer({
       {/* Alt Şerit */}
       <div className="border-t border-line/10">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 flex flex-col items-center gap-4">
-          {/* 7 Kas 2026: iyzico/kart logoları kalktı — kart ödemesi kapalı
-              (iyzico hesabı kapatılan eski firmaya aitti); ödeme havale/EFT. */}
+          {/* Kart logoları — Tosla sanal POS şartı (13 Kas 2026); ayrıntı bileşende. */}
+          <OdemeLogolari />
           <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
           <p className="text-[10px] font-body text-line/50 tracking-wider">
             {/* Satıcı künyesi — E-Ticaret Kanunu gereği; boş alanlar basılmaz. */}
