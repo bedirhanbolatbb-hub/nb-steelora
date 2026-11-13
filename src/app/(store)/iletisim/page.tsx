@@ -52,7 +52,7 @@ export default async function IletisimPage() {
           className="mb-0"
         />
       </div>
-      <IletisimClient />
+      <IletisimClient adres={kunye.adres} telefon={kunye.telefon} />
       <section className="border-t border-line bg-surface-muted/40">
         <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-6 lg:px-8">
           <p className="text-[11px] uppercase tracking-[0.28em] text-accent-deep">Yasal</p>

@@ -5,6 +5,7 @@ import { getSiteContent } from '@/lib/supabase/content'
 import { AYIP_ISPAT_AY, AYIP_ZAMANASIMI_YIL, AZAMI_TESLIM_GUN, BANKA_YANSIMA_LABEL, CAYMA_SURESI_GUN, GERI_GONDERME_GUN, GERI_ODEME_GUN, HAKEM_HEYETI_SINIRI_TL, HAKEM_HEYETI_YILI, ONARIM_DEGISIM_IS_GUNU, SOZLESME_YOLLARI } from '@/lib/legal/sozlesme'
 import { FREE_SHIPPING_LABEL, HAZIRLIK_LABEL, TASIMA_LABEL, TESLIM_CUMLESI } from '@/lib/shipping'
 import { ORG_EMAIL, sayfaUstVerisi } from '@/lib/seo'
+import { WHATSAPP_URL } from '@/lib/contact'
 
 export const metadata: Metadata = sayfaUstVerisi({
   baslik: 'Kargo, İade ve Değişim',
@@ -71,6 +72,22 @@ export default async function KargoVeIadePage() {
         Siparişinizi <Link prefetch={false} href="/kargo-takip">kargo takip sayfasından</Link> üye olmadan da
         izleyebilirsiniz. Ürünün stokta bulunmaması siparişinizin tek taraflı iptal edilmesi
         sonucunu doğurmaz; böyle bir durumda sizinle iletişime geçeriz.
+      </p>
+
+      {/* Sipariş iptali ayrı başlık: Tosla sanal POS şartı (iptal ve iade sayfasında
+          sipariş iptali süreci net anlatılmalı, 13 Kas 2026). Teslimden önce cayma
+          MSY m.9/2; iade süresi sozlesme.ts'ten. */}
+      <h2>Sipariş İptali</h2>
+      <p>
+        Siparişiniz kargoya verilmeden önce iptal etmek isterseniz {ORG_EMAIL} adresine ya da{' '}
+        <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+          WhatsApp hattımıza
+        </a>{' '}
+        sipariş numaranızla yazmanız yeterlidir; gerekçe göstermeniz gerekmez. Talebinizi
+        aldığımızı size bildiririz ve siparişiniz kargoya verilmez. Ödeme yaptıysanız tahsil
+        edilen tutarın tamamı, talebinizin bize ulaştığı tarihten itibaren en geç{' '}
+        <strong>{GERI_ODEME_GUN} gün</strong> içinde ödeme yaptığınız yönteme tek seferde iade
+        edilir. Siparişiniz kargoya verildiyse aşağıdaki cayma hakkı adımları geçerlidir.
       </p>
 
       <h2>Cayma Hakkı (14 Gün İçinde İade)</h2>
@@ -170,7 +187,7 @@ export default async function KargoVeIadePage() {
       <h2>Uyuşmazlık Çözümü</h2>
       <p>
         Anlaşamazsak, değeri{' '}
-        <strong>{HAKEM_HEYETI_SINIRI_TL.toLocaleString('tr-TR')} TL'nin altındaki</strong>{' '}
+        <strong>{HAKEM_HEYETI_SINIRI_TL.toLocaleString('tr-TR')} TL&apos;nin altındaki</strong>{' '}
         uyuşmazlıklarda <strong>yerleşim yerinizin</strong> veya işlemin yapıldığı yerin İl
         ya da İlçe <strong>Tüketici Hakem Heyetine</strong> başvurabilirsiniz
         ({HAKEM_HEYETI_YILI} yılı sınırı; her yıl güncellenir). Başvuru e-Devlet üzerinden{' '}
