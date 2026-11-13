@@ -102,6 +102,17 @@ BB N11'i KarPanel için sormuş.)
    yoklaması (kısa 200 bile bir çağrı), "next" 573 sayfa ve önyükleme.
    Çağrı başına ~85 ms: işleyicinin kendisi hafif, maliyet çağrı sayısında.
 
+8. **`/favicon.ico` 404 → 404 sayfası her seferinde sunucuda kuruluyor**
+   (13 Kas istek günlüğü; `not-found.tsx` force-dynamic). Site simgesi
+   `/icon` (icon.tsx); tarayıcılar yine de `/favicon.ico` istiyor. 12 sa'te
+   `/_not-found` 11 çağrı / 0,7 sn — küçük ama bedava kapatılabilir
+   (public/favicon.ico).
+9. **Kadraj önbelleği her yayında sıfırlanıyor — doğrulandı** (13 Kas, yayından
+   hemen sonra): ana sayfadaki 12 kadraj görselinin 12'si `MISS · age 0`,
+   aynı adres ikinci istekte `HIT`. Yani her yayın, ziyaret edilen her görsel
+   için bir kez yeniden üretim (0,4–1,4 sn) demek: yalnız belge değişen
+   commit de yayın tetikliyor.
+
 ## Yapılanlar
 
 - `4cc9a8b`: izleyiciye ara katmanda kısa 200 (`proxy.ts`, `IZLEYICI`);
@@ -111,7 +122,7 @@ BB N11'i KarPanel için sormuş.)
   ana sayfa, ürün sayfası, `/api/health` 200. Gündüz yayınına rağmen
   12:00 TR `/api/sync` çalıştı (zamanlanmış görevler yeni yayına bağlandı).
 
-- 13 Kas (bu sohbet, commit aşağıdaki deploy raporunda):
+- 13 Kas, `bc72a23` (yayın `dpl_53ZkXqa5snt6qh1whiEwhgtTgUrW`, 12.19 TR):
   - İzleyicinin kökteki yoklaması **ara katmana hiç girmiyor**: next.config.ts
     `rewrites.beforeFiles` onu statik `/izleyici.txt`'ye ("ok") yönlendiriyor,
     proxy.ts matcher'ı kökü YALNIZ bu tarayıcıya karşı atlıyor (kök dışındaki
@@ -126,6 +137,15 @@ BB N11'i KarPanel için sormuş.)
     kodunda `prefetch`'i belirtilmemiş `<Link>` hata verir — yeni bağlantıda
     unutulmaz.
   - Güvenlik başlıkları DEĞİŞMEDİ: bütün sayfalarda nonce'lu CSP sürüyor.
+- Canlı doğrulama (13 Kas 12.20–12.30 TR): CDN günlüğünde izleyicinin
+  12.19.40'tan sonraki her yoklaması `Route /izleyici.txt · Path Type static ·
+  Cache HIT · 200`; istek günlüğünde kökte dakikalık ara katman satırı
+  kesildi. Ana sayfa, `/odeme`, `/panel/login` nonce'lu CSP + strict-dynamic,
+  `unsafe-inline` yok; `/odeme` no-store + noindex; `/panel` oturumsuz
+  `/panel/login`'e gidiyor. Ana sayfa (masaüstünde 12 görünür menü
+  bağlantısı) ve ürün sayfası açılışında RSC önyükleme isteği 0. 390 px ürün
+  sayfası taşma yok; sepet paneli → "Ödemeye Geç" → `/odeme` ve menü →
+  `/kategori/kolye` gezinmesi çalışıyor; konsolda hata yok.
 
 ## Sıradaki (NB Steelora oturumunun işi)
 
@@ -150,3 +170,8 @@ BB N11'i KarPanel için sormuş.)
   dinamik kalır (12 sa'te ~4 sn).
 - Sentry izleyicisinin aralığını 5 dakikaya çıkar (Sentry paneli; BB oturumu
   gerekir). Artık sunucu süresi harcamıyor; yalnız gereksiz istek.
+- Gereksiz yayından kaçın: yalnız `docs/` ve `.md` değişen commit'ler
+  yayınlanmasın (`deploy.yml` → `paths-ignore`), her yayın kadraj görsellerini
+  yeniden ürettiriyor (bulgu 9). Bir sonraki kod yayınıyla birlikte.
+- `public/favicon.ico` (bulgu 8) ve kadraj görsellerini kalıcı depoya yazma
+  (bulgu 6/9) — bir sonraki kod yayınıyla.
