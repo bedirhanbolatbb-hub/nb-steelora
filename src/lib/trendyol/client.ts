@@ -15,7 +15,7 @@ export const BARCODE_QUERY_LIMIT = 50
 /** 429'da bekleyip yeniden denenecek tur sayısı (ilk deneme hariç). */
 const YENIDEN_DENEME = 3
 
-function getHeaders() {
+export function getHeaders() {
   const credentials = Buffer.from(
     `${process.env.TRENDYOL_API_KEY}:${process.env.TRENDYOL_API_SECRET}`
   ).toString('base64')
@@ -46,7 +46,7 @@ const bekle = (ms: number) => new Promise((r) => setTimeout(r, ms))
  * beşte biri. Yine de tek bir 429 bütün koşuyu düşürmesin diye ağ var:
  * Retry-After başlığı varsa ona, yoksa artan beklemeye uyar.
  */
-async function istek(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+export async function istek(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
   for (let tur = 0; ; tur++) {
     const res = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) })
     if (res.status !== 429 || tur >= YENIDEN_DENEME) return res
