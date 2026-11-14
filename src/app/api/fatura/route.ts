@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server'
 import { adminIstegiMi, cronIstegiMi } from '@/lib/admin/requireAdmin'
 import { faturaIsi } from '@/lib/fatura/is'
 import { ozetiGonder } from '@/lib/fatura/ozet'
-import { goruntuOnizlemesi, yuklemeyiGeriAl } from '@/lib/fatura/yukleme'
-import { goruntuBasliklari } from '@/lib/fatura/depo'
+import { pdfOnizlemesi } from '@/lib/fatura/yukleme'
 import { yuklemeAcikMi, yuklemeyiAyarla } from '@/lib/fatura/anahtar'
 
 /**
@@ -15,13 +14,11 @@ import { yuklemeAcikMi, yuklemeyiAyarla } from '@/lib/fatura/anahtar'
  *                     yükler; gerekirse BB'ye özet atar.
  *  GET  panel oturumu: önizleme — neyin kesileceğini ve yükleneceğini
  *                     gösterir, HİÇBİR şey yazmaz.
- *       ?goruntu=<sipariş no>: o siparişin yüklenecek fatura sayfası
- *                     (aynı denetimlerle; imzasız taslak da gösterilir).
+ *       ?pdf=<sipariş no>: o siparişin Trendyol'a gidecek PDF'si (aynı
+ *                     denetimlerle; imzasız taslağınki de gösterilir).
  *  POST panel oturumu: şimdi kes (anahtar kapalı olsa da; bilerek tetiklenir).
  *       ?yukle=evet  : imzalıları da yükle (anahtara bakmadan).
  *       ?yukleme=ac | kapat: sabah turunun yükleme anahtarı.
- *       ?geriAl=<anahtar>: yüklenmiş bir faturayı geri al (sayfa silinir,
- *                     Trendyol'daki bağlantı kaldırılır).
  *
  * Panel karşılığı: buton yok; sonuç maille gelir, önizleme bu uçtan okunur.
  */
@@ -45,11 +42,18 @@ export async function GET(request: Request) {
     })
   }
   if (await adminIstegiMi(request)) {
-    const goruntu = new URL(request.url).searchParams.get('goruntu')
-    if (goruntu) {
-      const o = await goruntuOnizlemesi(goruntu.trim())
+    const pdfSiparis = new URL(request.url).searchParams.get('pdf')
+    if (pdfSiparis) {
+      const o = await pdfOnizlemesi(pdfSiparis.trim())
       if ('hata' in o) return NextResponse.json({ hata: o.hata }, { status: 422 })
-      return new Response(o.html, { headers: goruntuBasliklari() })
+      return new Response(new Uint8Array(o.pdf), {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `inline; filename="${o.dosyaAdi}"`,
+          'Cache-Control': 'private, no-store, max-age=0',
+          'X-Robots-Tag': 'noindex, nofollow',
+        },
+      })
     }
     const [sonuc, otomatikYukleme] = await Promise.all([faturaIsi('onizleme'), yuklemeAcikMi()])
     return NextResponse.json({ ...sonuc, otomatikYukleme: otomatikYukleme ? 'açık' : 'kapalı' })
@@ -64,8 +68,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Yetkisiz' }, { status: 403 })
   }
   const parametre = new URL(request.url).searchParams
-  const geriAl = parametre.get('geriAl')
-  if (geriAl) return NextResponse.json(await yuklemeyiGeriAl(geriAl.trim()))
   const anahtar = parametre.get('yukleme')
   if (anahtar === 'ac' || anahtar === 'kapat') {
     await yuklemeyiAyarla(anahtar === 'ac')

@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
   // başına mümkün kılmaz ama hedefe uygun açık aramayı kolaylaştırır.
   poweredByHeader: false,
 
+  // Fatura PDF'i (lib/fatura/pdf.ts, 14 Kas 2026): başsız Chromium paketi
+  // ikili dosyalarını kendi klasöründen göreli yolla bulur; paketlenirse
+  // kırılır. Paket dışı tutulur ve ikilileri yalnız /api/fatura işlevine
+  // kopyalanır (vitrin işlevleri büyümez).
+  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
+  outputFileTracingIncludes: {
+    "/api/fatura": ["./node_modules/@sparticuz/chromium/bin/**"],
+  },
+
   /**
    * Güvenlik başlıkları TÜM yollara (API dahil) uygulanır. CSP burada DEĞİL:
    * her istek için ayrı nonce gerektiği için proxy.ts'te üretiliyor.
@@ -18,7 +27,7 @@ const nextConfig: NextConfig = {
       // Nonce'lu sıkı politika gereken yollar (panel, hesabım, ödeme, sipariş,
       // giriş/kayıt/şifre) bu kurala girmez; onları src/proxy.ts yazar.
       {
-        source: '/((?!panel|hesabim|odeme|siparis-tamamlandi|giris|kayit|sifremi-unuttum|admin|api|_next|fatura/).*)',
+        source: '/((?!panel|hesabim|odeme|siparis-tamamlandi|giris|kayit|sifremi-unuttum|admin|api|_next).*)',
         headers: [
           { key: 'Content-Security-Policy', value: cspSabit(process.env.NODE_ENV === 'development') },
         ],

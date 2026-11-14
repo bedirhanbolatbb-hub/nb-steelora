@@ -101,28 +101,28 @@ yanlış siparişe yanlış fatura yüklemek başkasının kimlik ve adres bilgi
 üçüncü kişiye vermek demek, cezası ağır. Bu yüzden yükleme şüphede durur:
 bir denetim bile geçmezse fatura yüklenmez, mailde "elle" olarak yazılır.
 
-### Yol: fatura bağlantısı
+### Yol: PDF dosyası (14 Kas 2026, BB'nin kararı)
 
-Trendyol iki yol tanıyor: PDF dosyası ya da fatura bağlantısı (entegratör
-yolu; `POST /integration/sellers/{id}/seller-invoice-links`). e-Arşiv Portal
-PDF vermiyor; HTML görüntü veriyor. Sunucuda PDF üretmek ağır bir tarayıcı
-gerektirirdi. Bağlantı yolu bunun yerine:
+İlk kurulumda fatura bağlantısı yolu yazıldı (fatura sayfası sitede, bağlantı
+Trendyol'a). Aynı gün BB PDF'yi sordu; değerlendirme: yanlış eşleşme riski
+biçimden bağımsız (aşağıdaki denetimler ikisinde de aynı), PDF'de Trendyol
+dosyayı kendisi saklar ve "bağlantı 8 yıl açık kalmalı" yükümlülüğü doğmaz;
+BB'nin elle yaptığıyla da aynı. Bağlantı yoluyla hiçbir fatura gönderilmedi
+(anahtar o arada hiç imzalı faturayla çalışmadı); o kod kaldırıldı.
 
-- Görüntü GİB'in kendi HTML'idir (`EARSIV_PORTAL_FATURA_GOSTER`), hiç
-  değiştirilmez. İçinde GİB'in karekod betiği ve logolar var, dış kaynak yok.
-- Supabase Storage'da ÖZEL `faturalar` kovasına sıkıştırılarak yazılır
-  (`goruntu/<anahtar>.html.gz`), yanına kişisel veri içermeyen kaydı
-  (`kayit/<anahtar>.json`: sipariş, paket, belge, ETTN, tutar, zaman).
-- Bağlantı `https://www.nbsteelora.com/fatura/<anahtar>`; anahtar 128 bit
-  rastgele. Sayfa önbelleğe girmez, arama motoruna kapalı (robots + başlık),
-  `sandbox` içinde açılır: karekod betiği çalışır ama sitenin çerezlerine ve
-  deposuna erişemez.
-- Trendyol bağlantıyı müşteriye kendi e-postasıyla gönderir. **Trendyol
-  kuralı: bağlantı 8 yıl açık kalmalı.** Site ve kova bu süre boyunca
-  kapatılmamalı; taşınırsa `/fatura/<anahtar>` adresleri korunmalı. Görüntü
-  kaybolursa kayıttaki ETTN ile GİB'den aynı görüntü yeniden alınabilir.
-- Geri alınabilirlik bu yolun güvenlik artısı: yanlış bir yükleme fark
-  edilirse görüntü silindiği an bağlantı 404 olur.
+- Görüntü GİB'in kendi HTML'idir (`EARSIV_PORTAL_FATURA_GOSTER`, portalın
+  "Görüntüle" düğmesi), hiç değiştirilmez.
+- Sunucuda başsız Chromium'da açılıp A4 PDF'ye yazdırılır (`lib/fatura/pdf.ts`,
+  `@sparticuz/chromium` + `puppeteer-core`; next.config'de paket dışı ve
+  ikilileri yalnız `/api/fatura` işlevinde). Sayfa dışarıya istek atamaz.
+- PDF denetimi: karekod çizilmiş, yazdırılan sayfanın görünen metninde belge
+  numarası ve ETTN var, çıktı gerçekten PDF, 5 KB–9,5 MB, 1–3 sayfa.
+- `POST /integration/sellers/{id}/seller-invoice-file` (multipart:
+  shipmentPackageId + file; mikro ihracatta invoiceDateTime ve invoiceNumber
+  da). Trendyol dosyayı saklar ve müşteriye kendisi iletir.
+- **Geri alınamaz**: Trendyol'da gönderilen dosyayı silen bir uç yok. Yanlış
+  yükleme şüphesinde tek yol Trendyol satıcı desteği; bu yüzden denetimler
+  şüphede yüklemeyi durdurur.
 
 ### Denetimler (hepsi geçmeli; lib/fatura/eslesme.ts, yukleme.ts)
 
@@ -142,30 +142,25 @@ gerektirirdi. Bağlantı yolu bunun yerine:
 7. GİB görüntüsünde belge numarası ve ETTN geçiyor.
 8. Yüklemeden hemen önce Trendyol'dan sipariş taze okunur: tek paket, aynı
    paket no, faturası yok, durumu uygun; 5–6 taze paketle yeniden yapılır.
-9. Görüntü depoya yazıldıktan sonra bağlantı sitenin kendisinden açılıp
-   denenir (200 + belge no); açılmazsa silinir, Trendyol'a gitmez.
-10. Trendyol 409 derse (pakete daha önce fatura verilmiş) görüntü silinir.
-    Cevap belirsizse (zaman aşımı) görüntü kalır, mailde yazılır; sonraki tur
-    paketteki bağlantıya bakar.
-11. Gönderimden sonra paket yeniden okunur: bağlantı bizimki mi.
+9. PDF denetimi (yukarıda); geçmezse yüklenmez.
+10. Trendyol "pakete daha önce fatura gönderilmiş" derse elle; ret → hata.
+    Cevap belirsizse (zaman aşımı) mailde yazılır; sonraki tur pakete bakar.
+11. Gönderimden sonra paket yeniden okunur: faturası görünüyor mu.
 
 Tur başına en çok 10 yükleme; rotanın 60 sn sınırı yüzünden 40. saniyeden
 sonra yeni yükleme başlatılmaz, kalan sonraki tura kalır.
 
-### Anahtar, önizleme, geri alma (panel oturumuyla)
+### Anahtar ve önizleme (panel oturumuyla)
 
 - Önizleme `GET /api/fatura`: `yuklenecek` (imzalı ve denetimden geçen),
   `imzaDenetimi` (imza bekleyen her taslak imzalansa geçer mi), `elle`
   nedenleri, `otomatikYukleme` (anahtarın durumu). Hiçbir şey yazmaz.
-- Bir siparişin yüklenecek sayfası: `GET /api/fatura?goruntu=<sipariş no>`
-  (aynı denetimler; imzasız taslak da gösterilir).
+- Bir siparişin Trendyol'a gidecek PDF'si: `GET /api/fatura?pdf=<sipariş no>`
+  (aynı denetimler; imzasız taslağınki de gösterilir).
 - Sabah turunun yüklemesi: `POST /api/fatura?yukleme=ac` / `?yukleme=kapat`.
   Anahtar veritabanında (`alert_state`, `fatura_yukle`); kapatmak o an
   etkilidir. Satır yoksa kapalıdır.
 - Şimdi yükle: `POST /api/fatura?yukle=evet` (anahtara bakmaz).
-- Geri al: `POST /api/fatura?geriAl=<anahtar>` → görüntü silinir (bağlantı
-  404), paketteki bağlantı gerçekten bizimkiyse Trendyol'dan da kaldırılır
-  (`seller-invoice-links/delete`). Doğru fatura sonra yeniden yüklenebilir.
 
 Panel karşılığı: buton yok; sonuç maille gelir.
 

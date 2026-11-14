@@ -1,19 +1,17 @@
 /**
- * Trendyol'a fatura BAĞLANTISI gönderme ve geri alma (14 Kas 2026).
+ * Trendyol'a müşteri faturası DOSYASI (PDF) gönderme (14 Kas 2026).
  *
- * Belge: developers.trendyol.com "Send Customer Invoice Link" ve "Delete
- * Customer Invoice Link".
- *   POST /integration/sellers/{id}/seller-invoice-links
- *        { invoiceLink, shipmentPackageId, invoiceDateTime (ms), invoiceNumber (3+13) }
- *        201 başarı; 409 "pakete daha önce fatura verilmiş" ya da "bağlantı
- *        başka pakete verilmiş".
- *   POST /integration/sellers/{id}/seller-invoice-links/delete
- *        { serviceSourceId: paket, channelId: 1, customerId } → 202
- * Bağlantı müşteriye Trendyol'un e-postasıyla gider ve 8 yıl açık kalmalıdır.
- *
- * Bu modül yalnız yukleme.ts'ten, bütün denetimler geçtikten sonra çağrılır.
+ * Belge: developers.trendyol.com "Send Customer Invoice File".
+ *   POST /integration/sellers/{id}/seller-invoice-file   (multipart/form-data)
+ *        shipmentPackageId + file (PDF, en çok 10 MB); mikro ihracat
+ *        paketlerinde invoiceDateTime ve invoiceNumber de ZORUNLU.
+ *   Hatalar (metin): "has already been sent" (pakete fatura verilmiş),
+ *   "could not be found", "does not belong to the specified seller".
+ * Trendyol dosyayı saklar ve müşteriye kendisi iletir. Gönderilen dosyayı
+ * geri alan bir uç YOK; bu yüzden bu modül yalnız yukleme.ts'ten, bütün
+ * denetimler geçtikten sonra çağrılır.
  */
-import { getHeaders, istek } from '@/lib/trendyol/client'
+import { getHeaders } from '@/lib/trendyol/client'
 
 const KOK = 'https://apigw.trendyol.com/integration/sellers'
 
@@ -31,55 +29,41 @@ export type GonderimSonucu =
 
 const kisalt = (s: string) => s.replace(/\s+/g, ' ').slice(0, 200)
 
-export async function faturaBaglantisiGonder(g: {
-  link: string
+export async function faturaDosyasiGonder(g: {
+  pdf: Buffer
+  /** BB'nin elle yüklerken kullandığı ad: sipariş numarası (ör. 11808648857.pdf). */
+  dosyaAdi: string
   paketId: number
-  faturaZamani: number
   belgeNumarasi: string
+  faturaZamani: number
+  mikro: boolean
 }): Promise<GonderimSonucu> {
+  const form = new FormData()
+  form.append('shipmentPackageId', String(g.paketId))
+  if (g.mikro) {
+    form.append('invoiceDateTime', String(g.faturaZamani))
+    form.append('invoiceNumber', g.belgeNumarasi)
+  }
+  form.append('file', new Blob([new Uint8Array(g.pdf)], { type: 'application/pdf' }), g.dosyaAdi)
+
+  // Content-Type'ı fetch kendisi kurar (multipart sınırı); JSON başlığı gitmez.
+  const { Authorization, 'User-Agent': tarayici } = getHeaders()
   let yanit: Response
   try {
-    yanit = await istek(
-      `${KOK}/${satici()}/seller-invoice-links`,
-      {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({
-          invoiceLink: g.link,
-          shipmentPackageId: g.paketId,
-          invoiceDateTime: g.faturaZamani,
-          invoiceNumber: g.belgeNumarasi,
-        }),
-        cache: 'no-store',
-      },
-      20_000
-    )
+    yanit = await fetch(`${KOK}/${satici()}/seller-invoice-file`, {
+      method: 'POST',
+      headers: { Authorization, 'User-Agent': tarayici, Accept: 'application/json' },
+      body: form,
+      cache: 'no-store',
+      signal: AbortSignal.timeout(30_000),
+    })
   } catch (e) {
-    // Zaman aşımı: Trendyol işlemiş de olabilir. Görüntü silinmez, sonraki tur bakar.
+    // Zaman aşımı: Trendyol işlemiş de olabilir; sonraki tur pakete bakar.
     return { durum: 'belirsiz', mesaj: `Trendyol yanıt vermedi (${(e as Error).name})` }
   }
   const metin = kisalt(await yanit.text().catch(() => ''))
   if (yanit.status >= 200 && yanit.status < 300) return { durum: 'tamam' }
-  if (yanit.status === 409) return { durum: 'zaten', mesaj: metin }
-  if (yanit.status >= 500) return { durum: 'belirsiz', mesaj: `HTTP ${yanit.status}` }
+  if (/already been sent|daha önce/i.test(metin) || yanit.status === 409) return { durum: 'zaten', mesaj: metin }
+  if (yanit.status === 429 || yanit.status >= 500) return { durum: 'belirsiz', mesaj: `HTTP ${yanit.status}` }
   return { durum: 'hata', mesaj: `HTTP ${yanit.status} ${metin}`.trim() }
-}
-
-export async function faturaBaglantisiSil(paketId: number, musteriId: number): Promise<{ tamam: boolean; mesaj: string }> {
-  try {
-    const yanit = await istek(
-      `${KOK}/${satici()}/seller-invoice-links/delete`,
-      {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ serviceSourceId: paketId, channelId: 1, customerId: musteriId }),
-        cache: 'no-store',
-      },
-      20_000
-    )
-    const metin = kisalt(await yanit.text().catch(() => ''))
-    return { tamam: yanit.status >= 200 && yanit.status < 300, mesaj: `HTTP ${yanit.status} ${metin}`.trim() }
-  } catch (e) {
-    return { tamam: false, mesaj: `Trendyol yanıt vermedi (${(e as Error).name})` }
-  }
 }
