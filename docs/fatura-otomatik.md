@@ -116,7 +116,11 @@ BB'nin elle yaptığıyla da aynı. Bağlantı yoluyla hiçbir fatura gönderilm
   `@sparticuz/chromium` + `puppeteer-core`; next.config'de paket dışı ve
   ikilileri yalnız `/api/fatura` işlevinde). Sayfa dışarıya istek atamaz.
 - PDF denetimi: karekod çizilmiş, yazdırılan sayfanın görünen metninde belge
-  numarası ve ETTN var, çıktı gerçekten PDF, 5 KB–9,5 MB, 1–3 sayfa.
+  numarası ve ETTN var, Trendyol'a gidecekse GİB'in "İMZASIZ" filigranı yok,
+  çıktı gerçekten PDF, 5 KB–9,5 MB, 1–3 sayfa. (GİB filigranı istekteki onay
+  durumuna göre basıyor; asıl güvence listede belgenin "Onaylandı" olması.)
+- Dosya adı sipariş numarası (`11808648857.pdf`), BB'nin elle yüklerken
+  kullandığı gibi.
 - `POST /integration/sellers/{id}/seller-invoice-file` (multipart:
   shipmentPackageId + file; mikro ihracatta invoiceDateTime ve invoiceNumber
   da). Trendyol dosyayı saklar ve müşteriye kendisi iletir.

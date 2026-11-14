@@ -234,7 +234,10 @@ export async function pdfOnizlemesi(siparisNo: string): Promise<{ pdf: Buffer; d
     const html = await faturaGoruntusu(oturum, k.ettn, k.onay)
     if (!goruntuBelgeyleUyumlu(html, k.belge, k.ettn)) return { hata: 'görüntü belgeyle eşleşmedi' }
     tarayici = await pdfTarayicisiAc()
-    return { pdf: await faturaPdf(tarayici, html, k.belge, k.ettn), dosyaAdi: `${siparisNo}.pdf` }
+    return {
+      pdf: await faturaPdf(tarayici, html, k.belge, k.ettn, { imzasizOlabilir: k.onay !== IMZALI }),
+      dosyaAdi: `${siparisNo}.pdf`,
+    }
   } catch (e) {
     return { hata: mesaj(e) }
   } finally {

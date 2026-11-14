@@ -10,6 +10,10 @@
  *  - Sayfa dışarıya hiçbir istek atamaz (yalnız satır içi data: kaynakları).
  *  - Karekod gerçekten çizilmiş olmalı (#qrcode içindeki resim yüklü).
  *  - Yazdırılan sayfanın görünen metninde belge numarası ve ETTN geçmeli.
+ *  - Trendyol'a gidecekse sayfada GİB'in "İMZASIZ" filigranı OLMAMALI. (GİB
+ *    filigranı, istekte gönderilen onay durumuna göre basıyor — test
+ *    portalında görüldü; asıl güvence listede belgenin "Onaylandı" olması,
+ *    bu ikinci, bağımsız bir bakış.)
  *  - Çıktı gerçekten PDF ("%PDF-"), makul boyda (5 KB – 9,5 MB; Trendyol
  *    sınırı 10 MB) ve 1–3 sayfa.
  */
@@ -42,7 +46,13 @@ function sayfaSayisi(pdf: Buffer): number {
   return (pdf.toString('latin1').match(/\/Type\s*\/Page(?!s)/g) ?? []).length
 }
 
-export async function faturaPdf(tarayici: Browser, html: string, belge: string, ettn: string): Promise<Buffer> {
+export async function faturaPdf(
+  tarayici: Browser,
+  html: string,
+  belge: string,
+  ettn: string,
+  secenek: { imzasizOlabilir?: boolean } = {}
+): Promise<Buffer> {
   const sayfa = await tarayici.newPage()
   try {
     await sayfa.setRequestInterception(true)
@@ -61,6 +71,9 @@ export async function faturaPdf(tarayici: Browser, html: string, belge: string, 
     const metin = await sayfa.evaluate(() => document.body.innerText)
     if (!metin.includes(belge) || !metin.toLowerCase().includes(ettn.toLowerCase())) {
       throw new Error('yazdırılacak sayfada belge numarası ya da ETTN görünmüyor')
+    }
+    if (!secenek.imzasizOlabilir && /İMZASIZ|IMZASIZ/i.test(metin)) {
+      throw new Error('fatura görüntüsü imzasız görünüyor')
     }
     const pdf = Buffer.from(
       await sayfa.pdf({
