@@ -150,6 +150,16 @@ BB'nin elle yaptığıyla da aynı. Bağlantı yoluyla hiçbir fatura gönderilm
 10. Trendyol "pakete daha önce fatura gönderilmiş" derse elle; ret → hata.
     Cevap belirsizse (zaman aşımı) mailde yazılır; sonraki tur pakete bakar.
 11. Gönderimden sonra paket yeniden okunur: faturası görünüyor mu.
+12. Trendyol'un SAKLADIĞI dosya geri okunur (`lib/fatura/dosyaDogrula.ts`,
+    14 Kas 2026): paketin `invoiceLink` adresindeki PDF indirilir, görünür
+    metni çözülür; içinde TEK bir GİB belge numarası olmalı ve o, yüklenen
+    belge olmalı; ETTN görünüyorsa yüklenenin ETTN'i; 1–3 sayfa; "İMZASIZ"
+    yok. Ağ hatasında bir kez yeniden denenir. Doğrulanamazsa ya da tutmazsa
+    o turda başka yükleme yapılmaz, otomatik yükleme KAPANIR ve özet maili
+    "Fatura yükleme durduruldu: kontrol gerekiyor" başlığıyla gider.
+    Neden: pakette fatura görünmesi, doğru dosyanın doğru pakete gittiğini
+    kanıtlamaz. Elle günlük denetimin (token maliyeti fatura başına ~10–30
+    TL) yerini aldı; sunucuda fatura başına birkaç yüz milisaniye.
 
 Tur başına en çok 10 yükleme; rotanın 60 sn sınırı yüzünden 40. saniyeden
 sonra yeni yükleme başlatılmaz, kalan sonraki tura kalır.
@@ -165,6 +175,9 @@ sonra yeni yükleme başlatılmaz, kalan sonraki tura kalır.
   Anahtar veritabanında (`alert_state`, `fatura_yukle`); kapatmak o an
   etkilidir. Satır yoksa kapalıdır.
 - Şimdi yükle: `POST /api/fatura?yukle=evet` (anahtara bakmaz).
+- Trendyol'daki dosyanın içeriği: `GET /api/fatura?dosya=<sipariş no>` →
+  belge numaraları, ETTN, sayfa, filigran (kişisel veri dönmez). Sipariş son
+  13 gün içinde olmalı.
 
 Panel karşılığı: buton yok; sonuç maille gelir.
 

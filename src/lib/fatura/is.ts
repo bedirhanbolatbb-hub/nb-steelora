@@ -60,6 +60,8 @@ export interface FaturaIsiSonucu {
   elle: { siparis: string; neden: string }[]
   uyari: { siparis: string; durum: string; belge: string; onay: string }[]
   hatalar: string[]
+  /** Trendyol'daki bir dosya doğrulanamadı; otomatik yükleme kapatıldı. */
+  durduruldu: boolean
 }
 
 const mesaj = (e: unknown) => String((e as Error)?.message ?? e).slice(0, 240)
@@ -117,6 +119,7 @@ export async function faturaIsi(
     elle: [],
     uyari: [],
     hatalar: [],
+    durduruldu: false,
   }
 
   const kullanici = process.env.GIB_KULLANICI?.trim()
@@ -231,6 +234,7 @@ export async function faturaIsi(
       s.imzaDenetimi = y.imzaDenetimi
       s.yuklenecek = y.yuklenecek
       s.yuklendi = y.yuklendi
+      s.durduruldu = y.durduruldu
       s.elle.push(...y.elle)
       s.hatalar.push(...y.hatalar)
     }

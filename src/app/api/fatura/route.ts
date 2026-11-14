@@ -4,6 +4,8 @@ import { faturaIsi } from '@/lib/fatura/is'
 import { ozetiGonder } from '@/lib/fatura/ozet'
 import { pdfOnizlemesi } from '@/lib/fatura/yukleme'
 import { yuklemeAcikMi, yuklemeyiAyarla } from '@/lib/fatura/anahtar'
+import { trendyolDosyasiniOku } from '@/lib/fatura/dosyaDogrula'
+import { siparisPaketleri } from '@/lib/fatura/trendyolSiparis'
 
 /**
  * Otomatik fatura — ayrıntı: lib/fatura/is.ts, docs/fatura-otomatik.md.
@@ -42,6 +44,31 @@ export async function GET(request: Request) {
     })
   }
   if (await adminIstegiMi(request)) {
+    // ?dosya=<sipariş>: Trendyol'un o siparişte sakladığı fatura dosyasındaki
+    // belge numaraları (kişisel veri dönmez). Günlük denetim ve teşhis için.
+    const dosyaSiparis = new URL(request.url).searchParams.get('dosya')?.trim()
+    if (dosyaSiparis) {
+      if (!/^\d{6,15}$/.test(dosyaSiparis)) return NextResponse.json({ hata: 'geçersiz sipariş no' }, { status: 400 })
+      let paketler: Awaited<ReturnType<typeof siparisPaketleri>>
+      try {
+        paketler = await siparisPaketleri(dosyaSiparis)
+      } catch (e) {
+        return NextResponse.json({ siparis: dosyaSiparis, durum: 'Trendyol okunamadı', neden: (e as Error).message }, { status: 502 })
+      }
+      if (paketler.length !== 1) return NextResponse.json({ siparis: dosyaSiparis, durum: `${paketler.length} paket` })
+      const link = paketler[0].invoiceLink
+      if (!link) return NextResponse.json({ siparis: dosyaSiparis, durum: 'pakette fatura yok' })
+      const o = await trendyolDosyasiniOku(String(link))
+      if (!o.ok) return NextResponse.json({ siparis: dosyaSiparis, durum: 'okunamadı', neden: o.neden })
+      return NextResponse.json({
+        siparis: dosyaSiparis,
+        durum: 'okundu',
+        belgeler: o.belgeler,
+        ettn: o.ettn,
+        sayfa: o.sayfa,
+        imzasiz: o.imzasiz,
+      })
+    }
     const pdfSiparis = new URL(request.url).searchParams.get('pdf')
     if (pdfSiparis) {
       const o = await pdfOnizlemesi(pdfSiparis.trim())

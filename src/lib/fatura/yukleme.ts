@@ -17,7 +17,11 @@
  *     ETTN var, gerçekten PDF, makul boy ve sayfa. Olmazsa yüklenmez.
  *  6. PDF Trendyol'a gider. "Daha önce gönderilmiş" → elle. Ret → hata.
  *     Belirsiz (zaman aşımı) → sonraki tur pakete bakar.
- *  7. Trendyol'dan yeniden okunur: pakette fatura görünüyor mu.
+ *  7. Trendyol'dan yeniden okunur: pakette fatura görünüyor mu; görünüyorsa
+ *     Trendyol'un SAKLADIĞI dosya indirilip içindeki belge no / ETTN
+ *     yüklediğimiz belgeyle karşılaştırılır (dosyaDogrula.ts). Doğrulanamazsa
+ *     ya da tutmazsa bu turda başka yükleme yapılmaz ve otomatik yükleme
+ *     KAPANIR (anahtar.ts); BB'ye giden özet "durduruldu" başlığıyla gider.
  * Trendyol'a giden PDF'yi geri alan bir uç yok; şüphede yükleme yapılmaz,
  * BB'ye "elle" satırı yazılır.
  *
@@ -29,6 +33,8 @@ import { goruntuBelgeyleUyumlu, IMZALI, yuklemeDenetimi, type GibKaydi } from '.
 import { faturaHaritasi, GIB_GUNU } from './harita'
 import { faturaPdf, pdfTarayicisiAc, pdfTarayicisiKapat } from './pdf'
 import { faturaDosyasiGonder } from './trendyolFatura'
+import { yuklenenDosyayiDogrula, type DosyaDogrulama } from './dosyaDogrula'
+import { yuklemeyiAyarla } from './anahtar'
 import { KESILECEK, paketDurumu, siparisPaketleri } from './trendyolSiparis'
 import type { TrendyolPaket } from './taslak'
 
@@ -39,9 +45,12 @@ export interface YuklemeSonucu {
   /** Yalnız önizleme: imza bekleyen taslaklar imzalansa denetimden geçer mi. */
   imzaDenetimi: { siparis: string; belge: string; sonuc: string }[]
   yuklenecek: { siparis: string; paket: number; belge: string; tutar: number }[]
+  /** dogrulandi: Trendyol'daki dosyanın belge no/ETTN'i yüklenen belgeyle aynı. */
   yuklendi: { siparis: string; paket: number; belge: string; tutar: number; dogrulandi: boolean }[]
   elle: { siparis: string; neden: string }[]
   hatalar: string[]
+  /** Trendyol'daki dosya doğrulanamadı → tur kesildi, otomatik yükleme kapatıldı. */
+  durduruldu: boolean
 }
 
 const bekle = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -79,7 +88,15 @@ export async function imzalilariYukle(g: {
   /** Bu andan sonra yeni yükleme başlatılmaz (rota süre sınırı). */
   sureSonu: number
 }): Promise<YuklemeSonucu> {
-  const s: YuklemeSonucu = { imzaBekleyen: 0, imzaDenetimi: [], yuklenecek: [], yuklendi: [], elle: [], hatalar: [] }
+  const s: YuklemeSonucu = {
+    imzaBekleyen: 0,
+    imzaDenetimi: [],
+    yuklenecek: [],
+    yuklendi: [],
+    elle: [],
+    hatalar: [],
+    durduruldu: false,
+  }
   const elle = (siparis: string, neden: string) => s.elle.push({ siparis, neden: `yükleme: ${neden}` })
   let yapilan = 0
   let tarayici: Browser | null = null
@@ -191,16 +208,40 @@ export async function imzalilariYukle(g: {
         continue
       }
 
-      // 7. Doğrula.
-      await bekle(1000)
-      let dogrulandi = false
-      try {
-        const sonra = await siparisPaketleri(no, paket.orderDate)
-        dogrulandi = sonra.length === 1 && !!sonra[0].invoiceLink
-      } catch {
-        /* sonraki tur görür */
+      // 7. Doğrula: pakette fatura bağlantısı + Trendyol'un sakladığı dosyanın içeriği.
+      let link: string | null = null
+      for (let deneme = 0; deneme < 4 && !link; deneme++) {
+        await bekle(deneme === 0 ? 1000 : 2000)
+        try {
+          const sonra = await siparisPaketleri(no, paket.orderDate)
+          if (sonra.length === 1 && Number(sonra[0].id) === Number(t.id) && sonra[0].invoiceLink)
+            link = String(sonra[0].invoiceLink)
+        } catch {
+          /* yeniden denenir */
+        }
       }
-      s.yuklendi.push({ siparis: no, paket: Number(t.id), belge: kayit.belge, tutar: son.tutar, dogrulandi })
+      let dosya: DosyaDogrulama = { tamam: false, neden: 'pakette fatura bağlantısı görünmedi', belirsiz: true }
+      if (link) {
+        dosya = await yuklenenDosyayiDogrula(link, kayit.belge, kayit.ettn)
+        if (!dosya.tamam && dosya.belirsiz) {
+          await bekle(3000)
+          dosya = await yuklenenDosyayiDogrula(link, kayit.belge, kayit.ettn)
+        }
+      }
+      s.yuklendi.push({ siparis: no, paket: Number(t.id), belge: kayit.belge, tutar: son.tutar, dogrulandi: dosya.tamam })
+      if (!dosya.tamam) {
+        // Kapalı başarısızlık: doğrulanamayan bir yüklemeden sonra devam edilmez.
+        s.durduruldu = true
+        s.hatalar.push(
+          `${no}: Trendyol'daki fatura dosyası doğrulanamadı (${dosya.neden}); otomatik yükleme durduruldu, bu turda başka yükleme yapılmadı`
+        )
+        try {
+          await yuklemeyiAyarla(false)
+        } catch (e) {
+          s.hatalar.push(`otomatik yükleme kapatılamadı: ${mesaj(e)} — panelden kapatın`)
+        }
+        break
+      }
       await bekle(400)
     }
   } finally {

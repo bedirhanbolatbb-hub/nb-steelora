@@ -22,6 +22,14 @@ const tl = (n: number) => n.toLocaleString('tr-TR', { minimumFractionDigits: 2, 
 
 export function faturaOzetEposta(s: FaturaIsiSonucu): { subject: string; html: string } {
   const p: string[] = []
+  if (s.durduruldu) {
+    p.push(
+      '<p style="color:#a00000"><strong>Otomatik yükleme durduruldu.</strong> Trendyol\'a yüklenen bir faturanın ' +
+        'Trendyol\'daki dosyası doğrulanamadı (ayrıntı aşağıda, Hatalar bölümünde). Bu turda başka fatura yüklenmedi; ' +
+        'kontrol edilip sorun giderilene kadar faturalar Trendyol\'a otomatik yüklenmez. Yüklenen dosyayı geri alan ' +
+        'bir yol yok; dosya yanlışsa Trendyol satıcı desteğine başvurulur.</p>'
+    )
+  }
   const sonrasi =
     s.yukleme === 'açık'
       ? 'İmzaladığınızda sistem her birini denetleyip Trendyol\'da kendi siparişine kendisi yükler.'
@@ -35,7 +43,7 @@ export function faturaOzetEposta(s: FaturaIsiSonucu): { subject: string; html: s
           .map(
             (y) =>
               `<tr><td>${kacis(y.siparis)}</td><td>${kacis(y.belge)}</td><td align="right">${tl(y.tutar)} TL</td>` +
-              `<td>${y.dogrulandi ? 'yüklendi' : 'Trendyol kabul etti, panelde görünmesi bekleniyor'}</td></tr>`
+              `<td>${y.dogrulandi ? 'yüklendi, Trendyol\'daki dosya doğrulandı' : 'yüklendi, DOSYA DOĞRULANAMADI'}</td></tr>`
           )
           .join('') +
         '</table>'
@@ -83,7 +91,9 @@ export function faturaOzetEposta(s: FaturaIsiSonucu): { subject: string; html: s
   }
   p.push(`<p style="color:#777;font-size:12px">Tur: ${kacis(s.zaman)} · Trendyol paketi: ${s.paket} · GİB: ${s.gib}</p>`)
 
-  const subject = s.yuklendi.length
+  const subject = s.durduruldu
+    ? 'Fatura yükleme durduruldu: kontrol gerekiyor'
+    : s.yuklendi.length
     ? `Trendyol'a yüklendi: ${s.yuklendi.length} fatura` + (s.kesildi.length ? `, ${s.kesildi.length} yeni taslak` : '')
     : s.kesildi.length
     ? `Fatura taslağı hazır: ${s.kesildi.length} sipariş`
