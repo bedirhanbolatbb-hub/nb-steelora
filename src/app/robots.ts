@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin/', '/panel/', '/api/'],
+      disallow: ['/admin/', '/panel/', '/api/', '/fatura/'],
     },
     sitemap: 'https://www.nbsteelora.com/sitemap.xml',
   }

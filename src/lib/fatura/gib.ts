@@ -1,5 +1,5 @@
 /**
- * GİB e-Arşiv Portal istemcisi — yalnız taslak fatura işleri.
+ * GİB e-Arşiv Portal istemcisi — taslak açma ve belge okuma.
  *
  * Portalın kendi sayfalarının kullandığı uçlar (13 Kas 2026'da portal
  * sayfasından doğrulandı):
@@ -11,7 +11,9 @@
  * Şifre ve token hiçbir yere yazılmaz, loglanmaz.
  *
  * İMZA BURADA YOK: taslaklar "Onaylanmadı" durumunda kalır; BB portalda
- * Düzenlenen Belgeler → GİB İmza ile SMS koduyla imzalar.
+ * Düzenlenen Belgeler → GİB İmza ile SMS koduyla imzalar. İmzalı belgenin
+ * görüntüsü (portalın "Görüntüle" düğmesinin HTML'i) Trendyol'a yükleme için
+ * okunur (14 Kas 2026; komut ve yanıt biçimi GİB test portalında denendi).
  */
 import { randomUUID } from 'crypto'
 
@@ -31,6 +33,8 @@ export interface GibBelge {
   belgeNumarasi: string
   belgeTarihi: string
   onayDurumu: string
+  aliciVknTckn: string
+  aliciUnvanAdSoyad: string
 }
 
 /** Portalın JSON zarfı: başarıda `data` ya da `token`, hatada `error` + `messages`. */
@@ -162,6 +166,8 @@ export async function belgeleriListele(oturum: GibOturum, gun: number): Promise<
           belgeNumarasi: String(b.belgeNumarasi ?? ''),
           belgeTarihi: String(b.belgeTarihi ?? ''),
           onayDurumu: String(b.onayDurumu ?? ''),
+          aliciVknTckn: String(b.aliciVknTckn ?? ''),
+          aliciUnvanAdSoyad: String(b.aliciUnvanAdSoyad ?? ''),
         })
       }
     }
@@ -180,4 +186,15 @@ export async function faturaOlustur(oturum: GibOturum, jp: Record<string, unknow
   const veri = await komut(oturum, 'EARSIV_PORTAL_FATURA_OLUSTUR', 'RG_BASITFATURA', jp)
   const metin = typeof veri === 'string' ? veri : JSON.stringify(veri ?? '')
   if (!/başarıyla oluşturul/i.test(metin)) throw new GibHatasi(`GİB: ${metin.slice(0, 200)}`)
+}
+
+/**
+ * Belgenin portalda "Görüntüle" ile açılan HTML'i (GİB'in kendi fatura
+ * görüntüsü: karekod betiği ve logolar içinde, dış kaynak yok, ~55 KB).
+ * `onayDurumu` listedeki değerle aynen gider ("Onaylandı" / "Onaylanmadı").
+ */
+export async function faturaGoruntusu(oturum: GibOturum, ettn: string, onayDurumu: string): Promise<string> {
+  const veri = await komut(oturum, 'EARSIV_PORTAL_FATURA_GOSTER', 'RG_TASLAKLAR', { ettn, onayDurumu })
+  if (typeof veri !== 'string' || !/<html/i.test(veri)) throw new GibHatasi('GİB fatura görüntüsünü döndürmedi')
+  return veri
 }

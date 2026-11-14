@@ -54,6 +54,7 @@ export interface TrendyolAdres {
 
 export interface TrendyolPaket {
   id?: number
+  customerId?: number
   orderNumber: string
   orderDate?: number
   status?: string

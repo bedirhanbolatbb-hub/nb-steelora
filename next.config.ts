@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
       // Nonce'lu sıkı politika gereken yollar (panel, hesabım, ödeme, sipariş,
       // giriş/kayıt/şifre) bu kurala girmez; onları src/proxy.ts yazar.
       {
-        source: '/((?!panel|hesabim|odeme|siparis-tamamlandi|giris|kayit|sifremi-unuttum|admin|api|_next).*)',
+        source: '/((?!panel|hesabim|odeme|siparis-tamamlandi|giris|kayit|sifremi-unuttum|admin|api|_next|fatura/).*)',
         headers: [
           { key: 'Content-Security-Policy', value: cspSabit(process.env.NODE_ENV === 'development') },
         ],

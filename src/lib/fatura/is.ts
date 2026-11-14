@@ -1,49 +1,48 @@
 /**
- * Otomatik fatura işi — Trendyol siparişleri için e-Arşiv TASLAĞI açar.
+ * Otomatik fatura işi — Trendyol siparişleri için e-Arşiv TASLAĞI açar; BB'nin
+ * imzaladığı faturaları Trendyol'a yükler (14 Kas 2026'dan, yukleme.ts).
  *
  * Akış: Trendyol'dan son 13 günün paketleri → GİB'de son 21 günün belgeleri
- * (nottaki sipariş numarasıyla eşlenir) → faturası olmayan uygun siparişlere
- * taslak. İmza ve Trendyol'a yükleme BB'de (13 Kas 2026 kararı).
+ * (nottaki sipariş numarasıyla eşlenir, harita.ts) → faturası olmayan uygun
+ * siparişlere taslak → imzalanmış ve henüz yüklenmemiş olanları yükleme.
+ * İmza BB'de: e-Arşiv Portal, Düzenlenen Belgeler, GİB İmza (tek SMS).
  *
  * Uygun sipariş: BB'nin tarifiyle "yeni, işleme alınan, taşıma durumunda ve
- * teslim edilen" (Created, Picking, Invoiced, Shipped, AtCollectionPoint,
- * Delivered). İptal/iade olanlara fatura açılmaz; faturası varsa BB'ye
- * bildirilir.
+ * teslim edilen" (trendyolSiparis.ts KESILECEK). İptal/iade olanlara fatura
+ * açılmaz, yüklenmez; faturası varsa BB'ye bildirilir.
  *
  * Mükerrer koruması iki katlı:
  *  1. GİB'deki HER belge (taslak, imzalı, silinmiş, iptal) sayılır: notunda
  *     sipariş numarası geçen siparişe bir daha fatura açılmaz. BB'nin
  *     sildiği taslak da geri açılmaz — silmek "istemiyorum" demektir.
- *  2. Kesme turu kalıcı kilitle tekleşir (alert_state'te `fatura_kilit`
- *     satırı; bellek içi kilit Vercel'de çalışmaz). Kilit taramadan ÖNCE
- *     alınır ki iki tur aynı boşluğu görüp ikisi birden kesmesin.
- * Bir belgenin notu okunamazsa tur hiç kesmeden biter (kapalı başarısızlık).
+ *  2. Tur kalıcı kilitle tekleşir (alert_state'te `fatura_kilit` satırı;
+ *     bellek içi kilit Vercel'de çalışmaz). Kilit taramadan ÖNCE alınır ki
+ *     iki tur aynı boşluğu görüp ikisi birden kesmesin ya da yüklemesin.
+ * Bir belgenin notu okunamazsa tur hiç iş yapmadan biter (kapalı başarısızlık).
  *
- * Kişisel veri loglanmaz: sonuçta yalnız sipariş/belge numarası, tutar,
+ * Yükleme yalnız açıkça istendiğinde çalışır (`yukle`): cron'da yükleme
+ * anahtarı (anahtar.ts) açıksa, panelden POST ?yukle=evet. Önizleme
+ * yükleneceklerin listesini gösterir, hiçbir şey yazmaz.
+ *
+ * Süre: rota 60 sn ile sınırlı; yeni yükleme SURE_PAYI_MS dolduktan sonra
+ * başlatılmaz, kalan sonraki tura kalır.
+ *
+ * Kişisel veri loglanmaz: sonuçta yalnız sipariş/paket/belge numarası, tutar,
  * ürün adı ve hata metni var; alıcı adı ve adresi yalnız GİB'e gider.
  */
 import { createServiceClient } from '@/lib/supabase/service'
-import {
-  belgeGetir,
-  belgeleriListele,
-  faturaOlustur,
-  gibCikis,
-  gibGiris,
-  istanbulSimdi,
-  type GibOturum,
-} from './gib'
-import { siparisNoNottan, taslakHazirla, type FaturaTuru, type TrendyolPaket } from './taslak'
-import { sonPaketler } from './trendyolSiparis'
-
-const KESILECEK = new Set(['Created', 'Picking', 'Invoiced', 'Shipped', 'AtCollectionPoint', 'Delivered'])
-const DONEN = new Set(['Cancelled', 'UnSupplied', 'Returned', 'UnDelivered'])
+import { faturaOlustur, gibCikis, gibGiris, istanbulSimdi, type GibOturum } from './gib'
+import { faturaHaritasi, GIB_GUNU } from './harita'
+import type { GibKaydi } from './eslesme'
+import { taslakHazirla, type FaturaTuru, type TrendyolPaket } from './taslak'
+import { DONEN, KESILECEK, paketDurumu, sonPaketler } from './trendyolSiparis'
+import { imzalilariYukle, type YuklemeSonucu } from './yukleme'
 
 const SIPARIS_GUNU = 13
-const GIB_GUNU = 21
 const TUR_BASINA_EN_FAZLA = 20
-const ES_ZAMANLI_OKUMA = 3
 const KILIT = 'fatura_kilit'
 const KILIT_OMRU_MS = 10 * 60_000
+const SURE_PAYI_MS = 40_000
 
 export interface FaturaIsiSonucu {
   kip: 'onizleme' | 'kes'
@@ -53,46 +52,18 @@ export interface FaturaIsiSonucu {
   mevcut: number
   kesilecek: { siparis: string; tur: FaturaTuru; tutar: number; urunler: string[] }[]
   kesildi: { siparis: string; tur: FaturaTuru; tutar: number; belge: string | null }[]
+  yukleme: 'kapalı' | 'önizleme' | 'açık'
+  imzaBekleyen: number
+  imzaDenetimi: YuklemeSonucu['imzaDenetimi']
+  yuklenecek: YuklemeSonucu['yuklenecek']
+  yuklendi: YuklemeSonucu['yuklendi']
   elle: { siparis: string; neden: string }[]
   uyari: { siparis: string; durum: string; belge: string; onay: string }[]
   hatalar: string[]
 }
 
-type Kayit = { belge: string; onay: string }
-
 const mesaj = (e: unknown) => String((e as Error)?.message ?? e).slice(0, 240)
 const bekle = (ms: number) => new Promise((r) => setTimeout(r, ms))
-const paketDurumu = (p: TrendyolPaket) => p.shipmentPackageStatus ?? p.status ?? ''
-
-async function sinirli<T, R>(ogeler: T[], es: number, f: (x: T) => Promise<R>): Promise<R[]> {
-  const sonuc = new Array<R>(ogeler.length)
-  let sira = 0
-  await Promise.all(
-    Array.from({ length: Math.min(es, ogeler.length) }, async () => {
-      while (sira < ogeler.length) {
-        const k = sira++
-        sonuc[k] = await f(ogeler[k])
-      }
-    })
-  )
-  return sonuc
-}
-
-/** GİB belgeleri → sipariş no eşlemesi. `bilinen` ETTN'ler yeniden okunmaz. */
-async function faturaHaritasi(
-  oturum: GibOturum,
-  gun: number,
-  bilinen = new Set<string>()
-): Promise<{ harita: Map<string, Kayit>; ettnler: Set<string> }> {
-  const belgeler = (await belgeleriListele(oturum, gun)).filter((b) => !bilinen.has(b.ettn))
-  const notlar = await sinirli(belgeler, ES_ZAMANLI_OKUMA, async (b) => (await belgeGetir(oturum, b.ettn)).not)
-  const harita = new Map<string, Kayit>()
-  belgeler.forEach((b, i) => {
-    const no = siparisNoNottan(notlar[i])
-    if (no && !harita.has(no)) harita.set(no, { belge: b.belgeNumarasi, onay: b.onayDurumu })
-  })
-  return { harita, ettnler: new Set(belgeler.map((b) => b.ettn)) }
-}
 
 async function kilitAl(): Promise<string | null> {
   const db = createServiceClient()
@@ -123,8 +94,13 @@ async function kilitBirak(damga: string): Promise<void> {
   }
 }
 
-export async function faturaIsi(kip: 'onizleme' | 'kes'): Promise<FaturaIsiSonucu> {
+export async function faturaIsi(
+  kip: 'onizleme' | 'kes',
+  secenek: { yukle?: boolean } = {}
+): Promise<FaturaIsiSonucu> {
+  const basla = Date.now()
   const an = istanbulSimdi()
+  const yukle = kip === 'kes' && secenek.yukle === true
   const s: FaturaIsiSonucu = {
     kip,
     zaman: `${an.tarih} ${an.saat}`,
@@ -133,6 +109,11 @@ export async function faturaIsi(kip: 'onizleme' | 'kes'): Promise<FaturaIsiSonuc
     mevcut: 0,
     kesilecek: [],
     kesildi: [],
+    yukleme: kip === 'onizleme' ? 'önizleme' : yukle ? 'açık' : 'kapalı',
+    imzaBekleyen: 0,
+    imzaDenetimi: [],
+    yuklenecek: [],
+    yuklendi: [],
     elle: [],
     uyari: [],
     hatalar: [],
@@ -172,7 +153,7 @@ export async function faturaIsi(kip: 'onizleme' | 'kes'): Promise<FaturaIsiSonuc
       }
     }
 
-    let gibKayitlari = { harita: new Map<string, Kayit>(), ettnler: new Set<string>() }
+    let gibKayitlari = { harita: new Map<string, GibKaydi[]>(), ettnler: new Set<string>() }
     if (kullanici && sifre) {
       try {
         oturum = await gibGiris(kullanici, sifre)
@@ -205,33 +186,53 @@ export async function faturaIsi(kip: 'onizleme' | 'kes'): Promise<FaturaIsiSonuc
     }
     for (const p of donenler) {
       const no = String(p.orderNumber)
-      const kayit = mevcut.get(no)
+      const kayit = mevcut.get(no)?.[0]
       if (kayit) s.uyari.push({ siparis: no, durum: paketDurumu(p), belge: kayit.belge, onay: kayit.onay })
     }
 
-    if (kip !== 'kes' || !oturum || !isler.length) return s
+    if (!oturum) return s
 
-    for (const is of isler.slice(0, TUR_BASINA_EN_FAZLA)) {
-      try {
-        await faturaOlustur(oturum, is.jp)
-        s.kesildi.push({ siparis: is.no, tur: is.tur, tutar: is.toplam, belge: null })
-      } catch (e) {
-        s.hatalar.push(`${is.no}: ${mesaj(e)}`)
+    // Taslaklar.
+    if (kip === 'kes' && isler.length) {
+      for (const is of isler.slice(0, TUR_BASINA_EN_FAZLA)) {
+        try {
+          await faturaOlustur(oturum, is.jp)
+          s.kesildi.push({ siparis: is.no, tur: is.tur, tutar: is.toplam, belge: null })
+        } catch (e) {
+          s.hatalar.push(`${is.no}: ${mesaj(e)}`)
+        }
+        await bekle(400)
       }
-      await bekle(400)
-    }
-    if (isler.length > TUR_BASINA_EN_FAZLA) {
-      s.hatalar.push(`${isler.length - TUR_BASINA_EN_FAZLA} sipariş bir sonraki tura kaldı`)
+      if (isler.length > TUR_BASINA_EN_FAZLA) {
+        s.hatalar.push(`${isler.length - TUR_BASINA_EN_FAZLA} sipariş bir sonraki tura kaldı`)
+      }
+      // Yeni taslakların belge numaraları — yalnız bugünün yeni belgeleri okunur.
+      if (s.kesildi.length) {
+        try {
+          const yeni = await faturaHaritasi(oturum, 1, gibKayitlari.ettnler)
+          for (const k of s.kesildi) k.belge = yeni.harita.get(k.siparis)?.[0]?.belge ?? null
+        } catch {
+          /* numara eşlenemese de taslaklar açıldı; özet yine gider */
+        }
+      }
     }
 
-    // Yeni taslakların belge numaraları — yalnız bugünün yeni belgeleri okunur.
-    if (s.kesildi.length) {
-      try {
-        const yeni = await faturaHaritasi(oturum, 1, gibKayitlari.ettnler)
-        for (const k of s.kesildi) k.belge = yeni.harita.get(k.siparis)?.belge ?? null
-      } catch {
-        /* numara eşlenemese de taslaklar açıldı; özet yine gider */
-      }
+    // İmzalılar → Trendyol (önizlemede yalnız liste).
+    if (kip === 'onizleme' || yukle) {
+      const y = await imzalilariYukle({
+        kip,
+        oturum,
+        adaylar,
+        coklu,
+        belgeler: mevcut,
+        sureSonu: basla + SURE_PAYI_MS,
+      })
+      s.imzaBekleyen = y.imzaBekleyen
+      s.imzaDenetimi = y.imzaDenetimi
+      s.yuklenecek = y.yuklenecek
+      s.yuklendi = y.yuklendi
+      s.elle.push(...y.elle)
+      s.hatalar.push(...y.hatalar)
     }
     return s
   } catch (e) {

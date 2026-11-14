@@ -1,8 +1,9 @@
 /**
  * Fatura turunun BB'ye özeti.
  *
- * Mail yalnız iki durumda gider: yeni taslak açıldıysa, ya da elle bakılacak /
- * uyarı / hata listesi bir önceki maildekinden farklıysa. Aynı açık konu her
+ * Mail yalnız şu durumlarda gider: yeni taslak açıldıysa, Trendyol'a fatura
+ * yüklendiyse, ya da elle bakılacak / uyarı / hata listesi bir önceki
+ * maildekinden farklıysa. Aynı açık konu her
  * sabah tekrar gelmesin diye son listenin parmak izi alert_state'te
  * (`fatura_ozet`) tutulur.
  */
@@ -21,11 +22,29 @@ const tl = (n: number) => n.toLocaleString('tr-TR', { minimumFractionDigits: 2, 
 
 export function faturaOzetEposta(s: FaturaIsiSonucu): { subject: string; html: string } {
   const p: string[] = []
+  const sonrasi =
+    s.yukleme === 'açık'
+      ? 'İmzaladığınızda sistem her birini denetleyip Trendyol\'da kendi siparişine kendisi yükler.'
+      : 'Sonra her birini Trendyol\'da kendi siparişine yükleyin.'
+  if (s.yuklendi.length) {
+    p.push(`<p>${s.yuklendi.length} imzalı fatura Trendyol'da kendi siparişine yüklendi:</p>`)
+    p.push(
+      '<table cellpadding="6" style="border-collapse:collapse;font-size:14px">' +
+        '<tr><th align="left">Sipariş</th><th align="left">Belge</th><th align="right">Tutar</th><th align="left">Durum</th></tr>' +
+        s.yuklendi
+          .map(
+            (y) =>
+              `<tr><td>${kacis(y.siparis)}</td><td>${kacis(y.belge)}</td><td align="right">${tl(y.tutar)} TL</td>` +
+              `<td>${y.dogrulandi ? 'yüklendi' : 'Trendyol kabul etti, panelde görünmesi bekleniyor'}</td></tr>`
+          )
+          .join('') +
+        '</table>'
+    )
+  }
   if (s.kesildi.length) {
     p.push(
       `<p>${s.kesildi.length} siparişin faturası e-Arşiv Portal'da taslak olarak hazır. ` +
-        `İmza için: e-Arşiv Portal, Düzenlenen Belgeler, taslakları seç, GİB İmza. ` +
-        `Sonra her birini Trendyol'da kendi siparişine yükle.</p>`
+        `İmza için: e-Arşiv Portal, Düzenlenen Belgeler, taslakları seç, GİB İmza. ${sonrasi}</p>`
     )
     p.push(
       '<table cellpadding="6" style="border-collapse:collapse;font-size:14px">' +
@@ -40,8 +59,11 @@ export function faturaOzetEposta(s: FaturaIsiSonucu): { subject: string; html: s
         '</table>'
     )
   }
+  if (s.imzaBekleyen > 0 && !s.kesildi.length) {
+    p.push(`<p>İmza bekleyen ${s.imzaBekleyen} taslak var. ${sonrasi}</p>`)
+  }
   if (s.elle.length) {
-    p.push('<p>Sistemin kesmediği, elle bakılması gereken siparişler:</p>')
+    p.push('<p>Sistemin kesmediği ya da yüklemediği, elle bakılması gereken siparişler:</p>')
     p.push(`<ul>${s.elle.map((e) => `<li>${kacis(e.siparis)}: ${kacis(e.neden)}</li>`).join('')}</ul>`)
   }
   if (s.uyari.length) {
@@ -61,7 +83,9 @@ export function faturaOzetEposta(s: FaturaIsiSonucu): { subject: string; html: s
   }
   p.push(`<p style="color:#777;font-size:12px">Tur: ${kacis(s.zaman)} · Trendyol paketi: ${s.paket} · GİB: ${s.gib}</p>`)
 
-  const subject = s.kesildi.length
+  const subject = s.yuklendi.length
+    ? `Trendyol'a yüklendi: ${s.yuklendi.length} fatura` + (s.kesildi.length ? `, ${s.kesildi.length} yeni taslak` : '')
+    : s.kesildi.length
     ? `Fatura taslağı hazır: ${s.kesildi.length} sipariş`
     : s.hatalar.length
       ? 'Fatura turu: hata var'
@@ -84,11 +108,12 @@ function parmakIzi(s: FaturaIsiSonucu): string {
  */
 export async function ozetiGonder(s: FaturaIsiSonucu, zorla = false): Promise<string> {
   const konuVar = s.elle.length + s.uyari.length + s.hatalar.length > 0
-  if (!s.kesildi.length && !konuVar) return 'gerekmedi'
+  const yeniIs = s.kesildi.length + s.yuklendi.length > 0
+  if (!yeniIs && !konuVar) return 'gerekmedi'
 
   const iz = parmakIzi(s)
   const db = createServiceClient()
-  if (!s.kesildi.length && !zorla) {
+  if (!yeniIs && !zorla) {
     const { data } = await db.from('alert_state').select('fingerprint').eq('key', OZET).maybeSingle()
     if (data?.fingerprint === iz) return 'aynı konular, tekrar gönderilmedi'
   }
