@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 import { kuponKoduUret } from '@/lib/kuponlar/ikinciSiparis'
 import { kisiselKuponEmail } from '@/lib/emails/templates'
 import { sendMail } from '@/lib/emails/send'
 import { KUPON_VARSAYILAN } from '@/lib/metin/kuponMetni'
+import { vitriniYenile } from '@/lib/cache/vitrin'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +26,7 @@ export const dynamic = 'force-dynamic'
 const EPOSTA = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 export async function POST(request: Request) {
+  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -148,6 +150,7 @@ export async function POST(request: Request) {
 
 /** İptal / yeniden etkinleştirme — kupon SİLİNMEZ, izi kalır. */
 export async function PATCH(request: Request) {
+  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

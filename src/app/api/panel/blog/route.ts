@@ -3,6 +3,7 @@ import { indexNowBildir } from '@/lib/indexnow'
 import { SITE_URL } from '@/lib/seo'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
+import { vitriniYenile } from '@/lib/cache/vitrin'
 
 function slugla(title: string): string {
   return (
@@ -34,6 +35,7 @@ function yayinlananiBildir(slug: string) {
  * hâle getirilir); güncellemede slug alanı yok sayılır — canlı URL değişmez.
  */
 export async function POST(request: Request) {
+  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

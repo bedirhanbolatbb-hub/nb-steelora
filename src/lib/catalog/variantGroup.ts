@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { getGroupKey, hasDistinctLabels, pickCover } from './variants'
 
 export type VariantMember = {
@@ -20,7 +20,7 @@ const GRUP_ALANLARI =
  * Önce ucuz eşitliklerle aday kümesi, sonra normalize başlıkla kesin eşleşme.
  */
 async function grupUyeleri(product: any): Promise<any[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   let query = supabase
     .from('products_display')

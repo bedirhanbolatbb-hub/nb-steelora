@@ -1,10 +1,12 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 import { validateCampaign } from '@/lib/panel/campaignValidation'
 import { hedefVeKademeYaz } from '@/lib/panel/kampanyaYaz'
+import { vitriniYenile } from '@/lib/cache/vitrin'
 
 export async function POST(request: Request) {
+  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

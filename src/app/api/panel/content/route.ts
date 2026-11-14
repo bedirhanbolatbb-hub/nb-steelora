@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 import { SATICI_PUANI_ANAHTARLARI, puanSayisi, puanTarihi } from '@/lib/metin/saticiPuani'
+import { vitriniYenile } from '@/lib/cache/vitrin'
 
 /**
  * Panelde alanı olup tabloda satırı henüz bulunmayan anahtarlar. Yalnız bunlar
@@ -12,6 +13,7 @@ const ILK_KAYITTA_OLUSUR = new Set<string>(['tiktok_url', ...Object.values(SATIC
 
 /** Site metni güncelleme — anahtar mevcutsa yazar, yeni anahtar üretmez. */
 export async function PATCH(request: Request) {
+  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { havaleAyariDogrula } from '@/lib/odeme/havale'
 import { havaleAyariOku, havaleAyariYaz } from '@/lib/odeme/havaleAyari'
+import { vitriniYenile } from '@/lib/cache/vitrin'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +13,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await request.json().catch(() => null)
   const sonuc = havaleAyariDogrula(body)

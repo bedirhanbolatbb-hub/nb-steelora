@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
 
+// 14 Kas 2026: vitrin önbellekten verilirken bu yol her istekte, nonce'lu sıkı
+// güvenlik politikasıyla çizilmeli (src/proxy.ts).
+export const dynamic = 'force-dynamic'
+
 /**
  * İşlevsel sayfa — arama sonucunda yeri yok (Faz 31 denetimi).
  *

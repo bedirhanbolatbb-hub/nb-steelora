@@ -104,13 +104,13 @@ function sentryKaynagi(): string {
   }
 }
 
-export function cspUret(nonce: string, gelistirme: boolean): string {
+function cspKur(scriptKaynaklari: string, gelistirme: boolean): string {
   const supabase = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').trim()
   const sentry = sentryKaynagi()
   const kurallar: string[] = [
     "default-src 'self'",
     // Geliştirmede Next hot-reload için eval kullanır; üretimde yok.
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${gelistirme ? " 'unsafe-eval'" : ''}`,
+    `script-src ${scriptKaynaklari}${gelistirme ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
     "img-src 'self' data: blob: https:",
@@ -126,4 +126,19 @@ export function cspUret(nonce: string, gelistirme: boolean): string {
     'upgrade-insecure-requests',
   ]
   return kurallar.join('; ')
+}
+
+/** Nonce'lu sıkı politika — panel, hesabım, ödeme, sipariş, giriş yolları (src/proxy.ts). */
+export function cspUret(nonce: string, gelistirme: boolean): string {
+  return cspKur(`'self' 'nonce-${nonce}' 'strict-dynamic'`, gelistirme)
+}
+
+/**
+ * Nonce'suz sabit politika — önbellekten verilen vitrin sayfaları (next.config.ts).
+ * Önbellekteki sayfa istek başı nonce taşıyamaz; satır içi script'e izin
+ * verilir, geri kalan kurallar (kaynaklar, bağlantılar, çerçeve, form) aynıdır.
+ * BB onayı 14 Kas 2026 (Vercel ücretsiz planı, ayda 4 saat sunucu süresi).
+ */
+export function cspSabit(gelistirme: boolean): string {
+  return cspKur(`'self' 'unsafe-inline'`, gelistirme)
 }

@@ -1,12 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
 import Navbar from '@/components/store/Navbar'
 import Footer from '@/components/store/Footer'
 import FloatingWhatsApp from '@/components/store/FloatingWhatsApp'
 import RevealController from '@/components/motion/RevealController'
 import ConsentGate from '@/components/store/ConsentGate'
 import TarayiciDogrula from '@/components/store/TarayiciDogrula'
+import SayfaGoruntuleme from '@/components/store/SayfaGoruntuleme'
 import { getLayoutData } from '@/lib/layoutData'
-import { sunucuOlayi } from '@/lib/analytics/server'
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import { KampanyaSaglayici } from '@/components/store/KampanyaContext'
 import { UyelikTesvikSaglayici } from '@/components/store/UyelikTesvikContext'
@@ -29,21 +28,10 @@ export default async function StoreLayout({
     uyelikTesvikiGetir(),
   ])
 
-  // Sayfa görüntüleme sunucuda ölçülür (Faz 12): engelleyicilerden etkilenmez,
-  // istemciye JS eklemez ve after() sayesinde yanıtı geciktirmez.
-  await sunucuOlayi('page_view')
-
-  // Salt görsel karar (hesap ikonunun hedefi): oturumu çerezden okumak yeterli,
-  // ağ doğrulaması (getUser) TTFB'ye yüzlerce ms ekliyordu. Yazma yapan her uç
-  // kendi doğrulamasını zaten yapıyor.
-  let isLoggedIn = false
-  try {
-    const supabase = await createClient()
-    const { data } = await supabase.auth.getSession()
-    isLoggedIn = !!data.session
-  } catch {
-    // Defaults apply
-  }
+  // 14 Kas 2026: vitrin önbellekten verilir (ücretsiz plandaki sunucu süresi).
+  // Bu yüzden burada istek başı hiçbir şey okunmaz: sayfa görüntüleme
+  // tarayıcıdan ölçülür (SayfaGoruntuleme), hesap simgesinin hedefi tarayıcıda
+  // oturum çerezine bakılarak seçilir (hooks/useOturumVar).
 
   return (
     // Faz 11A: sağlayıcı yalnız <main>'i sarıyordu; Navbar onun DIŞINDAydı.
@@ -60,17 +48,17 @@ export default async function StoreLayout({
       <Navbar
         bannerText={veri.bannerText}
         bannerColor={veri.bannerColor}
-        isLoggedIn={isLoggedIn}
         coupon={veri.coupon}
         ilkSiparisSeridi={veri.ilkSiparis?.serit ?? null}
         koleksiyonlar={veri.collections.map((c) => ({ slug: c.slug, name: c.name }))}
       />
       <main className="flex-1">{children}</main>
-      <Footer isLoggedIn={isLoggedIn} collections={veri.collections} content={veri.content} />
+      <Footer collections={veri.collections} content={veri.content} />
       <FloatingWhatsApp />
       <RevealController />
       <ConsentGate />
       <TarayiciDogrula />
+      <SayfaGoruntuleme />
       </SaticiPuaniSaglayici>
       </KadrajSaglayici>
       </UyelikTesvikSaglayici>

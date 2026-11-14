@@ -1,4 +1,3 @@
-import { headers } from 'next/headers'
 
 /**
  * JSON-LD blok basar. Sunucu bileşenidir: çıktı HTML'e gömülür, istemciye
@@ -10,14 +9,13 @@ import { headers } from 'next/headers'
  * Faz 27: CSP nonce'u eklendi. `application/ld+json` çalıştırılabilir bir
  * script değildir ama tarayıcılar onu `script-src` altında sayar; nonce
  * olmadan politika bu bloğu engeller ve yapılandırılmış veri kaybolur.
- * Nonce'u proxy üretir ve `x-nonce` başlığıyla taşır.
+ * 14 Kas 2026: nonce kaldırıldı — bileşen yalnız önbellekten verilen vitrin
+ * sayfalarında (sabit politika) kullanılıyor; application/ld+json zaten çalıştırılmaz.
  */
-export default async function JsonLd({ data }: { data: Record<string, unknown> }) {
-  const nonce = (await headers()).get('x-nonce') ?? undefined
+export default function JsonLd({ data }: { data: Record<string, unknown> }) {
   return (
     <script
       type="application/ld+json"
-      nonce={nonce}
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, '\\u003c') }}
     />
   )

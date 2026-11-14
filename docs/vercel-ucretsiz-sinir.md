@@ -169,23 +169,23 @@ BB N11'i KarPanel için sormuş.)
 
 - Yayından ~12 saat sonra Usage'tan yeniden ölç (Type kırılımıyla). Hedef
   ayda 3 saatin altı.
-- **Vitrin önbelleği (ISR) bir güvenlik kararına bağlı — BB onayı bekliyor.**
-  Önbellekten verilen sayfa istek başı nonce taşıyamaz; ISR için vitrinde
-  nonce'suz sabit CSP (`script-src 'self' 'unsafe-inline'`) gerekir (Next'in
-  belgesindeki "nonce'suz" yöntem). Bu, herkese açık sayfalarda satır içi
-  script'e karşı korumayı gevşetir; 13 Kas'ta bu değişiklik otomatik güvenlik
-  denetiminde durduruldu ve BB'ye soruldu. Panel, hesabım, ödeme, sipariş ve
-  giriş sayfaları her durumda nonce'lu kalır. Onay gelirse plan (tek seferde):
-  sabit CSP + nonce yollarının layout'larına `force-dynamic`; `page_view` ve
-  `product_view` tarayıcıdan (bot/prefetch/kendi trafik kuralları aynı,
-  TarayiciDogrula işareti korunur); hesap simgesi istemcide (çerez varlığı);
-  ana sayfa önizlemesi istemcide (yönetici ucu); `/`, `/urun/[slug]`,
-  `/blog/[slug]` için `revalidate = 3600` + `generateStaticParams() → []`;
-  katalog okumaları çerezsiz istemciyle; ürün fiyat bloğu ve tahmini teslim
-  istemcide (kampanya bitişi bağlamdan, `KampanyaSaglayici` bitişte indirimi
-  düşürür); panel kayıt uçları ve senkron sonrası `revalidatePath('/',
-  'layout')`. `/kategori` ve `/urunler` süzgeçleri sunucuda olduğu için
-  dinamik kalır (12 sa'te ~4 sn).
+- **Vitrin önbelleği (ISR) — YAPILDI (14 Kas 2026, BB onayı "onaylıyorum yap").**
+  `/`, `/urun/[slug]`, `/blog/[slug]` önbellekten (revalidate 3600 +
+  `generateStaticParams() → []`); nonce'suz sabit CSP vitrinde next.config.ts'ten
+  (`cspSabit`), nonce'lu sıkı CSP yalnız panel/hesabım/ödeme/sipariş/giriş/kayıt/
+  şifre yollarında (proxy.ts; layout'larında `force-dynamic`). Proxy matcher
+  daraltıldı: vitrin isteklerinde middleware hiç çalışmaz (`/?utm_source=instagram`
+  hariç). Ölçüm tarayıcıya taşındı: `SayfaGoruntuleme` (page_view, meta.kaynak=
+  istemci; track ucu bunu kabul eder, `kaynak` kayda yazılmaz), product_view
+  `RecentlyViewedTracker`'dan. Hesap simgesi `useOturumVar` (çerez varlığı).
+  Ürün fiyat bloğu `UrunFiyati`, tahmini teslim `TahminiTeslim` istemcide;
+  `KampanyaSaglayici` bitiş anında indirimi düşürür. Katalog okumaları
+  `createPublicClient` (çerezsiz). Ana sayfa önizlemesi `/onizleme?kampanya=`
+  (panel bağlantısı güncellendi). Panel kayıt uçları ve `/api/sync`
+  `after(vitriniYenile)` ile `revalidatePath('/', 'layout')` çağırır.
+  `/kategori` ve `/urunler` süzgeçleri sunucuda olduğu için dinamik kalır.
+  Yayından sonra: x-vercel-cache HIT, CSP başlıkları, panel/hesabım nonce'u,
+  fiyat ve 390 px kontrolü; 24 saat sonra Usage ölçümü.
 - Sentry izleyicisinin aralığını 5 dakikaya çıkar (Sentry paneli; BB oturumu
   gerekir). Artık sunucu süresi harcamıyor; yalnız gereksiz istek.
 - Gereksiz yayından kaçın: yalnız `docs/` ve `.md` değişen commit'ler

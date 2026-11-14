@@ -1366,7 +1366,7 @@ function OnGunUyarisi({
         <>
           {' '}
           <a
-            href={`/?kampanya_onizleme=${kendisi}`}
+            href={`/onizleme?kampanya=${kendisi}`}
             target="_blank"
             rel="noreferrer"
             className="font-medium text-[var(--p-ink)] underline underline-offset-4"

@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
-import { SABIT_GUVENLIK_BASLIKLARI } from "./src/lib/security/basliklar";
+import { SABIT_GUVENLIK_BASLIKLARI, cspSabit } from "./src/lib/security/basliklar";
 
 const nextConfig: NextConfig = {
   // Faz 27: `x-powered-by: Next.js` çalışan çatıyı duyuruyordu. Saldırıyı tek
@@ -14,6 +14,15 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: '/:path*', headers: SABIT_GUVENLIK_BASLIKLARI },
+      // 14 Kas 2026: vitrin önbellekten verildiği için nonce'suz sabit politika.
+      // Nonce'lu sıkı politika gereken yollar (panel, hesabım, ödeme, sipariş,
+      // giriş/kayıt/şifre) bu kurala girmez; onları src/proxy.ts yazar.
+      {
+        source: '/((?!panel|hesabim|odeme|siparis-tamamlandi|giris|kayit|sifremi-unuttum|admin|api|_next).*)',
+        headers: [
+          { key: 'Content-Security-Policy', value: cspSabit(process.env.NODE_ENV === 'development') },
+        ],
+      },
       /**
        * Faz 36: görsel sunucularına ERKEN bağlantı.
        *

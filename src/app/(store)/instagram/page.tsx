@@ -69,7 +69,7 @@ export default async function InstagramSayfasi() {
 
   let sira = 0
   return (
-    <div>
+    <div data-nb-yol="/instagram">
       <section className="border-b border-line bg-surface-muted">
         <div className="mx-auto max-w-[1400px] px-4 py-8 text-center lg:px-8 lg:py-12">
           <p className="eyebrow">Instagram · @nbsteelora</p>

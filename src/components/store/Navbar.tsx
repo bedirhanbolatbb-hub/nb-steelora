@@ -6,6 +6,7 @@ import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
 import { useKatmanKlavyesi } from '@/hooks/useKatmanKlavyesi'
 import { useLinkStatus } from 'next/link'
 import { useState, useEffect, useRef } from 'react'
+import { useOturumVar } from '@/hooks/useOturumVar'
 import { Search, Heart, User, ShoppingBag, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
@@ -44,7 +45,6 @@ function LogoPending() {
 interface NavbarProps {
   bannerText?: string | null
   bannerColor?: string | null
-  isLoggedIn?: boolean
   coupon?: CouponReminder | null
   /** İlk sipariş kuponu satırı — yalnız otomatik kampanya YOKKEN dolu gelir. */
   ilkSiparisSeridi?: string | null
@@ -61,7 +61,9 @@ interface NavbarProps {
  * eşik çevresinde titremez. prefers-reduced-motion'da geçişler kapalı
  * (motion-safe). Mobil tek sıra: hamburger · logo · arama+sepet.
  */
-export default function Navbar({ bannerText, bannerColor, isLoggedIn, coupon, ilkSiparisSeridi, koleksiyonlar = [] }: NavbarProps) {
+export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeridi, koleksiyonlar = [] }: NavbarProps) {
+  // 14 Kas 2026: sayfa önbellekten geldiği için oturum tarayıcıda okunur.
+  const isLoggedIn = useOturumVar()
   // Kasım 2026: tüm ürünlerde geçerli koşulsuz indirim yürürlükteyse şeridin
   // ilk mesajı o olur (oran + tarih aralığı). Kaynak, kartlarda üstü çizili
   // fiyatı basan bağlamın ta kendisi — şerit ile fiyat çelişemez.

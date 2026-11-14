@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 import './panel.css'
 
+// 14 Kas 2026: vitrin önbellekten verilirken bu yol her istekte, nonce'lu sıkı
+// güvenlik politikasıyla çizilmeli (src/proxy.ts).
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: { default: 'Panel — NB Steelora', template: '%s — NB Steelora Panel' },
   robots: { index: false, follow: false },

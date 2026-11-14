@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
-import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { CAYMA_SURESI_GUN, URUN_TOLERANS_KISA } from '@/lib/legal/sozlesme'
 import Image from 'next/image'
 import Link from 'next/link'
 import { CalendarDays, Gift, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { createServiceClient } from '@/lib/supabase/service'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
@@ -35,7 +34,8 @@ import ReviewList from '@/components/store/ReviewList'
 import RecentlyViewedTracker from '@/components/store/RecentlyViewedTracker'
 import RecentlyViewed from '@/components/store/RecentlyViewed'
 import { WHATSAPP_URL } from '@/lib/contact'
-import { sunucuOlayi } from '@/lib/analytics/server'
+import UrunFiyati from '@/components/store/UrunFiyati'
+import TahminiTeslim from '@/components/store/TahminiTeslim'
 
 // Aciliyet ve rozet mantığı lib/catalog/badge.ts'te: "Son 1 adet" yalnız gerçekten
 // son adette basılır; katalogda stok 1-5 arası ürün çoğunlukta olduğu için eşik
@@ -48,13 +48,25 @@ import { sunucuOlayi } from '@/lib/analytics/server'
  * görünen (kısa/override) addır. Böylece kısa ad kampanyası arama görünürlüğünü
  * değiştirmez.
  */
+/**
+ * Ürün sayfası önbellekten verilir (14 Kas 2026, ücretsiz plandaki sunucu
+ * süresi): ilk ziyarette üretilir, en fazla 1 saat saklanır; panel kaydı ve
+ * Trendyol senkronu hemen tazeler (lib/cache/vitrin). Fiyat bloğu ve tahmini
+ * teslim tarayıcıda güncellenir; ödemede fiyat her zaman sunucuda hesaplanır.
+ */
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  return []
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const [{ data }, { data: priceRow }] = await Promise.all([
     supabase
       .from('products_display')
@@ -102,7 +114,7 @@ export default async function UrunDetayPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const service = createServiceClient()
 
   const [{ data: product }, { data: priceRow }] = await Promise.all([
@@ -119,7 +131,6 @@ export default async function UrunDetayPage({
   }
 
   // Ürün görüntüleme sunucuda ölçülür (Faz 12) — engelleyicilerden etkilenmez.
-  await sunucuOlayi('product_view', { productId: product.id, path: `/urun/${product.slug}` })
 
   // products_display view'u override_price içermeyebilir — direkt products
   // tablosundan al. (Sütun adı 'custom_price' sanılıyordu; gerçek ad
@@ -264,44 +275,16 @@ export default async function UrunDetayPage({
             variant={useLabels ? 'chips' : 'thumbnails'}
           />
 
-          {/* Fiyat — aktif kampanya varsa indirimli tutar önde, liste fiyatı
-              üstü çizili ve oran rozetiyle (Faz 15). */}
-          <div className="mt-6 border-t border-line pt-6">
-            <div className="flex flex-wrap items-baseline gap-3">
-              {kampanyaliFiyat != null ? (
-                <>
-                  <p className="price text-[28px] text-accent-deep">{formatPrice(kampanyaliFiyat)}</p>
-                  <p className="price text-[16px] font-normal text-muted line-through">
-                    {formatPrice(listeFiyati)}
-                  </p>
-                  <span className="rounded-[3px] bg-accent/10 px-2 py-1 font-body text-[12px] font-medium text-accent-deep">
-                    %{vitrinIndirimi!.oran} indirim
-                  </span>
-                </>
-              ) : (
-                <>
-                  <p className="price text-[28px] text-ink">{formatPrice(listeFiyati)}</p>
-                  {mergedProduct.override_price &&
-                    mergedProduct.override_price < product.display_price && (
-                      <p className="price text-[16px] text-muted line-through font-normal">
-                        {formatPrice(product.display_price)}
-                      </p>
-                    )}
-                </>
-              )}
-            </div>
-            {kampanyaliFiyat != null && (
-              <p className="mt-1 font-body text-[12px] text-accent-deep">
-                {kampanyaEtiketi(vitrinIndirimi!.ad)} — sepette {formatPrice(listeFiyati - kampanyaliFiyat)} kazanıyorsunuz
-              </p>
-            )}
-            {/* Koşullu kampanya: indirimli fiyat yerine koşul rozeti (Faz 17). */}
-            {kampanyaliFiyat == null && vitrinIndirimi?.rozet && (
-              <p className="mt-1 font-body text-[12px] text-accent-deep">
-                {kampanyaEtiketi(vitrinIndirimi.ad)} — {vitrinIndirimi.rozet}
-              </p>
-            )}
-          </div>
+          {/* Fiyat — tarayıcıda çizilir (14 Kas 2026): sayfa önbellekten geldiği için
+              kampanyanın bitişi sepetle aynı kaynaktan (KampanyaSaglayici) izlenir. */}
+          <UrunFiyati
+            listeFiyati={listeFiyati}
+            ustCiziliFiyat={
+              mergedProduct.override_price && mergedProduct.override_price < product.display_price
+                ? Number(product.display_price)
+                : null
+            }
+          />
 
           {/* Tek rozet: Son 1 adet > elle girilen badge > Yeni */}
           {stock > 0 ? (
@@ -339,7 +322,7 @@ export default async function UrunDetayPage({
           {stock > 0 && (
             <p className="mt-3 flex items-center gap-1.5 text-[12px] font-body text-ink-soft">
               <CalendarDays size={14} strokeWidth={1.5} className="text-accent-deep shrink-0" aria-hidden />
-              Tahmini teslim: <span className="font-medium text-ink">{tahminiTeslimEtiketi()}</span>
+              Tahmini teslim: <span className="font-medium text-ink"><TahminiTeslim ilk={tahminiTeslimEtiketi()} /></span>
             </p>
           )}
 
@@ -503,7 +486,7 @@ export default async function UrunDetayPage({
       />
 
       {/* Son Görüntülenenler */}
-      <RecentlyViewedTracker slug={slug} />
+      <RecentlyViewedTracker slug={slug} productId={product.id} />
       <RecentlyViewed currentSlug={slug} />
 
       {/* Dar ekranda yapışkan satın alma çubuğu (sm altı) */}

@@ -10,12 +10,16 @@ import ProductGrid from '@/components/store/ProductGrid'
 import { yaziKategorisi, railUrunleri } from '@/lib/blog/kategori'
 
 /**
- * Yazı sayfaları artık istek anında render ediliyor: ölçüm (blog/layout.tsx)
- * istek başlıklarını okuduğu için sayfa önceden üretilemez. Önceki 1 saatlik
- * ISR ve generateStaticParams bu yüzden kaldırıldı — aksi hâlde önbellekten
- * dönen isteklerde blog trafiği ölçüme hiç girmezdi. Sorgu tek satırlık ve
- * vitrinin geri kalanı da (store) grubunda aynı şekilde dinamik.
+ * Yazı sayfaları önbellekten verilir (1 saat; panel kaydı hemen tazeler —
+ * lib/cache/vitrin). 14 Kas 2026: ölçüm tarayıcıya taşındı (SayfaGoruntuleme)
+ * ve vitrin nonce'suz sabit güvenlik politikasında; önceki "istek anında
+ * render" gerekçesi kalmadı.
  */
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  return []
+}
 
 export async function generateMetadata({
   params,

@@ -4,6 +4,7 @@ import type { CollectionCard } from '@/lib/collections'
 import { WHATSAPP_URL } from '@/lib/contact'
 import CerezTercihleriDugmesi from './CerezTercihleriDugmesi'
 import OdemeLogolari from './OdemeLogolari'
+import HesapBaglantilari from './HesapBaglantilari'
 import { kunyeSatirlari } from '@/lib/layoutData'
 
 // Menüyle birebir aynı liste — tek kaynak src/lib/catalog/categories.ts
@@ -48,11 +49,9 @@ const ETBIS_DOGRULAMA =
   'https://etbis.ticaret.gov.tr/tr/SiteSorgulamaSonuc?siteId=ca30e2bd-074e-48c3-a7d4-5162d95579bd'
 
 export default function Footer({
-  isLoggedIn,
   collections,
   content,
 }: {
-  isLoggedIn?: boolean
   // Koleksiyonlar üst menüye eklenmiyor (menü dolu); giriş noktası footer.
   // Veri layout'un süreç içi önbelleğinden gelir (Faz 9A).
   collections: CollectionCard[]
@@ -171,17 +170,11 @@ export default function Footer({
                   </Link>
                 </li>
               ))}
-              {(isLoggedIn ? accountLinks.loggedIn : accountLinks.loggedOut).map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    prefetch={false}
-                    className="inline-block py-1.5 -my-1.5 text-[12px] font-body text-line/70 hover:text-accent transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              <HesapBaglantilari
+                girisli={accountLinks.loggedIn}
+                girissiz={accountLinks.loggedOut}
+                className="inline-block py-1.5 -my-1.5 text-[12px] font-body text-line/70 hover:text-accent transition-colors"
+              />
             </ul>
           </div>
 

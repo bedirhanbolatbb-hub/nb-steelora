@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getBlurDataURL } from '@/lib/blur'
 import { varyantUret } from '@/lib/gorselVaryant'
 import { CATEGORIES } from '@/lib/catalog/categories'
+import { vitriniYenile } from '@/lib/cache/vitrin'
 
 const HEDEF_TIPLERI = new Set(['collection', 'category', 'product', 'url'])
 const MAX_SLAYT = 4
@@ -15,6 +16,7 @@ const MAX_SLAYT = 4
  * Değişmeyen görselin mevcut blur'u aynen taşınır, yeniden üretilmez.
  */
 export async function POST(request: Request) {
+  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

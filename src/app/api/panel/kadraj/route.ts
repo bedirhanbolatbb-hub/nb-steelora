@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { createServiceClient } from '@/lib/supabase/service'
 import { KADRAJ_ANAHTARI, KADRAJ_KAPALI_ANAHTARI, kapaliListesiniCoz } from '@/lib/gorsel/kadrajAyari'
+import { vitriniYenile } from '@/lib/cache/vitrin'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,6 +16,7 @@ export const dynamic = 'force-dynamic'
  * site_content'i 2 dakikalık önbellekle okur; değişiklik en geç o kadar sürede yansır.
  */
 export async function POST(request: Request) {
+  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await request.json().catch(() => null)
   const supabase = createServiceClient()

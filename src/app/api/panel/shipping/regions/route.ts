@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { bolgeleriSenkronla, illeriGetir, ilceleriGetir } from '@/lib/shipping/geo'
+import { vitriniYenile } from '@/lib/cache/vitrin'
 
 export const maxDuration = 60
 
@@ -22,6 +23,7 @@ export async function GET(request: Request) {
 
 /** Listeyi sağlayıcıdan yeniden çeker (panel "listeyi yenile"). */
 export async function POST() {
+  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
     const sonuc = await bolgeleriSenkronla()

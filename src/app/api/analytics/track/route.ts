@@ -25,6 +25,8 @@ function metaTemizle(ham: unknown): Record<string, unknown> | null {
   for (const [k, v] of Object.entries(ham as Record<string, unknown>)) {
     if (Object.keys(cikti).length >= 10) break
     if (typeof k !== 'string' || k.length > 40) continue
+    // 'kaynak' yalnız ayırt etme işareti; kayda yazılmaz.
+    if (k === 'kaynak') continue
     if (typeof v === 'number' && Number.isFinite(v)) cikti[k] = v
     else if (typeof v === 'boolean') cikti[k] = v
     else if (typeof v === 'string') cikti[k] = v.slice(0, 120)
@@ -47,8 +49,12 @@ export async function POST(request: Request) {
    * sayısına katılmaz — raporda `meta.js` taşıyanlar ayrılır. İşaretsiz bir
    * page_view denemesi reddedilir ki istemci sayfa sayısını şişiremesin.
    */
+  // 14 Kas 2026: sayfa görüntüleme artık tarayıcıdan gelir (SayfaGoruntuleme,
+  // meta.kaynak='istemci'); vitrin önbellekten verildiği için sunucu yazamıyor.
+  const istemciGoruntulemesi =
+    event === 'page_view' && (body?.meta as Record<string, unknown> | undefined)?.kaynak === 'istemci'
   if (event === 'page_view') {
-    if (!jsIsareti) return NextResponse.json({ error: 'Bilinmeyen olay' }, { status: 400 })
+    if (!jsIsareti && !istemciGoruntulemesi) return NextResponse.json({ error: 'Bilinmeyen olay' }, { status: 400 })
   } else if (!IZINLI.includes(event)) {
     return NextResponse.json({ error: 'Bilinmeyen olay' }, { status: 400 })
   }
@@ -73,7 +79,13 @@ export async function POST(request: Request) {
     visitorId,
     userId: await uyeKimligi(),
     path: typeof body?.path === 'string' ? body.path : null,
-    referrer: request.headers.get('referer'),
+    // Sayfa görüntülemede yönlendiren tarayıcıdan gelir: ilk sayfada dış kaynak,
+    // site içi geçişte bir önceki sayfa (sunucunun Referer'ı ile aynı anlam).
+    referrer: istemciGoruntulemesi
+      ? typeof body?.referrer === 'string' && body.referrer
+        ? body.referrer.slice(0, 500)
+        : null
+      : request.headers.get('referer'),
     userAgent: ua,
     device: cihazTipi(ua),
     productId: typeof body?.productId === 'string' ? body.productId : null,

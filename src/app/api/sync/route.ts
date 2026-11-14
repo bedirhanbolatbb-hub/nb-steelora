@@ -12,6 +12,7 @@ import {
   processRun,
   startRun,
 } from '@/lib/trendyol/syncRun'
+import { vitriniYenile } from '@/lib/cache/vitrin'
 
 export const maxDuration = 60
 
@@ -101,6 +102,7 @@ async function runSync() {
 }
 
 export async function POST(request: Request) {
+  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!cronIstegiMi(request) && !(await adminIstegiMi(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -113,6 +115,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   // Vercel cron bu yoldan gelir: koşunun tamamı burada işlenir.
   if (cronIstegiMi(request)) {
     try {
