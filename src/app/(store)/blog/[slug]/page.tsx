@@ -15,7 +15,8 @@ import { yaziKategorisi, railUrunleri } from '@/lib/blog/kategori'
  * ve vitrin nonce'suz sabit güvenlik politikasında; önceki "istek anında
  * render" gerekçesi kalmadı.
  */
-export const revalidate = 3600
+// En fazla 24 saat; panelden blog kaydı önbelleği hemen tazeler (lib/cache/vitrin).
+export const revalidate = 86400
 
 export async function generateStaticParams() {
   return []

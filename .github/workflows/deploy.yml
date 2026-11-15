@@ -2,6 +2,13 @@ name: Deploy to Vercel
 on:
   push:
     branches: [main]
+    # Yalnız belge değişen gönderimler yayın tetiklemez (15 Kas 2026): her
+    # yayın Vercel'in uç önbelleğini sıfırlıyor ve sayfalar/görseller yeniden
+    # üretiliyor — ücretsiz plandaki sunucu süresi. Kodla birlikte değişen
+    # belge yine yayınla gider (paths-ignore yalnız TÜM dosyalar eşleşirse atlar).
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}

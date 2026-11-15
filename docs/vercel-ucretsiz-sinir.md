@@ -193,3 +193,79 @@ BB N11'i KarPanel için sormuş.)
   yeniden ürettiriyor (bulgu 9). Bir sonraki kod yayınıyla birlikte.
 - `public/favicon.ico` (bulgu 8) ve kadraj görsellerini kalıcı depoya yazma
   (bulgu 6/9) — bir sonraki kod yayınıyla.
+
+
+## 15 Kasım 2026 ölçümü — vitrin önbelleğinden (ISR) 24 saat sonra
+
+Kaynak: nbsteelora takımı → Usage → Fluid Active CPU (Projects görünümü, saat
+aralıkları Türkiye saati). Bu hesap 12 Kasım'da açıldı; 30 günlük toplam şu an
+36 dk 49 sn (12 Kas ~10 dk, 13 Kas ~13 dk, 14 Kas ~11 dk, 15 Kas sabahı).
+
+| Aralık | Fluid Active CPU |
+| --- | --- |
+| ISR'den önceki 24 saat (13 Kas 10.16 → 14 Kas 10.16) | 13 dk 45 sn |
+| ISR'den sonraki 24 saat (14 Kas 10.16 → 15 Kas 10.16; gün içinde 5 yayın) | 11 dk 39 sn |
+| 13 Kas (TR günü) | 13 dk 14 sn |
+| 14 Kas (TR günü) | 11 dk 4 sn |
+| Son 12 saat (15 Kas 00.53 → 13.00, yayın yok) | 3 dk 41 sn |
+
+Tür kırılımı (ISR sonrası 24 saat): işlev %97,1 · ara katman %2,9 (ISR öncesi ara
+katman ~%43'tü — matcher daraltması işe yaradı). Bölge: fra1 %99,6.
+
+Öngörü: yayınsız gece temposu 3 dk 41 sn / 12 sa → günde ~7–9 dk → 30 günde
+~3,5–4,5 sa: SINIRDA. Yayınlı gün ~11–12 dk. Bu tempoyla 4 saat 2–3 Aralık
+civarında dolabilir.
+
+Observability (son 12 sa, yol bazında, Usage'ın altında gösterir ama oranlar
+doğru): `/urun/[slug]` 316 çağrı 59 sn · `/api/gorsel/kadraj` 121 çağrı 38 sn ·
+`/api/health` 152 çağrı 12 sn · `/blog/[slug]` 36 çağrı 7 sn · `/` 6 sn ·
+`/kategori/[slug]` 5 sn · `/urunler` 4,9 sn · geri kalanı küçük.
+ISR (son 12 sa): `/urun/[slug]` okuma 125, yazma 632, tekil yol 227; süreye bağlı
+yenileme 134; etiketle yenileme 0. Yani ürün sayfalarına gelen isteklerin çoğu
+(büyük kısmı arama motoru botları) önbellekten değil yeniden üretimden
+karşılanıyor: `revalidate = 3600` botların sayfaları saatten seyrek ziyaret
+etmesi yüzünden neredeyse her ziyarette yeniden üretim demek.
+
+Yapılacak (öncelik sırasıyla):
+1. `/urun/[slug]` ve `/blog/[slug]` için `revalidate` 3600 → 86400. Fiyat bloğu
+   (`UrunFiyati`) ve tahmini teslim istemcide; panel kayıtları ve `/api/sync`
+   zaten `revalidatePath('/', 'layout')` çağırıyor — içerik değişince sayfa yine
+   hemen tazelenir. Önce stok/tükendi gösteriminin sunucuda mı istemcide mi
+   olduğunu doğrula.
+2. Kadraj görselleri kalıcı depoya (bulgu 6/9): her yayında yeniden üretilmesin.
+3. Yalnız `docs/` ve `.md` değişen commit'ler yayınlanmasın (`deploy.yml` →
+   `paths-ignore`).
+4. `/api/health` dakikada bir yoklanıyor gibi (12 saatte 152): çağıranı bul; dış
+   izleyiciyse statik dosyaya yönlendir.
+
+### 15 Kasım 2026 — uygulanan (yukarıdaki dört madde + bulunan bir açık)
+
+1. **Ürün ve blog sayfası 24 saat** (`revalidate` 86400; ana sayfa 1 saatte
+   kaldı). Doğrulandı: stok ("Son 1 adet", sepete ekle) sunucuda basılıyor;
+   stok veritabanında yalnız senkron, panel ve sipariş/iptal/iadede değişiyor.
+   Üçü de artık önbelleği hemen tazeliyor: senkron ve panel zaten
+   `vitriniYenile` çağırıyordu, stok değişimi `lib/trendyol/stockUpdate`'e
+   eklendi. Kampanyalar saatle başlayıp bittiği için yeni gece cron'u
+   `/api/cron/vitrin-tazele` (21.05 UTC = 00.05 TR) önbelleği her gece
+   tazeliyor; sayfadaki indirimli fiyat ve yapısal veri günü aşmaz.
+2. **Açık kapatıldı:** panel uçlarında (17 çağrı) ve `/api/sync`'te
+   `after(vitriniYenile)` yetki kontrolünden ÖNCE kayıtlıydı — kimliksiz bir
+   POST bile bütün vitrin önbelleğini boşaltıp sayfaları yeniden ürettirebiliyordu
+   (sunucu süresi harcatma yolu). Artık yalnız yetkili istekte; senkronda
+   yalnız gerçekten koşan senkronun sonunda (durum okuması ve atlanan koşu
+   boşaltmaz).
+3. **Kadraj kalıcı depoda:** üretilen görsel Supabase `media` kovasına
+   (`kadraj/v<KADRAJ_SURUM>/<sha256>-<en>-<oran>.webp`) yanıttan sonra yazılıyor;
+   sonraki isteklerde uç üretmiyor, depodaki dosyaya 302 ile yönlendiriyor
+   (yönlendirme uç önbelleğinde bir yıl / sonraki yayına kadar, tarayıcıda bir
+   gün). Yayın sonrası her görsel için bir hafif yönlendirme kalıyor, işleme yok.
+4. **Belge commit'i yayınlamaz:** `deploy.yml` → `paths-ignore: docs/**, **/*.md`.
+5. **`/api/health`:** çağıran 5 dakikada bir yoklayan dış izleyici (asıl
+   uygulama sağlığı için kasıtlı; kökteki Sentry yoklaması zaten statik
+   `/izleyici.txt`'de). Statiğe almak veritabanı kesintisini görünmez yapacağı
+   için seçilmedi: sağlıklı yanıt CDN'de 15 dk tutuluyor (`s-maxage=900`),
+   işlev saatte en fazla ~4 kez çalışıyor; 503 hiç saklanmıyor.
+
+Beklenen: `/urun/[slug]` yeniden üretimi ~20 kat azalır, kadraj işlemesi yayın
+başına bir kez → ~0, health ~%70 azalır. Ölçüm: 24 saat sonra Usage → Fluid
+Active CPU (hedef günde 5 dk altı).

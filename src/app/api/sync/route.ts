@@ -42,6 +42,11 @@ async function runSync() {
       runStartedAt: start.runStartedAt,
     })
 
+    // Fiyat ve stok yazıldı: vitrin önbelleği yanıttan sonra tazelenir.
+    // Yalnız gerçekten koşan bir senkronun sonunda — durum okuması, atlanan
+    // (eşzamanlı) koşu ya da yetkisiz istek önbelleği boşaltmaz (15 Kas 2026).
+    after(vitriniYenile)
+
     // Katalog değişti: beslemeyi ve site haritasını tazelenmek üzere işaretle.
     // İkisi de ISR ile üretiliyor (/feed.xml saatlik, /sitemap.xml günlük);
     // işaretlemezsek senkron bittikten sonra bir saate kadar ESKİ malzeme,
@@ -102,7 +107,6 @@ async function runSync() {
 }
 
 export async function POST(request: Request) {
-  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!cronIstegiMi(request) && !(await adminIstegiMi(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -115,7 +119,6 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   // Vercel cron bu yoldan gelir: koşunun tamamı burada işlenir.
   if (cronIstegiMi(request)) {
     try {

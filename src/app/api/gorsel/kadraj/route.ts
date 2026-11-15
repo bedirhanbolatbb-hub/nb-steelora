@@ -1,7 +1,9 @@
+import { createHash } from 'node:crypto'
+import { after } from 'next/server'
 import { isAdminRequest } from '@/lib/admin/requireAdmin'
 import { hizSiniri, istekKimligi } from '@/lib/guvenlik/hizSiniri'
 import { icerikKutusu, kadrajHesapla, urunKutusu } from '@/lib/gorsel/odak'
-import { KADRAJ_GENISLIKLERI, KADRAJ_ORANLARI, type KadrajOrani, trendyolOzgun } from '@/lib/gorsel/kadraj'
+import { KADRAJ_GENISLIKLERI, KADRAJ_ORANLARI, KADRAJ_SURUM, type KadrajOrani, trendyolOzgun } from '@/lib/gorsel/kadraj'
 import { gorselBoyutu, trendyolCdnMi } from '@/lib/images'
 import { createServiceClient } from '@/lib/supabase/service'
 
@@ -15,6 +17,13 @@ export const maxDuration = 20
  * `?u=<Trendyol görseli>&w=<en>&o=<oran>&v=<sürüm>` → takıya göre kadrajlanmış
  * WebP. Yanıt bir yıl önbelleğe yazılır (adres içerikle birebir: aynı adres
  * hep aynı görsel). Uç yalnız önbellek boşken çalışır.
+ *
+ * Kalıcı depo (15 Kas 2026, ücretsiz plandaki sunucu süresi): Vercel her
+ * yayında uç önbelleğini sıfırlıyor ve her görsel yeniden üretiliyordu
+ * (12 saatte 121 çağrı, 38 sn — sunucu süresinin ikinci büyük kalemi).
+ * Artık üretilen görsel Supabase "media" kovasına (`kadraj/v<sürüm>/…`)
+ * yazılır; sonraki isteklerde uç görseli üretmez, depodaki dosyaya yönlendirir.
+ * Algoritma değişince KADRAJ_SURUM artar: hem adres hem depo yolu değişir.
  *
  * Kötüye kullanım sınırı: yalnız KENDİ ürünlerimizin görselleri işlenir
  * (başkasının Trendyol görseliyle sunucu yorulmaz), yalnız sabit genişlik ve
@@ -32,6 +41,24 @@ const AYAR: Record<KadrajOrani, { pay: number; enKucuk: number }> = {
 
 const ANALIZ_EN = 240
 const YIL = 31536000
+const GUN = 86400
+const DEPO_KOVASI = 'media'
+
+/** Depo yolu kaynağa, genişliğe, orana ve algoritma sürümüne bağlı — aynı girdi hep aynı dosya. */
+function depoYolu(ozgun: string, w: number, o: KadrajOrani): string {
+  const ozet = createHash('sha256').update(ozgun).digest('hex').slice(0, 40)
+  return `kadraj/v${KADRAJ_SURUM}/${ozet}-${w}-${o}.webp`
+}
+
+/** Depodaki dosya var mı — yalnız başlık isteği, gövde inmez. */
+async function depodaVarMi(adres: string): Promise<boolean> {
+  try {
+    const r = await fetch(adres, { method: 'HEAD', cache: 'no-store', signal: AbortSignal.timeout(3000) })
+    return r.ok
+  } catch {
+    return false
+  }
+}
 
 /** Kendi ürün görsellerimiz — örnek başına 10 dk tutulur (yalnız hız için; doğruluk ona bağlı değil). */
 const g = globalThis as unknown as { __nbKadrajGorselleri?: { at: number; liste: Set<string> } }
@@ -75,6 +102,19 @@ export async function GET(request: Request) {
       return yonlendir(gorselBoyutu(ozgun, w))
     }
 
+    // Daha önce üretildiyse depodan ver: uç görseli yeniden üretmez, yalnız
+    // yönlendirir. Yönlendirme uç önbelleğinde bir yıl (bir sonraki yayına
+    // kadar), tarayıcıda bir gün tutulur.
+    const supabase = createServiceClient()
+    const yol = depoYolu(ozgun, w, o)
+    const depoAdresi = supabase.storage.from(DEPO_KOVASI).getPublicUrl(yol).data.publicUrl
+    if (await depodaVarMi(depoAdresi)) {
+      return new Response(null, {
+        status: 302,
+        headers: { Location: depoAdresi, 'Cache-Control': `public, max-age=${GUN}, s-maxage=${YIL}` },
+      })
+    }
+
     if (!(await isAdminRequest())) {
       const sinir = await hizSiniri(`kadraj:${istekKimligi(request)}`, 600, 600)
       if (!sinir.gecer) return yonlendir(gorselBoyutu(ozgun, w))
@@ -109,6 +149,17 @@ export async function GET(request: Request) {
       .resize({ width: Math.min(w, kirp.width) })
       .webp({ quality: 80, effort: 4 })
       .toBuffer()
+
+    // Kalıcı depoya yanıttan SONRA yazılır (ilk ziyaretçi beklemez). Yazılamazsa
+    // vitrin etkilenmez; bir sonraki istek görseli yeniden üretip yine dener.
+    after(async () => {
+      const { error } = await supabase.storage.from(DEPO_KOVASI).upload(yol, cikti, {
+        contentType: 'image/webp',
+        cacheControl: String(YIL),
+        upsert: true,
+      })
+      if (error) console.warn('[kadraj] depoya yazılamadı:', error.message)
+    })
 
     return new Response(new Uint8Array(cikti), {
       status: 200,

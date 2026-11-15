@@ -23,8 +23,8 @@ export async function GET(request: Request) {
 
 /** Listeyi sağlayıcıdan yeniden çeker (panel "listeyi yenile"). */
 export async function POST() {
-  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  after(vitriniYenile) // yalnız yetkili istekte: vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   try {
     const sonuc = await bolgeleriSenkronla()
     return NextResponse.json({ ok: true, ...sonuc })

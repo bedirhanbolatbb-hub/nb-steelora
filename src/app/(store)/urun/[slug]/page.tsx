@@ -50,11 +50,15 @@ import TahminiTeslim from '@/components/store/TahminiTeslim'
  */
 /**
  * Ürün sayfası önbellekten verilir (14 Kas 2026, ücretsiz plandaki sunucu
- * süresi): ilk ziyarette üretilir, en fazla 1 saat saklanır; panel kaydı ve
- * Trendyol senkronu hemen tazeler (lib/cache/vitrin). Fiyat bloğu ve tahmini
- * teslim tarayıcıda güncellenir; ödemede fiyat her zaman sunucuda hesaplanır.
+ * süresi): ilk ziyarette üretilir, en fazla 24 saat saklanır (15 Kas; önce 1
+ * saatti — botlar 227 ürünü saat başı yeniden ürettiriyordu). Sayfayı
+ * değiştiren her olay önbelleği hemen tazeler (lib/cache/vitrin): panel
+ * kaydı, Trendyol senkronu, sipariş/iptal/iadede stok değişimi
+ * (lib/trendyol/stockUpdate) ve kampanya başlangıç/bitişleri için gece
+ * yarısı tazelemesi (/api/cron/vitrin-tazele). Fiyat bloğu ve tahmini teslim
+ * tarayıcıda güncellenir; ödemede fiyat her zaman sunucuda hesaplanır.
  */
-export const revalidate = 3600
+export const revalidate = 86400
 
 export async function generateStaticParams() {
   return []

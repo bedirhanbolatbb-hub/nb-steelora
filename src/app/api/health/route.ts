@@ -129,7 +129,16 @@ export async function GET() {
     },
     {
       status: dbDustu ? 503 : 200,
-      headers: { 'Cache-Control': 'no-store, max-age=0' },
+      // 15 Kas 2026 (ücretsiz plandaki sunucu süresi): izleyici bu ucu 5
+      // dakikada bir yokluyor (12 saatte ~150 çağrı). Sağlıklı yanıt CDN'de
+      // 15 dakika tutulur → işlev saatte en fazla ~4 kez çalışır. Veritabanı
+      // düştüyse (503) yanıt hiç saklanmaz: izleyici kesintiyi en geç bir
+      // önbellek süresi sonra görür, düzelmeyi ise hemen.
+      headers: {
+        'Cache-Control': dbDustu
+          ? 'no-store, max-age=0'
+          : 'public, max-age=0, s-maxage=900, stale-while-revalidate=60',
+      },
     }
   )
 }

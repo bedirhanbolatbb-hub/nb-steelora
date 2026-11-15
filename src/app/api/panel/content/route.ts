@@ -13,10 +13,10 @@ const ILK_KAYITTA_OLUSUR = new Set<string>(['tiktok_url', ...Object.values(SATIC
 
 /** Site metni güncelleme — anahtar mevcutsa yazar, yeni anahtar üretmez. */
 export async function PATCH(request: Request) {
-  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  after(vitriniYenile) // yalnız yetkili istekte: vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
 
   const body = await request.json().catch(() => null)
   const key = typeof body?.key === 'string' ? body.key.trim() : ''

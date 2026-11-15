@@ -6,10 +6,10 @@ import { hedefVeKademeYaz } from '@/lib/panel/kampanyaYaz'
 import { vitriniYenile } from '@/lib/cache/vitrin'
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  after(vitriniYenile) // yalnız yetkili istekte: vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
 
   const { id } = await params
   const body = await request.json().catch(() => null)
@@ -49,10 +49,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  after(vitriniYenile) // yalnız yetkili istekte: vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
 
   const { id } = await params
   const supabase = createServiceClient()

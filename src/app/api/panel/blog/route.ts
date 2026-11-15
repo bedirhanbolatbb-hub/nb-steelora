@@ -35,10 +35,10 @@ function yayinlananiBildir(slug: string) {
  * hâle getirilir); güncellemede slug alanı yok sayılır — canlı URL değişmez.
  */
 export async function POST(request: Request) {
-  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  after(vitriniYenile) // yalnız yetkili istekte: vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
 
   const body = await request.json().catch(() => null)
   const id = typeof body?.id === 'string' ? body.id : null

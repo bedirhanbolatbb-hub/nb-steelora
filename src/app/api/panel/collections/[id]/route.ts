@@ -8,10 +8,10 @@ import { vitriniYenile } from '@/lib/cache/vitrin'
  * slug DEĞİŞMEZ — canlı URL; gövdede gelirse istek reddedilir.
  */
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  after(vitriniYenile) // yalnız yetkili istekte: vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
 
   const { id } = await params
   const body = await request.json().catch(() => null)

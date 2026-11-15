@@ -26,10 +26,10 @@ export const dynamic = 'force-dynamic'
 const EPOSTA = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 export async function POST(request: Request) {
-  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  after(vitriniYenile) // yalnız yetkili istekte: vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
 
   const islem = new URL(request.url).searchParams.get('islem')
   const body = await request.json().catch(() => null)
@@ -150,10 +150,10 @@ export async function POST(request: Request) {
 
 /** İptal / yeniden etkinleştirme — kupon SİLİNMEZ, izi kalır. */
 export async function PATCH(request: Request) {
-  after(vitriniYenile) // vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  after(vitriniYenile) // yalnız yetkili istekte: vitrin önbelleğini yanıt sonrası tazeler (lib/cache/vitrin)
   const body = await request.json().catch(() => null)
   const id = String(body?.id ?? '').trim()
   const aktif = Boolean(body?.is_active)

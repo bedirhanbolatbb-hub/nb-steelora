@@ -1,6 +1,7 @@
 import { updateTrendyolStock } from './client'
 import { createServiceClient } from '@/lib/supabase/service'
 import { stokYazimModu, yazimAcik } from './stokYazimBayragi'
+import { vitriniYenile } from '@/lib/cache/vitrin'
 
 export async function increaseStock(
   productId: string,
@@ -20,6 +21,9 @@ export async function increaseStock(
     const newStock = (product.trendyol_stock ?? 0) + quantity
 
     await supabase.from('products').update({ trendyol_stock: newStock }).eq('id', productId)
+    // Ürün sayfası 24 saat önbellekte duruyor: stok değişince hemen tazelensin
+    // ("Son 1 adet" ve sepete ekle doğru kalsın).
+    vitriniYenile()
 
     // Trendyol yazımı bayrağa bağlı (Faz 16B). Kapalıyken mutlak değer
     // yazılmaz — bayat DB değerinden hesaplanan mutlak stok, Trendyol'daki
@@ -56,6 +60,8 @@ export async function decreaseStock(
       .from('products')
       .update({ trendyol_stock: newStock })
       .eq('id', productId)
+    // Ürün sayfası 24 saat önbellekte duruyor: stok değişince hemen tazelensin.
+    vitriniYenile()
 
     // Trendyol'da stoku güncelle — bayrağa bağlı (Faz 16B).
     await trendyolaYaz(product.trendyol_barcode, newStock, quantity, 'satis')
