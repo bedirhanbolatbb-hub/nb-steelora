@@ -34,9 +34,12 @@ export const CEREZ_SURUMU: MetinSurumu = {
 export const KVKK_SURUMU: MetinSurumu = {
   // Faz 28: T.C. kimlik numarası toplanmadığı açıkça yazıldı, kurumsal fatura
   // verisi eklendi.
-  surum: 'v1.3',
+  // 16 Kas 2026 (v1.4): kartla ödeme (Aköde / Tosla) aktarılan taraflara ve
+  // işlenen verilere eklendi (sonuç, onay kodu, maskelenmiş kart numarası).
+  surum: 'v1.4',
   // 7 Kas 2026: ödeme aracısı (iyzico) kalktı; ödeme havale/EFT ile banka üzerinden.
-  yururluk: '2026-11-07',
+  // 16 Kas 2026: kartla ödeme (Tosla) — canlıya alındığı gün.
+  yururluk: '2026-11-16',
 }
 
 /** Mesafeli satış sözleşmesi ve ön bilgilendirme formu. */
@@ -47,7 +50,9 @@ export const MESAFELI_SURUMU: MetinSurumu = {
   // YAZILDIĞI için eski siparişlerin onay kaydı olduğu gibi kalır.
   // 5 Eyl 2026: üretim toleransı maddesindeki "el işçiliği" dayanağı düzeltildi.
   // 7 Kas 2026: ödeme maddesi — kart (iyzico) yerine havale/EFT.
-  yururluk: '2026-11-07',
+  // 16 Kas 2026: ödeme maddesi — kart (Tosla) ve havale/EFT birlikte
+  // (canlıya alındığı gün; bkz. lib/legal/sozlesme.ts).
+  yururluk: '2026-11-16',
 }
 
 /** ISO tarihi GG.AA.YYYY biçimine çevirir. Geçersizse olduğu gibi döner. */

@@ -1,7 +1,66 @@
 import Link from 'next/link'
-import { XCircle } from 'lucide-react'
+import { Clock, XCircle } from 'lucide-react'
 
-export default function BasarisizPage() {
+/**
+ * Kartla ödeme sonucu (12 Kas 2026 · Tosla).
+ *
+ * İki ayrı durum, iki ayrı söz:
+ *  - Banka reddetti / ödeme tamamlanmadı → "tekrar deneyin".
+ *  - `durum=kontrol` → ödeme alınmış OLABİLİR (dönüş yarıda kaldı, sorgu
+ *    cevap vermedi, tutar incelemede). Müşteriye "tekrar deneyin" denirse
+ *    ikinci kez ödeyebilir; bu yüzden "kontrol ediyoruz, size yazacağız"
+ *    denir. Gecelik süpürge siparişi Tosla'ya yeniden sorar.
+ *
+ * `neden` bankanın mesajıdır (Tosla'dan gelir, 120 karakterle sınırlı);
+ * React metni kaçırarak basar.
+ */
+export default async function BasarisizPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ durum?: string; neden?: string; siparis?: string }>
+}) {
+  const { durum, neden, siparis } = await searchParams
+  const kontrol = durum === 'kontrol'
+  const siparisNo = siparis && /^NBS-\d{13}$/.test(siparis) ? siparis : null
+  const bankaNedeni = !kontrol && neden ? neden.slice(0, 120) : null
+
+  if (kontrol) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-20 text-center">
+        <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Clock size={30} className="text-amber-700" />
+        </div>
+        <h1 className="font-heading text-[32px] text-ink mb-3">Ödemeniz Kontrol Ediliyor</h1>
+        <p className="text-[13px] font-body text-ink-soft mb-4 leading-relaxed">
+          Ödemenizin sonucunu bankadan henüz kesin olarak alamadık. Lütfen tekrar ödeme
+          yapmayın: kartınızdan çekim yapıldıysa siparişiniz onaylanır ve size e-posta
+          göndeririz. Çekim yapılmadıysa da e-postayla bilgilendiririz.
+        </p>
+        {siparisNo && (
+          <p className="text-[12px] font-body text-muted mb-8">
+            Sipariş numaranız: <span className="font-mono text-ink">{siparisNo}</span>
+          </p>
+        )}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            prefetch={false}
+            href="/iletisim"
+            className="inline-block border border-line text-ink-soft text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:border-accent-line hover:text-accent-deep transition-all"
+          >
+            Bize Ulaşın
+          </Link>
+          <Link
+            prefetch={false}
+            href="/urunler"
+            className="inline-block border border-line text-ink-soft text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:border-accent-line hover:text-accent-deep transition-all"
+          >
+            Alışverişe Dön
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-lg mx-auto px-4 py-20 text-center">
       <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -10,11 +69,14 @@ export default function BasarisizPage() {
       <h1 className="font-heading text-[32px] text-ink mb-3">
         Ödeme Başarısız
       </h1>
-      <p className="text-[12px] font-body text-muted mb-8 leading-relaxed">
-        Ödeme işlemi tamamlanamadı. Lütfen kart bilgilerinizi kontrol edip
-        tekrar deneyin veya farklı bir kart kullanın.
+      <p className="text-[12px] font-body text-muted mb-3 leading-relaxed">
+        Ödeme işlemi tamamlanamadı; kartınızdan çekim yapılmadı. Kart bilgilerinizi kontrol
+        edip tekrar deneyebilir, farklı bir kart kullanabilir ya da havale/EFT ile ödeyebilirsiniz.
       </p>
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+      {bankaNedeni && (
+        <p className="text-[12px] font-body text-ink-soft mb-8">Bankanın yanıtı: {bankaNedeni}</p>
+      )}
+      <div className={`flex flex-col sm:flex-row items-center justify-center gap-3 ${bankaNedeni ? '' : 'mt-5'}`}>
         <Link
           prefetch={false}
           href="/odeme"

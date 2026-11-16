@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { refundFullPayment } from '@/lib/iyzico/client'
+import { kartTahsilatiniGeriVer } from '@/lib/odeme/kartIadesi'
 import { increaseStock } from '@/lib/trendyol/stockUpdate'
 import { kuyrugaEkle, kuyrugaIsle } from '@/lib/trendyol/stokKuyrugu'
 
@@ -19,7 +19,7 @@ export type AdminOrderRefundResult =
  * İADE onayı (Faz 15).
  *
  * Bulunan kusur: iade talebi onaylandığında yalnız `order_requests` satırı
- * "approved" işaretleniyordu — iyzico'ya iade isteği HİÇ gitmiyor, stok geri
+ * "approved" işaretleniyordu — ödeme kuruluşuna iade isteği HİÇ gitmiyor, stok geri
  * eklenmiyordu. Yani müşteri panelde "iadeniz onaylandı" görüyor ama parası
  * dönmüyordu. (İPTAL yolu doğru çalışıyordu; iki yol ayrı yazılmıştı.)
  *
@@ -60,14 +60,16 @@ export async function executeAdminOrderRefund(
       orderId,
       paymentId: order.iyzico_payment_id,
     })
-    const refund = await refundFullPayment(String(order.iyzico_payment_id))
+    const refund = await kartTahsilatiniGeriVer(order)
     console.log('[admin-order-refund] refund result', {
       orderId,
       success: refund.success,
+      saglayici: refund.saglayici,
+      yol: refund.yol,
       error: refund.error,
     })
     if (!refund.success) {
-      return { ok: false, status: 502, error: refund.error || 'iyzico iade başarısız', code: 'REFUND_FAILED' }
+      return { ok: false, status: 502, error: refund.error || 'Kart iadesi başarısız', code: 'REFUND_FAILED' }
     }
     iadeEdildi = true
 
@@ -77,7 +79,7 @@ export async function executeAdminOrderRefund(
       .eq('id', orderId)
     if (stampErr) {
       console.error(
-        '[admin-order-refund] CRITICAL: iyzico iadesi geçti ama payment_refunded_at yazılamadı',
+        '[admin-order-refund] CRITICAL: kart iadesi geçti ama payment_refunded_at yazılamadı',
         { orderId, stampErr }
       )
       return { ok: false, status: 500, error: 'İade kaydı veritabanına yazılamadı', code: 'STAMP_FAILED' }

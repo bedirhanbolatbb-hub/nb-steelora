@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { kartOdemesiAcikMi } from '@/lib/tosla/client'
 
 /**
  * Kart logoları — Tosla İşim sanal POS başvurusunun site şartı (13 Kas 2026,
@@ -15,9 +16,11 @@ import Image from 'next/image'
  * kendi koruma boşluğunu içerdiği için daha yüksek basılır; üçü gözle eş
  * boyda görünür.
  *
- * Alttaki satır dürüst kalır: kartla ödeme açılana dek (TOSLA_ODEME_ACIK
- * 'evet' değilken) "şu an havale/EFT" der; anahtar açılınca kendiliğinden
- * değişir, metne elle dokunmak gerekmez. Panel karşılığı: gerekmiyor (sabit
+ * Alttaki satır dürüst kalır: kartla ödeme açılana dek "şu an havale/EFT"
+ * der; açılınca kendiliğinden değişir, metne elle dokunmak gerekmez. "Açık
+ * mı" sorusunun tek cevabı lib/tosla/client `kartOdemesiAcikMi()`
+ * (TOSLA_ODEME_ACIK=evet VE Tosla kimliği tam) — ödeme ekranı, sepet, SSS ve
+ * llms.txt ile aynı kaynak. Panel karşılığı: gerekmiyor (sabit
  * marka işaretleri; metin ödeme durumunu izler).
  */
 const LOGOLAR = [
@@ -25,11 +28,6 @@ const LOGOLAR = [
   { src: '/badges/mastercard.svg', alt: 'Mastercard', genislik: 152, yukseklik: 108, sinif: 'h-[26px]' },
   { src: '/badges/troy.svg', alt: 'Troy', genislik: 298, yukseklik: 137, sinif: 'h-[16px]' },
 ] as const
-
-/** Kartla ödeme açık mı — Tosla bağlantısı canlıya alınıp anahtar açılınca. */
-export function kartlaOdemeAcik(): boolean {
-  return process.env.TOSLA_ODEME_ACIK === 'evet'
-}
 
 export default function OdemeLogolari() {
   return (
@@ -52,7 +50,7 @@ export default function OdemeLogolari() {
         ))}
       </ul>
       <p className="text-[10px] font-body text-line/50 tracking-wider text-center">
-        {kartlaOdemeAcik()
+        {kartOdemesiAcikMi()
           ? 'Visa, Mastercard ve Troy kartlarla ödeme alınır.'
           : 'Şu an ödemeler havale/EFT ile alınır; kartla ödeme hazırlanıyor.'}
       </p>

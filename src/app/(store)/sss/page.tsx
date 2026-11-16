@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import LegalPageLayout from '@/components/store/LegalPageLayout'
 import JsonLd from '@/components/seo/JsonLd'
-import { SSS_TAMAMI } from '@/lib/legal/sss'
+import { sssTamami } from '@/lib/legal/sss'
+import { kartOdemesiAcikMi } from '@/lib/tosla/client'
 import { ORG_NAME, SITE_URL, sayfaUstVerisi } from '@/lib/seo'
 
 export const metadata: Metadata = sayfaUstVerisi({
@@ -22,6 +23,8 @@ export const metadata: Metadata = sayfaUstVerisi({
  * türer — yeni vaat yazılmaz. Aynı kaynak ürün sayfası akordeonunu da besler.
  */
 export default function SssPage() {
+  // Ödeme cevabı kart (Tosla) açık mı sorusuna göre seçilir (12 Kas 2026).
+  const SSS_TAMAMI = sssTamami(kartOdemesiAcikMi())
   return (
     <>
       <JsonLd

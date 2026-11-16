@@ -14,6 +14,8 @@ import MailGecmisi from './MailGecmisi'
 import type { BaskiKaydi } from '@/lib/emails/baskiListesi'
 import IcNotlar from './IcNotlar'
 import HavaleBlogu, { type HavaleBilgisi } from './HavaleBlogu'
+import KartBlogu, { type KartBilgisi } from './KartBlogu'
+import { toslaOdemesiMi } from '@/lib/tosla/ortak'
 
 type Kalem = {
   productId: string
@@ -71,6 +73,8 @@ export type SiparisDetay = {
   iyzicoId: string | null
   /** Havale/EFT siparişiyse ödeme bilgisi (7 Kas 2026); değilse null. */
   havale?: HavaleBilgisi | null
+  /** Kartla (Tosla) açılmış siparişse ödeme izi (12 Kas 2026); değilse null. */
+  kart?: KartBilgisi | null
   takipNo: string | null
   createdAt: string
   updatedAt: string | null
@@ -84,7 +88,7 @@ export type SiparisDetay = {
 const GERI_ALINAMAZ: Record<string, string> = {
   shipped: 'Kargoya verildi olarak işaretlenecek ve müşteriye kargo maili gidecek. Bu geçiş geri alınamaz (yalnız teslim edildi kalır).',
   delivered: 'Teslim edildi olarak işaretlenecek ve müşteriye değerlendirme daveti gidecek (sipariş başına bir kez). Bu son adımdır.',
-  cancelled: 'Sipariş iptal edilecek: mevcut akış iyzico iadesini ve stok geri yüklemesini otomatik çalıştırır. Bu geçiş geri alınamaz.',
+  cancelled: 'Sipariş iptal edilecek: kartla ödendiyse para karta otomatik geri verilir ve stok geri yüklenir. Bu geçiş geri alınamaz.',
 }
 
 const ts = (t: string | null) =>
@@ -503,8 +507,11 @@ export default function SiparisDetayClient({
                   .join(', ') || '—'}
               </p>
               <p className="text-[var(--p-muted)]">{siparis.adres?.phone ?? ''} · {siparis.email ?? ''}</p>
-              {siparis.iyzicoId && (
-                <p className="text-[11px] text-[var(--p-muted)]">iyzico ödeme kimliği: {siparis.iyzicoId}</p>
+              {/* Ödeme kimliği: Tosla siparişinde `tosla:<sipariş no>`; ayrıntı
+                  "Kart ödemesi" bloğunda. Diğer dolu kimlik 7 Kas 2026 öncesi
+                  iyzico siparişidir (eski firma). */}
+              {siparis.iyzicoId && !toslaOdemesiMi(siparis.iyzicoId) && (
+                <p className="text-[11px] text-[var(--p-muted)]">Kart ödemesi (iyzico, 7 Kas 2026 öncesi): {siparis.iyzicoId}</p>
               )}
             </div>
           </PCard>
@@ -515,6 +522,7 @@ export default function SiparisDetayClient({
               gönderi oluşturulup takip kodu alındıktan sonra durum «Kargoya
               verildi»ye çekiliyor. */}
           {siparis.havale && <HavaleBlogu siparisId={siparis.id} siparisNo={siparis.no} h={siparis.havale} />}
+          {siparis.kart && <KartBlogu k={siparis.kart} />}
 
           <KargoBlogu {...kargo} />
 
@@ -551,7 +559,7 @@ export default function SiparisDetayClient({
               </PButton>
 
               <p className="text-[11px] leading-relaxed text-[var(--p-muted)]">
-                Geçiş kuralları, iptalde iyzico iadesi + stok geri yükleme ve mail tetikleri
+                Geçiş kuralları, iptalde kart iadesi + stok geri yükleme ve mail tetikleri
                 mevcut yönetim ucundan çalışır; panel yeni ödeme/mail mantığı içermez.
               </p>
             </div>
@@ -606,7 +614,11 @@ export default function SiparisDetayClient({
             ? siparis.havale.durum === 'pending'
               ? 'Ödemesi gelmemiş havale siparişi iptal edilecek; müşteriye iptal maili gider. Bu geçiş geri alınamaz.'
               : 'Sipariş iptal edilecek ve stok geri yüklenecek. Havale ile ödendiği için para otomatik dönmez: tutarı müşterinin para gönderdiği hesaba bankadan geri gönderin. Bu geçiş geri alınamaz.'
-            : GERI_ALINAMAZ[hedefDurum]}
+            : hedefDurum === 'cancelled' && siparis.kart && siparis.kart.durum !== 'odendi'
+              ? siparis.kart.durum === 'bekliyor'
+                ? 'Bu kart siparişinin sonucu henüz gelmedi; müşteri şu an ödeme sayfasında olabilir. İptal ederseniz ve ödeme yine de tamamlanırsa size uyarı gelir, tutarı Tosla İşim panelinden iade etmeniz gerekir. Bu geçiş geri alınamaz.'
+                : 'Ödemesi tamamlanmamış kart siparişi iptal edilecek; karttan çekim olmadığı için iade gerekmez. Bu geçiş geri alınamaz.'
+              : GERI_ALINAMAZ[hedefDurum]}
         </p>
       </PDialog>
     </div>

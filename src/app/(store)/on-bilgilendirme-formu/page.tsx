@@ -62,18 +62,32 @@ export default async function OnBilgilendirmeFormuPage() {
         Sitede gösterilen tüm fiyatlar Türk Lirası (TRY) cinsinden ve <strong>KDV
         dahildir</strong>. Varsa indirim, sepet toplamına yansıtılarak ödeme adımında
         gösterilir; ödeyeceğiniz nihai tutar ödeme düğmesinin üzerinde yazan tutardır.
-        Ek bir masraf, hizmet bedeli ya da komisyon alınmaz.
+        Yalnız belirli bir ödeme yöntemine tanınan indirim (ör. havale/EFT indirimi), o
+        yöntemi seçtiğinizde uygulanır. Ek bir masraf, hizmet bedeli ya da komisyon alınmaz.
       </p>
       <p>
         Kargo: <strong>{FREE_SHIPPING_LABEL}</strong>. Teslimat masrafı tüketiciye
         yansıtılmaz.
       </p>
-      <p>
-        Ödeme <strong>havale/EFT</strong> ile yapılır: siparişi onayladığınızda satıcının hesap
-        bilgileri (alıcı, banka, IBAN) ve ödenecek tutar ekranda ve e-postanızda bildirilir.
-        Sipariş, ödeme satıcı hesabına ulaştığında onaylanır ve hazırlanır; iki gün içinde
-        ödemesi ulaşmayan sipariş iptal edilebilir. Kart bilgisi istenmez.
-      </p>
+      {/* 12 Kas 2026 · ESASA İLİŞKİN: kartla ödeme (Tosla) eklendi. Metin, kart
+          seçeneği açık da kapalı da olsa doğru kalacak biçimde yazıldı; o an
+          sunulan yöntemler ödeme adımında gösterilir. */}
+      <p>Ödeme, ödeme adımında size sunulan yöntemlerden biriyle yapılır:</p>
+      <ul>
+        <li>
+          <strong>Kredi veya banka kartı:</strong> Bu yöntem sunulduğunda ödeme, elektronik
+          para kuruluşu Aköde Elektronik Para ve Ödeme Hizmetleri A.Ş.&apos;nin (Tosla) güvenli
+          ödeme sayfasında, 3D Secure doğrulamasıyla ve tek çekim olarak alınır. Kart
+          bilgilerinizi bu sayfada girersiniz; kart numaranızın tamamı ve güvenlik kodunuz
+          satıcıya ulaşmaz. Sipariş, ödemeniz onaylandığında kesinleşir ve hazırlanır.
+        </li>
+        <li>
+          <strong>Havale/EFT:</strong> Siparişi onayladığınızda satıcının hesap bilgileri
+          (alıcı, banka, IBAN) ve ödenecek tutar ekranda ve e-postanızda bildirilir. Sipariş,
+          ödeme satıcı hesabına ulaştığında onaylanır ve hazırlanır; iki gün içinde ödemesi
+          ulaşmayan sipariş iptal edilebilir. Bu yöntemde kart bilgisi istenmez.
+        </li>
+      </ul>
 
       <h2>4. Teslimat</h2>
       <p>

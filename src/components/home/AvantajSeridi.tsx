@@ -27,6 +27,7 @@ const MADDELER = [
   { Icon: RotateCcw, baslik: '14 gün iade', metin: 'Sebep göstermeden, iade kargosu bizden', vurgulu: false },
   // 7 Kas 2026: "iyzico güvencesiyle" kalktı (kart ödemesi kapalı, havale/EFT).
   // ETBİS kaydı sitede zaten doğrulanabilir (footer bağlantısı) — yeni iddia değil.
+  // 12 Kas 2026: kart (Tosla) açıkken de doğru; ödeme yönteminden bağımsız.
   { Icon: ShieldCheck, baslik: 'Kayıtlı satıcı', metin: 'Ticaret Bakanlığı ETBİS kaydı', vurgulu: false },
 ] as const
 

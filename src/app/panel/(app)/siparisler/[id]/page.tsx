@@ -259,6 +259,21 @@ export default async function PanelSiparisDetayPage({
           : null,
         acikTalepVar: Boolean(acikIadeTalebi),
         iyzicoId: o.iyzico_payment_id ?? null,
+        // Kartla ödeme (Tosla, 12 Kas 2026) — panelde durum bloğu çıkar.
+        kart:
+          (o.metadata as any)?.odeme_yontemi === 'kart' && (o.metadata as any)?.kart?.saglayici === 'tosla'
+            ? {
+                durum: String((o.metadata as any).kart.durum ?? ''),
+                ortam: String((o.metadata as any).kart.ortam ?? ''),
+                kart: (o.metadata as any).kart.kart ?? null,
+                yetkiKodu: (o.metadata as any).kart.yetki_kodu ?? null,
+                islemNo: (o.metadata as any).kart.islem_no ?? null,
+                bankaMesaji: (o.metadata as any).kart.banka_mesaji ?? null,
+                neden: (o.metadata as any).kart.neden ?? null,
+                oturum: (o.metadata as any).kart.oturum_at ?? null,
+                odendi: (o.metadata as any).kart.odendi_at ?? null,
+              }
+            : null,
         // Havale/EFT siparişi (7 Kas 2026) — panelde onay bloğu çıkar.
         havale:
           (o.metadata as any)?.odeme_yontemi === 'havale'

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { refundFullPayment } from '@/lib/iyzico/client'
+import { kartTahsilatiniGeriVer } from '@/lib/odeme/kartIadesi'
 import { increaseStock } from '@/lib/trendyol/stockUpdate'
 import { kuyrugaEkle, kuyrugaIsle } from '@/lib/trendyol/stokKuyrugu'
 import { validateOrderStatusTransition } from '@/lib/orders/statusTransitions'
@@ -17,7 +17,7 @@ export type AdminOrderCancelResult =
   | { ok: false; status: number; error: string; code?: string }
 
 /**
- * Full admin cancel path: validation, iyzico refund when applicable, stock restore, status → cancelled.
+ * Full admin cancel path: validation, card refund when applicable (Tosla; legacy iyzico), stock restore, status → cancelled.
  * Shared by PATCH /api/admin/orders/[id] and order request approval.
  */
 export async function executeAdminOrderCancellation(
@@ -73,23 +73,25 @@ export async function executeAdminOrderCancellation(
     (existing.status === 'paid' || existing.status === 'preparing') &&
     Boolean(existing.iyzico_payment_id)
 
-  // Double-refund guard: payment_refunded_at set → skip iyzico refund.
+  // Double-refund guard: payment_refunded_at set → skip card refund.
   if (needsRefund && !existing.payment_refunded_at) {
     console.log('[admin-order-cancel] refund start', {
       orderId,
       paymentId: existing.iyzico_payment_id,
     })
-    const refund = await refundFullPayment(String(existing.iyzico_payment_id))
+    const refund = await kartTahsilatiniGeriVer(existing)
     console.log('[admin-order-cancel] refund result', {
       orderId,
       success: refund.success,
+      saglayici: refund.saglayici,
+      yol: refund.yol,
       error: refund.error,
     })
     if (!refund.success) {
       return {
         ok: false,
         status: 502,
-        error: refund.error || 'iyzico iade başarısız',
+        error: refund.error || 'Kart iadesi başarısız',
       }
     }
 
@@ -130,7 +132,7 @@ export async function executeAdminOrderCancellation(
       })
       if (!inc.success) {
         console.error(
-          '[admin-order-cancel] CRITICAL: iyzico refund may have completed but stock restore failed',
+          '[admin-order-cancel] CRITICAL: card refund may have completed but stock restore failed',
           { orderId, productId: pid, error: inc.error }
         )
         return {

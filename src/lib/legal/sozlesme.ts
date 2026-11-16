@@ -17,7 +17,12 @@
 // ve sıralı yazıldı. Banka yansıma süresi de tek değere (3–7) oturtuldu.
 // 07.11.2026 — ESASA İLİŞKİN: ödeme yöntemi. Kart ödemesi (iyzico) kapatıldı;
 // ödeme, sipariş sonrası bildirilen satıcı hesabına havale/EFT ile yapılır.
-export const SOZLESME_SURUMU = '2026-11-07.1'
+// 16.11.2026 — ESASA İLİŞKİN: kartla ödeme (Tosla / Aköde) eklendi; ödeme
+// maddesi iki yolu birlikte anlatır, kart seçeneği kapalıyken de doğru kalır.
+// Yalnız bir yönteme tanınan indirimin o yöntemde uygulandığı yazıldı.
+// (Kod 12.11.2026'da hazırlandı; canlıya alındığı gün 16.11.2026 — sürüm ve
+// lib/legal/surum.ts'deki iki yürürlük tarihi bu güne çekildi, docs/tosla/PLAN.md.)
+export const SOZLESME_SURUMU = '2026-11-16.1'
 
 /**
  * Yasal süreler ve eşikler — TEK KAYNAK (Faz 20'de mevzuattan doğrulandı).

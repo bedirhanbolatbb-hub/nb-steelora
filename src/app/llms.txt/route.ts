@@ -6,6 +6,7 @@ import {
   BANKA_YANSIMA_LABEL,
 } from '@/lib/legal/sozlesme'
 import { FREE_SHIPPING_LABEL, TESLIM_CUMLESI } from '@/lib/shipping'
+import { kartOdemesiAcikMi } from '@/lib/tosla/client'
 
 const TABAN = 'https://www.nbsteelora.com'
 
@@ -55,7 +56,11 @@ Marka adı TÜRKPATENT'te tescillidir (2025 163503).
 - İade kargo ücreti satıcıya aittir; müşteriden alınmaz.
 - Geri ödeme: ürün kargoya verildikten sonra en geç ${GERI_ODEME_GUN} gün içinde başlatılır; karta yansıması bankaya bağlı olarak ${BANKA_YANSIMA_LABEL} sürer.
 - Cayma hakkı yalnız iki durumda kullanılamaz: kişiye özel hazırlanan ürünler ve hijyen mührü açılmış küpe/piercing.
-- Ödeme havale/EFT ile, sitedeki satıcı adına kayıtlı hesaba alınır. Kart bilgisi istenmez.
+- ${
+    kartOdemesiAcikMi()
+      ? 'Ödeme kartla (Tosla güvenli ödeme sayfası, 3D Secure, tek çekim; kart bilgisi siteye girilmez) ya da havale/EFT ile, sitedeki satıcı adına kayıtlı hesaba alınır.'
+      : 'Ödeme havale/EFT ile, sitedeki satıcı adına kayıtlı hesaba alınır. Kart bilgisi istenmez.'
+  }
 - Her sipariş ücretsiz hediye kutusunda gönderilir.
 
 ## Kategoriler

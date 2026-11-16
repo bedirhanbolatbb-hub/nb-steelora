@@ -52,16 +52,23 @@ veri sorumlusu sıfatıyla tarafımızca işlenmesine ilişkin sizleri bilgilend
 <li><strong>Kimlik:</strong> Ad, soyad. <strong>T.C. kimlik numarası talep edilmez.</strong></li>
 <li><strong>Fatura (yalnız kurumsal fatura isteyen müşterilerde):</strong> Firma unvanı, vergi dairesi, vergi kimlik numarası</li>
 <li><strong>İletişim:</strong> E-posta adresi, telefon numarası, teslimat adresi</li>
-<li><strong>Müşteri işlem:</strong> Sipariş geçmişi, sepet içeriği, ödeme durumu, kargo takip bilgisi, ürün yorumları</li>
+<li><strong>Müşteri işlem:</strong> Sipariş geçmişi, sepet içeriği, ödeme durumu (kartla ödemede ödeme kuruluşundan dönen sonuç, onay kodu ve maskelenmiş kart numarası), kargo takip bilgisi, ürün yorumları</li>
 <li><strong>İşlem güvenliği:</strong> Bağlantı kayıtları, tarayıcı ve cihaz bilgisi</li>
 <li><strong>Pazarlama:</strong> Bülten aboneliği (yalnız kendiniz kaydolduysanız)</li>
 <li><strong>Üyelik hareketleri:</strong> Üyeyseniz ve giriş yapmışsanız; hangi ürünleri görüntülediğiniz, favorilediğiniz, sepete eklediğiniz ve site içi arama sorgularınız</li>
 </ul>
 <p>
-Ödemeler havale/EFT ile alınır; ödeme kartı bilgisi <strong>istenmez ve saklanmaz</strong>.
-Havale/EFT ile gönderdiğiniz ödemede gönderen adı ve hesap bilgisi bankanın hesap hareketinde
-görünür; bu bilgi yalnız ödemenin siparişle eşleştirilmesi ve olası iadenin aynı hesaba
-yapılması için kullanılır.
+Kartla ödeme seçeneği sunulduğunda kart bilgileriniz, elektronik para kuruluşu Aköde Elektronik
+Para ve Ödeme Hizmetleri A.Ş.'nin (Tosla) güvenli ödeme sayfasında girilir; kart numaranızın
+tamamı ve güvenlik kodunuz <strong>tarafımıza ulaşmaz ve saklanmaz</strong>. Bu kuruluştan
+yalnız ödemenin sonucu, onay kodu ve kartınızın maskelenmiş numarası (numaranın tamamı değil)
+alınır; bunlar ödemenin doğrulanması ve olası iade ile itirazların yürütülmesi için siparişinizle
+birlikte saklanır.
+</p>
+<p>
+Havale/EFT ile ödemede kart bilgisi istenmez. Gönderdiğiniz ödemede gönderen adı ve hesap
+bilgisi bankanın hesap hareketinde görünür; bu bilgi yalnız ödemenin siparişle eşleştirilmesi
+ve olası iadenin aynı hesaba yapılması için kullanılır.
 </p>`,
     `<h2>İşleme Amaçları ve Hukuki Sebepler</h2>
 <ul>
@@ -94,6 +101,7 @@ paylaşılmaz. Ayrıntılar için
 </p>`,
     `<h2>Kişisel Verilerin Aktarıldığı Taraflar</h2>
 <ul>
+<li><strong>Aköde Elektronik Para ve Ödeme Hizmetleri A.Ş. (Tosla):</strong> Kartla ödeme seçeneği sunulduğunda kartla ödemenin alınması, doğrulanması ve olası iadenin yapılması; tarafımızdan yalnız sipariş numarası ve tutar iletilir (yurt içi).</li>
 <li><strong>Bankalar:</strong> Havale/EFT ödemesinin alınması ve olası iadenin yapılması (yurt içi).</li>
 <li><strong>Anlaşmalı kargo firmaları:</strong> Gönderinin teslim edilmesi; yalnız ad, adres ve telefon bilgisi (yurt içi).</li>
 <li><strong>Barındırma, veritabanı ve e-posta hizmet sağlayıcıları:</strong> Sitenin ve bildirim e-postalarının çalışabilmesi (aşağıdaki bölüme bakınız).</li>
