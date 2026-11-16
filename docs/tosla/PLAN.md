@@ -1,7 +1,9 @@
 # NB Steelora — Tosla İşim kartla ödeme (dal: tosla-odeme)
 
-Durum (13 Kas 2026 gece): KOD HAZIR, deneme ortamında doğrulandı, CANLIDA DEĞİL.
-Dal asıl depoya yalnız DAL olarak kaydedildi; main'e birleştirilmedi.
+Durum (16 Kas 2026 20.45): KOD CANLIDA (main b00f108), KART KAPALI — Tosla
+nbsteelora.com üye işyerinin banka tanımlarını henüz bitirmedi. Ayrıntı en altta
+"16 Kasım 2026 — canlıya alma denemesi". Tekrar açma adımları orada.
+(13 Kas: kod hazırdı, deneme ortamında doğrulandı; dal 16 Kas'ta main'e birleşti.)
 
 Çalışma kopyası: VM içinde $HOME/nbs-tosla. Asıl depo $HOME/mnt/nb-steelora'da
 başka oturumun işleri sürdüğü için main'e ve çalışma ağacına dokunulmadı.
@@ -62,3 +64,33 @@ eklenebilir mi, yoksa ayrı başvuru mu (12 Kas 20.22'de soruldu).
 6. Gerçek küçük bir deneme alışverişi (BB'nin kendi kartıyla), panelde
    "Ödendi" görülür, ardından panelden iptal → para karta geri döner.
 7. Tripwire: aktif ürün sayısı · siparişler · /urunler kartları.
+
+## 16 Kasım 2026 — canlıya alma denemesi
+- Tosla 16 Kas 11.45'te sanal POS başvurusunu onayladı; 12.11'de ilk banka tanımı
+  tamamlandı, 18.02'de diğer banka tanımları sürüyordu (Tosla e-postaları).
+- Adım 2: BB dört değişkeni Vercel'e girdi (Production). Adım 3: dal main'e
+  birleşti (b00f108), VS Code eşitlemesiyle gönderildi, Deploy #354 yayında.
+  Sürüm tarihleri 16.11.2026'ya çekildi (sözleşme 2026-11-16.1, KVKK v1.4).
+- Adım 4: kart kapalıyken canlı kontrol temiz (ödeme ekranı eskisi gibi,
+  sözleşme sayfaları yeni metinle, panel KVKK alanı ezmiyor, konsol hatası yok).
+- Adım 5: TOSLA_ODEME_ACIK=evet eklendi (Config), Deploy #354 GitHub'dan
+  "Re-run all jobs" ile yeniden yayınlandı (deploy.yml'de elle tetikleme yok;
+  belge commit'i yayın tetiklemiyor). Kart seçeneği göründü.
+- Adım 6: BB'nin iki denemesi Tosla'nın 3D adımında düştü: "3D Secure doğrulama
+  esnasında bir problem ile karşılaşıldı .NotEnrolled.T2" (Tosla işlem no
+  2000000003343658). Karttan çekim yok, stok düşmedi; akışımız doğru çalıştı
+  (dönüş → Tosla'ya sorgu → başarısız sayfası, sipariş "yarım kalan").
+  Teşhis: üye işyeri tarafı — KarPanel'in Tosla üye işyeri 12 Kas'ta canlı kartı
+  sorunsuz almıştı; nbsteelora.com'un banka tanımları sürüyor.
+- Kart KAPATILDI: TOSLA_ODEME_ACIK silindi, Deploy #354 yeniden yayınlandı.
+  (Not: Vercel'de değişken DÜZENLEMEK e-postaya gelen kodu istiyor; silip yeniden
+  eklemek istemiyor.)
+
+### Tekrar açma (Tosla "tanımlar tamamlandı" dedikten sonra)
+1. Vercel → Environment Variables → Add: TOSLA_ODEME_ACIK = evet (Config, Production).
+2. GitHub Actions → son "Deploy to Vercel" koşusu → Re-run all jobs (BB'nin Chrome'u).
+3. Ödeme sayfasında "Kart ile öde" görünür → BB'nin kendi kartıyla küçük deneme
+   (NBH008 ₺299,92) → panelde "Ödendi" → panelden iptal (aynı gün: iptal, sonra: iade).
+4. Tripwire: aktif ürün 412 / pasif 108 / tümü 520 · siparişler · /urunler ilk sayfa 24 kart
+   · NBH008 stoğu 10 (deneme sonrası iptalle geri gelmeli).
+
