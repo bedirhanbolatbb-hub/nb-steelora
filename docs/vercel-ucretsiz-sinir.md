@@ -269,3 +269,35 @@ Yapılacak (öncelik sırasıyla):
 Beklenen: `/urun/[slug]` yeniden üretimi ~20 kat azalır, kadraj işlemesi yayın
 başına bir kez → ~0, health ~%70 azalır. Ölçüm: 24 saat sonra Usage → Fluid
 Active CPU (hedef günde 5 dk altı).
+
+### 16 Kasım 2026 ölçümü — d008486'dan ~25 saat sonra
+
+Ölçüm 16 Kas 18.45 TR, Observability → Functions, son 12 saat (06.45–18.45 TR).
+Usage grafiği gizli tarayıcı penceresinde çizilmediği için toplam yol tablosundan
+toplandı; ara katman (middleware) 12 saatte 17 çağrı, ihmal edilebilir.
+
+| Yol | Çağrı | Active CPU | Önceki 12 sa (15 Kas) |
+|---|---|---|---|
+| `/api/gorsel/kadraj` | 885 | ~4 dk | 121 · 38 sn |
+| `/urun/[slug]` | 220 | 47 sn | 316 · 59 sn |
+| `/api/health` | 70 | 15 sn | 152 · 12 sn |
+| `/kategori/[slug]` | 36 | 7 sn | — |
+| `/urunler` | 35 | 6 sn | — |
+| `/` | 13 | 6 sn | — |
+| `/api/analytics/track` | 43 | 5 sn | — |
+| diğer 30 yol | ~70 | ~25 sn | — |
+| **Toplam** | ~1.400 | **~5 dk 45 sn** | 3 dk 41 sn |
+
+Kadraj dışı toplam ~1 dk 45 sn / 12 sa → günde ~3,5 dk: hedefin (günde 5 dk)
+altında. Fazlalığın tamamı kadraj: uç 12 saatte Trendyol CDN'inden 591 görsel
+indirdi (= 591 üretim), 294 istek depodan yönlendirildi. Neden: kalıcı depo
+(`kadraj/v2/`) 15 Kas 17.30'da boş başladı; vitrindeki her (görsel × en × oran)
+bir kez üretilip depoya yazılıyor. Depo yazımı çalışıyor: /urunler ilk
+sayfasındaki 24 ürünün 5 enindeki 60 dosyanın 60'ı da depoda (HEAD 200).
+Üretim sayısı katalogla sınırlı (yalnız kendi ürün görsellerimiz, 5 en,
+3 oran) → tahminen 2.000–4.000 dosya, bir kerelik ~15–25 dk; dolunca uç yalnız
+hafif yönlendirme yapar. Kod değişikliği YAPILMADI (yayın, uç önbelleğini
+sıfırlayıp yönlendirmeleri yeniden çalıştırırdı). 30 günlük öngörü: dolum dahil
+~2,5–3 sa (sınır 4 sa). Yeniden ölçüm 18 Kas akşamı (son 12 sa): kadraj
+üretimi (cdn.dsmcdn.com çağrısı) 50'nin altına inmeli; inmezse aynı görselin
+neden yeniden üretildiğine bak (depo yolu, oran/genişlik dağılımı, hız sınırı).
