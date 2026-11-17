@@ -1,6 +1,6 @@
 # NB Steelora — Tosla İşim kartla ödeme (dal: tosla-odeme)
 
-Durum (16 Kas 2026 20.45): KOD CANLIDA (main b00f108), KART KAPALI — Tosla
+Durum (17 Kas 2026 10.58): KOD CANLIDA (main b00f108), KART AÇIK (deneme alışverişi bekleniyor); önceki durum 16 Kas 20.45: KART KAPALI — Tosla
 nbsteelora.com üye işyerinin banka tanımlarını henüz bitirmedi. Ayrıntı en altta
 "16 Kasım 2026 — canlıya alma denemesi". Tekrar açma adımları orada.
 (13 Kas: kod hazırdı, deneme ortamında doğrulandı; dal 16 Kas'ta main'e birleşti.)
@@ -94,3 +94,13 @@ eklenebilir mi, yoksa ayrı başvuru mu (12 Kas 20.22'de soruldu).
 4. Tripwire: aktif ürün 412 / pasif 108 / tümü 520 · siparişler · /urunler ilk sayfa 24 kart
    · NBH008 stoğu 10 (deneme sonrası iptalle geri gelmeli).
 
+## 17 Kasım 2026 — kart yeniden açıldı
+- Tosla 17 Kas sabahı telefonla "tanımlar tamamlandı, bağlayabilirsiniz" dedi.
+- 10.55: TOSLA_ODEME_ACIK = evet (Config, Production) eklendi. İlk denemede alanlar
+  iki kez yazılıp "TOSLA_ODEME_ACIKTOSLA_ODEME_ACIK" adıyla kaydedildi (uygulama okumaz,
+  etkisiz); hemen silinip doğrusu eklendi. Ders: Kaydet'ten önce alan değerlerini
+  sayfadan oku, ekran görüntüsüne güvenme.
+- Deploy #354 (koşu 43912874578) 4. kez "Re-run all jobs" → başarılı (1 dk 40 sn).
+- Canlı: alt bilgi "Visa, Mastercard ve Troy kartlarla ödeme alınır.", llms.txt kartı anıyor.
+- Tripwire (deneme öncesi): Aktif 412 / Pasif 108 / Tümü 520 · /urunler 24 kart · NBH008 stok 10.
+- Sıradaki: BB'nin deneme alışverişi (NBH008 ₺299,92) → "Ödendi" → panelden iptal → tripwire.
