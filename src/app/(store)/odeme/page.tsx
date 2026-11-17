@@ -14,6 +14,7 @@ import { TRENDYOL_MAGAZA_URL } from '@/lib/kanallar'
 import { BaglamliSaticiPuaniSatiri } from '@/components/store/SaticiPuaniContext'
 import { SOZLESME_SURUMU, SOZLESME_YOLLARI } from '@/lib/legal/sozlesme'
 import Input from '@/components/ui/Input'
+import IlIlceSecici from '@/components/store/IlIlceSecici'
 import CheckoutSteps from '@/components/store/CheckoutSteps'
 import { izle } from '@/lib/analytics/izle'
 import { SHIPPING_LINE_LABEL, shippingCostFor } from '@/lib/shipping'
@@ -420,17 +421,11 @@ export default function OdemePage() {
               value={form.phone}
               onChange={(e) => updateField('phone', e.target.value)}
             />
-            <Input
-              placeholder="İl *"
-              autoComplete="address-level1"
-              value={form.city}
-              onChange={(e) => updateField('city', e.target.value)}
-            />
-            <Input
-              placeholder="İlçe *"
-              autoComplete="address-level2"
-              value={form.district}
-              onChange={(e) => updateField('district', e.target.value)}
+            <IlIlceSecici
+              il={form.city}
+              ilce={form.district}
+              onIl={(v) => updateField('city', v)}
+              onIlce={(v) => updateField('district', v)}
             />
             <div className="sm:col-span-2">
               <Input

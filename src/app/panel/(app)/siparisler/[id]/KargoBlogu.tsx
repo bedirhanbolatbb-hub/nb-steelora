@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Copy, Download, RefreshCw, Truck } from 'lucide-react'
 import { PBadge, PButton, PCard, PInput, PSelect, type BadgeTone } from '../../_components/ui'
@@ -92,6 +92,21 @@ export default function KargoBlogu({
     const data = await res.json()
     setIller(data.regions || [])
   }
+
+  // Elle seçim gerekiyorsa listeler odaklanmayı beklemeden yüklenir; il eşleşip
+  // yalnız ilçe eşleşmediyse o ilin ilçeleri de gelir (17 Kas deneme siparişinde
+  // il seçili görünmüyor, ilçe listesi boş kalıyordu).
+  useEffect(() => {
+    if (!manuelBolgeGerekli) return
+    illeriYukle().catch(() => {})
+    if (bolgeEslesme.stateId) {
+      fetch(`/api/panel/shipping/regions?state_id=${bolgeEslesme.stateId}`)
+        .then((r) => r.json())
+        .then((d) => setIlceler(d.regions || []))
+        .catch(() => {})
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const ilSecildi = async (deger: string) => {
     setStateId(deger)

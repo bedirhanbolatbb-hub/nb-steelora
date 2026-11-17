@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import { getCarrierProvider } from './providers'
+import { adAnahtari } from './adAnahtari'
 
 /**
  * Sipariş adresindeki il/ilçe METNİNİ sağlayıcının kimliklerine eşler.
@@ -9,14 +10,8 @@ import { getCarrierProvider } from './providers'
  * ister — adres sessizce yanlış ilçeye gönderilmez.
  */
 
-/** Türkçe karakterleri sadeleştirip karşılaştırma anahtarı üretir. */
-export function adAnahtari(metin: string): string {
-  return (metin || '')
-    .toLocaleLowerCase('tr-TR')
-    .replace(/[çğıîöşüâ]/g, (c) => ({ ç: 'c', ğ: 'g', ı: 'i', î: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a' })[c] || c)
-    .replace(/[^a-z0-9]+/g, '')
-    .trim()
-}
+/** Türkçe karakterleri sadeleştirip karşılaştırma anahtarı üretir (ortak modülde). */
+export { adAnahtari }
 
 export type Bolge = { providerId: number; ad: string }
 
