@@ -301,3 +301,54 @@ sıfırlayıp yönlendirmeleri yeniden çalıştırırdı). 30 günlük öngör�
 ~2,5–3 sa (sınır 4 sa). Yeniden ölçüm 18 Kas akşamı (son 12 sa): kadraj
 üretimi (cdn.dsmcdn.com çağrısı) 50'nin altına inmeli; inmezse aynı görselin
 neden yeniden üretildiğine bak (depo yolu, oran/genişlik dağılımı, hız sınırı).
+
+### 18 Kasım 2026 ölçümü — kadraj deposu doldu
+
+Ölçüm 18 Kas 18.55 TR, Observability → Functions, son 12 saat (06.51–18.51 TR);
+yol tablosunun iki sayfası (51 yol) toplandı. External APIs sayfası bu kez
+çizildi (16 Kas'ta gizli pencerede boş kalmıştı).
+
+| Yol | Çağrı | Active CPU | 16 Kas (12 sa) |
+|---|---|---|---|
+| `/urun/[slug]` | 172 | 41 sn | 220 · 47 sn |
+| `/api/gorsel/kadraj` | 76 | 27 sn | 885 · ~4 dk |
+| `/api/health` | 77 | 16 sn | 70 · 15 sn |
+| `/urunler` | 25 | 8 sn | 35 · 6 sn |
+| `/` | 15 | 7 sn | 13 · 6 sn |
+| `/blog/[slug]` | 16 | 4,3 sn | — |
+| `/api/fatura` (cron) | 3 | 4,2 sn | — |
+| `/kategori/[slug]` | 10 | 3,6 sn | 36 · 7 sn |
+| `/panel/siparisler` | 44 | 3,3 sn | — |
+| `/sitemap.xml` | 13 | 3,0 sn | — |
+| `/api/analytics/track` | 19 | 2,9 sn | 43 · 5 sn |
+| diğer 40 yol | 523 | ~24 sn | ~25 sn |
+| **Toplam** | 993 (üst özet: 940) | **~2 dk 25 sn** | ~5 dk 45 sn |
+
+- **Kadraj:** External APIs → `cdn.dsmcdn.com` 12 saatte **2 çağrı** (16 Kas:
+  591) = 2 üretim; kalan 74 istek depodan 302. Hedef (50 altı) tuttu, depo
+  doldu. İstek başına ortalama ~0,35 sn Active CPU = 2 üretim (sharp, tam boy
+  kaynak) + soğuk başlangıçlar (%27,8); yönlendirme yolunda sharp yüklenmiyor
+  (`await import('sharp')` yalnız üretimde).
+- **Toplam:** ~2 dk 25 sn / 12 sa (16 Kas'a göre −%58). Ölçülen 12 saat günün
+  yoğun yarısı; ×2 üst sınırla günde ~4 dk 50 sn → hedef (günde 5 dk altı)
+  tuttu. Panel yolları (`/panel*`) 511 çağrı · ~15 sn.
+- **Usage, 19 Eki–18 Kas penceresi:** Fluid Active CPU **1 sa 10 dk / 4 sa**
+  (%29; 15–16 Kas depo dolumu dahil), işlev çağrısı 20K, CDN isteği 32K, ISR
+  yazma 19K, Fast Data Transfer 421,88 MB / 100 GB, Fast Origin Transfer
+  481,92 MB / 10 GB, cron çağrısı 33.
+- **Yan bulgu — dış çağrılar (12 sa):** Supabase 3,6K, `api.resend.com` 87,
+  `app.kargonomi.com.tr` 86, `earsivportal.efatura.gov.tr` 71,
+  `apigw.trendyol.com` 31, Vercel Data Cache 4, `cdn.dsmcdn.com` 2,
+  `api.indexnow.org` 1. Resend ve Kargonomi çağrılarının 77'şer tanesi
+  `/api/health`'in her yoklamada yaptığı anahtar/kredi kontrolü
+  (`GET /domains`, `GET /api/v1/user/credit`). Kod toplu gönderim kullanmıyor
+  (`resend.emails.send`, istek başına bir mail) → 12 saatte gerçek mail
+  gönderimi + durum okuması en fazla 10; müşteriye fazla mail üreten bir döngü
+  yok. Hostname ayrıntı sayfası (uç başına kırılım) Hobby'de örnek veri
+  gösteriyor, kullanılamaz.
+
+Karar: kod değişikliği yok. Kadraj artık yalnız yeni ürün görseli eklendiğinde
+üretiyor. Dikkat: `KADRAJ_SURUM` artırılırsa depo yeni klasörde baştan dolar
+(16 Kas'taki gibi bir kerelik ~15–25 dk) — sürüm yalnız kesim hesabı gerçekten
+değişince artırılmalı, ardından 12 saatlik ölçüm. Bunun dışında yeniden ölçüm
+yalnız Vercel sınır uyarısı gelirse.
