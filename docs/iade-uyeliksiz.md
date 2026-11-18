@@ -65,6 +65,23 @@ gösterilir ki BB neyi kabul ettiğini bilsin.
 Müşteriye teyit maili panelden açıldığında da GİDER. Telefonda "açtım" demek
 kanıt değildir (MSY m.11/2).
 
+## Para sistem dışında iade edildiyse (18 Kas 2026)
+
+Ödeme kuruluşunun panelinden ya da bankadan elle yapılan iadeyi sistem
+bilmiyordu: talebi kapatmanın tek yolu "Parayı iade et"ti ve o düğme
+kuruluşa İKİNCİ bir iade isteği gönderip müşteriye "iadeniz tamamlandı"
+maili atıyordu (NBS-1787569943108'de yaşandı, düğmeye basılmadan yakalandı).
+
+"Ürün teslim alındı"dan sonra artık iki düğme var:
+
+| düğme | ne yapar |
+|---|---|
+| Parayı iade et | Kartla ödendiyse tutarı kuruluş üzerinden karta iade eder, stoku geri yükler, müşteriye mail atar. |
+| Para elle iade edildi | Kuruluşa istek göndermez, mail atmaz. `payment_refunded_at` damgasını atar (sonraki her iade denemesi çift iade korumasına takılır), talebi "Para iade edildi" yapar, iz kaydına not düşer. Stok yalnız pencerede işaretlenirse geri eklenir. |
+
+Kod: `executeAdminOrderRefund(service, orderId, { paraSistemDisinda, stokIade })`,
+`PATCH /api/admin/order-requests/[id]` → `{ action: 'refund_manual', stokIade }`.
+
 ## Kalıcı kural
 
 Vitrine "yalnız üyede var" bir yol açılırsa, üyeliksiz karşılığı **aynı işte**
