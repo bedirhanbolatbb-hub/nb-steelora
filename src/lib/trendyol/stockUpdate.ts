@@ -1,7 +1,18 @@
-import { updateTrendyolStock } from './client'
 import { createServiceClient } from '@/lib/supabase/service'
-import { stokYazimModu, yazimAcik } from './stokYazimBayragi'
 import { vitriniYenile } from '@/lib/cache/vitrin'
+
+/*
+ * Bu dosya YALNIZ bizim veritabanımızdaki stoğu değiştirir.
+ *
+ * Trendyol'a stok yazımı tek yoldan yapılır: stok kuyruğu (kuyrugaEkle +
+ * kuyrugaIsle) canlı Trendyol stoğunu okur ve deltayı onun üstüne uygular.
+ * Buradaki her çağıran (ödeme, iptal, iade, kalem iptali) kuyruğa da yazıyor.
+ *
+ * 18 Kas 2026'ya kadar burada ayrıca MUTLAK değer de yazılıyordu: aynı barkoda
+ * birkaç saniye arayla iki istek gidiyordu. Trendyol ilkini işledikten sonra
+ * kuyruk canlı stoğu okursa ya da kuyruk isteği reddedilip yeniden denenirse
+ * aynı satış iki kez düşülebiliyordu (ya da iade iki kez eklenebiliyordu).
+ */
 
 export async function increaseStock(
   productId: string,
@@ -12,7 +23,7 @@ export async function increaseStock(
   try {
     const { data: product } = await supabase
       .from('products')
-      .select('trendyol_stock, trendyol_barcode, trendyol_id')
+      .select('trendyol_stock')
       .eq('id', productId)
       .single()
 
@@ -24,11 +35,6 @@ export async function increaseStock(
     // Ürün sayfası 24 saat önbellekte duruyor: stok değişince hemen tazelensin
     // ("Son 1 adet" ve sepete ekle doğru kalsın).
     vitriniYenile()
-
-    // Trendyol yazımı bayrağa bağlı (Faz 16B). Kapalıyken mutlak değer
-    // yazılmaz — bayat DB değerinden hesaplanan mutlak stok, Trendyol'daki
-    // gerçek stoğu ezip olmayan ürünü satışa açabiliyordu.
-    await trendyolaYaz(product.trendyol_barcode, newStock, quantity, 'iade')
 
     return { success: true }
   } catch (error: any) {
@@ -47,7 +53,7 @@ export async function decreaseStock(
   try {
     const { data: product } = await supabase
       .from('products')
-      .select('trendyol_stock, trendyol_barcode, trendyol_id')
+      .select('trendyol_stock')
       .eq('id', productId)
       .single()
 
@@ -63,39 +69,9 @@ export async function decreaseStock(
     // Ürün sayfası 24 saat önbellekte duruyor: stok değişince hemen tazelensin.
     vitriniYenile()
 
-    // Trendyol'da stoku güncelle — bayrağa bağlı (Faz 16B).
-    await trendyolaYaz(product.trendyol_barcode, newStock, quantity, 'satis')
-
     return { success: true }
   } catch (error: any) {
     console.error('Stock decrease error:', error)
     return { success: false, error: error.message }
   }
-}
-
-
-/**
- * Bayrak kademesine göre Trendyol yazımı.
- *
- * off/shadow: yazılmaz, tek satır log düşülür. Yazım açıldığında bile bu yol
- * MUTLAK değer gönderir; doğru yol (canlı stok okuyup delta uygulamak) kuyruk
- * katmanında kurulur — bu fonksiyon yalnız eski davranışın kapısıdır.
- */
-async function trendyolaYaz(
-  barcode: string | null | undefined,
-  yeniStok: number,
-  adet: number,
-  yon: 'satis' | 'iade'
-): Promise<void> {
-  if (!barcode) return
-  const mod = stokYazimModu()
-  if (!yazimAcik(barcode)) {
-    console.log(
-      `[stok-yazim] ${mod} · YAZILMADI · barkod=${barcode} · yön=${yon} · adet=${adet} · ` +
-        `DB'deki yeni değer=${yeniStok}`
-    )
-    return
-  }
-  await updateTrendyolStock(barcode, yeniStok)
-  console.log(`[stok-yazim] on · YAZILDI · barkod=${barcode} · değer=${yeniStok} · yön=${yon}`)
 }
