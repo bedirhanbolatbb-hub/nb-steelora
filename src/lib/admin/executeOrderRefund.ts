@@ -12,8 +12,23 @@ function lineProductId(item: any): string | null {
 }
 
 export type AdminOrderRefundResult =
-  | { ok: true; iadeEdildi: boolean; tutar: number }
+  | { ok: true; iadeEdildi: boolean; tutar: number; stokEklendi: boolean }
   | { ok: false; status: number; error: string; code?: string }
+
+export type AdminOrderRefundSecenek = {
+  /**
+   * Para sistem dışında (ödeme kuruluşunun paneli, banka) ZATEN iade edildi.
+   * Ödeme kuruluşuna istek gitmez; yalnız `payment_refunded_at` damgası atılır
+   * ve bu damga sonraki her iade denemesini durdurur (çift iade koruması).
+   */
+  paraSistemDisinda?: boolean
+  /**
+   * İade gelen ürünler stoka geri eklensin mi. Varsayılan evet (kart iadesi
+   * akışı). Elle iadede yönetici seçer: ürün satılamaz durumdaysa ya da stoka
+   * elle eklendiyse ikinci kez eklenmez.
+   */
+  stokIade?: boolean
+}
 
 /**
  * İADE onayı (Faz 15).
@@ -34,8 +49,11 @@ export type AdminOrderRefundResult =
  */
 export async function executeAdminOrderRefund(
   serviceClient: SupabaseClient,
-  orderId: string
+  orderId: string,
+  secenek: AdminOrderRefundSecenek = {}
 ): Promise<AdminOrderRefundResult> {
+  const { paraSistemDisinda = false, stokIade = true } = secenek
+
   const { data: order, error: fetchErr } = await serviceClient
     .from('orders')
     .select('*')
@@ -51,11 +69,23 @@ export async function executeAdminOrderRefund(
   // Çift iade koruması.
   if (order.payment_refunded_at) {
     console.log('[admin-order-refund] idempotent — already refunded', { orderId })
-    return { ok: true, iadeEdildi: true, tutar }
+    return { ok: true, iadeEdildi: true, tutar, stokEklendi: false }
   }
 
   let iadeEdildi = false
-  if (order.iyzico_payment_id) {
+  if (paraSistemDisinda) {
+    // Para elle iade edildi: kuruluşa istek GİTMEZ. Damga yalnız boşsa yazılır.
+    const { error: stampErr } = await serviceClient
+      .from('orders')
+      .update({ payment_refunded_at: new Date().toISOString() })
+      .eq('id', orderId)
+      .is('payment_refunded_at', null)
+    if (stampErr) {
+      console.error('[admin-order-refund] elle iade damgası yazılamadı', { orderId, stampErr })
+      return { ok: false, status: 500, error: 'İade kaydı veritabanına yazılamadı', code: 'STAMP_FAILED' }
+    }
+    console.log('[admin-order-refund] para sistem dışında iade edildi — kuruluşa istek gönderilmedi', { orderId })
+  } else if (order.iyzico_payment_id) {
     console.log('[admin-order-refund] refund start', {
       orderId,
       paymentId: order.iyzico_payment_id,
@@ -89,7 +119,8 @@ export async function executeAdminOrderRefund(
   }
 
   // İade edilen ürünler rafa döner.
-  if (order.stock_deducted_at && !order.stock_restored_at) {
+  let stokEklendi = false
+  if (stokIade && order.stock_deducted_at && !order.stock_restored_at) {
     const items = Array.isArray(order.items) ? (order.items as any[]) : []
     for (const item of items) {
       const pid = lineProductId(item)
@@ -114,6 +145,7 @@ export async function executeAdminOrderRefund(
       .from('orders')
       .update({ stock_restored_at: new Date().toISOString(), updated_at: new Date().toISOString() })
       .eq('id', orderId)
+    stokEklendi = true
 
     // Trendyol'a ters kayıt: aynı kuyruktan, delta pozitif (Faz 16B).
     try {
@@ -131,6 +163,6 @@ export async function executeAdminOrderRefund(
     }
   }
 
-  console.log('[admin-order-refund] success', { orderId, iadeEdildi })
-  return { ok: true, iadeEdildi, tutar }
+  console.log('[admin-order-refund] success', { orderId, iadeEdildi, stokEklendi })
+  return { ok: true, iadeEdildi, tutar, stokEklendi }
 }

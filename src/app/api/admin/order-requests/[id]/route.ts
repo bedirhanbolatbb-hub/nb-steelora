@@ -31,7 +31,7 @@ export async function PATCH(
     return NextResponse.json({ success: false, error: 'Talep bulunamadı.' }, { status: 404 })
   }
 
-  let body: { action?: string; iadeKodu?: string; kargoFirmasi?: string }
+  let body: { action?: string; iadeKodu?: string; kargoFirmasi?: string; stokIade?: boolean }
   try {
     body = await request.json()
   } catch {
@@ -39,7 +39,9 @@ export async function PATCH(
   }
 
   // Faz 20: iade akışı dört adıma bölündü — onay artık para göndermiyor.
-  const GECERLI = ['approve', 'reject', 'received', 'refund'] as const
+  // refund_manual (18 Kas 2026): para sistem dışında zaten iade edildiyse
+  // talebi kuruluşa istek göndermeden kapatır.
+  const GECERLI = ['approve', 'reject', 'received', 'refund', 'refund_manual'] as const
   const action = body.action as (typeof GECERLI)[number] | undefined
   if (!action || !GECERLI.includes(action)) {
     return NextResponse.json({ success: false, error: 'Geçersiz işlem.' }, { status: 400 })
@@ -100,6 +102,56 @@ export async function PATCH(
     }
     await adimKaydet(service, row.order_id, 'teslim_alindi')
     return NextResponse.json({ success: true, durum: 'inspecting' })
+  }
+
+  // ── PARA SİSTEM DIŞINDA İADE EDİLDİ ───────────────────────────────────
+  // Para ödeme kuruluşunun panelinden ya da bankadan elle iade edildiyse
+  // "Parayı iade et" kuruluşa İKİNCİ bir iade isteği gönderir ve müşteriye
+  // "iadeniz tamamlandı" maili atardı. Bu eylem yalnız kaydı kapatır:
+  // kuruluşa istek gitmez, müşteriye mail gitmez; stok yalnız yönetici
+  // isterse geri eklenir (ürün satılamaz durumda ya da stoka elle eklenmiş
+  // olabilir).
+  if (action === 'refund_manual') {
+    if (!paraIadesineHazirMi(row.status)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Önce "Ürün teslim alındı" işaretlenmelidir.',
+          code: 'TESLIM_ALINMADI',
+        },
+        { status: 400 }
+      )
+    }
+
+    const sonuc = await executeAdminOrderRefund(service, row.order_id, {
+      paraSistemDisinda: true,
+      stokIade: body.stokIade === true,
+    })
+    if (!sonuc.ok) {
+      return NextResponse.json(
+        { success: false, error: sonuc.error, ...(sonuc.code ? { code: sonuc.code } : {}) },
+        { status: sonuc.status }
+      )
+    }
+
+    const { data: upd } = await service
+      .from('order_requests')
+      .update({ status: 'approved', updated_at: new Date().toISOString() })
+      .eq('id', requestId)
+      .eq('status', 'inspecting')
+      .select('id')
+
+    await adimKaydet(service, row.order_id, 'iade_edildi', {
+      not: `para sistem dışında elle iade edildi — kuruluşa istek ve müşteriye mail gitmedi; ${
+        sonuc.stokEklendi ? 'ürünler stoka geri eklendi' : 'stok değişmedi'
+      }`,
+    })
+
+    return NextResponse.json({
+      success: true,
+      durum: upd?.length ? 'approved' : row.status,
+      iade: { iadeEdildi: false, elle: true, stokEklendi: sonuc.stokEklendi },
+    })
   }
 
   // ── PARA İADESİ ────────────────────────────────────────────────────────

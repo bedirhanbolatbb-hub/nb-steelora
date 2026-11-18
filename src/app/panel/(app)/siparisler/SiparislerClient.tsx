@@ -60,6 +60,8 @@ const TALEP_DURUM: Record<string, { label: string; tone: BadgeTone }> = {
   completed: { label: 'Tamamlandı', tone: 'success' },
 }
 
+type TalepEylemi = 'approve' | 'reject' | 'received' | 'refund' | 'refund_manual'
+
 const tarihStr = (t: string) =>
   new Date(t).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Istanbul' })
 
@@ -86,19 +88,22 @@ export default function SiparislerClient({
   const zamanlayici = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [talepIslem, setTalepIslem] = useState<{
     talep: TalepSatiri
-    action: 'approve' | 'reject' | 'received' | 'refund'
+    action: TalepEylemi
   } | null>(null)
   const [isleniyor, setIsleniyor] = useState(false)
   const [kargoFirmasi, setKargoFirmasi] = useState(iadeVarsayilanlari.firma)
   const [iadeKodu, setIadeKodu] = useState(iadeVarsayilanlari.kod)
-  /** İyzico iadesi düşerse satırın altında kırmızı kalır (Faz 20). */
+  /** Kart iadesi düşerse satırın altında kırmızı kalır (Faz 20). */
   const [iadeHatalari, setIadeHatalari] = useState<Record<string, string>>({})
+  /** Elle iadede iade gelen ürünler stoka geri eklensin mi (varsayılan hayır). */
+  const [stokIade, setStokIade] = useState(false)
 
-  const talepAc = (talep: TalepSatiri, action: 'approve' | 'reject' | 'received' | 'refund') => {
+  const talepAc = (talep: TalepSatiri, action: TalepEylemi) => {
     // Sıra: daha önce kaydedilmiş > siparişin GİDİŞ firması > isteğe bağlı
     // varsayılan > boş. Gidiş gönderisi yoksa alan boş gelir, BB elle seçer.
     setKargoFirmasi(talep.kargoFirmasi || talep.gidisFirmasi || iadeVarsayilanlari.firma)
     setIadeKodu(talep.iadeKodu || iadeVarsayilanlari.kod)
+    setStokIade(false)
     setTalepIslem({ talep, action })
   }
 
@@ -113,7 +118,9 @@ export default function SiparislerClient({
         body: JSON.stringify(
           action === 'approve' && talep.tip === 'return'
             ? { action, kargoFirmasi, iadeKodu }
-            : { action }
+            : action === 'refund_manual'
+              ? { action, stokIade }
+              : { action }
         ),
       })
       const data = await res.json()
@@ -133,7 +140,9 @@ export default function SiparislerClient({
             ? 'Ürün teslim alındı olarak işaretlendi'
             : action === 'refund'
               ? 'Para iadesi yapıldı'
-              : 'Talep reddedildi',
+              : action === 'refund_manual'
+                ? 'Talep kapatıldı — elle yapılan iade kaydedildi'
+                : 'Talep reddedildi',
         'success'
       )
       setTalepIslem(null)
@@ -349,7 +358,7 @@ export default function SiparislerClient({
 
                 {iadeHatalari[t.id] && (
                   <p className="mt-2 rounded-[4px] bg-[var(--p-danger-bg)] px-3 py-2 text-[12px] text-[var(--p-danger)]">
-                    İyzico iadesi başarısız: {iadeHatalari[t.id]}
+                    Kart iadesi başarısız: {iadeHatalari[t.id]}
                   </p>
                 )}
 
@@ -370,9 +379,14 @@ export default function SiparislerClient({
                     </PButton>
                   )}
                   {t.durum === 'inspecting' && (
-                    <PButton variant="primary" disabled={isleniyor} onClick={() => talepAc(t, 'refund')}>
-                      Parayı iade et
-                    </PButton>
+                    <>
+                      <PButton variant="primary" disabled={isleniyor} onClick={() => talepAc(t, 'refund')}>
+                        Parayı iade et
+                      </PButton>
+                      <PButton variant="ghost" disabled={isleniyor} onClick={() => talepAc(t, 'refund_manual')}>
+                        Para elle iade edildi
+                      </PButton>
+                    </>
                   )}
                 </div>
               </div>
@@ -394,12 +408,18 @@ export default function SiparislerClient({
               ? 'Ürün teslim alındı işaretlenecek'
               : talepIslem?.action === 'refund'
                 ? 'Para iade edilecek'
-                : 'Talep reddedilecek'
+                : talepIslem?.action === 'refund_manual'
+                  ? 'Elle yapılan iade kaydedilecek'
+                  : 'Talep reddedilecek'
         }
         footer={
           <>
             <PButton variant="ghost" onClick={() => setTalepIslem(null)}>Vazgeç</PButton>
-            <PButton variant={talepIslem?.action === 'approve' ? 'primary' : 'danger'} onClick={talepUygula} disabled={isleniyor}>
+            <PButton
+              variant={talepIslem?.action === 'approve' || talepIslem?.action === 'refund_manual' ? 'primary' : 'danger'}
+              onClick={talepUygula}
+              disabled={isleniyor}
+            >
               {isleniyor ? 'Uygulanıyor…' : 'Evet, uygula'}
             </PButton>
           </>
@@ -414,9 +434,29 @@ export default function SiparislerClient({
               : talepIslem?.action === 'received'
                 ? 'Ürünün elinize ulaştığını onaylıyorsunuz. Bu işaret konmadan para iadesi yapılamaz.'
                 : talepIslem?.action === 'refund'
-                  ? 'İyzico üzerinden tam iade yapılır, stok geri yüklenir ve müşteriye "iadeniz tamamlandı" e-postası gider.'
-                  : 'Müşteri talebi reddedilmiş olarak işaretlenir.'}
+                  ? 'Kartla ödendiyse tutar ödeme kuruluşu üzerinden karta tam iade edilir, stok geri yüklenir ve müşteriye "iadeniz tamamlandı" e-postası gider. Parayı zaten elle iade ettiyseniz bunu değil "Para elle iade edildi"yi kullanın.'
+                  : talepIslem?.action === 'refund_manual'
+                    ? 'Parayı ödeme kuruluşunun panelinden ya da bankadan zaten iade ettiyseniz kullanın. Karta yeni iade isteği gitmez, müşteriye e-posta gitmez; talep "Para iade edildi" olarak kapanır.'
+                    : 'Müşteri talebi reddedilmiş olarak işaretlenir.'}
         </p>
+
+        {talepIslem?.action === 'refund_manual' && (
+          <label className="mt-4 flex items-start gap-1.5 rounded-[4px] border border-[var(--p-line)] p-3 text-[12px]">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={stokIade}
+              onChange={(e) => setStokIade(e.target.checked)}
+            />
+            <span>
+              İade gelen ürünleri stoka geri ekle
+              <span className="block text-[11px] text-[var(--p-muted)]">
+                Ürünler satılabilir durumdaysa ve stoka elle eklemediyseniz işaretleyin. İşaretlemezseniz stok
+                değişmez.
+              </span>
+            </span>
+          </label>
+        )}
 
         {talepIslem?.action === 'approve' && talepIslem.talep.tip === 'return' && (
           <div className="mt-4 space-y-3">
