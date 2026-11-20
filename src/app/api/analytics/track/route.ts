@@ -3,6 +3,7 @@ import { olayYaz, istektenKimlik, botMu, cihazTipi, ISTEMCI_OLAYLARI, type Analy
 import { oturumKimligi, istekIp } from '@/lib/analytics/session'
 import { uyeKimligi } from '@/lib/analytics/uye'
 import { olcumeDahilMi } from '@/lib/analytics/kendiTrafik'
+import { metaTemizle } from '@/lib/analytics/olayMeta'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,22 +18,6 @@ export const dynamic = 'force-dynamic'
 // 'product_view' ayrıca burada: sunucu da yazabiliyor ama ürün sayfasındaki
 // istemci ölçümü de kabul edilir.
 const IZINLI: readonly AnalyticsEvent[] = [...ISTEMCI_OLAYLARI, 'product_view']
-
-/** En fazla 10 anahtar, kısa değerler; dizi/obje değerler atılır. */
-function metaTemizle(ham: unknown): Record<string, unknown> | null {
-  if (!ham || typeof ham !== 'object' || Array.isArray(ham)) return null
-  const cikti: Record<string, unknown> = {}
-  for (const [k, v] of Object.entries(ham as Record<string, unknown>)) {
-    if (Object.keys(cikti).length >= 10) break
-    if (typeof k !== 'string' || k.length > 40) continue
-    // 'kaynak' yalnız ayırt etme işareti; kayda yazılmaz.
-    if (k === 'kaynak') continue
-    if (typeof v === 'number' && Number.isFinite(v)) cikti[k] = v
-    else if (typeof v === 'boolean') cikti[k] = v
-    else if (typeof v === 'string') cikti[k] = v.slice(0, 120)
-  }
-  return Object.keys(cikti).length ? cikti : null
-}
 
 export async function POST(request: Request) {
   const ua = request.headers.get('user-agent')
@@ -94,7 +79,7 @@ export async function POST(request: Request) {
     value: Number.isFinite(Number(body?.value)) ? Number(body.value) : null,
     // Faz 27: `meta` istemciden gelen serbest JSON'du — boyut ve anahtar
     // denetimi yoktu; analytics_events tablosu keyfi veriyle şişirilebilirdi.
-    meta: metaTemizle(body?.meta),
+    meta: metaTemizle(body?.meta, event),
   })
 
   return NextResponse.json({ ok: true })

@@ -496,7 +496,7 @@ export default function AnalizClient({
       <PCard title="Sepete ekleme nereden?">
         <p className="border-b border-[var(--p-line)] px-4 py-2 text-[11px] text-[var(--p-muted)]">
           {sayi(rapor.sepeteEkleyenZiyaretci ?? 0)} farklı ziyaretçi sepete ekleme yaptı. Kaynağı
-          kaydedilmeye başlamadan önceki eklemeler “eski kayıt” satırındadır.
+          kaydedilmemiş eklemeler (6 Kasım öncesi ve 14–20 Kasım arası ölçüm hatası) “kaynak kaydı yok” satırındadır.
         </p>
         <ul className="divide-y divide-[var(--p-line)] text-[12px]">
           {(rapor.sepetKaynaklari ?? []).length === 0 && (

@@ -2,14 +2,10 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Product } from '@/types'
 import { izle } from '@/lib/analytics/izle'
+import type { SepetKaynagi } from '@/lib/analytics/olayMeta'
 
-/**
- * Sepete eklemenin YAPILDIĞI YER (Faz 36). Ölçümde `meta.kaynak` olarak
- * yazılır; panel analizde "Sepete ekleme nereden?" kırılımı buradan gelir.
- * Sayfa yolu zaten kaydediliyor ama ürün sayfasındaki asıl düğme ile mobil
- * alt çubuğu yoldan ayırt edilemiyordu.
- */
-export type SepetKaynagi = 'pdp' | 'yapiskan' | 'kart' | 'paylasim'
+// Sepete eklemenin yapıldığı yer (Faz 36) — tek kaynak lib/analytics/olayMeta.
+export type { SepetKaynagi }
 
 interface CartItem {
   product: Product

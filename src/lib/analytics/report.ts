@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import { kaynakGrubu, KAYNAK_ADI, type KaynakGrubu } from './kaynak'
+import { sepetKaynagiMi, type SepetKaynagi } from './olayMeta'
 import { makineleriBul } from './makine'
 
 /**
@@ -424,7 +425,7 @@ export type Rapor = {
   }
 }
 
-const SEPET_KAYNAK_ADI: Record<string, string> = {
+const SEPET_KAYNAK_ADI: Record<SepetKaynagi, string> = {
   pdp: 'Ürün sayfası · Sepete Ekle düğmesi',
   yapiskan: 'Ürün sayfası · alt çubuk (mobil)',
   kart: 'Ürün kartı',
@@ -441,7 +442,7 @@ function kartSayfasi(path: string | null): string {
 }
 
 function sepetKaynakAdi(kaynak: unknown, path: string | null): string {
-  if (typeof kaynak !== 'string' || !SEPET_KAYNAK_ADI[kaynak]) return 'Kaynak kaydı yok (eski kayıt)'
+  if (!sepetKaynagiMi(kaynak)) return 'Kaynak kaydı yok'
   return kaynak === 'kart' ? `${SEPET_KAYNAK_ADI.kart} · ${kartSayfasi(path)}` : SEPET_KAYNAK_ADI[kaynak]
 }
 
