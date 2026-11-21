@@ -149,6 +149,18 @@ export default function OdemePage() {
    * sayfa açılırken seçim ve tutar bir kez sıçrardı.
    */
   const [secilenYontem, setSecilenYontem] = useState<'kart' | 'havale' | null>(null)
+  /**
+   * 21 Kas 2026: kart bankada reddedilince sonuç sayfası "Havale / EFT ile öde"
+   * bağlantısı verir (/odeme?yontem=havale); müşteri yeniden seçim yapmadan
+   * havaleyle devam eder. Havale açık değilse seçim yine kartta kalır.
+   */
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get('yontem') === 'havale') setSecilenYontem('havale')
+    } catch {
+      // adres okunamadıysa varsayılan sürer
+    }
+  }, [])
   /** Sunucu ödeme anında "kart kapalı" dediyse (503) bu sayfada kart gizlenir. */
   const [kartKapandi, setKartKapandi] = useState(false)
   const kartKullanilabilir = kartAcik && !kartKapandi

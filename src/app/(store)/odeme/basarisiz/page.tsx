@@ -95,6 +95,15 @@ export default async function BasarisizPage({
         >
           Tekrar Dene
         </Link>
+        {/* 21 Kas 2026: kartı reddedilen müşteriye ikinci yol tek tıkla —
+            ödeme adımı havale/EFT seçili açılır (sepet aynı kalır). */}
+        <Link
+          prefetch={false}
+          href="/odeme?yontem=havale"
+          className="inline-block border border-ink text-ink text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:border-accent-deep hover:text-accent-deep transition-all"
+        >
+          Havale / EFT ile öde
+        </Link>
         <Link
           prefetch={false}
           href="/urunler"
