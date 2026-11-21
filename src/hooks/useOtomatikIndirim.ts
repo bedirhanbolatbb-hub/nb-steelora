@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useCart } from '@/hooks/useCart'
-import { esitlemeNotu as notMetni } from '@/lib/campaigns/sepetEsitleme'
 
 export type SepetOzeti = {
   araToplam: number
@@ -67,9 +66,10 @@ export function useOtomatikIndirim(
   const [yenileme, setYenileme] = useState(0)
   /**
    * Sepet sunucuyla eşitlendiyse müşteriye gösterilecek tek satır (21 Kas 2026):
-   * fiyatı güncellenen ya da satıştan kalktığı için çıkarılan kalem.
+   * fiyatı güncellenen ya da satıştan kalktığı için çıkarılan kalem. Not sepet
+   * deposunda tutulur: eşitlemeyi sepet çekmecesi yapsa da ödeme adımı gösterir.
    */
-  const [esitlemeNotu, setEsitlemeNotu] = useState<string | null>(null)
+  const esitlemeNotu = useCart((s) => s.esitlemeNotu)
   const anahtar =
     kalemler.map((k) => `${k.productId}x${k.adet}`).join('|') + `|${kod ?? ''}|${eposta ?? ''}|${yenileme}`
 
@@ -106,11 +106,9 @@ export function useOtomatikIndirim(
           // olmayan kalem çıkar (lib/campaigns/sepetEsitleme). Eskiden ödeme
           // ucu eski fiyatı her denemede reddediyordu.
           if (Array.isArray(d?.fiyatlar)) {
-            const s = useCart
+            useCart
               .getState()
               .sunucuylaEsitle(d.fiyatlar, Array.isArray(d?.gecersizler) ? d.gecersizler : [])
-            const metin = notMetni(s)
-            if (metin) setEsitlemeNotu(metin)
           }
           setYuklendi(true)
         })

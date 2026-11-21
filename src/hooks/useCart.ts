@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { Product } from '@/types'
 import { izle } from '@/lib/analytics/izle'
 import type { SepetKaynagi } from '@/lib/analytics/olayMeta'
-import { sepetiEsitle, type SunucuFiyati } from '@/lib/campaigns/sepetEsitleme'
+import { esitlemeNotu, sepetiEsitle, type SunucuFiyati } from '@/lib/campaigns/sepetEsitleme'
 
 // Sepete eklemenin yapıldığı yer (Faz 36) — tek kaynak lib/analytics/olayMeta.
 export type { SepetKaynagi }
@@ -15,6 +15,12 @@ interface CartItem {
 
 interface CartStore {
   items: CartItem[]
+  /**
+   * Bu oturumda sepet sunucuyla eşitlendiyse müşteriye gösterilecek tek satır
+   * (21 Kas 2026). Kalıcı DEĞİL (sayfa yenilenince silinir); eşitlemeyi hangi
+   * ekran yaptıysa (sepet çekmecesi, sepet, ödeme) ödeme adımı bu notu gösterir.
+   */
+  esitlemeNotu: string | null
   addItem: (product: Product, quantity?: number, kaynak?: SepetKaynagi) => void
   removeItem: (productId: string) => void
   updateQuantity: (productId: string, quantity: number) => void
@@ -36,6 +42,7 @@ export const useCart = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      esitlemeNotu: null,
 
       addItem: (product, quantity = 1, kaynak) => {
         const items = get().items
@@ -82,7 +89,7 @@ export const useCart = create<CartStore>()(
 
       sunucuylaEsitle: (fiyatlar, gecersizler) => {
         const sonuc = sepetiEsitle(get().items, fiyatlar, gecersizler)
-        if (sonuc.degisti) set({ items: sonuc.items })
+        if (sonuc.degisti) set({ items: sonuc.items, esitlemeNotu: esitlemeNotu(sonuc) })
         return { fiyatiDegisen: sonuc.fiyatiDegisen, cikarilan: sonuc.cikarilan }
       },
 
@@ -94,6 +101,10 @@ export const useCart = create<CartStore>()(
           0
         ),
     }),
-    { name: 'nb-steelora-cart' }
+    {
+      name: 'nb-steelora-cart',
+      // Yalnız kalemler saklanır; eşitleme notu oturumluktur (21 Kas 2026).
+      partialize: (s) => ({ items: s.items }),
+    }
   )
 )
