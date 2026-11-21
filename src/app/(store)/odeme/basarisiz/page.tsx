@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Clock, XCircle } from 'lucide-react'
+import { bankaYanitiAciklamasi } from '@/lib/tosla/bankaYaniti'
 
 /**
  * Kartla ödeme sonucu (12 Kas 2026 · Tosla).
@@ -17,12 +18,16 @@ import { Clock, XCircle } from 'lucide-react'
 export default async function BasarisizPage({
   searchParams,
 }: {
-  searchParams: Promise<{ durum?: string; neden?: string; siparis?: string }>
+  searchParams: Promise<{ durum?: string; neden?: string; siparis?: string; kod?: string }>
 }) {
-  const { durum, neden, siparis } = await searchParams
+  const { durum, neden, siparis, kod } = await searchParams
   const kontrol = durum === 'kontrol'
   const siparisNo = siparis && /^NBS-\d{13}$/.test(siparis) ? siparis : null
   const bankaNedeni = !kontrol && neden ? neden.slice(0, 120) : null
+  const bankaKodu = !kontrol && kod && /^[0-9A-Za-z]{1,4}$/.test(kod) ? kod : null
+  // 21 Kas 2026: bankanın İngilizce kısa yanıtı ("Transaction is not valid.")
+  // müşteriye ne yapacağını söylemiyordu; Türkçe açıklama önce gelir.
+  const aciklama = !kontrol ? bankaYanitiAciklamasi(bankaKodu, bankaNedeni) : null
 
   if (kontrol) {
     return (
@@ -73,8 +78,14 @@ export default async function BasarisizPage({
         Ödeme işlemi tamamlanamadı; kartınızdan çekim yapılmadı. Kart bilgilerinizi kontrol
         edip tekrar deneyebilir, farklı bir kart kullanabilir ya da havale/EFT ile ödeyebilirsiniz.
       </p>
+      {aciklama && (
+        <p className="text-[13px] font-body text-ink mb-3 leading-relaxed">{aciklama}</p>
+      )}
       {bankaNedeni && (
-        <p className="text-[12px] font-body text-ink-soft mb-8">Bankanın yanıtı: {bankaNedeni}</p>
+        <p className="text-[12px] font-body text-ink-soft mb-8">
+          Bankanın yanıtı: {bankaNedeni}
+          {bankaKodu ? ` (kod ${bankaKodu})` : ''}
+        </p>
       )}
       <div className={`flex flex-col sm:flex-row items-center justify-center gap-3 ${bankaNedeni ? '' : 'mt-5'}`}>
         <Link

@@ -269,6 +269,7 @@ export default async function PanelSiparisDetayPage({
                 yetkiKodu: (o.metadata as any).kart.yetki_kodu ?? null,
                 islemNo: (o.metadata as any).kart.islem_no ?? null,
                 bankaMesaji: (o.metadata as any).kart.banka_mesaji ?? null,
+                bankaKodu: (o.metadata as any).kart.banka_kodu ?? null,
                 neden: (o.metadata as any).kart.neden ?? null,
                 oturum: (o.metadata as any).kart.oturum_at ?? null,
                 odendi: (o.metadata as any).kart.odendi_at ?? null,

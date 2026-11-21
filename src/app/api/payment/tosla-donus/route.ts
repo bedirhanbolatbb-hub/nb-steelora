@@ -83,8 +83,16 @@ async function isle(request: Request): Promise<NextResponse> {
     case 'zaten':
       return yonlendir(tamam)
     case 'basarisiz': {
+      // 21 Kas 2026: bankanın yanıt KODU da gider; sonuç sayfası müşteriye
+      // Türkçe ne yapacağını söyler (lib/tosla/bankaYaniti). Kod yalnız harf
+      // ve rakam, en çok 4 karakter.
+      const q = new URLSearchParams()
       const neden = (r.neden ?? '').slice(0, 120)
-      return yonlendir(`/odeme/basarisiz${neden ? `?neden=${encodeURIComponent(neden)}` : ''}`)
+      const kod = (r.bankaKodu ?? '').replace(/[^0-9A-Za-z]/g, '').slice(0, 4)
+      if (neden) q.set('neden', neden)
+      if (kod) q.set('kod', kod)
+      const qs = q.toString()
+      return yonlendir(`/odeme/basarisiz${qs ? `?${qs}` : ''}`)
     }
     case 'kapali':
     case 'bulunamadi':

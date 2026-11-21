@@ -1,5 +1,6 @@
 import { PBadge, PCard } from '../../_components/ui'
 import type { BadgeTone } from '../../_components/ui'
+import { bankaYanitiAciklamasi } from '@/lib/tosla/bankaYaniti'
 
 /** Siparişin `metadata.kart` izi — panelde yalnız gösterilir (12 Kas 2026). */
 export type KartBilgisi = {
@@ -9,6 +10,8 @@ export type KartBilgisi = {
   yetkiKodu: string | null
   islemNo: string | null
   bankaMesaji: string | null
+  /** Bankanın yanıt kodu (ISO 8583, ör. 05, 12, 51) — 21 Kas 2026'dan beri gösterilir. */
+  bankaKodu: string | null
   neden: string | null
   oturum: string | null
   odendi: string | null
@@ -59,6 +62,9 @@ export default function KartBlogu({ k }: { k: KartBilgisi }) {
     </div>
   )
   const sebep = k.neden || k.bankaMesaji
+  // 21 Kas 2026: bankanın kısa İngilizce yanıtının Türkçe karşılığı — müşteriye
+  // ne söyleneceği buradan okunur (ödeme sonucu sayfası da aynısını gösterir).
+  const aciklama = k.durum === 'basarisiz' ? bankaYanitiAciklamasi(k.bankaKodu, k.bankaMesaji) : null
   return (
     <PCard title="Kart ödemesi (Tosla)">
       <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -72,7 +78,9 @@ export default function KartBlogu({ k }: { k: KartBilgisi }) {
         {satir('Ödeme sayfası açıldı', ts(k.oturum))}
         {k.odendi && satir('Ödendi', ts(k.odendi))}
         {sebep && k.durum !== 'odendi' && satir('Sebep', sebep)}
+        {k.bankaKodu && k.durum !== 'odendi' && satir('Banka yanıt kodu', k.bankaKodu)}
       </dl>
+      {aciklama && <p className="mt-3 text-[12px]">{aciklama}</p>}
       {d.aciklama && <p className="mt-3 text-[12px] text-[var(--p-muted)]">{d.aciklama}</p>}
     </PCard>
   )

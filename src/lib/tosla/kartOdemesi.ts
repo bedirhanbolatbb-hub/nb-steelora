@@ -94,7 +94,7 @@ export type TamamlaSonucu =
   | { sonuc: 'odendi'; siparis: any }
   | { sonuc: 'zaten' }
   | { sonuc: 'bekliyor' }
-  | { sonuc: 'basarisiz'; neden: string | null }
+  | { sonuc: 'basarisiz'; neden: string | null; bankaKodu?: string | null }
   | { sonuc: 'inceleme'; neden: string }
   | { sonuc: 'kapali' }
   | { sonuc: 'bulunamadi' }
@@ -199,7 +199,7 @@ export async function kartOdemesiniTamamla(
 
   if (k.tur === 'basarisiz') {
     await izGuncelle(db, siparis, { durum: 'basarisiz', ...banka, sonuc_at: new Date().toISOString() })
-    return { sonuc: 'basarisiz', neden: k.neden }
+    return { sonuc: 'basarisiz', neden: k.neden, bankaKodu: q.bankaKodu }
   }
 
   if (k.tur === 'inceleme') {
