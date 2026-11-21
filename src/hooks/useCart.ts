@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { Product } from '@/types'
 import { izle } from '@/lib/analytics/izle'
 import type { SepetKaynagi } from '@/lib/analytics/olayMeta'
+import { sepetiEsitle, type SunucuFiyati } from '@/lib/campaigns/sepetEsitleme'
 
 // Sepete eklemenin yapıldığı yer (Faz 36) — tek kaynak lib/analytics/olayMeta.
 export type { SepetKaynagi }
@@ -18,6 +19,15 @@ interface CartStore {
   removeItem: (productId: string) => void
   updateQuantity: (productId: string, quantity: number) => void
   clearCart: () => void
+  /**
+   * Sepeti sunucudaki güncel fiyatla eşitler, satışta olmayanı çıkarır
+   * (21 Kas 2026 · lib/campaigns/sepetEsitleme). Sepet özeti her geldiğinde
+   * çağrılır; değişiklik yoksa sepete hiç yazılmaz.
+   */
+  sunucuylaEsitle: (
+    fiyatlar: SunucuFiyati[] | null | undefined,
+    gecersizler: string[] | null | undefined
+  ) => { fiyatiDegisen: number; cikarilan: number }
   totalItems: () => number
   totalPrice: () => number
 }
@@ -69,6 +79,12 @@ export const useCart = create<CartStore>()(
       },
 
       clearCart: () => set({ items: [] }),
+
+      sunucuylaEsitle: (fiyatlar, gecersizler) => {
+        const sonuc = sepetiEsitle(get().items, fiyatlar, gecersizler)
+        if (sonuc.degisti) set({ items: sonuc.items })
+        return { fiyatiDegisen: sonuc.fiyatiDegisen, cikarilan: sonuc.cikarilan }
+      },
 
       totalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
 

@@ -26,6 +26,8 @@ export async function sepetOzetiHesapla(
 ): Promise<{
   ozet: HesapSonucu
   kalemler: ReturnType<typeof sepetiDogrula> extends Promise<infer T> ? T extends { kalemler: infer K } ? K : never : never
+  /** Bulunamayan / satışta olmayan ürünler (21 Kas 2026 · sepet eşitlemesi). */
+  gecersizler: string[]
   kodHatasi: string | null
   /** Kupon kutusunun durumu — ekranlar mesajı buradan basar (Faz 25). */
   kuponDurumu: KuponDurumu | null
@@ -143,6 +145,7 @@ export async function sepetOzetiHesapla(
   return {
     ozet,
     kalemler: dogrulanmis.kalemler as any,
+    gecersizler: dogrulanmis.gecersizler,
     kodHatasi,
     kuponDurumu,
     kullanilanKampanyaId: ozet.uygulananlar[0]?.kampanyaId ?? null,

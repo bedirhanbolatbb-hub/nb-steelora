@@ -1,6 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useCart } from '@/hooks/useCart'
+import { esitlemeNotu as notMetni } from '@/lib/campaigns/sepetEsitleme'
 
 export type SepetOzeti = {
   araToplam: number
@@ -63,6 +65,11 @@ export function useOtomatikIndirim(
    * eski tutarı görüp her denemede aynı uyarıyı alırdı.
    */
   const [yenileme, setYenileme] = useState(0)
+  /**
+   * Sepet sunucuyla eşitlendiyse müşteriye gösterilecek tek satır (21 Kas 2026):
+   * fiyatı güncellenen ya da satıştan kalktığı için çıkarılan kalem.
+   */
+  const [esitlemeNotu, setEsitlemeNotu] = useState<string | null>(null)
   const anahtar =
     kalemler.map((k) => `${k.productId}x${k.adet}`).join('|') + `|${kod ?? ''}|${eposta ?? ''}|${yenileme}`
 
@@ -94,6 +101,17 @@ export function useOtomatikIndirim(
           setIlkSiparisMetni(d?.ilkSiparisMetni ?? null)
           setHavale(d?.havale && Number(d.havale.tutar) > 0 ? d.havale : null)
           setKartAcik(d?.kartAcik === true)
+          // 21 Kas 2026 · sepetteki fiyat eklendiği günde kalmasın: özet her
+          // geldiğinde kalemler sunucudaki güncel fiyatla eşitlenir, satışta
+          // olmayan kalem çıkar (lib/campaigns/sepetEsitleme). Eskiden ödeme
+          // ucu eski fiyatı her denemede reddediyordu.
+          if (Array.isArray(d?.fiyatlar)) {
+            const s = useCart
+              .getState()
+              .sunucuylaEsitle(d.fiyatlar, Array.isArray(d?.gecersizler) ? d.gecersizler : [])
+            const metin = notMetni(s)
+            if (metin) setEsitlemeNotu(metin)
+          }
           setYuklendi(true)
         })
         .catch(() => {
@@ -123,5 +141,6 @@ export function useOtomatikIndirim(
     kartAcik,
     yuklendi,
     yenile,
+    esitlemeNotu,
   }
 }

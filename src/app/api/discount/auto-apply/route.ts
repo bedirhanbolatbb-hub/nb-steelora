@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     eposta: typeof body?.eposta === 'string' ? body.eposta : null,
   })
 
-  const { ozet, kodHatasi, kuponDurumu } = await sepetOzetiHesapla(supabase, {
+  const { ozet, kodHatasi, kuponDurumu, kalemler, gecersizler } = await sepetOzetiHesapla(supabase, {
     items,
     kod,
     // Kişiye özel kuponun sahiplik kontrolü için: kupon yalnız kendi
@@ -87,5 +87,14 @@ export async function POST(request: Request) {
     // indirimi ödeme adımında havale seçilince düşer. Yalnız evet/hayır
     // döner; kimlik bilgisinin hiçbir parçası istemciye gitmez.
     kartAcik: kartOdemesiAcikMi(),
+    // 21 Kas 2026 · sepet eşitlemesi: tarayıcıdaki sepet kalemlerin GÜNCEL
+    // fiyatını ve satışta olmayanları buradan öğrenir (lib/campaigns/
+    // sepetEsitleme). Eskiden eklendiği günün fiyatı sepette kalıyor, ödeme ucu
+    // "fiyat değişti" deyip her denemeyi reddediyordu.
+    fiyatlar: ((kalemler ?? []) as { productId: string; fiyat: number }[]).map((k) => ({
+      productId: k.productId,
+      fiyat: k.fiyat,
+    })),
+    gecersizler,
   })
 }

@@ -42,10 +42,15 @@ export async function sepetiDogrula(
   }
 
   const kimlikler = [...istenen.keys()]
-  const { data: urunler } = await supabase
+  const { data: urunler, error: urunHatasi } = await supabase
     .from('products_display')
     .select('id, slug, display_title, display_price, trendyol_category, trendyol_barcode, trendyol_stock')
     .in('id', kimlikler)
+  // 21 Kas 2026: okuma hatası "ürün bulunamadı" SAYILMAZ. Eskiden hata yutuluyor,
+  // sepetteki her ürün "satışta değil" görünüyordu; artık sepet eşitlemesi
+  // (lib/campaigns/sepetEsitleme) bu listeyle kalemi sepetten çıkardığı için
+  // hata yükseltilir — müşterinin sepeti bir okuma hatasıyla boşalmaz.
+  if (urunHatasi) throw new Error(`products_display okunamadı: ${urunHatasi.message}`)
 
   // Koleksiyon üyeliği ayrı tabloda (collections.product_ids) tutuluyor.
   const { data: koleksiyonlar } = await supabase

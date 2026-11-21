@@ -115,6 +115,7 @@ export default function OdemePage() {
     kartAcik,
     yuklendi: ozetYuklendi,
     yenile: ozetiYenile,
+    esitlemeNotu,
   } = useOtomatikIndirim(
     items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 })),
     kod || null,
@@ -308,7 +309,13 @@ export default function OdemePage() {
       }
       // Tutar sayfa açıkken değiştiyse ekrandaki özet yenilenir; müşteri
       // güncel tutarı görüp yeniden onaylar (aynı uyarıda takılı kalmaz).
-      if (data.code === 'TUTAR_DEGISTI') ozetiYenile()
+      // 21 Kas 2026: fiyat değiştiyse ya da bir ürün satıştan kalktıysa özet
+      // yenilenir; özet sepeti sunucuyla eşitler (eski fiyat güncellenir,
+      // satışta olmayan çıkar). Müşteri güncel tutarı görüp yeniden onaylar —
+      // eskiden aynı uyarıda takılı kalıyor, ödeme yapamıyordu.
+      if (data.code === 'TUTAR_DEGISTI' || data.code === 'FIYAT_DEGISTI' || data.code === 'URUN_YOK') {
+        ozetiYenile()
+      }
       setPaymentError(
         data.error
           ? String(data.error)
@@ -663,6 +670,15 @@ export default function OdemePage() {
               </p>
             )}
           </section>
+
+          {esitlemeNotu && !paymentError && (
+            <div
+              role="status"
+              className="border border-line bg-surface px-4 py-3 text-[12px] font-body text-ink rounded-[4px]"
+            >
+              {esitlemeNotu}
+            </div>
+          )}
 
           {paymentError && (
             <div

@@ -97,14 +97,18 @@ export async function POST(request: Request) {
     }
     if (dogrulanmis.gecersizler.length > 0) {
       return NextResponse.json(
-        { error: 'Sepetinizdeki bazı ürünler artık satışta değil. Sepeti yenileyin.' },
+        {
+          error:
+            'Sepetinizdeki bir ürün artık satışta değil; sepetinizden çıkarıldı. Güncel tutarı kontrol edip yeniden onaylayın.',
+          code: 'URUN_YOK',
+        },
         { status: 400 }
       )
     }
     if (dogrulanmis.fiyatFarklari.length > 0) {
       return NextResponse.json(
         {
-          error: 'Sepetinizdeki fiyatlar güncellendi. Lütfen sepeti yenileyip tekrar deneyin.',
+          error: 'Sepetinizdeki bir ürünün fiyatı güncellendi. Güncel tutarı kontrol edip yeniden onaylayın.',
           code: 'FIYAT_DEGISTI',
         },
         { status: 409 }

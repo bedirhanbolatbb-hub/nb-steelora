@@ -91,7 +91,11 @@ export async function POST(request: Request) {
     if (dogrulanmis.gecersizler.length > 0) {
       console.warn('[initialize] sepette bulunamayan ürün:', dogrulanmis.gecersizler)
       return NextResponse.json(
-        { error: 'Sepetinizdeki bazı ürünler artık satışta değil. Sepeti yenileyin.' },
+        {
+          error:
+            'Sepetinizdeki bir ürün artık satışta değil; sepetinizden çıkarıldı. Güncel tutarı kontrol edip yeniden onaylayın.',
+          code: 'URUN_YOK',
+        },
         { status: 400 }
       )
     }
@@ -101,7 +105,7 @@ export async function POST(request: Request) {
       console.warn('[initialize] fiyat farkı:', JSON.stringify(dogrulanmis.fiyatFarklari))
       return NextResponse.json(
         {
-          error: 'Sepetinizdeki fiyatlar güncellendi. Lütfen sepeti yenileyip tekrar deneyin.',
+          error: 'Sepetinizdeki bir ürünün fiyatı güncellendi. Güncel tutarı kontrol edip yeniden onaylayın.',
           code: 'FIYAT_DEGISTI',
         },
         { status: 409 }
