@@ -13,23 +13,23 @@ import { CATEGORIES } from '@/lib/catalog/categories'
  */
 export default function NotFoundContent() {
   return (
-    <div className="max-w-xl mx-auto px-4 lg:px-8 py-24 text-center">
+    <div className="max-w-xl mx-auto px-4 lg:px-8 py-16 lg:py-24 text-center">
       <p className="eyebrow">404</p>
-      <h1 className="font-heading text-[34px] lg:text-[40px] font-semibold text-ink mt-3 leading-tight">
-        Aradığınız parça burada değil
+      <h1 className="font-heading text-[30px] lg:text-[40px] font-medium text-ink mt-3 leading-tight">
+        Bu sayfayı bulamadık
       </h1>
-      <p className="text-[13px] font-body text-ink-soft mt-4 leading-relaxed">
-        Bu sayfa kaldırılmış ya da adres yanlış yazılmış olabilir. Koleksiyonun tamamı
-        birkaç adım ötede.
+      <p className="mt-4 font-body text-[15px] leading-relaxed text-ink-soft">
+        Sayfa kaldırılmış ya da adres yanlış yazılmış olabilir. Aşağıdaki kategorilerden
+        devam edebilirsiniz.
       </p>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-        {CATEGORIES.filter((k) => !k.gender).map((k) => (
+        {CATEGORIES.map((k) => (
           <Link
             prefetch={false}
             key={k.slug}
             href={`/kategori/${k.slug}`}
-            className="inline-flex items-center border border-line text-ink-soft text-[11px] uppercase tracking-[0.12em] font-body px-4 py-2 rounded-[4px] hover:border-ink hover:text-ink transition-colors"
+            className="inline-flex min-h-[44px] items-center rounded-[4px] border border-line-strong px-4 font-body text-[14px] text-ink transition-colors hover:border-ink"
           >
             {k.title}
           </Link>
@@ -40,30 +40,30 @@ export default function NotFoundContent() {
         <Link
           prefetch={false}
           href="/urunler"
-          className="inline-flex items-center bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
+          className="basis inline-flex min-h-[52px] w-full items-center justify-center rounded-[4px] bg-ink px-8 font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-white hover:bg-accent-deep sm:w-auto"
         >
-          Koleksiyona Dön
+          Tüm Ürünler
         </Link>
         <Link
           prefetch={false}
           href="/"
-          className="inline-flex items-center border border-ink text-ink text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-ink hover:text-bg transition-colors"
+          className="basis inline-flex min-h-[52px] w-full items-center justify-center rounded-[4px] border border-ink px-8 font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-ink hover:bg-ink hover:text-bg sm:w-auto"
         >
           Ana Sayfa
         </Link>
       </div>
 
-      <p className="mt-10 text-[11px] font-body text-muted">
-        Aradığınızı bulamadıysanız{' '}
+      <p className="mt-10 font-body text-[14px] text-ink-soft">
+        Belirli bir ürünü arıyorsanız adını{' '}
         <a
           href={WHATSAPP_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-accent-deep underline underline-offset-2"
+          className="text-ink underline decoration-accent underline-offset-4"
         >
           WhatsApp&apos;tan yazın
         </a>
-        , yardımcı olalım.
+        ; birlikte bulalım.
       </p>
     </div>
   )

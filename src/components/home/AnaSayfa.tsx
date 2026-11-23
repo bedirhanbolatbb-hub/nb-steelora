@@ -14,7 +14,8 @@ import BlogPreview from '@/components/home/BlogPreview'
 import Newsletter from '@/components/home/Newsletter'
 import ProductCardV2 from '@/components/store/ProductCardV2'
 import JsonLd from '@/components/seo/JsonLd'
-import AvantajSeridi from '@/components/home/AvantajSeridi'
+import KanitSeridi from '@/components/home/KanitSeridi'
+import BolumBasligi from '@/components/home/BolumBasligi'
 import { saticiPuaniOku } from '@/lib/metin/saticiPuani'
 import { ilkEkranKampanyasi } from '@/lib/campaigns/kampanyaVitrini'
 import type { kampanyaOnizlemesiGetir } from '@/lib/campaigns/vitrinIndirimi'
@@ -44,12 +45,13 @@ export default async function AnaSayfa({ onizleme }: { onizleme: AnaSayfaOnizlem
   // bant eskisi gibi altında durur.
   const ilkEkran = ilkEkranKampanyasi(onizleme ?? veri.kampanya)
 
-  // Faz 12: editoryal düzen (2 büyük + 3'lü sıra) en az 5 ürünle anlamlı.
-  // Ölçülen kusur: panelde 3 ürün seçiliyken 2 dev kart + tek başına kalan
-  // üçüncü kartın yanında koca bir boşluk çıkıyordu. 5'ten azsa düz ızgara.
-  const editoryal = veri.featured.length >= 5
-  const buyukler = editoryal ? veri.featured.slice(0, 2) : []
-  const standartlar = editoryal ? veri.featured.slice(2, 8) : veri.featured.slice(0, 8)
+  // 24 Kas 2026 tasarım denetimi — ana sayfa yeniden sıralandı ve kısaldı
+  // (telefonda 9.239 px → yaklaşık 5.500 px). Sıra: ilk ekran → kanıt şeridi →
+  // kategoriler → öne çıkanlar → hediye → yeni gelenler → koleksiyonlar →
+  // marka → rehber → bülten. Her söz bir kez söylenir; bölüm başlıkları tek
+  // kalıp (BolumBasligi), kartlar tek boy.
+  const saticiPuani = saticiPuaniOku(c)
+  const hediyeKoleksiyonu = veri.collections.find((k) => /hediye/i.test(k.name)) ?? null
 
   return (
     <>
@@ -85,94 +87,74 @@ export default async function AnaSayfa({ onizleme }: { onizleme: AnaSayfaOnizlem
       {/* 2 · Promo şeridi — kampanya ilk ekrandaysa tekrar basılmaz */}
       {!(ilkEkran && veri.slides.length > 0) && <PromoStrip bant={veri.bant} />}
 
-      {/* 2b · Fayda şeridi: ücretsiz kargo (alt limit yok), hediye kutusu,
-          iade, güvenli ödeme — ilk ekranın hemen altında. Kasım 2026.
-          8 Kas: altında Trendyol satıcı puanı bandı (panelden; yoksa basılmaz). */}
-      <AvantajSeridi saticiPuani={saticiPuaniOku(c)} />
+      {/* 2b · Kanıt şeridi: Trendyol puanı, ücretsiz kargo (alt limit yok), iade
+          — ilk ekranın hemen altında, tek satır (components/home/KanitSeridi). */}
+      <KanitSeridi saticiPuani={saticiPuani} />
 
       {/* 3 · Kategoriler */}
       <CategoryRail categoryImages={veri.categoryImages} />
 
-      {/* 4 · Öne Çıkanlar — editorial: 2 büyük (masaüstünde 5:4) + 6 standart */}
+      {/* 4 · Öne Çıkanlar — tek boy kart; telefonda 6, geniş ekranda 8 ürün.
+          Faz 12: `priority` yok — kartlar ilk ekranın altında, hero görseliyle
+          bant genişliği paylaşmasınlar. */}
       {veri.featured.length > 0 && (
-        <section id="one-cikanlar" className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-16 lg:pb-20">
-          <div className="mb-8 text-center" data-reveal>
-            <p className="eyebrow">Seçki</p>
-            <h2 className="font-heading text-[30px] lg:text-[36px] font-medium text-ink mt-2">
-              {c.featured_title || 'Öne Çıkanlar'}
-            </h2>
-            {c.featured_subtitle && (
-              <p className="text-[12px] font-body text-muted mt-1.5">{c.featured_subtitle}</p>
-            )}
+        <section id="one-cikanlar" className="max-w-[1400px] mx-auto px-4 lg:px-8 pt-12 lg:pt-20">
+          <BolumBasligi
+            baslik={c.featured_title || 'Öne Çıkanlar'}
+            aciklama={c.featured_subtitle}
+            href="/urunler"
+            etiket="Tüm ürünler"
+          />
+          <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-10">
+            {veri.featured.slice(0, 8).map((product: any, i: number) => (
+              <div
+                key={product.id}
+                className={i >= 6 ? 'hidden lg:block' : undefined}
+                data-reveal
+                style={{ '--reveal-delay': `${(i % 4) * 50}ms` } as React.CSSProperties}
+              >
+                <ProductCardV2 product={product} />
+              </div>
+            ))}
           </div>
-
-          {/* Faz 11B: mobilde bu iki kart tek sütundu ve 5:4 oranıyla neredeyse
-              tam ekran kaplıyordu — iki ürün için iki ekran kaydırmak
-              gerekiyordu. Mobilde normal 2'li ızgaraya ve standart kart boyuna
-              (4:5) iniyor; masaüstü editorial düzeni aynen duruyor. */}
-          {/* Faz 12: `priority` kaldırıldı — iki büyük kart hero ile aynı anda
-              ön yükleniyor, LCP görselinin bant genişliğini paylaşıyordu;
-              üstelik ikisi de ilk ekranın altında (mobil y≈1440, masaüstü
-              y≈1290). */}
-          {buyukler.length > 0 && (
-            <div className="grid grid-cols-2 gap-4 lg:gap-6">
-              {buyukler.map((product: any, i: number) => (
-                <div key={product.id} data-reveal style={{ '--reveal-delay': `${i * 60}ms` } as React.CSSProperties}>
-                  <ProductCardV2 product={product} buyuk />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {standartlar.length > 0 && (
-            <div
-              className={`grid grid-cols-2 gap-4 lg:gap-6 ${
-                editoryal
-                  ? 'mt-4 lg:mt-6 lg:grid-cols-3'
-                  : standartlar.length >= 4
-                    ? 'lg:grid-cols-4'
-                    : 'lg:grid-cols-3'
-              }`}
+          <div className="mt-8 lg:mt-10 lg:text-center">
+            <Link
+              prefetch={false}
+              href="/urunler"
+              className="basis inline-flex min-h-[52px] w-full items-center justify-center rounded-[4px] border border-ink px-8 font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-ink hover:bg-ink hover:text-bg lg:w-auto"
             >
-              {standartlar.map((product: any, i: number) => (
-                <div key={product.id} data-reveal style={{ '--reveal-delay': `${(i % 3) * 50}ms` } as React.CSSProperties}>
-                  <ProductCardV2 product={product} />
-                </div>
-              ))}
-            </div>
-          )}
+              Tüm ürünleri görün
+            </Link>
+          </div>
         </section>
       )}
 
-      {/* 5 · Koleksiyonlar */}
-      <CollectionsBand collections={veri.collections} />
+      {/* 5 · Hediye kutusu — görsel ve metin panelden (Faz 11D); hediye
+          kısayollarıyla öne alındı. */}
+      <GiftSplit
+        gorsel={c.hakkimizda_gorsel_paket}
+        baslik={c.hediye_baslik}
+        metin={c.hediye_metin}
+        hediyeKoleksiyonu={hediyeKoleksiyonu ? { slug: hediyeKoleksiyonu.slug, name: hediyeKoleksiyonu.name } : null}
+      />
 
       {/* 6 · Yeni Gelenler — peek'li rail */}
       {veri.newArrivals.length > 0 && (
-        <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-16 lg:py-20">
-          <div className="mb-8 flex items-end justify-between" data-reveal>
-            <div>
-              <p className="eyebrow">Taze</p>
-              <h2 className="font-heading text-[30px] lg:text-[36px] font-medium text-ink mt-2">
-                {c.new_arrivals_title || 'Yeni Gelenler'}
-              </h2>
-            </div>
-            <Link
-              prefetch={false}
-              href="/urunler?siralama=yeni"
-              className="hidden sm:block text-[11px] uppercase tracking-[0.16em] font-body font-medium text-ink border-b border-accent pb-0.5 hover:text-accent-deep transition-colors"
-            >
-              Tümünü Gör →
-            </Link>
-          </div>
+        <section className="max-w-[1400px] mx-auto px-4 lg:px-8 pt-12 lg:pt-20">
+          <BolumBasligi
+            baslik={c.new_arrivals_title || 'Yeni Gelenler'}
+            href="/urunler?siralama=yeni"
+          />
 
           {/* Faz 11B-ek: düz şerit masaüstünde ok/gösterge olmadan duruyordu —
-              ~4,6 kart görünüyor, kalan 8'e ulaşmanın görünür yolu yoktu. */}
+              ~4,6 kart görünüyor, kalan 8'e ulaşmanın görünür yolu yoktu.
+              24 Kas 2026: telefonda kart 68vw yerine ızgara kartıyla aynı
+              boyda (2 kart + üçüncünün kenarı görünür). */}
           <YeniGelenlerRayi>
             {veri.newArrivals.map((product: any, i: number) => (
               <div
                 key={product.id}
-                className="w-[68vw] sm:w-[280px] shrink-0 snap-start"
+                className="w-[42vw] sm:w-[240px] shrink-0 snap-start"
                 data-reveal
                 style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}
               >
@@ -186,14 +168,9 @@ export default async function AnaSayfa({ onizleme }: { onizleme: AnaSayfaOnizlem
       {/* 6b · Çok Beğenilenler (Faz 11D) — yalnız onaylı yorumu olan ürün
           sayısı 8'i bulunca; azsa bölüm HİÇ basılmaz. */}
       {veri.cokBegenilenler.length >= 8 && (
-        <section className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-16 lg:pb-20">
-          <div className="mb-8 text-center" data-reveal>
-            <p className="eyebrow">Beğenilenler</p>
-            <h2 className="font-heading text-[30px] lg:text-[36px] font-medium text-ink mt-2">
-              Çok Beğenilenler
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <section className="max-w-[1400px] mx-auto px-4 lg:px-8 pt-12 lg:pt-20">
+          <BolumBasligi baslik="Çok Beğenilenler" />
+          <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-4 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-10">
             {veri.cokBegenilenler.map((product: any, i: number) => (
               <div key={product.id} data-reveal style={{ '--reveal-delay': `${(i % 4) * 40}ms` } as React.CSSProperties}>
                 <ProductCardV2 product={product} morph={false} />
@@ -203,15 +180,11 @@ export default async function AnaSayfa({ onizleme }: { onizleme: AnaSayfaOnizlem
         </section>
       )}
 
-      {/* 7 · Hediye kutusu — görsel ve metin panelden (Faz 11D) */}
-      <GiftSplit
-        gorsel={c.hakkimizda_gorsel_paket}
-        baslik={c.hediye_baslik}
-        metin={c.hediye_metin}
-      />
+      {/* 7 · Koleksiyonlar */}
+      <CollectionsBand collections={veri.collections} />
 
-      {/* 8 · Neden NB Steelora */}
-      <WhyUs />
+      {/* 8 · Marka bölümü (eski "Neden NB Steelora") + tarihli Trendyol puanı */}
+      <WhyUs saticiPuani={saticiPuani} />
 
       {/* 8b · Gerçek yorumlar (Faz 11D) — en az 3 onaylı yorum şartı bileşende */}
       <YorumSeridi yorumlar={veri.yorumlar} />

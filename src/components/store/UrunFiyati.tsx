@@ -29,11 +29,15 @@ export default function UrunFiyati({
       : null
 
   return (
-    <div className="mt-6 border-t border-line pt-6">
-      <div className="flex flex-wrap items-baseline gap-3">
+    // 24 Kas 2026 tasarım denetimi: fiyat MÜREKKEP renginde (altın yazı beyaz
+    // zeminde zayıf okunuyordu; altın yalnız indirim rozetinde kalır). Alt
+    // satır "sepette … kazanıyorsunuz" diyordu — indirim sepette ayrıca
+    // düşecekmiş gibi okunuyordu; oysa yazan fiyata zaten yansımış durumda.
+    <div className="mt-4 lg:mt-6 lg:border-t lg:border-line lg:pt-6">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         {kampanyaliFiyat != null ? (
           <>
-            <p className="price text-[28px] text-accent-deep">{formatPrice(kampanyaliFiyat)}</p>
+            <p className="price text-[28px] leading-none text-ink">{formatPrice(kampanyaliFiyat)}</p>
             <p className="price text-[16px] font-normal text-muted line-through">{formatPrice(listeFiyati)}</p>
             <span className="rounded-[3px] bg-accent/10 px-2 py-1 font-body text-[12px] font-medium text-accent-deep">
               %{vitrinIndirimi!.oran} indirim
@@ -41,21 +45,23 @@ export default function UrunFiyati({
           </>
         ) : (
           <>
-            <p className="price text-[28px] text-ink">{formatPrice(listeFiyati)}</p>
+            <p className="price text-[28px] leading-none text-ink">{formatPrice(listeFiyati)}</p>
             {ustCiziliFiyat != null && (
               <p className="price text-[16px] text-muted line-through font-normal">{formatPrice(ustCiziliFiyat)}</p>
             )}
           </>
         )}
+        <span className="font-body text-[12px] text-muted">KDV dahil</span>
       </div>
       {kampanyaliFiyat != null && (
-        <p className="mt-1 font-body text-[12px] text-accent-deep">
-          {kampanyaEtiketi(vitrinIndirimi!.ad)} — sepette {formatPrice(listeFiyati - kampanyaliFiyat)} kazanıyorsunuz
+        <p className="mt-2 font-body text-[13px] text-ink-soft">
+          {kampanyaEtiketi(vitrinIndirimi!.ad)} bu fiyata yansıtıldı:{' '}
+          <span className="whitespace-nowrap">{formatPrice(listeFiyati - kampanyaliFiyat)} indirim</span>
         </p>
       )}
       {/* Koşullu kampanya: indirimli fiyat yerine koşul rozeti (Faz 17). */}
       {kampanyaliFiyat == null && vitrinIndirimi?.rozet && (
-        <p className="mt-1 font-body text-[12px] text-accent-deep">
+        <p className="mt-2 font-body text-[13px] text-accent-deep">
           {kampanyaEtiketi(vitrinIndirimi.ad)} — {vitrinIndirimi.rozet}
         </p>
       )}

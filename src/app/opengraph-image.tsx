@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { MARKA_ALT_SATIR_BUYUK } from '@/lib/metin/marka'
 
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
@@ -37,7 +38,7 @@ export default function OGImage() {
             fontFamily: 'serif',
           }}
         >
-          FINE JEWELLERY
+          {MARKA_ALT_SATIR_BUYUK}
         </div>
         <div
           style={{

@@ -50,7 +50,7 @@ export const ORG_ID = `${SITE_URL}/#organization`
  * bir bilgi vermiyordu. Süre ve kargo cümlesi tek kaynaktan okunur.
  */
 export const ANA_SAYFA_BASLIGI = 'NB Steelora | Çelik Takı, Kolye, Küpe ve Bileklik Modelleri'
-export const ANA_SAYFA_ACIKLAMASI = `316L paslanmaz çelik ve premium kaplama kolye, küpe, bileklik, yüzük ve piercing modelleri. ${FREE_SHIPPING_LABEL}, hediye kutusu ve ${CAYMA_SURESI_GUN} gün iade.`
+export const ANA_SAYFA_ACIKLAMASI = `316L paslanmaz çelik ve kaplama kolye, küpe, bileklik, yüzük ve piercing modelleri. ${FREE_SHIPPING_LABEL}, hediye kutusu ve ${CAYMA_SURESI_GUN} gün iade.`
 
 /**
  * Marka logosu — KARE (512×512), app/logo/route.tsx üretir.

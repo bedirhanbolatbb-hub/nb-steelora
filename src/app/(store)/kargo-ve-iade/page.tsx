@@ -44,29 +44,31 @@ export default async function KargoVeIadePage() {
         oradan devralır.
       </p>
 
-      <div className="not-prose my-6 overflow-x-auto">
-        <table className="w-full border-collapse text-[13px] font-body">
-          <tbody>
-            {[
-              ['Kargo ücreti', <strong key="k">{FREE_SHIPPING_LABEL}</strong>, 'Alt sınır yoktur.'],
-              ['Hazırlık süresi', HAZIRLIK_LABEL, 'Ödeme onayından sonra kargoya verilir.'],
-              [
-                'Kargo taşıma süresi',
-                TASIMA_LABEL,
-                'Kargoya verildikten SONRA başlar; hazırlık süresine eklenir.',
-              ],
-              ['Yasal azami süre', `${AZAMI_TESLIM_GUN} gün`, 'Aşılırsa sözleşmeyi feshedebilirsiniz.'],
-              ['Takip', 'E-posta ile', 'Takip numarası hazır olunca gönderilir.'],
-            ].map(([ad, deger, not]) => (
-              <tr key={String(ad)} className="border-b border-line last:border-0">
-                <td className="py-3 pr-4 align-top text-ink-soft">{ad}</td>
-                <td className="py-3 pr-4 align-top font-medium text-ink whitespace-nowrap">{deger}</td>
-                <td className="py-3 align-top text-muted">{not}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* 24 Kas 2026 tasarım denetimi: üç sütunlu tablo 390 px'te ekrandan
+          taşıyor, üçüncü sütun kesiliyordu. Telefonda satır = ad + değer,
+          altında not; geniş ekranda üç sütun. */}
+      <dl className="not-prose my-6 divide-y divide-line border-y border-line font-body">
+        {[
+          ['Kargo ücreti', <strong key="k">{FREE_SHIPPING_LABEL}</strong>, 'Alt sınır yoktur.'],
+          ['Hazırlık süresi', HAZIRLIK_LABEL, 'Ödeme onayından sonra kargoya verilir.'],
+          [
+            'Kargo taşıma süresi',
+            TASIMA_LABEL,
+            'Kargoya verildikten SONRA başlar; hazırlık süresine eklenir.',
+          ],
+          ['Yasal azami süre', `${AZAMI_TESLIM_GUN} gün`, 'Aşılırsa sözleşmeyi feshedebilirsiniz.'],
+          ['Takip', 'E-posta ile', 'Takip numarası hazır olunca gönderilir.'],
+        ].map(([ad, deger, not]) => (
+          <div
+            key={String(ad)}
+            className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 py-3 sm:grid-cols-[180px_220px_minmax(0,1fr)] sm:gap-x-6"
+          >
+            <dt className="text-[14px] text-ink-soft">{ad}</dt>
+            <dd className="text-right text-[14px] font-medium text-ink sm:text-left">{deger}</dd>
+            <dd className="col-span-2 text-[13px] text-muted sm:col-span-1">{not}</dd>
+          </div>
+        ))}
+      </dl>
 
       <p>
         Siparişinizi <Link prefetch={false} href="/kargo-takip">kargo takip sayfasından</Link> üye olmadan da

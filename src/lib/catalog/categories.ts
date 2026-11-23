@@ -131,3 +131,17 @@ export function markaKategorisi(ham: string | null | undefined): string {
   }
   return metin
 }
+
+/**
+ * Marka kategorisinin liste sayfası (24 Kas 2026 tasarım denetimi).
+ * Ürün sayfasında telefonda kırıntı satırı yerine tek "‹ Bileklik" bağlantısı
+ * basılır; hedef buradan gelir. Halhal ayrı sayfa değil, Bileklik'in içinde.
+ */
+export function markaKategoriYolu(
+  ham: string | null | undefined
+): { href: string; title: string } | null {
+  const baslik = markaKategorisi(ham)
+  const k = FILTRE_KATEGORILERI.find((c) => c.title === baslik)
+  if (!k) return null
+  return { href: `/kategori/${k.slug === 'halhal' ? 'bileklik' : k.slug}`, title: k.title }
+}

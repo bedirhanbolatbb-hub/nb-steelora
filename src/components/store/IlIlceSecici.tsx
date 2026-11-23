@@ -23,7 +23,7 @@ type IlKaydi = { ad: string; ilceler: string[] }
 type Veri = { iller: IlKaydi[] }
 
 const SECICI_SINIF =
-  'w-full border border-line bg-white px-4 py-3 text-base sm:text-sm font-body text-ink focus:border-accent-line focus:outline-none transition-colors disabled:opacity-60'
+  'w-full border border-line-strong bg-white px-4 py-3 text-base sm:text-sm font-body text-ink focus:border-ink focus:outline-none transition-colors disabled:opacity-60'
 
 export default function IlIlceSecici({
   il,
@@ -77,13 +77,15 @@ export default function IlIlceSecici({
     return (
       <>
         <Input
-          placeholder="İl *"
+          etiket="İl"
+          required
           autoComplete="address-level1"
           value={il}
           onChange={(e) => onIl(e.target.value)}
         />
         <Input
-          placeholder="İlçe *"
+          etiket="İlçe"
+          required
           autoComplete="address-level2"
           value={ilce}
           onChange={(e) => onIlce(e.target.value)}
@@ -94,6 +96,14 @@ export default function IlIlceSecici({
 
   return (
     <>
+      <label className="block">
+        <span className="mb-1.5 block font-body text-[13px] text-ink-soft">
+          İl
+          <span aria-hidden className="text-accent-deep">
+            {' '}
+            *
+          </span>
+        </span>
       <select
         aria-label="İl"
         name="il"
@@ -107,13 +117,22 @@ export default function IlIlceSecici({
         }}
         className={cn(SECICI_SINIF, !seciliIl && 'text-muted')}
       >
-        <option value="">{veri ? 'İl seçin *' : 'İller yükleniyor…'}</option>
+        <option value="">{veri ? 'İl seçin' : 'İller yükleniyor…'}</option>
         {veri?.iller.map((x) => (
           <option key={x.ad} value={x.ad} className="text-ink">
             {x.ad}
           </option>
         ))}
       </select>
+      </label>
+      <label className="block">
+        <span className="mb-1.5 block font-body text-[13px] text-ink-soft">
+          İlçe
+          <span aria-hidden className="text-accent-deep">
+            {' '}
+            *
+          </span>
+        </span>
       <select
         aria-label="İlçe"
         name="ilce"
@@ -123,13 +142,14 @@ export default function IlIlceSecici({
         onChange={(e) => onIlce(e.target.value)}
         className={cn(SECICI_SINIF, !seciliIlce && 'text-muted')}
       >
-        <option value="">{seciliIl ? 'İlçe seçin *' : 'Önce il seçin'}</option>
+        <option value="">{seciliIl ? 'İlçe seçin' : 'Önce il seçin'}</option>
         {seciliIl?.ilceler.map((x) => (
           <option key={x} value={x} className="text-ink">
             {x}
           </option>
         ))}
       </select>
+      </label>
     </>
   )
 }

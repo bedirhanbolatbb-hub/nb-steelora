@@ -10,14 +10,14 @@ import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
 import { useKatmanKlavyesi } from '@/hooks/useKatmanKlavyesi'
 import Link from 'next/link'
-import { X, Minus, Plus, Trash2, ShoppingBag, ShieldCheck, RotateCcw, Gift } from 'lucide-react'
+import { X, Minus, Plus, Trash2, ShoppingBag, ShieldCheck, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
 import Button from '@/components/ui/Button'
 import { FREE_SHIPPING_LABEL, tahminiTeslimEtiketi } from '@/lib/shipping'
-import { GUVEN_METNI } from '@/lib/metin/guven'
-import { BaglamliSaticiPuaniSatiri } from '@/components/store/SaticiPuaniContext'
+import { GUVEN_METNI, odemeGuvenceKisa } from '@/lib/metin/guven'
+import { GeriAlSatiri, useGeriAlinabilirKaldirma } from '@/components/store/SepetGeriAl'
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
 import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
 import { SepetiPaylasDugmesi } from '@/components/store/SepetPaylasim'
@@ -37,13 +37,15 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
   // sırasındaydı (odak görünmez ögelere gidiyordu) — inert ile çözülüyor.
   const kapRef = useRef<HTMLDivElement>(null)
   useKatmanKlavyesi(isOpen, onClose, kapRef)
-  const { items, removeItem, updateQuantity, totalPrice } = useCart()
+  const { items, updateQuantity, totalPrice } = useCart()
+  // 24 Kas 2026: kaldırma geri alınabilir (components/store/SepetGeriAl).
+  const { silinen, kaldir, geriAl } = useGeriAlinabilirKaldirma()
   // Faz 11A: fiyat gösterimi vitrin kampanyasından türer (tek kaynak).
   const kadrajMi = useKadrajSorgu()
   const kampanyaIndirimi = useVitrinIndirimi()
   const subtotal = totalPrice()
   // İndirim artık ödeme adımını beklemeden burada görünüyor (Faz 15).
-  const { ozet, indirim, havale, kartAcik } = useOtomatikIndirim(
+  const { ozet, indirim, havale, kartAcik, yuklendi } = useOtomatikIndirim(
     items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 }))
   )
   // Ek havale/EFT indirimi (7 Kas 2026) — sunucudan; ürün kartında yok,
@@ -91,12 +93,13 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
           </h2>
           <button
             onClick={onClose}
-            className="text-ink-soft hover:text-accent-deep transition-colors"
+            className="-mr-3 flex h-11 w-11 items-center justify-center text-ink-soft transition-colors hover:text-ink"
             aria-label="Kapat"
           >
-            <X size={20} />
+            <X size={22} strokeWidth={1.6} />
           </button>
         </div>
+        <GeriAlSatiri silinen={silinen} onGeriAl={geriAl} className="mx-6 mt-3" />
 
         {hasItems ? (
           <>
@@ -128,7 +131,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                       />
                     </Link>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-heading text-[14px] text-ink truncate">
+                      <h3 className="font-heading text-[15px] leading-snug text-ink line-clamp-2">
                         <Link
                           prefetch={false}
                           href={`/urun/${item.product.slug}`}
@@ -138,12 +141,12 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                           {item.product.display_title}
                         </Link>
                       </h3>
-                      <p className="text-[11px] text-muted font-body mt-0.5">
+                      <p className="text-[12px] text-muted font-body mt-0.5">
                         {markaKategorisi(item.product.trendyol_category)}
                       </p>
                       {/* Faz 11A: satır liste fiyatını gösteriyordu; ürün
                           sayfasında indirimli, burada tam fiyat çıkıyordu. */}
-                      <p className="text-[13px] font-body mt-1">
+                      <p className="text-[14px] font-body mt-1">
                         {(() => {
                           const f = vitrinFiyati(
                             (item.product as any).override_price ?? item.product.display_price,
@@ -151,7 +154,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                           )
                           return (
                             <>
-                              <span className="text-accent-deep font-medium">
+                              <span className="font-semibold text-ink">
                                 {formatPrice(f.gosterilen)}
                               </span>
                               {f.ustuCizili != null && (
@@ -163,36 +166,40 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                           )
                         })()}
                       </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center border border-line">
+                      {/* 24 Kas 2026: adet düğmeleri 28 → 44 px, kaldır 14 → 44 px;
+                          son adette eksi de geri alınabilir kaldırmadır. */}
+                      <div className="mt-1.5 flex items-center justify-between">
+                        <div className="flex items-center rounded-[4px] border border-line-strong">
                           <button
                             onClick={() =>
-                              updateQuantity(item.product.id, item.quantity - 1)
+                              item.quantity <= 1
+                                ? kaldir(item.product, item.quantity)
+                                : updateQuantity(item.product.id, item.quantity - 1)
                             }
-                            className="w-7 h-7 flex items-center justify-center text-ink-soft hover:text-accent-deep transition-colors"
+                            className="flex h-11 w-11 items-center justify-center text-ink transition-colors hover:text-accent-deep"
                             aria-label="Azalt"
                           >
-                            <Minus size={12} />
+                            <Minus size={15} />
                           </button>
-                          <span className="w-8 text-center text-[12px] font-body">
+                          <span className="w-7 text-center font-body text-[14px] tabular-nums" aria-live="polite">
                             {item.quantity}
                           </span>
                           <button
                             onClick={() =>
                               updateQuantity(item.product.id, item.quantity + 1)
                             }
-                            className="w-7 h-7 flex items-center justify-center text-ink-soft hover:text-accent-deep transition-colors"
+                            className="flex h-11 w-11 items-center justify-center text-ink transition-colors hover:text-accent-deep"
                             aria-label="Artır"
                           >
-                            <Plus size={12} />
+                            <Plus size={15} />
                           </button>
                         </div>
                         <button
-                          onClick={() => removeItem(item.product.id)}
-                          className="text-muted hover:text-red-600 transition-colors"
-                          aria-label="Kaldır"
+                          onClick={() => kaldir(item.product, item.quantity)}
+                          className="-mr-3 flex h-11 w-11 items-center justify-center text-muted transition-colors hover:text-ink"
+                          aria-label={`${item.product.display_title} — sepetten kaldır`}
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={18} strokeWidth={1.5} />
                         </button>
                       </div>
                     </div>
@@ -211,7 +218,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                 kararının verildiği bu panelde "ne zaman gelir" sorusunun
                 cevabı yoktu (yalnız /kargo-ve-iade sayfasında yazıyordu). */}
             <div className="px-6 py-3 bg-surface-muted/50">
-              <p className="text-[11px] font-body text-ink text-center">
+              <p className="text-[13px] font-body text-ink text-center">
                 <span className="text-accent-deep">✓</span> {FREE_SHIPPING_LABEL}
                 {teslimEtiketi && (
                   <span className="text-ink-soft"> · Tahmini teslim {teslimEtiketi}</span>
@@ -222,7 +229,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
             {/* Kupon hatırlatması — yalnız kampanya bu sepete uygulanabiliyorsa */}
             {couponApplies(coupon ?? null, subtotal) && (
               <div className="px-6 py-2.5 border-t border-line">
-                <p className="text-[11px] font-body text-ink-soft">
+                <p className="text-[12px] font-body text-ink-soft">
                   <span className="text-accent-deep">✦</span> {coupon!.label}
                   <span className="text-muted">
                     {indirim
@@ -237,11 +244,11 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
             <div className="px-6 py-5 border-t border-line">
               <div className="mb-4 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-body text-ink-soft uppercase tracking-wider">
-                    Ara Toplam
+                  <span className="text-[14px] font-body text-ink-soft">
+                    {indirimVar ? 'Ara toplam' : 'Toplam'}
                   </span>
                   <span
-                    className={`text-[14px] font-body ${indirimVar ? 'text-muted line-through' : 'text-accent-deep font-medium text-[16px]'}`}
+                    className={`font-body ${indirimVar ? 'text-[14px] text-muted line-through' : 'text-[18px] font-semibold text-ink'}`}
                   >
                     {formatPrice(subtotal)}
                   </span>
@@ -251,28 +258,27 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                   <>
                     {indirim && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[12px] font-body text-ink-soft">{kampanyaEtiketi(indirim.ad)}</span>
-                        <span className="text-[13px] font-body text-accent-deep">
+                        <span className="text-[13px] font-body text-ink-soft">{kampanyaEtiketi(indirim.ad)}</span>
+                        <span className="text-[14px] font-body text-accent-deep">
                           −{formatPrice(indirim.tutar)}
                         </span>
                       </div>
                     )}
                     {havale && havaleDusulen > 0 && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[12px] font-body text-ink-soft">Havale/EFT indirimi (%{havale.oran})</span>
-                        <span className="text-[13px] font-body text-accent-deep">−{formatPrice(havaleDusulen)}</span>
+                        <span className="text-[13px] font-body text-ink-soft">Havale/EFT indirimi (%{havale.oran})</span>
+                        <span className="text-[14px] font-body text-accent-deep">−{formatPrice(havaleDusulen)}</span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between border-t border-line pt-1.5">
-                      <span className="text-[12px] font-body uppercase tracking-wider text-ink">
-                        Toplam
-                      </span>
-                      <span className="text-[16px] font-body font-medium text-accent-deep">
+                    <div className="flex items-center justify-between border-t border-line pt-2">
+                      <span className="text-[14px] font-body font-medium text-ink">Toplam</span>
+                      <span className="text-[18px] font-body font-semibold text-ink">
                         {formatPrice(indirimliToplam)}
                       </span>
                     </div>
-                    <p className="text-[11px] font-body text-accent-deep">
-                      {formatPrice(ozet.indirimToplami + havaleDusulen)} kazandınız
+                    {/* "… kazandınız" yerine ne olduğunu söyleyen yalın cümle. */}
+                    <p className="text-[12px] font-body text-ink-soft">
+                      Toplam indiriminiz: {formatPrice(ozet.indirimToplami + havaleDusulen)}
                       {ozet.tavanUygulandi && (
                         <span className="text-muted"> · indirim tavanı uygulandı</span>
                       )}
@@ -282,9 +288,9 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                 {/* Kart açıkken havale indirimi toplamdan düşmez; müşteri
                     ödeme adımında seçebileceğini burada görür. */}
                 {kartAcik && havale && havaleTutari > 0 && (
-                  <p className="text-[11px] font-body text-ink-soft">
+                  <p className="text-[13px] font-body text-ink-soft">
                     Havale/EFT ile öderseniz ek %{havale.oran} indirimle{' '}
-                    <span className="text-accent-deep">
+                    <span className="font-medium text-ink">
                       {formatPrice(Math.max(0, indirimliToplam - havaleTutari))}
                     </span>
                   </p>
@@ -294,42 +300,39 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                 prefetch={false}
                 href="/odeme"
                 onClick={onClose}
-                className="basis block w-full py-3.5 bg-ink text-bg text-center text-[11px] uppercase tracking-[0.15em] font-body hover:bg-accent-deep"
+                className="basis flex min-h-[52px] w-full items-center justify-center rounded-[4px] bg-ink text-center font-body text-[13px] font-semibold uppercase tracking-[0.12em] text-white hover:bg-accent-deep"
               >
                 Ödemeye Geç
               </Link>
               <button
                 onClick={onClose}
-                className="w-full mt-2 py-2 border border-ink/30 text-ink text-[11px] uppercase tracking-[0.15em] font-body hover:border-ink transition-colors text-center"
+                className="mt-2 flex min-h-[48px] w-full items-center justify-center rounded-[4px] border border-line-strong text-center font-body text-[14px] font-medium text-ink transition-colors hover:border-ink"
               >
-                Alışverişe Devam Et
+                Alışverişe devam et
               </button>
-              {/* 8 Kas 2026: Trendyol satıcı puanı — ödeme kararının yanında.
-                  Bağlamdan okunur; puan yoksa/eskiyse satır hiç basılmaz
-                  (space-y: satır yoksa güven listesinin boşluğu değişmez). */}
-              <div className="mt-4 space-y-2.5">
-                <BaglamliSaticiPuaniSatiri />
-                {/* Faz 36: güven satırı ürün sayfasında vardı, ödeme düğmesinin
-                    yanında yoktu. Metinler tek kaynaktan (lib/metin/guven). */}
-                <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[10px] font-body text-ink-soft">
-                  {[
-                    { Icon: ShieldCheck, metin: GUVEN_METNI.odeme },
-                    { Icon: RotateCcw, metin: GUVEN_METNI.iade },
-                    { Icon: Gift, metin: GUVEN_METNI.hediye },
-                  ].map(({ Icon, metin }) => (
-                    <li key={metin} className="flex items-center gap-1.5 whitespace-nowrap">
-                      <Icon size={12} strokeWidth={1.5} className="text-accent-deep shrink-0" aria-hidden />
-                      {metin}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {/* 24 Kas 2026 tasarım denetimi: burada Trendyol puanı ve 10 px'lik
+                  üç parça vardı; müşterinin bu noktadaki sorusu "nasıl
+                  ödeyeceğim, güvenli mi?" idi ve yanıtı yoktu. Puan ana sayfa,
+                  ürün sayfası ve ödeme adımında duruyor. Metinler tek
+                  kaynaktan (lib/metin/guven); kart durumu sunucudan. */}
+              <ul className="mt-4 space-y-1.5 font-body text-[12px] text-ink-soft">
+                {yuklendi && (
+                  <li className="flex items-center justify-center gap-1.5 text-center">
+                    <ShieldCheck size={14} strokeWidth={1.5} className="shrink-0 text-accent-deep" aria-hidden />
+                    {odemeGuvenceKisa(kartAcik)}
+                  </li>
+                )}
+                <li className="flex items-center justify-center gap-1.5 text-center">
+                  <RotateCcw size={14} strokeWidth={1.5} className="shrink-0 text-accent-deep" aria-hidden />
+                  {GUVEN_METNI.iade} · {GUVEN_METNI.hediye}
+                </li>
+              </ul>
             </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center px-6">
             <ShoppingBag size={48} className="text-line mb-4" />
-            <p className="text-[13px] font-body text-muted">{BOS_DURUM.sepet.baslik}</p>
+            <p className="text-[14px] font-body text-ink-soft">{BOS_DURUM.sepet.baslik}</p>
             <Button variant="outline" className="mt-6" onClick={onClose}>
               Alışverişe Başla
             </Button>

@@ -80,7 +80,7 @@ export default async function HakkimizdaPage() {
           </h2>
           <p>
             Herkesin ulaşabileceği zarif takılar sunmak en temel hedefimizdir. Her ürünün
-            malzemesi kendi sayfasında açıkça yazar — 316L paslanmaz çelik ve premium kaplama
+            malzemesi kendi sayfasında açıkça yazar — 316L paslanmaz çelik ve kaplama
             pirinç ayrı ayrı belirtilir. Gelen her parçayı titizlikle kontrol eder, kusurlu
             olanı göndermeyiz.
           </p>
@@ -120,20 +120,25 @@ export default async function HakkimizdaPage() {
           </p>
         </div>
         <div className="bg-surface-muted/30 p-6">
-          <p className="text-[14px] font-heading text-ink mb-2">Kayıtlı Satıcı</p>
+          <p className="text-[14px] font-heading text-ink mb-2">Satıcı Bilgileri Açık</p>
           <p className="text-[12px] text-muted">
-            Ticaret Bakanlığı ETBİS kayıtlı satıcı; ödemeniz yalnız satıcının kendi hesabına yapılır.
+            Unvanımız, adresimiz ve ETBİS kaydımız İletişim sayfasında ve her sayfanın altında
+            yazar. Ödemeler yalnızca bu unvan adına alınır.
           </p>
         </div>
         <div className="bg-surface-muted/30 p-6">
-          <p className="text-[14px] font-heading text-ink mb-2">Hızlı Kargo</p>
+          <p className="text-[14px] font-heading text-ink mb-2">Ücretsiz Kargo</p>
           <p className="text-[12px] text-muted">
-            {HAZIRLIK_LABEL} hazırlık, {TASIMA_LABEL} kargo taşıma. {FREE_SHIPPING_LABEL}.
+            {FREE_SHIPPING_LABEL}. Siparişiniz {HAZIRLIK_LABEL} içinde kargoya verilir; kargo{' '}
+            {TASIMA_LABEL} içinde teslim eder.
           </p>
         </div>
         <div className="bg-surface-muted/30 p-6">
           <p className="text-[14px] font-heading text-ink mb-2">14 Gün İade</p>
-          <p className="text-[12px] text-muted">14 gün içinde sebep göstermeden iade; her sipariş hediye kutusunda gönderilir.</p>
+          <p className="text-[12px] text-muted">
+            Teslimden sonraki 14 gün içinde, sebep göstermeden iade edebilirsiniz. İade kargo
+            ücreti bize aittir.
+          </p>
         </div>
       </div>
 

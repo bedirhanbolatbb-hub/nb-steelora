@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { Mail, MapPin, Clock, Phone } from 'lucide-react'
 import Input from '@/components/ui/Input'
@@ -59,9 +60,9 @@ export default function IletisimClient({ adres, telefon }: { adres?: string; tel
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
         {/* Sol: Bilgiler */}
         <div>
-          <p className="text-[13px] font-body text-ink-soft leading-relaxed mb-8">
-            Sorularınız, önerileriniz veya sipariş ile ilgili talepleriniz için bize
-            ulaşabilirsiniz. En kısa sürede size dönüş yapacağız.
+          <p className="text-[15px] font-body text-ink-soft leading-relaxed mb-8">
+            Sorunuz ya da siparişinizle ilgili bir talebiniz varsa bize yazın. Mesajlara hafta
+            içi 09.00–18.00 arasında yanıt veriyoruz.
           </p>
 
           <div className="space-y-6">
@@ -70,12 +71,12 @@ export default function IletisimClient({ adres, telefon }: { adres?: string; tel
                 <Mail size={16} className="text-accent-deep" />
               </div>
               <div>
-                <p className="text-[11px] font-body text-muted uppercase tracking-wider mb-1">
+                <p className="text-[12px] font-body text-muted mb-0.5">
                   E-posta
                 </p>
                 <a
                   href="mailto:info@nbsteelora.com"
-                  className="text-[13px] font-body text-ink hover:text-accent-deep transition-colors"
+                  className="inline-flex min-h-[32px] items-center text-[15px] font-body text-ink underline decoration-accent underline-offset-4 hover:text-accent-deep transition-colors"
                 >
                   info@nbsteelora.com
                 </a>
@@ -87,16 +88,16 @@ export default function IletisimClient({ adres, telefon }: { adres?: string; tel
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#B8952A"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
               </div>
               <div>
-                <p className="text-[11px] font-body text-muted uppercase tracking-wider mb-1">
+                <p className="text-[12px] font-body text-muted mb-0.5">
                   WhatsApp
                 </p>
                 <a
                   href={WHATSAPP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[13px] font-body text-ink hover:text-accent-deep transition-colors"
+                  className="inline-flex min-h-[32px] items-center text-[15px] font-body text-ink underline decoration-accent underline-offset-4 hover:text-accent-deep transition-colors"
                 >
-                  WhatsApp ile Yazın
+                  WhatsApp&apos;tan yazın
                 </a>
               </div>
             </div>
@@ -106,10 +107,10 @@ export default function IletisimClient({ adres, telefon }: { adres?: string; tel
                 <MapPin size={16} className="text-accent-deep" />
               </div>
               <div>
-                <p className="text-[11px] font-body text-muted uppercase tracking-wider mb-1">
+                <p className="text-[12px] font-body text-muted mb-0.5">
                   Adres
                 </p>
-                <p className="text-[13px] font-body text-ink">
+                <p className="text-[15px] font-body text-ink">
                   {adresMetni}
                 </p>
               </div>
@@ -121,12 +122,12 @@ export default function IletisimClient({ adres, telefon }: { adres?: string; tel
                   <Phone size={16} className="text-accent-deep" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-body text-muted uppercase tracking-wider mb-1">
+                  <p className="text-[12px] font-body text-muted mb-0.5">
                     Telefon
                   </p>
                   <a
                     href={telefonHref}
-                    className="text-[13px] font-body text-ink hover:text-accent-deep transition-colors"
+                    className="inline-flex min-h-[32px] items-center text-[15px] font-body text-ink underline decoration-accent underline-offset-4 hover:text-accent-deep transition-colors"
                   >
                     {telefonMetni}
                   </a>
@@ -139,11 +140,11 @@ export default function IletisimClient({ adres, telefon }: { adres?: string; tel
                 <Clock size={16} className="text-accent-deep" />
               </div>
               <div>
-                <p className="text-[11px] font-body text-muted uppercase tracking-wider mb-1">
+                <p className="text-[12px] font-body text-muted mb-0.5">
                   Çalışma Saatleri
                 </p>
-                <p className="text-[13px] font-body text-ink">
-                  Pazartesi — Cuma: 09:00 — 18:00
+                <p className="text-[15px] font-body text-ink">
+                  Pazartesi–Cuma, 09.00–18.00
                 </p>
               </div>
             </div>
@@ -153,31 +154,37 @@ export default function IletisimClient({ adres, telefon }: { adres?: string; tel
         {/* Sağ: Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
-            placeholder="Ad Soyad *"
+            etiket="Ad Soyad"
+            autoComplete="name"
             value={form.name}
             onChange={(e) => updateField('name', e.target.value)}
             required
           />
           <Input
-            placeholder="E-posta *"
+            etiket="E-posta adresi"
             type="email"
+            autoComplete="email"
             value={form.email}
             onChange={(e) => updateField('email', e.target.value)}
             required
           />
           <Input
-            placeholder="Konu"
+            etiket="Konu (isteğe bağlı)"
             value={form.subject}
             onChange={(e) => updateField('subject', e.target.value)}
           />
-          <textarea
-            placeholder="Mesajınız *"
-            value={form.message}
-            onChange={(e) => updateField('message', e.target.value)}
-            required
-            rows={5}
-            className="w-full border border-line bg-white px-4 py-3 text-sm font-body text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors resize-none"
-          />
+          <label className="block">
+            <span className="mb-1.5 block font-body text-[13px] text-ink-soft">
+              Mesajınız<span aria-hidden className="text-accent-deep"> *</span>
+            </span>
+            <textarea
+              value={form.message}
+              onChange={(e) => updateField('message', e.target.value)}
+              required
+              rows={5}
+              className="w-full border border-line-strong bg-white px-4 py-3 text-base sm:text-sm font-body text-ink placeholder:text-muted focus:border-ink focus:outline-none transition-colors resize-none"
+            />
+          </label>
 
           <Button
             type="submit"
@@ -185,16 +192,23 @@ export default function IletisimClient({ adres, telefon }: { adres?: string; tel
             className="w-full"
             disabled={status === 'loading'}
           >
-            {status === 'loading' ? 'Gönderiliyor...' : 'Mesaj Gönder'}
+            {status === 'loading' ? 'Gönderiliyor…' : 'Mesaj Gönder'}
           </Button>
+          <p className="font-body text-[12px] leading-relaxed text-muted">
+            Bilgilerinizi yalnızca mesajınızı yanıtlamak için kullanırız. Ayrıntılar için{' '}
+            <Link prefetch={false} href="/kvkk" className="text-ink-soft underline underline-offset-2">
+              KVKK Aydınlatma Metni
+            </Link>
+            &apos;ne bakabilirsiniz.
+          </p>
 
           {status === 'success' && (
-            <p className="text-[12px] font-body text-accent-deep text-center">
-              Mesajınız başarıyla gönderildi. En kısa sürede size dönüş yapacağız.
+            <p role="status" className="text-[14px] font-body text-ink text-center">
+              Mesajınız bize ulaştı. Hafta içi 09.00–18.00 arasında yanıt veriyoruz.
             </p>
           )}
           {status === 'error' && (
-            <p className="text-[12px] font-body text-red-600 text-center">
+            <p role="alert" className="text-[14px] font-body text-red-700 text-center">
               Mesaj gönderilemedi. Lütfen daha sonra tekrar deneyin veya doğrudan
               info@nbsteelora.com adresine yazın.
             </p>

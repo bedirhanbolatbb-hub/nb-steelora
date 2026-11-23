@@ -30,7 +30,7 @@ export default function KirintiYolu({
       <JsonLd data={breadcrumbJsonLd(adimlar.map((a) => ({ name: a.ad, path: a.path })))} />
       <nav
         aria-label="breadcrumb"
-        className={`flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-body text-muted ${className}`}
+        className={`flex flex-wrap items-center gap-1.5 text-[12px] font-body text-muted ${className}`}
       >
         {adimlar.map((a, i) => (
           <span key={a.path} className="contents">
@@ -38,7 +38,7 @@ export default function KirintiYolu({
             {i === son ? (
               <span
                 aria-current="page"
-                className="text-ink-soft normal-case tracking-normal truncate max-w-[240px]"
+                className="text-ink truncate max-w-[240px]"
               >
                 {a.ad}
               </span>

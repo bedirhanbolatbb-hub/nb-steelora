@@ -35,14 +35,11 @@ export default function RecentlyViewed({ currentSlug }: { currentSlug: string })
   if (products.length === 0) return null
 
   return (
-    <div className="mt-16 pt-16 border-t border-line">
-      <div className="mb-8">
-        <p className="eyebrow">Gezinme geçmişi</p>
-        <h2 className="font-heading text-[26px] lg:text-[32px] font-medium text-ink mt-1.5">
-          Son Görüntüledikleriniz
-        </h2>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+    <div className="mt-12 border-t border-line pt-10 lg:mt-16 lg:pt-14">
+      <h2 className="mb-5 font-heading text-[24px] font-medium text-ink lg:mb-8 lg:text-[32px]">
+        Son baktıklarınız
+      </h2>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-4 md:grid-cols-4 lg:gap-x-6">
         {products.map((product) => (
           <ProductCardV2 key={product.id} product={product} morph={false} />
         ))}

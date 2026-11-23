@@ -81,7 +81,7 @@ const BASLIKLAR: Record<HeroSablonu['kimlik'], [string, string, string][]> = {
 
 const ACIKLAMALAR: Record<HeroSablonu['kimlik'], string[]> = {
   yeni_koleksiyon: [
-    '316L paslanmaz çelik ve premium kaplama. Kararmaz, paslanmaz, solmaz.',
+    '316L paslanmaz çelik ve kaplama takılar. Her ürünün malzemesi kendi sayfasında yazar.',
     'Günlük kullanıma uygun, hafif ve dayanıklı parçalar.',
     'Tek başına ya da katmanlı kullanılabilen yeni modeller.',
   ],
@@ -91,7 +91,7 @@ const ACIKLAMALAR: Record<HeroSablonu['kimlik'], string[]> = {
     'Seçtiğiniz parçalar, beklediğiniz fiyata.',
   ],
   sezon_hikaye: [
-    '316L medikal çelik. Kararmaz, paslanmaz, solmaz.',
+    'Çelik ve kaplama takılar; malzemesi her ürünün sayfasında açıkça yazar.',
     'Her gün takılacak kadar sade, hatırlanacak kadar özel.',
     'Az sayıda parça, uzun süre kullanım.',
   ],

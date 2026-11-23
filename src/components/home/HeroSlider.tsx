@@ -140,7 +140,7 @@ export default function HeroSlider({
                   )}
                   {s.subtitle && (
                     <p
-                      className="hero-line mt-4 max-w-md font-body text-[13px] leading-relaxed text-ink-soft lg:text-[14px]"
+                      className="hero-line mt-4 max-w-md font-body text-[15px] leading-relaxed text-ink-soft lg:text-[16px]"
                       style={{ '--hero-delay': '140ms' } as React.CSSProperties}
                     >
                       {s.subtitle}
@@ -151,7 +151,7 @@ export default function HeroSlider({
                       prefetch={false}
                       href={s.href}
                       tabIndex={i === aktif ? 0 : -1}
-                      className="hero-line basis mt-7 inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.18em] text-bg hover:bg-accent-deep"
+                      className="hero-line basis mt-7 inline-flex min-h-[52px] items-center rounded-[4px] bg-ink px-8 font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-white hover:bg-accent-deep"
                       style={{ '--hero-delay': '210ms' } as React.CSSProperties}
                     >
                       {s.cta_label}
@@ -290,7 +290,7 @@ function TamSlayt({
             <>
               {s.eyebrow && (
                 <p
-                  className="hero-line font-body text-[10px] font-semibold uppercase tracking-[0.28em] text-white/80"
+                  className="hero-line font-body text-[12px] font-semibold uppercase tracking-[0.14em] text-white/90"
                   style={{ '--hero-delay': '0ms' } as React.CSSProperties}
                 >
                   {s.eyebrow}
@@ -306,7 +306,7 @@ function TamSlayt({
                 // Telefonda alt metin gizli: görselin alt kısmındaki takıyı
                 // (kolyenin ucu, bileklik) yazı bloğu örtmesin.
                 <p
-                  className="hero-line mt-3 hidden max-w-md font-body text-[13px] leading-relaxed text-white/85 sm:block lg:text-[15px]"
+                  className="hero-line mt-3 hidden max-w-md font-body text-[15px] leading-relaxed text-white/90 sm:block lg:text-[16px]"
                   style={{ '--hero-delay': '140ms' } as React.CSSProperties}
                 >
                   {s.subtitle}
@@ -317,7 +317,7 @@ function TamSlayt({
                   prefetch={false}
                   href={s.href}
                   tabIndex={etkin ? 0 : -1}
-                  className="hero-line mt-6 inline-flex min-h-[44px] items-center rounded-[4px] bg-white px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:bg-bg"
+                  className="hero-line mt-6 inline-flex min-h-[52px] items-center rounded-[4px] bg-white px-8 font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-ink transition-colors hover:bg-bg"
                   style={{ '--hero-delay': '210ms' } as React.CSSProperties}
                 >
                   {s.cta_label}
@@ -358,7 +358,7 @@ function KampanyaYazisi({
     <>
       <p
         className={cn(
-          'hero-line font-body text-[10px] font-semibold uppercase tracking-[0.28em] sm:text-[11px]',
+          'hero-line font-body text-[12px] font-semibold uppercase tracking-[0.14em]',
           acik ? 'text-white/90' : 'text-accent-deep'
         )}
         style={{ '--hero-delay': '0ms' } as React.CSSProperties}
@@ -388,7 +388,7 @@ function KampanyaYazisi({
       </Baslik>
       <p
         className={cn(
-          'hero-line mt-3 hidden max-w-md font-body text-[13px] leading-relaxed sm:block lg:text-[15px]',
+          'hero-line mt-3 hidden max-w-md font-body text-[15px] leading-relaxed sm:block lg:text-[16px]',
           acik ? 'text-white/85' : 'text-ink-soft'
         )}
         style={{ '--hero-delay': '140ms' } as React.CSSProperties}
@@ -400,8 +400,8 @@ function KampanyaYazisi({
         href={k.hedef}
         tabIndex={etkin ? 0 : -1}
         className={cn(
-          'hero-line mt-5 inline-flex min-h-[48px] items-center rounded-[4px] px-9 py-4 font-body text-[12px] font-semibold uppercase tracking-[0.18em] transition-colors sm:mt-6',
-          acik ? 'bg-white text-ink hover:bg-bg' : 'bg-ink text-bg hover:bg-accent-deep'
+          'hero-line mt-5 inline-flex min-h-[52px] items-center rounded-[4px] px-9 font-body text-[13px] font-semibold uppercase tracking-[0.1em] transition-colors sm:mt-6',
+          acik ? 'bg-white text-ink hover:bg-bg' : 'bg-ink text-white hover:bg-accent-deep'
         )}
         style={{ '--hero-delay': '210ms' } as React.CSSProperties}
       >
@@ -421,7 +421,7 @@ function KargoSatiri({ ton }: { ton: 'acik' | 'koyu' }) {
   return (
     <p
       className={cn(
-        'hero-line mt-4 flex items-center gap-2 font-body text-[12px] font-medium tracking-[0.02em] sm:text-[13px]',
+        'hero-line mt-4 flex items-center gap-2 font-body text-[13px] font-medium sm:text-[14px]',
         acik ? 'text-white/90' : 'text-ink-soft'
       )}
       style={{ '--hero-delay': '280ms' } as React.CSSProperties}
@@ -445,7 +445,7 @@ function KargoSatiri({ ton }: { ton: 'acik' | 'koyu' }) {
  */
 function YapayZekaNotu() {
   return (
-    <p className="pointer-events-none absolute right-3 top-3 z-[1] font-body text-[10px] leading-none tracking-[0.03em] text-white/80 [text-shadow:0_1px_3px_rgba(0,0,0,0.55)] md:bottom-4 md:right-5 md:top-auto">
+    <p className="pointer-events-none absolute right-3 top-3 z-[1] rounded-[2px] bg-ink/55 px-2 py-1 font-body text-[11px] leading-none text-white md:bottom-4 md:right-5 md:top-auto">
       Yapay zekâ ile üretilmiş görsel
     </p>
   )

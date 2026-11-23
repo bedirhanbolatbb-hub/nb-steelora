@@ -31,8 +31,9 @@ export default function HavaleBilgiKarti(p: {
   const satir = (ad: string, etiket: string, gorunen: string, kopya?: string) => (
     <div className="flex items-center justify-between gap-3 border-b border-line py-2.5 last:border-0">
       <div className="min-w-0 text-left">
-        <p className="text-[10px] uppercase tracking-[0.18em] font-body text-muted">{etiket}</p>
-        <p className={`select-all text-ink ${ad === 'iban' ? 'font-mono text-[13px] break-all' : 'font-body text-[15px]'}`}>
+        <p className="font-body text-[12px] text-muted">{etiket}</p>
+        {/* IBAN tek satırda kalır: son hane tek başına alt satıra düşüyordu. */}
+        <p className={`select-all text-ink ${ad === 'iban' ? 'whitespace-nowrap font-mono text-[12.5px] tracking-tight sm:text-[14px]' : 'font-body text-[15px]'}`}>
           {gorunen}
         </p>
       </div>

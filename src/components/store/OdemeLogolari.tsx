@@ -49,7 +49,7 @@ export default function OdemeLogolari() {
           </li>
         ))}
       </ul>
-      <p className="text-[10px] font-body text-line/50 tracking-wider text-center">
+      <p className="text-center font-body text-[12px] text-line/65">
         {kartOdemesiAcikMi()
           ? 'Visa, Mastercard ve Troy kartlarla ödeme alınır.'
           : 'Şu an ödemeler havale/EFT ile alınır; kartla ödeme hazırlanıyor.'}

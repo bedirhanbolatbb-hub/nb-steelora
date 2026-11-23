@@ -49,7 +49,7 @@ export default function HeroCinema({
           }`}
           style={{ '--hero-delay': '140ms' } as React.CSSProperties}
         >
-          {c.hero_description || '316L medikal çelik. Kararmaz, paslanmaz, solmaz.'}
+          {c.hero_description || '316L paslanmaz çelik ve kaplama takılar. Her ürünün malzemesi kendi sayfasında yazar.'}
         </p>
         <div
           className="flex flex-wrap items-center gap-5 mt-8 hero-line"

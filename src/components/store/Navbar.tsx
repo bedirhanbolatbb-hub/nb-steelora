@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { MARKA_ALT_SATIR_BUYUK } from '@/lib/metin/marka'
 import { useSepetPaneli } from '@/hooks/useSepetPaneli'
 import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
 import { useKatmanKlavyesi } from '@/hooks/useKatmanKlavyesi'
@@ -16,6 +17,7 @@ import SearchModal from './SearchModal'
 import DuyuruSeridi from './DuyuruSeridi'
 import { MENU_LINKS } from '@/lib/catalog/categories'
 import { FREE_SHIPPING_EMPHASIS, FREE_SHIPPING_LABEL } from '@/lib/shipping'
+import { WHATSAPP_URL } from '@/lib/contact'
 import { useVitrinIndirimi } from './KampanyaContext'
 import { seritKampanyaMesaji } from '@/lib/campaigns/kampanyaVitrini'
 import type { CouponReminder } from '@/lib/campaigns'
@@ -79,6 +81,12 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
   // DOM'dan çıkarmak, sayfanın tamamını yukarı çeker — ölçülen sorun buydu.
   const seritRef = useRef<HTMLDivElement>(null)
   const [seritYuksekligi, setSeritYuksekligi] = useState(0)
+  // 24 Kas 2026 tasarım denetimi (masaüstü): yoğuşunca büyük marka sırası
+  // DOM'dan çıkarılıyordu; yapışkan başlık 157 → 80 px'e iniyor, sayfanın
+  // tamamı 76 px yukarı sıçrıyordu. Artık mobildeki yöntemin aynısı: sıra
+  // yerinde kalır, kabuk o kadar yukarı ÖTELENİR (yükseklik değişmez, CLS 0).
+  const markaRef = useRef<HTMLDivElement>(null)
+  const [markaYuksekligi, setMarkaYuksekligi] = useState(0)
   // Denetim (Faz 11B): menü Escape ile kapanmıyordu, odak menüye taşınmıyor
   // ve Tab arkadaki sayfaya kaçıp sayfayı klavyeyle kaydırıyordu.
   const menuRef = useRef<HTMLDivElement>(null)
@@ -121,10 +129,16 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
   useEffect(() => {
     const el = seritRef.current
     if (!el) return
-    const olc = () => setSeritYuksekligi(el.getBoundingClientRect().height)
+    const marka = markaRef.current
+    const olc = () => {
+      setSeritYuksekligi(el.getBoundingClientRect().height)
+      // Mobilde bu sıra gizli (yükseklik 0) — tek formül iki ekrana da uyar.
+      setMarkaYuksekligi(marka ? marka.getBoundingClientRect().height : 0)
+    }
     olc()
     const go = new ResizeObserver(olc)
     go.observe(el)
+    if (marka) go.observe(marka)
     return () => go.disconnect()
   }, [])
 
@@ -154,7 +168,7 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
       <Link prefetch={false} href="/favorilerim" className="hidden sm:block relative text-ink-soft hover:text-accent-deep transition-colors" aria-label="Favoriler">
         <Heart size={18} strokeWidth={1.6} />
         {wishlistCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 min-w-[18px] min-h-[18px] bg-ink text-bg text-[9px] rounded-full flex items-center justify-center font-body font-medium">
+          <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 min-w-[18px] min-h-[18px] bg-ink text-bg text-[11px] rounded-full flex items-center justify-center font-body font-medium">
             {wishlistCount}
           </span>
         )}
@@ -172,7 +186,7 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
             <span
               key={totalItems}
               aria-hidden
-              className="animate-cart-pulse absolute -top-2 -right-2.5 min-w-[18px] min-h-[18px] px-1 bg-ink text-bg text-[9px] rounded-full flex items-center justify-center font-body font-medium"
+              className="animate-cart-pulse absolute -top-2 -right-2.5 min-w-[18px] min-h-[18px] px-1 bg-ink text-bg text-[11px] rounded-full flex items-center justify-center font-body font-medium"
             >
               {totalItems}
             </span>
@@ -198,7 +212,7 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
         className="pointer-events-auto border-b border-line bg-bg motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.22,0.61,0.36,1)]"
         style={
           condensed && seritYuksekligi > 0 && !mobileOpen
-            ? { transform: `translateY(-${Math.round(seritYuksekligi)}px)` }
+            ? { transform: `translateY(-${Math.round(seritYuksekligi + markaYuksekligi)}px)` }
             : undefined
         }
       >
@@ -233,11 +247,11 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
 
       {/* ── Mobil tek sıra ── */}
       <div className="lg:hidden max-w-[1400px] mx-auto px-4">
-        <div className="grid grid-cols-[auto_1fr_auto] items-center h-14">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center h-14">
           {/* Dokunma hedefi 30×30'du (ölçüldü) — 44'e tamamlandı, negatif
               margin ile görsel hizalama bozulmuyor. */}
           <button
-            className="-ml-2.5 flex h-11 w-11 items-center justify-center text-ink"
+            className="-ml-2.5 flex h-11 w-11 items-center justify-center justify-self-start text-ink"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Menü"
             aria-expanded={mobileOpen}
@@ -255,7 +269,9 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
             <span className="font-heading text-[19px] font-light tracking-[0.16em] text-ink block leading-none">
               NB STEELORA
             </span>
-            <span className="text-[8px] uppercase tracking-[0.3em] text-accent-deep font-body">Fine Jewellery</span>
+            <span className="mt-[3px] block whitespace-nowrap font-body text-[8.5px] tracking-[0.2em] text-accent-deep">
+              {MARKA_ALT_SATIR_BUYUK}
+            </span>
             <LogoPending />
           </Link>
           <div className="justify-self-end">{ikonlar}</div>
@@ -263,7 +279,7 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
       </div>
 
       {/* ── Masaüstü üst sıra: ortada büyük marka — yoğuşunca kapanır ── */}
-      <div className={cn('hidden lg:block', condensed && 'lg:hidden')}>
+      <div ref={markaRef} className="hidden lg:block" inert={condensed} aria-hidden={condensed}>
         <div className="max-w-[1400px] mx-auto px-8 grid grid-cols-3 items-center h-[76px]">
           <div />
           <Link
@@ -275,8 +291,8 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
             <span className="font-heading text-[27px] font-light tracking-[0.2em] text-ink block leading-none">
               NB STEELORA
             </span>
-            <span className="text-[9px] uppercase tracking-[0.42em] text-accent-deep font-body mt-1 block">
-              Fine Jewellery
+            <span className="mt-1.5 block whitespace-nowrap font-body text-[10px] tracking-[0.34em] text-accent-deep">
+              {MARKA_ALT_SATIR_BUYUK}
             </span>
             <LogoPending />
           </Link>
@@ -320,7 +336,7 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
                 prefetch={false}
                 key={link.href}
                 href={link.href}
-                className="nav-cizgi text-[11px] uppercase tracking-[0.16em] font-body text-ink-soft hover:text-ink pb-0.5 transition-colors whitespace-nowrap"
+                className="nav-cizgi text-[13px] uppercase tracking-[0.1em] font-body text-ink hover:text-accent-deep pb-0.5 transition-colors whitespace-nowrap"
               >
                 {link.label}
               </Link>
@@ -404,7 +420,7 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
                   prefetch={false}
                   key={link.href}
                   href={link.href}
-                  className="flex min-h-[46px] items-center border-b border-line/60 font-body text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-accent-deep"
+                  className="flex min-h-[48px] items-center border-b border-line/60 font-body text-[16px] font-medium text-ink transition-colors hover:text-accent-deep"
                   onClick={() => setMobileOpen(false)}
                 >
                   {link.label}
@@ -419,7 +435,7 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
                     prefetch={false}
                     key={k.slug}
                     href={`/koleksiyon/${k.slug}`}
-                    className="flex min-h-[46px] items-center border-b border-line/60 font-heading text-[15px] text-ink transition-colors hover:text-accent-deep"
+                    className="flex min-h-[48px] items-center border-b border-line/60 font-body text-[16px] text-ink transition-colors hover:text-accent-deep"
                     onClick={() => setMobileOpen(false)}
                   >
                     {k.name}
@@ -428,21 +444,42 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
               </>
             )}
 
-            <Link
-              prefetch={false}
-              href="/blog"
-              className="mt-6 flex min-h-[46px] items-center border-b border-line/60 font-body text-[13px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-accent-deep"
-              onClick={() => setMobileOpen(false)}
+            {/* 24 Kas 2026 tasarım denetimi: menüde yardım yolu yoktu — kargo,
+                iade, takip ve iletişim yalnız sayfanın en altındaydı; müşteri
+                panelinde "nereden sorarım" en sık takılan yerdi. */}
+            <p className="eyebrow mt-6 mb-1">Yardım</p>
+            {[
+              { href: '/kargo-takip', ad: 'Sipariş Takibi' },
+              { href: '/kargo-ve-iade', ad: 'Kargo ve İade' },
+              { href: '/sss', ad: 'Sık Sorulan Sorular' },
+              { href: '/blog', ad: 'Takı Rehberi' },
+              { href: '/iletisim', ad: 'İletişim' },
+            ].map((y) => (
+              <Link
+                prefetch={false}
+                key={y.href}
+                href={y.href}
+                className="flex min-h-[48px] items-center border-b border-line/60 font-body text-[16px] text-ink transition-colors hover:text-accent-deep"
+                onClick={() => setMobileOpen(false)}
+              >
+                {y.ad}
+              </Link>
+            ))}
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-h-[48px] items-center border-b border-line/60 font-body text-[16px] text-ink transition-colors hover:text-accent-deep"
             >
-              Blog
-            </Link>
+              WhatsApp&apos;tan yazın
+            </a>
           </nav>
 
           <div className="flex shrink-0 items-center gap-6 border-t border-line px-5 py-4">
             <Link
               prefetch={false}
               href="/favorilerim"
-              className="flex min-h-[44px] items-center gap-2 font-body text-[12px] text-ink-soft transition-colors hover:text-accent-deep"
+              className="flex min-h-[44px] items-center gap-2 font-body text-[14px] text-ink transition-colors hover:text-accent-deep"
               onClick={() => setMobileOpen(false)}
             >
               <Heart size={18} strokeWidth={1.6} /> Favorilerim
@@ -450,7 +487,7 @@ export default function Navbar({ bannerText, bannerColor, coupon, ilkSiparisSeri
             <Link
               prefetch={false}
               href={isLoggedIn ? '/hesabim' : '/giris'}
-              className="flex min-h-[44px] items-center gap-2 font-body text-[12px] text-ink-soft transition-colors hover:text-accent-deep"
+              className="flex min-h-[44px] items-center gap-2 font-body text-[14px] text-ink transition-colors hover:text-accent-deep"
               onClick={() => setMobileOpen(false)}
             >
               <User size={18} strokeWidth={1.6} /> {isLoggedIn ? 'Hesabım' : 'Giriş yap'}

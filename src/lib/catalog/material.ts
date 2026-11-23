@@ -5,7 +5,9 @@
  */
 const MATERIAL_LABELS: Record<string, string> = {
   stainless_steel: '316L Paslanmaz Çelik',
-  plated_brass: 'Premium Kaplama Pirinç',
+  // 24 Kas 2026 tasarım denetimi: "Premium" düştü — kanıtlanamayan sıfat;
+  // aynı sayfanın açıklamasında "pirinç (bijuteri)" yazarken çelişiyordu.
+  plated_brass: 'Kaplama Pirinç',
   beaded: 'Boncuk & Doğal Taş',
 }
 
@@ -136,10 +138,35 @@ export function materialCare(materialType: string | null | undefined): string {
     return 'Suya, terlemeye ve parfüme dayanıklıdır. Nemli bir bezle silerek temizleyebilirsiniz.'
   }
   if (materialType === 'plated_brass') {
-    return 'Kaplama yüzeyi korumak için parfüm, deniz ve havuz suyuyla temastan kaçının; kuru bir bezle silin.'
+    return 'Kaplama yüzeyini korumak için parfüm, deniz ve havuz suyuyla temastan kaçının; kuru bir bezle silin.'
   }
   if (materialType === 'beaded') {
     return 'Boncuk ve doğal taş yüzeyler suyla uzun temasta matlaşabilir; kuru bir bezle silin, parfüm ve deniz suyundan uzak tutun.'
   }
   return 'Nemli bir bezle silerek temizleyin; parfüm ve kimyasallarla doğrudan temastan kaçının.'
+}
+
+/**
+ * Malzemenin NE OLMADIĞINI söyleyen tek cümle (24 Kas 2026 tasarım denetimi).
+ * Kaplamalı üründe "altın mı?" sorusu müşteri panelinde tekrar tekrar çıktı;
+ * yanıtı ürün sayfasında açıkça durur. Yalnız kesin bildiğimiz hâl için
+ * yazılır — çelik ve boncukta ek beyan yok (uydurma olmasın).
+ */
+export function materialNote(materialType: string | null | undefined): string | null {
+  if (materialType === 'plated_brass') {
+    return 'Bijuteri üründür; altın ya da gümüş değildir.'
+  }
+  return null
+}
+
+/** Ürün kartındaki kısa malzeme satırı (24 Kas 2026). Bilinmiyorsa hiçbir şey. */
+const MATERIAL_SHORT: Record<string, string> = {
+  stainless_steel: '316L çelik',
+  plated_brass: 'Kaplama pirinç',
+  beaded: 'Boncuk ve doğal taş',
+}
+
+export function materialShort(materialType: string | null | undefined): string | null {
+  if (!materialType) return null
+  return MATERIAL_SHORT[materialType] ?? null
 }

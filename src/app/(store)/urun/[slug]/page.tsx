@@ -2,21 +2,28 @@ import type { Metadata } from 'next'
 import { CAYMA_SURESI_GUN, URUN_TOLERANS_KISA } from '@/lib/legal/sozlesme'
 import Image from 'next/image'
 import Link from 'next/link'
-import { CalendarDays, Gift, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
+import { CalendarDays, ChevronLeft, RotateCcw, ShieldCheck, Truck } from 'lucide-react'
 import { createPublicClient } from '@/lib/supabase/public'
 import { createServiceClient } from '@/lib/supabase/service'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
-import { FREE_SHIPPING_LABEL, TESLIM_CUMLESI, tahminiTeslimEtiketi } from '@/lib/shipping'
-import { GUVEN_METNI } from '@/lib/metin/guven'
+import {
+  FREE_SHIPPING_LABEL,
+  GONDERIM_BOLGESI,
+  HAZIRLIK_LABEL,
+  TESLIM_CUMLESI,
+  tahminiTeslimEtiketi,
+} from '@/lib/shipping'
+import { odemeGuvenceSatiri } from '@/lib/metin/guven'
+import { kartOdemesiAcikMi } from '@/lib/tosla/client'
 import { saticiPuaniOku } from '@/lib/metin/saticiPuani'
 import { SaticiPuaniKarti } from '@/components/store/SaticiPuani'
 import { cleanDescription, iddiaTemizle, hasContent } from '@/lib/catalog/description'
-import { materialCare, materialLabel } from '@/lib/catalog/material'
-import { SSS_URUN } from '@/lib/legal/sss'
+import { materialCare, materialLabel, materialNote } from '@/lib/catalog/material'
+import { sssUrun } from '@/lib/legal/sss'
 import { urunOlcusu } from '@/lib/catalog/olculer'
-import { markaKategorisi } from '@/lib/catalog/categories'
+import { markaKategorisi, markaKategoriYolu } from '@/lib/catalog/categories'
 import { getSiteContent } from '@/lib/supabase/content'
 import WishlistButton from '@/components/store/WishlistButton'
 import { resolveBadge } from '@/lib/catalog/badge'
@@ -157,6 +164,11 @@ export default async function UrunDetayPage({
   }
 
   const material = materialLabel(product.material_type)
+  const malzemeNotu = materialNote(product.material_type)
+  // 24 Kas 2026 tasarım denetimi: telefonda kırıntı satırı yerine tek geri
+  // bağlantısı; ödeme sözü ve sorular ürünün kendi malzemesine göre.
+  const kategoriYolu = markaKategoriYolu(product.trendyol_category)
+  const kartAcik = kartOdemesiAcikMi()
 
   const olcu = urunOlcusu(product)
   // Faz 11D: hediye kutusu görseli panelden (Hakkımızda ile aynı tek kaynak).
@@ -196,7 +208,9 @@ export default async function UrunDetayPage({
     : plainText([...cleaned.paragraphs, ...cleaned.bullets].join(' '))
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8 lg:py-12">
+    // Telefonda üst boşluk yok: fotoğraf başlığın hemen altında başlar, fiyat ve
+    // düğme ilk ekrana sığar (24 Kas 2026 tasarım denetimi; önce y≈830–960'taydı).
+    <div className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-8 sm:pt-8 lg:py-12">
       <JsonLd
         data={productJsonLd({
           slug: product.slug,
@@ -239,18 +253,21 @@ export default async function UrunDetayPage({
         ])}
       />
 
-      {/* Görünür breadcrumb — JSON-LD BreadcrumbList ile eşlenik */}
-      <nav aria-label="breadcrumb" className="mb-6 flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] font-body text-muted">
+      {/* Görünür breadcrumb — JSON-LD BreadcrumbList ile eşlenik. Telefonda
+          basılmaz: 72 px'lik satır fotoğrafı aşağı itiyordu; yerine başlığın
+          üstündeki "‹ Kategori" bağlantısı var. */}
+      <nav aria-label="breadcrumb" className="mb-6 hidden sm:flex flex-wrap items-center gap-1.5 text-[12px] font-body text-muted">
         <Link prefetch={false} href="/" className="inline-block py-2.5 -my-2.5 hover:text-ink transition-colors">Ana Sayfa</Link>
         <span aria-hidden>/</span>
         <Link prefetch={false} href="/urunler" className="inline-block py-2.5 -my-2.5 hover:text-ink transition-colors">Ürünler</Link>
         <span aria-hidden>/</span>
-        <span className="text-ink-soft normal-case tracking-normal truncate max-w-[240px]">{product.display_title}</span>
+        <span className="text-ink truncate max-w-[320px]">{product.display_title}</span>
       </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20">
-        {/* Görsel galerisi */}
-        <div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-10 lg:gap-20">
+        {/* Görsel galerisi — geniş ekranda yazı sütunu kayarken yerinde kalır
+            (yalnız CSS); eskiden uzun sağ sütunun yanında ~580 px boşluk vardı. */}
+        <div className="lg:sticky lg:top-20 lg:self-start">
           <ProductImageGallery
             images={product.display_images || []}
             title={product.display_title}
@@ -261,11 +278,23 @@ export default async function UrunDetayPage({
         {/* Ürün bilgisi */}
         <div>
           {/* Kategori · malzeme — ince eyebrow hissiyatında (tek kanonik yer) */}
-          <p className="text-[10px] font-body text-accent-deep uppercase tracking-[0.22em]">
-            {[markaKategorisi(product.trendyol_category), material].filter(Boolean).join(' · ')}
+          <p className="font-body text-[11px] uppercase tracking-[0.16em] text-accent-deep">
+            {kategoriYolu ? (
+              <Link
+                prefetch={false}
+                href={kategoriYolu.href}
+                className="-my-3 inline-flex items-center py-3 transition-colors hover:text-ink"
+              >
+                <ChevronLeft size={14} strokeWidth={1.75} aria-hidden className="-ml-1 mr-0.5 sm:hidden" />
+                {kategoriYolu.title}
+              </Link>
+            ) : (
+              markaKategorisi(product.trendyol_category)
+            )}
+            {material && <span> · {material}</span>}
           </p>
 
-          <h1 className="mt-2.5 font-heading text-[34px] lg:text-[46px] font-medium text-ink leading-[1.1]">
+          <h1 className="mt-2 font-heading text-[26px] sm:text-[34px] lg:text-[40px] font-medium text-ink leading-[1.16] lg:leading-[1.12]">
             {product.display_title}
           </h1>
 
@@ -277,6 +306,7 @@ export default async function UrunDetayPage({
             members={variantMembers}
             currentId={product.id}
             variant={useLabels ? 'chips' : 'thumbnails'}
+            yuzuk={kategoriYolu?.title === 'Yüzük'}
           />
 
           {/* Fiyat — tarayıcıda çizilir (14 Kas 2026): sayfa önbellekten geldiği için
@@ -294,19 +324,19 @@ export default async function UrunDetayPage({
           {stock > 0 ? (
             badge && (
               <p className="mt-3">
-                <span className="bg-surface border border-accent-line text-accent-deep text-[10px] px-2.5 py-1 font-body font-medium uppercase tracking-[0.15em] rounded-[2px]">
+                <span className="bg-surface border border-accent-line text-accent-deep text-[11px] px-2.5 py-1 font-body font-medium uppercase tracking-[0.12em] rounded-[2px]">
                   {badge.label}
                 </span>
               </p>
             )
           ) : (
-            <div className="mt-4 border border-line bg-surface-muted text-ink text-[12px] font-body px-4 py-3 text-center">
+            <div className="mt-4 border border-line bg-surface-muted text-ink text-[14px] font-body px-4 py-3 text-center">
               Tükendi — Bu ürün şu anda mevcut değil
             </div>
           )}
 
           {/* Sepete ekle — yapışkan çubuk bu bloğun görünürlüğünü izler */}
-          <div className="mt-7 flex items-stretch gap-3" id={BUY_BLOCK_ID}>
+          <div className="mt-5 lg:mt-7 flex items-stretch gap-3" id={BUY_BLOCK_ID}>
             <div className="flex-1">
               <AddToCartButton
                 product={mergedProduct}
@@ -319,59 +349,81 @@ export default async function UrunDetayPage({
             <WishlistButton productId={product.id} gorunum="kutu" />
           </div>
 
-          {/* Faz 36: teslim süresi TARİH olarak, karar düğmesinin hemen altında.
-              Süre zaten yayındaydı (TESLIM_CUMLESI) ama yalnız "Kargo ve İade"
-              akordeonunun içinde, kapalı duruyordu. Hesap lib/shipping'den;
-              sayfa her istekte sunucuda üretildiği için tarih hep günceldir. */}
-          {stock > 0 && (
-            <p className="mt-3 flex items-center gap-1.5 text-[12px] font-body text-ink-soft">
-              <CalendarDays size={14} strokeWidth={1.5} className="text-accent-deep shrink-0" aria-hidden />
-              Tahmini teslim: <span className="font-medium text-ink"><TahminiTeslim ilk={tahminiTeslimEtiketi()} /></span>
-            </p>
-          )}
-
-          {/* Güven şeridi — tek sıra ikonlu kompakt satır (vaatler sabitlerden) */}
-          <ul className="mt-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-y border-line py-3 text-[10px] font-body text-ink-soft">
-            {[
-              { Icon: Truck, metin: FREE_SHIPPING_LABEL },
-              { Icon: RotateCcw, metin: GUVEN_METNI.iade },
-              { Icon: Gift, metin: GUVEN_METNI.hediye },
-              { Icon: ShieldCheck, metin: GUVEN_METNI.odeme },
-            ].map(({ Icon, metin }) => (
-              <li key={metin} className="flex items-center gap-1.5 whitespace-nowrap">
-                <Icon size={13} strokeWidth={1.5} className="text-accent-deep shrink-0" />
-                {metin}
+          {/* Söz listesi (24 Kas 2026 tasarım denetimi): teslim, iade, hediye ve
+              ödeme TEK listede, satır başına tek söz. Eskiden 10 px'lik dört
+              parçalı şerit, ayrı teslim satırı ve ayrı hediye kutusu vardı;
+              ödemenin nasıl alındığı ise ürün sayfasında hiç yazmıyordu.
+              Metinler tek kaynaklardan: lib/shipping (kargo, süre, tarih),
+              lib/legal/sozlesme (cayma süresi), lib/metin/guven (ödeme).
+              Havale indirimi burada YAZMAZ — sepette ve ödeme adımında görünür. */}
+          <ul className="mt-5 divide-y divide-line border-y border-line font-body">
+            <li className="flex items-start gap-3 py-3">
+              <Truck size={18} strokeWidth={1.5} className="mt-0.5 shrink-0 text-accent-deep" aria-hidden />
+              <div className="min-w-0">
+                <p className="text-[14px] font-medium text-ink">{FREE_SHIPPING_LABEL}</p>
+                <p className="mt-0.5 text-[13px] leading-snug text-muted">Alt sınır yok. {GONDERIM_BOLGESI}.</p>
+              </div>
+            </li>
+            {stock > 0 && (
+              <li className="flex items-start gap-3 py-3">
+                <CalendarDays size={18} strokeWidth={1.5} className="mt-0.5 shrink-0 text-accent-deep" aria-hidden />
+                <div className="min-w-0">
+                  <p className="text-[14px] font-medium text-ink">
+                    Tahmini teslim: <TahminiTeslim ilk={tahminiTeslimEtiketi()} />
+                  </p>
+                  <p className="mt-0.5 text-[13px] leading-snug text-muted">
+                    Siparişiniz {HAZIRLIK_LABEL} içinde kargoya verilir.
+                  </p>
+                </div>
               </li>
-            ))}
+            )}
+            <li className="flex items-start gap-3 py-3">
+              <RotateCcw size={18} strokeWidth={1.5} className="mt-0.5 shrink-0 text-accent-deep" aria-hidden />
+              <div className="min-w-0">
+                <p className="text-[14px] font-medium text-ink">{CAYMA_SURESI_GUN} gün içinde iade</p>
+                <p className="mt-0.5 text-[13px] leading-snug text-muted">
+                  Sebep göstermeniz gerekmez; iade kargo ücreti bize aittir.
+                </p>
+              </div>
+            </li>
+            {/* Hediye satırı — görsel panelden (Faz 11D), boşsa eski dosya */}
+            <li className="flex items-start gap-3 py-3">
+              <span className="relative mt-0.5 h-10 w-10 shrink-0 overflow-hidden rounded-[3px] bg-surface-muted">
+                <Image
+                  src={hediyeGorseli}
+                  unoptimized
+                  alt="NB Steelora hediye kutusu"
+                  fill
+                  className="object-cover"
+                  sizes="40px"
+                />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[14px] font-medium text-ink">Hediye kutusu ve hediye notu</p>
+                <p className="mt-0.5 text-[13px] leading-snug text-muted">
+                  Her siparişte ücretsiz. Notunuzu ödeme adımında yazarsınız.
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start gap-3 py-3">
+              <ShieldCheck size={18} strokeWidth={1.5} className="mt-0.5 shrink-0 text-accent-deep" aria-hidden />
+              <div className="min-w-0">
+                <p className="text-[14px] font-medium text-ink">Güvenli ödeme</p>
+                <p className="mt-0.5 text-[13px] leading-snug text-muted">{odemeGuvenceSatiri(kartAcik)}</p>
+              </div>
+            </li>
           </ul>
 
-          {/* Trendyol satıcı puanı — karar düğmesinin hemen altındaki güven
-              katmanı. Yalnız herkese açık, tarihli veri; JSON-LD'ye girmez. */}
+          {/* Trendyol satıcı puanı — karar düğmesinin altındaki güven katmanı.
+              Yalnız herkese açık, tarihli veri; JSON-LD'ye girmez. */}
           {saticiPuani && <SaticiPuaniKarti veri={saticiPuani} className="mt-5" />}
 
-          {/* Hediye satırı — görsel panelden (Faz 11D), boşsa eski dosya */}
-          <div className="mt-5 flex items-center gap-3.5 rounded-[4px] bg-surface-muted/60 p-3.5">
-            <div className="relative w-14 h-14 shrink-0 overflow-hidden rounded-[2px]">
-              <Image
-                src={hediyeGorseli}
-                unoptimized
-                alt="NB Steelora hediye kutusu"
-                fill
-                className="object-cover"
-                sizes="56px"
-              />
-            </div>
-            <p className="text-[12px] font-body text-ink-soft">
-              Her sipariş ücretsiz hediye kutusunda gönderilir.
-            </p>
-          </div>
-
-          {/* WhatsApp ghost CTA */}
+          {/* WhatsApp — telefonda yüzen düğme bu sayfada basılmıyor; kanal burası. */}
           <a
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center justify-center w-full border border-line text-ink-soft text-[11px] uppercase tracking-[0.16em] font-body font-medium px-6 py-3 rounded-[4px] hover:border-ink hover:text-ink transition-colors"
+            className="mt-4 flex min-h-[48px] w-full items-center justify-center rounded-[4px] border border-line-strong px-6 font-body text-[14px] font-medium text-ink transition-colors hover:border-ink"
           >
             Sorunuz mu var? WhatsApp&apos;tan yazın
           </a>
@@ -380,7 +432,7 @@ export default async function UrunDetayPage({
           <ProductAccordion
             sections={[
               {
-                title: 'Ürün Açıklaması',
+                title: 'Ürün açıklaması',
                 content: hasOverrideDescription ? (
                   <div dangerouslySetInnerHTML={{ __html: iddiaTemizle(product.override_description) }} />
                 ) : hasContent(cleaned) ? (
@@ -404,12 +456,13 @@ export default async function UrunDetayPage({
                 ),
               },
               {
-                title: 'Malzeme & Bakım',
+                title: 'Malzeme ve bakım',
                 content: (
                   <div className="space-y-2">
                     {material && (
                       <p>
                         <span className="text-ink font-medium">Malzeme:</span> {material}
+                        {malzemeNotu && <> — {malzemeNotu}</>}
                       </p>
                     )}
                     {/* Ölçüler (Faz 11A): YALNIZ ürünün kendi yayın metninde
@@ -432,10 +485,10 @@ export default async function UrunDetayPage({
                 ),
               },
               {
-                title: 'Kargo & İade',
+                title: 'Kargo ve iade',
                 content: (
                   <div className="space-y-2">
-                    <p>{FREE_SHIPPING_LABEL} — alt sınır yoktur.</p>
+                    <p>{FREE_SHIPPING_LABEL} — alt sınır yoktur. {GONDERIM_BOLGESI}.</p>
                     <p>
                       {TESLIM_CUMLESI}
                     </p>
@@ -452,14 +505,15 @@ export default async function UrunDetayPage({
                 ),
               },
               {
-                /* Sık sorulanlar (Faz 11A): satın almadan önce en çok sorulan
-                   dört şey burada — kararma, su/parfüm teması, hediye paketi
-                   ve iade. Cevaplar lib/legal/sss.ts'te, /sss sayfasıyla TEK
-                   KAYNAK; ikisi ayrışmasın diye burada metin tekrarı yok. */
-                title: 'Sık Sorulanlar',
+                /* Sık sorulanlar (Faz 11A): satın almadan önce en çok sorulanlar
+                   — kararma, su/parfüm teması, hediye paketi, iade ve ödeme.
+                   24 Kas 2026: sorular ÜRÜNÜN KENDİ MALZEMESİNE göre seçilir
+                   (lib/legal/sss `sssUrun`); kaplama pirinç üründe ilk soru
+                   artık çelikle başlamıyor. Metin tekrarı yok, tek kaynak. */
+                title: 'Sık sorulanlar',
                 content: (
                   <div className="space-y-4">
-                    {SSS_URUN.map((s) => (
+                    {sssUrun(product.material_type, kartAcik).map((s) => (
                       <div key={s.soru}>
                         <p className="text-ink font-medium">{s.soru}</p>
                         <p className="mt-1">{s.cevap}</p>

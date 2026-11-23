@@ -43,8 +43,8 @@ export default function Newsletter() {
         // Kupon mesajı sunucudan gelir; kampanya durumuna göre dolu ya da
         // boş olur (Faz 19) — istemci karar vermez, yalnız basar.
         const temel = data.alreadySubscribed
-          ? 'Bu adres zaten kayıtlı — teşekkürler.'
-          : 'Teşekkürler, aboneliğiniz alındı.'
+          ? 'Bu adres zaten kayıtlı; teşekkür ederiz.'
+          : 'Teşekkür ederiz, aboneliğiniz alındı.'
         setMessage(data.kuponMesaji ? `${temel} ${data.kuponMesaji}` : temel)
         setEmail('')
       } else {
@@ -59,26 +59,31 @@ export default function Newsletter() {
 
   return (
     <section className="bg-bg">
-      <div className="max-w-2xl mx-auto px-4 lg:px-8 py-20 text-center">
-        <p className="eyebrow mb-2">Bülten</p>
-        <h2 className="font-heading text-[30px] lg:text-[34px] font-medium text-ink mb-3">
-          Yeni koleksiyonlardan ilk siz haberdar olun
+      <div className="max-w-2xl mx-auto px-4 lg:px-8 py-12 lg:py-16 text-center">
+        {/* 24 Kas 2026 tasarım denetimi: "ilk siz haberdar olun / ve daha
+            fazlası" yerine ne gönderileceğini söyleyen iki cümle. */}
+        <h2 className="font-heading text-[24px] lg:text-[32px] font-medium leading-tight text-ink mb-3">
+          Yeni ürünleri ve indirimleri e-postayla haber verelim
         </h2>
-        <p className="text-[12px] font-body text-muted mb-8">
-          Özel kampanyalar, yeni ürünler ve daha fazlası için abone olun.
+        <p className="mx-auto mb-6 max-w-md font-body text-[14px] leading-relaxed text-ink-soft">
+          Yalnızca yeni ürün ve indirim duyuruları göndeririz. İstediğiniz zaman abonelikten
+          çıkabilirsiniz.
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
           <Input
             type="email"
+            aria-label="E-posta adresiniz"
             placeholder="E-posta adresiniz"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="flex-1"
+            className="flex-1 min-h-[52px] rounded-[4px]"
           />
           <Button
             type="submit"
             variant="primary"
+            size="lg"
             className="whitespace-nowrap"
             disabled={status === 'loading'}
           >
@@ -86,7 +91,7 @@ export default function Newsletter() {
           </Button>
         </form>
 
-        <label className="flex items-start gap-2 max-w-md mx-auto mt-4 text-left cursor-pointer">
+        <label className="flex items-start gap-3 max-w-md mx-auto mt-4 text-left cursor-pointer">
           <input
             type="checkbox"
             checked={consent}
@@ -97,12 +102,12 @@ export default function Newsletter() {
                 setMessage('')
               }
             }}
-            className="accent-accent mt-0.5 shrink-0"
+            className="mt-0.5 h-6 w-6 shrink-0 accent-ink"
           />
-          <span className="text-[11px] font-body text-muted leading-relaxed">
-            Kampanya ve yeni koleksiyon duyuruları için tarafıma ticari elektronik ileti
+          <span className="font-body text-[13px] leading-relaxed text-ink-soft">
+            Kampanya ve yeni ürün duyuruları için tarafıma ticari elektronik ileti
             gönderilmesine onay veriyorum.{' '}
-            <Link prefetch={false} href="/kvkk" className="inline-block py-1.5 -my-1.5 text-accent-deep underline underline-offset-2">
+            <Link prefetch={false} href="/kvkk" className="inline-block py-1.5 -my-1.5 text-ink underline decoration-accent underline-offset-2">
               Aydınlatma Metni
             </Link>
           </span>
@@ -111,7 +116,7 @@ export default function Newsletter() {
         {message && (
           <p
             role="status"
-            className={`text-[12px] font-body mt-4 ${
+            className={`text-[14px] font-body mt-4 ${
               status === 'error' ? 'text-accent-deep' : 'text-ink-soft'
             }`}
           >

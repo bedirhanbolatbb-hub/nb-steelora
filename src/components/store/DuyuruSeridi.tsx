@@ -43,7 +43,9 @@ export default function DuyuruSeridi({ metin, className }: { metin: string; clas
     return () => window.clearTimeout(t)
   }, [coklu, sira, mesajlar.length])
 
-  const yazi = cn('font-body uppercase text-accent-deep', className)
+  // 24 Kas 2026 tasarım denetimi: 10 px büyük harf + geniş harf aralığı yerine
+  // 13 px cümle düzeni — şerit bir etiket değil, okunan bir cümle.
+  const yazi = cn('font-body font-medium text-accent-deep', className)
 
   return (
     <>
@@ -51,14 +53,14 @@ export default function DuyuruSeridi({ metin, className }: { metin: string; clas
       <p className="sr-only">{metin}</p>
 
       {/* Masaüstü (ve tek mesaj): tam satır */}
-      <p aria-hidden className={cn(yazi, 'text-[10px] tracking-[0.2em]', coklu && 'hidden lg:block')}>
+      <p aria-hidden className={cn(yazi, 'text-[13px] leading-snug', coklu && 'hidden lg:block')}>
         {metin}
       </p>
 
       {coklu && (
         <>
           {/* Mobil · hareketi azalt: eski tam metin */}
-          <p aria-hidden className={cn(yazi, 'hidden text-[10px] tracking-[0.2em] max-lg:motion-reduce:block')}>
+          <p aria-hidden className={cn(yazi, 'hidden text-[13px] leading-snug max-lg:motion-reduce:block')}>
             {metin}
           </p>
 
@@ -75,9 +77,12 @@ export default function DuyuruSeridi({ metin, className }: { metin: string; clas
                 key={m}
                 className={cn(
                   yazi,
-                  'col-start-1 row-start-1 text-balance text-[10px] tracking-[0.16em]',
-                  'transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.22,0.61,0.36,1)]',
-                  i === sira ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-1 opacity-0'
+                  'col-start-1 row-start-1 text-balance text-[13px] leading-snug',
+                  // Giden mesaj ÖNCE söner (200 ms), gelen ONDAN SONRA belirir
+                  // (200 ms gecikme): eskiden iki yazı yarım saniye üst üste
+                  // biniyor, okunmaz bir leke oluşuyordu.
+                  'transition-opacity ease-out',
+                  i === sira ? 'opacity-100 delay-200 duration-300' : 'pointer-events-none opacity-0 duration-200'
                 )}
               >
                 {m}

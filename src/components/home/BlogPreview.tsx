@@ -1,65 +1,53 @@
 import Image from 'next/image'
 import { isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
+import BolumBasligi from '@/components/home/BolumBasligi'
 
 /** Blog önizleme — son 3 yazı homeData katmanından gelir (Faz 9A). */
 export default function BlogPreview({ posts }: { posts: any[] }) {
   if (posts.length === 0) return null
 
   return (
-    <section className="bg-surface-muted border-y border-line">
-      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-16 lg:py-20">
-        <div className="mb-8 flex items-end justify-between" data-reveal>
-          <div>
-            <p className="eyebrow">Günlük</p>
-            <h2 className="font-heading text-[30px] lg:text-[36px] font-medium text-ink mt-2">
-              Takı Rehberi
-            </h2>
-          </div>
-          <Link
-            prefetch={false}
-            href="/blog"
-            className="hidden sm:block text-[11px] uppercase tracking-[0.16em] font-body font-medium text-ink border-b border-accent pb-0.5 hover:text-accent-deep transition-colors"
-          >
-            Tüm Yazılar →
-          </Link>
-        </div>
+    // 24 Kas 2026 tasarım denetimi: telefonda üç tam genişlik kapak 1.227 px
+    // tutuyordu. Telefonda küçük görselli üç satır; geniş ekranda üç sütun.
+    <section className="mt-12 border-y border-line bg-surface-muted lg:mt-20">
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-10 lg:py-16">
+        <BolumBasligi baslik="Takı Rehberi" href="/blog" etiket="Tüm yazılar" />
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 lg:gap-6">
+        <ul className="divide-y divide-line sm:grid sm:grid-cols-3 sm:gap-5 sm:divide-y-0 lg:gap-6">
           {posts.map((post, i) => (
-            <Link
-              prefetch={false}
+            <li
               key={post.id}
-              href={`/blog/${post.slug}`}
-              className="group block"
               data-reveal
               style={{ '--reveal-delay': `${i * 60}ms` } as React.CSSProperties}
             >
-              <div className="relative aspect-[3/2] overflow-hidden rounded-[4px] bg-surface">
-                {post.cover_image ? (
-                  <Image
-                    src={post.cover_image}
-                    unoptimized={isRemoteMedia(post.cover_image)}
-                    alt={post.title}
-                    fill
-                    sizes="(max-width: 640px) 100vw, 33vw"
-                    className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                  />
-                ) : (
-                  <span className="absolute inset-0 flex items-center justify-center font-heading text-[30px] text-line">
-                    NB
-                  </span>
-                )}
-              </div>
-              <p className="mt-3 text-[10px] font-body uppercase tracking-[0.14em] text-muted">
-                {post.read_time} dk okuma
-              </p>
-              <h3 className="mt-1 font-heading text-[18px] font-medium text-ink leading-snug group-hover:text-accent-deep transition-colors">
-                {post.title}
-              </h3>
-            </Link>
+              <Link
+                prefetch={false}
+                href={`/blog/${post.slug}`}
+                className="group flex items-center gap-4 py-3 sm:block sm:py-0"
+              >
+                <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-[4px] bg-surface sm:aspect-[3/2] sm:h-auto sm:w-full">
+                  {post.cover_image && (
+                    <Image
+                      src={post.cover_image}
+                      unoptimized={isRemoteMedia(post.cover_image)}
+                      alt=""
+                      fill
+                      sizes="(max-width: 640px) 88px, 33vw"
+                      className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                    />
+                  )}
+                </div>
+                <div className="min-w-0 sm:mt-3">
+                  <p className="font-body text-[12px] text-muted">{post.read_time} dk okuma</p>
+                  <h3 className="mt-1 font-heading text-[17px] font-medium leading-snug text-ink transition-colors group-hover:text-accent-deep sm:text-[20px]">
+                    {post.title}
+                  </h3>
+                </div>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   )

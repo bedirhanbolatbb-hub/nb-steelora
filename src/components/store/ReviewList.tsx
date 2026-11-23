@@ -101,12 +101,17 @@ export default function ReviewList({ productId }: { productId: string }) {
 
   if (yorumYok && !showForm) {
     return (
-      <div id="yorum" className="mt-16 border-t border-line pt-8 scroll-mt-24">
+      <div id="yorum" className="mt-12 border-t border-line pt-6 scroll-mt-24">
+        <h2 className="font-heading text-[20px] font-medium text-ink">Değerlendirmeler</h2>
+        <p className="mt-2 max-w-[60ch] font-body text-[14px] leading-relaxed text-ink-soft">
+          Bu ürün için sitemizde henüz değerlendirme yok. Satın aldıysanız ilk değerlendirmeyi
+          siz yazabilirsiniz; değerlendirmeler incelendikten sonra yayınlanır.
+        </p>
         <button
           onClick={() => setShowForm(true)}
-          className="font-body text-[13px] text-accent-deep underline underline-offset-4 hover:text-ink transition-colors"
+          className="mt-2 flex min-h-[44px] items-center font-body text-[14px] font-medium text-ink underline decoration-accent underline-offset-4 transition-colors hover:text-accent-deep"
         >
-          Bu ürünü değerlendiren ilk siz olun →
+          Değerlendirme yazın
         </button>
       </div>
     )
@@ -114,9 +119,7 @@ export default function ReviewList({ productId }: { productId: string }) {
 
   return (
     <div id="yorum" className="mt-16 pt-16 border-t border-line scroll-mt-24">
-      <h2 className="font-heading text-[28px] font-light text-ink mb-8">
-        Müşteri <span className="italic text-accent-deep">Yorumları</span>
-      </h2>
+      <h2 className="font-heading text-[26px] font-medium text-ink mb-8">Değerlendirmeler</h2>
 
       {/* Summary */}
       {reviews.length > 0 && (
@@ -162,28 +165,28 @@ export default function ReviewList({ productId }: { productId: string }) {
       {!showForm && !submitted && (
         <button
           onClick={() => setShowForm(true)}
-          className="mb-8 py-3 px-8 border border-ink text-ink text-[11px] tracking-[0.15em] uppercase font-body hover:bg-ink hover:text-bg transition-colors"
+          className="mb-8 min-h-[48px] rounded-[4px] border border-ink px-8 font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-ink transition-colors hover:bg-ink hover:text-bg"
         >
-          Değerlendirme Yaz
+          Değerlendirme yazın
         </button>
       )}
 
       {submitted && (
-        <div className="mb-8 p-4 bg-surface border border-accent-line/50 text-ink text-[12px] font-body">
+        <div className="mb-8 p-4 bg-surface border border-accent-line/50 text-ink text-[14px] font-body">
           <span className="text-accent-deep mr-1">✓</span>
-          Teşekkürler! Değerlendirmen onaydan sonra yayınlanır.
+          Teşekkür ederiz. Değerlendirmeniz incelendikten sonra yayınlanır.
         </div>
       )}
 
       {showForm && (
         <div className="mb-10 p-6 bg-surface-muted/30 border border-line">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-heading text-[20px] font-light text-ink">
-              Yorum Yaz
+            <h3 className="font-heading text-[20px] font-medium text-ink">
+              Değerlendirme yazın
             </h3>
             <button
               onClick={() => setShowForm(false)}
-              className="text-muted hover:text-ink text-[12px] font-body transition-colors"
+              className="-mr-2 flex min-h-[44px] items-center px-2 text-ink-soft hover:text-ink text-[14px] font-body transition-colors"
             >
               İptal
             </button>

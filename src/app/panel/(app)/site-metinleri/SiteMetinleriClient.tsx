@@ -87,7 +87,7 @@ const GRUPLAR: Grup[] = [
       {
         anahtar: 'hero_description',
         etiket: 'Alt açıklama',
-        yardim: 'Başlığın altındaki tek cümle. Örnek: 316L medikal çelik. Kararmaz, paslanmaz, solmaz.',
+        yardim: 'Başlığın altındaki tek cümle. Örnek: 316L paslanmaz çelik ve kaplama takılar. Her ürünün malzemesi kendi sayfasında yazar.',
         cokSatir: true,
       },
       { anahtar: 'hero_cta', etiket: 'Düğme yazısı', yardim: 'Fotoğrafın üzerindeki düğme. Örnek: Koleksiyonu Keşfet' },

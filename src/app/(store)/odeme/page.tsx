@@ -6,6 +6,8 @@ import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import Image from 'next/image'
+import { ChevronDown } from 'lucide-react'
+import { WHATSAPP_DISPLAY, WHATSAPP_NUMBER, WHATSAPP_URL } from '@/lib/contact'
 import { useCart } from '@/hooks/useCart'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -255,7 +257,24 @@ export default function OdemePage() {
     // "ilk denemede uyar" kuralı hiç çalışmazdı. Doğrulama AYNEN duruyor:
     // form geçersizse ödeme başlamaz, yalnız uyarı görünür hâle gelir.
     setDenendi(true)
-    if (!isFormValid || !yontem) return
+    if (!isFormValid || !yontem) {
+      // Yapışık çubukta yalnız kısa uyarı var; müşteriyi eksik olan bölüme götür.
+      const teslimatEksik = !(
+        form.firstName &&
+        form.lastName &&
+        form.email &&
+        form.phone &&
+        form.city &&
+        form.district &&
+        form.address
+      )
+      const hedefId = teslimatEksik ? 'odeme-teslimat' : !sozlesmeOnay ? 'odeme-onay' : 'odeme-fatura'
+      const azHareket = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      document
+        .getElementById(hedefId)
+        ?.scrollIntoView({ block: 'start', behavior: azHareket ? 'auto' : 'smooth' })
+      return
+    }
     setPaymentError('')
     setLoading(true)
     // Kartta sayfa Tosla'ya geçerken düğme kilitli kalır (çift sipariş olmasın).
@@ -370,451 +389,10 @@ export default function OdemePage() {
     )
   }
 
-  return (
-    /* pb: mobilde ödeme bloğu ekranın altına SABİTLENİYOR; sayfanın son
-       satırlarının bloğun arkasında kalmaması için alt boşluk bırakılır. */
-    <div className="max-w-6xl mx-auto px-4 lg:px-8 py-12 pb-[200px] sm:pb-12">
-      <p className="eyebrow">Sipariş</p>
-      <h1 className="font-heading text-[32px] lg:text-[38px] font-semibold text-ink mt-2 mb-8">
-        Ödeme
-      </h1>
-
-      {/* Salt görsel adım çizgisi; teslimat alanları tamamlanınca Ödeme'ye geçer */}
-      <CheckoutSteps current={deliveryComplete ? 2 : 1} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-        {/* Form — sol 2/3 */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Üyelik uyarısı — sadece giriş yapılmamış kullanıcılara */}
-          {!userId && (
-            <div className="bg-accent-soft/60 border border-accent-line/30 p-5 rounded-[4px]">
-              <p className="text-[13px] font-body font-medium text-ink mb-1">
-                Üye olarak sipariş verin, daha fazlasını kazanın
-              </p>
-              <p className="text-[12px] font-body text-ink-soft mb-3">
-                Kargo takibi, sipariş geçmişi ve özel kampanyalar için üye olun.
-              </p>
-              <div className="flex items-center gap-4 text-[12px] font-body">
-                <a href="/giris" className="text-accent-deep underline underline-offset-4 hover:text-ink transition-colors">
-                  Giriş yap
-                </a>
-                <a href="/kayit" className="text-accent-deep underline underline-offset-4 hover:text-ink transition-colors">
-                  Üye ol
-                </a>
-                <span className="text-muted">veya misafir olarak devam edin ↓</span>
-              </div>
-            </div>
-          )}
-
-          <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
-            <p className="eyebrow">Adım 1</p>
-            <h2 className="font-heading text-[20px] font-semibold text-ink mt-1 mb-5">
-              Teslimat Bilgileri
-            </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              placeholder="Ad *"
-              autoComplete="given-name"
-              value={form.firstName}
-              onChange={(e) => updateField('firstName', e.target.value)}
-            />
-            <Input
-              placeholder="Soyad *"
-              autoComplete="family-name"
-              value={form.lastName}
-              onChange={(e) => updateField('lastName', e.target.value)}
-            />
-            <Input
-              placeholder="E-posta *"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              value={form.email}
-              onChange={(e) => updateField('email', e.target.value)}
-            />
-            <Input
-              placeholder="Telefon *"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={form.phone}
-              onChange={(e) => updateField('phone', e.target.value)}
-            />
-            <IlIlceSecici
-              il={form.city}
-              ilce={form.district}
-              onIl={(v) => updateField('city', v)}
-              onIlce={(v) => updateField('district', v)}
-            />
-            <div className="sm:col-span-2">
-              <Input
-                placeholder="Açık Adres *"
-                autoComplete="street-address"
-                value={form.address}
-                onChange={(e) => updateField('address', e.target.value)}
-              />
-            </div>
-            <Input
-              placeholder="Posta Kodu"
-              inputMode="numeric"
-              autoComplete="postal-code"
-              value={form.zipCode}
-              onChange={(e) => updateField('zipCode', e.target.value)}
-            />
-          </div>
-          </section>
-
-          {/* Adım 2 · Ödeme (12 Kas 2026). Kart (Tosla) açıksa iki yol, kart
-              öne gelir; kapalıysa yalnız havale/EFT (7 Kas düzeni) ve kartla
-              almak isteyene Trendyol mağazası gösterilir. */}
-          <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
-            <p className="eyebrow">Adım 2</p>
-            <h2 className="font-heading text-[20px] font-semibold text-ink mt-1 mb-3">
-              {!odemeSecenekleriHazir
-                ? 'Ödeme'
-                : ikiYolAcik
-                  ? 'Ödeme Yöntemi'
-                  : yontem === 'kart'
-                    ? 'Ödeme: Kart'
-                    : 'Ödeme: Havale / EFT'}
-            </h2>
-            {!odemeSecenekleriHazir ? (
-              <p className="text-[13px] font-body text-muted">Ödeme seçenekleri yükleniyor…</p>
-            ) : (
-              <>
-                {ikiYolAcik && (
-                  <div
-                    role="radiogroup"
-                    aria-label="Ödeme yöntemi"
-                    className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2"
-                  >
-                    {(
-                      [
-                        {
-                          deger: 'kart',
-                          baslik: 'Kart ile öde',
-                          alt: 'Kredi veya banka kartı · tek çekim',
-                        },
-                        {
-                          deger: 'havale',
-                          baslik: 'Havale / EFT',
-                          alt: havale ? `Ek %${havale.oran} indirim` : 'Banka hesabımıza ödeme',
-                        },
-                      ] as const
-                    ).map((y) => {
-                      const secili = yontem === y.deger
-                      return (
-                        <label
-                          key={y.deger}
-                          className={`flex cursor-pointer items-start gap-3 rounded-[4px] border px-4 py-3 transition-colors ${
-                            secili ? 'border-ink bg-bg' : 'border-line hover:border-accent-line'
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="odeme-yontemi"
-                            value={y.deger}
-                            checked={secili}
-                            onChange={() => {
-                              setSecilenYontem(y.deger)
-                              setPaymentError('')
-                            }}
-                            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-ink"
-                          />
-                          <span className="font-body">
-                            <span className="block text-[13px] font-medium text-ink">{y.baslik}</span>
-                            <span
-                              className={`mt-0.5 block text-[11px] ${
-                                y.deger === 'havale' && havale ? 'text-accent-deep' : 'text-muted'
-                              }`}
-                            >
-                              {y.alt}
-                            </span>
-                          </span>
-                        </label>
-                      )
-                    })}
-                  </div>
-                )}
-
-                {yontem === 'kart' && (
-                  <p className="text-[13px] font-body text-ink-soft leading-relaxed">
-                    Siparişinizi onayladığınızda Tosla&apos;nın güvenli ödeme sayfasına geçersiniz.
-                    Kart bilgilerinizi orada girer, bankanızın onayıyla (3D Secure) ödemeyi
-                    tamamlarsınız; kart numaranızın tamamı ve güvenlik kodunuz bize hiç ulaşmaz.
-                    Ödemeniz onaylanınca siparişinizi hazırlamaya başlarız.
-                  </p>
-                )}
-
-                {yontem === 'havale' && havaleBilgi && (
-                  <>
-                    <p className="text-[13px] font-body text-ink-soft leading-relaxed">
-                      Siparişinizi onayladığınızda ödeme bilgileri bu ekranda ve e-postanızda yer alır.
-                      Ödemeniz hesabımıza geçince siparişinizi onaylayıp kargoya hazırlarız.
-                    </p>
-                    <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-[4px] border border-line bg-bg px-4 py-3 text-[13px] font-body">
-                      <dt className="text-muted">Alıcı</dt>
-                      <dd className="text-ink">{havaleBilgi.alici}</dd>
-                      <dt className="text-muted">Banka</dt>
-                      <dd className="text-ink">{havaleBilgi.banka}</dd>
-                      <dt className="text-muted">IBAN</dt>
-                      <dd className="text-ink font-mono text-[12px] sm:text-[13px] break-all">{havaleBilgi.iban}</dd>
-                    </dl>
-                    {havaleIndirimi > 0 && havale && (
-                      <p className="mt-3 text-[12px] font-body text-accent-deep">
-                        Havale/EFT ile ödemede ek %{havale.oran} indirim sepetinize uygulandı.
-                      </p>
-                    )}
-                  </>
-                )}
-
-                {yontem === null && (
-                  <p className="text-[13px] font-body text-ink-soft leading-relaxed">
-                    Ödeme sistemimizi yeniliyoruz; ödeme kısa süre içinde açılıyor.
-                  </p>
-                )}
-              </>
-            )}
-            {odemeSecenekleriHazir && !kartKullanilabilir && (
-              <p className="mt-3 text-[12px] font-body text-muted">
-                Kartla ödemek isterseniz ürünlerimiz{' '}
-                <a
-                  href={TRENDYOL_MAGAZA_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent-deep underline underline-offset-2"
-                >
-                  Trendyol mağazamızda
-                </a>{' '}
-                da satışta.
-              </p>
-            )}
-          </section>
-
-          {/* Faz 11E: misafir ödemede nazik hatırlatma — akışı KESMEZ, tek
-              satır; üye girişi yapılmışsa (userId dolu) hiç basılmaz. */}
-          <UyelikTesvikSatiri baglam="odeme" gizliyseGosterme={Boolean(userId)} />
-
-          {/* Hediye Notu */}
-          <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
-            <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
-              Hediye Notu (isteğe bağlı, ücretsiz)
-            </label>
-            <textarea
-              placeholder="Sevdiklerinize özel bir not bırakın..."
-              value={giftNote}
-              onChange={(e) => setGiftNote(e.target.value)}
-              rows={3}
-              maxLength={300}
-              /* text-base: iOS, 16px'ten küçük alanlara dokunulduğunda sayfayı
-                 yakınlaştırıyor; masaüstünde tasarım ölçüsü korunuyor. */
-              className="w-full border border-line bg-white px-4 py-3 text-base sm:text-sm font-body text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors resize-none"
-            />
-            <p className="text-[10px] font-body text-muted mt-1 text-right">{giftNote.length}/300</p>
-          </section>
-
-          {/* Kurumsal fatura (Faz 28) — isteğe bağlı */}
-          <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
-            <label className="flex cursor-pointer items-start gap-3">
-              <input
-                type="checkbox"
-                checked={kurumsalFatura}
-                onChange={(e) => setKurumsalFatura(e.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0 accent-[#836835]"
-              />
-              <span className="font-body text-[13px] text-ink">
-                Kurumsal fatura istiyorum
-                <span className="mt-0.5 block text-[11px] text-muted">
-                  Şirket adına fatura için vergi dairesi ve vergi numarası gerekir.
-                  İşaretlemezseniz faturanız adınıza kesilir; kimlik numarası istemiyoruz.
-                </span>
-              </span>
-            </label>
-
-            {kurumsalFatura && (
-              <div className="mt-4 space-y-3">
-                <Input
-                  placeholder="Firma unvanı"
-                  value={fatura.firma}
-                  onChange={(e) => setFatura((f) => ({ ...f, firma: e.target.value.slice(0, 150) }))}
-                />
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Input
-                    placeholder="Vergi dairesi"
-                    value={fatura.vergiDairesi}
-                    onChange={(e) => setFatura((f) => ({ ...f, vergiDairesi: e.target.value.slice(0, 80) }))}
-                  />
-                  <Input
-                    placeholder="Vergi numarası"
-                    inputMode="numeric"
-                    value={fatura.vergiNo}
-                    onChange={(e) =>
-                      setFatura((f) => ({ ...f, vergiNo: e.target.value.replace(/\D/g, '').slice(0, 11) }))
-                    }
-                  />
-                </div>
-                <p className="font-body text-[11px] leading-relaxed text-muted">
-                  Bu bilgiler yalnız faturanızın düzenlenmesi için saklanır.
-                </p>
-              </div>
-            )}
-          </section>
-
-          {/* İndirim Kodu — sepetle AYNI bileşen, AYNI mesajlar (Faz 25) */}
-          <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
-            <KuponKutusu
-              kod={kod}
-              onKod={setKod}
-              mesaj={sunucuKodHatasi}
-              bilgiTonu={kuponBilgiMi}
-              uygulanan={
-                kuponUygulandi && secilenIndirim
-                  ? { ad: kampanyaEtiketi(secilenIndirim.ad), tutar: formatPrice(secilenIndirim.tutar) }
-                  : null
-              }
-            />
-            {/* İlk sipariş kuponu hatırlatması (Faz 19). Kod zaten
-                girilmişse tekrar önermeye gerek yok; sunucu da otomatik
-                kampanya varken bu metni hiç göndermiyor. */}
-            {ilkSiparisMetni && !kod && (
-              <p className="mt-2 font-body text-[11px] text-ink-soft">
-                <span className="text-accent-deep">✦</span> {ilkSiparisMetni}
-              </p>
-            )}
-          </section>
-
-          {esitlemeNotu && !paymentError && (
-            <div
-              role="status"
-              className="border border-line bg-surface px-4 py-3 text-[12px] font-body text-ink rounded-[4px]"
-            >
-              {esitlemeNotu}
-            </div>
-          )}
-
-          {paymentError && (
-            <div
-              role="alert"
-              className="border border-red-300 bg-red-50 px-4 py-3 text-[12px] font-body text-red-700 rounded-[4px]"
-            >
-              {paymentError}
-            </div>
-          )}
-
-          {/* Ödeme bloğu mobilde YAPIŞKAN (Faz 19).
-              Ölçüm: 3632px'lik sayfada düğme yalnız dar bir bantta görünüyordu;
-              klavye açıkken ulaşmak için 269px daha kaydırmak gerekiyordu ve
-              "eksik alanlar" uyarısı 1787px aşağıda, ekran dışında kalıyordu.
-              Blok artık ekranın altına yapışıyor: uyarı da düğme de her an
-              görünür. Çerez bandı açıkken onun üstüne oturur (--nb-consent-h),
-              ürün sayfasındaki StickyBuyBar ile aynı desen. */}
-          <div className="fixed inset-x-0 bottom-[var(--nb-consent-h,0px)] z-40 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur-sm sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
-            {/* Mesafeli satış onayı — yasal zorunluluk (Faz 19).
-                Etiketin tamamı tıklanabilir: 20px kutu tek başına dokunma
-                hedefi olarak küçük kalırdı. */}
-            <label className="mb-3 flex cursor-pointer items-start gap-2.5">
-              <input
-                type="checkbox"
-                checked={sozlesmeOnay}
-                onChange={(e) => setSozlesmeOnay(e.target.checked)}
-                className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-ink"
-              />
-              <span className="font-body text-[12px] leading-relaxed text-ink-soft">
-                <a
-                  href={SOZLESME_YOLLARI.onBilgilendirme}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent-deep underline underline-offset-2"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Ön bilgilendirme formunu
-                </a>{' '}
-                ve{' '}
-                <a
-                  href={SOZLESME_YOLLARI.mesafeliSatis}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent-deep underline underline-offset-2"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  mesafeli satış sözleşmesini
-                </a>{' '}
-                okudum, onaylıyorum.
-              </span>
-            </label>
-
-            {/* Düğme pasifken sessiz kalmıyor: neyin eksik olduğu tek satırda
-                yazılıyor (Faz 15 — BB yılı 2 haneli yazınca hiçbir uyarı yoktu). */}
-            {/* Faz 11A: uyarı müşteri hiçbir şeye dokunmadan görünüyordu —
-                sayfaya girer girmez "Eksik alanlar: ad, soyad, e-posta…"
-                yazıyordu. İlk gönderme denemesine kadar gizli; denemeden
-                sonra Faz 19 düzeni korunur (düğmeyle birlikte hep görünür,
-                ekran dışına kaymaz). */}
-            {denendi && !isFormValid && eksikAlanlar.length > 0 && (
-              <p
-                id="odeme-eksikler"
-                role="alert"
-                className="mb-2 text-center text-[12px] font-body text-red-600"
-              >
-                Eksik alanlar: {eksikAlanlar.join(', ')}
-              </p>
-            )}
-            {/* aria-disabled KULLANILMIYOR: düğme gerçekten tıklanabilir ve
-                tıklanınca eksikleri söylüyor. "Pasif" diye duyurulan ama basınca
-                çalışan düğme, ekran okuyucu kullananı hiç uyarıya ulaştırmaz.
-                Sönük görünüm hazır olmadığını gösterir, engel koymaz. */}
-            <button
-              onClick={handlePayment}
-              disabled={loading || yontem === null}
-              aria-describedby={denendi && !isFormValid ? 'odeme-eksikler' : undefined}
-              className={`w-full py-4 bg-ink text-bg font-body font-medium text-[12px] tracking-[0.15em] uppercase rounded-[4px] hover:bg-accent-deep transition-colors disabled:cursor-not-allowed ${
-                isFormValid ? '' : 'opacity-60'
-              }`}
-            >
-              {loading
-                ? yontem === 'kart'
-                  ? 'Ödeme sayfası açılıyor…'
-                  : 'İşleniyor...'
-                : !odemeSecenekleriHazir
-                  ? 'Yükleniyor…'
-                  : yontem === 'kart'
-                    ? `Kartla öde · ${formatPrice(total)}`
-                    : yontem === 'havale'
-                      ? `Siparişi onayla · ${formatPrice(total)}`
-                      : 'Ödeme kısa süre içinde açılıyor'}
-            </button>
-            {/* Mesafeli Sözleşmeler Yön.: sipariş onayının ödeme yükümlülüğü
-                doğurduğu açıkça söylenir. */}
-            {yontem && (
-              <p className="mt-2 text-center text-[11px] font-body text-muted">
-                {yontem === 'kart'
-                  ? 'Siparişi onayladığınızda ödeme yükümlülüğü doğar; ödemeyi bir sonraki adımda kartınızla yaparsınız.'
-                  : 'Siparişi onayladığınızda ödeme yükümlülüğü doğar; ödemeyi havale/EFT ile yaparsınız.'}
-              </p>
-            )}
-          </div>
-
-          <div>
-            {/* Güven satırı — yeni iddia yok: alıcı adı sitedeki satıcı bilgisiyle
-                aynı, iade vaadi /kargo-ve-iade ile aynı. */}
-            {yontem === 'havale' && (
-              <p className="mt-3 text-center text-[11px] font-body text-muted">
-                Ödemeniz yalnız satıcının hesabına ({havaleBilgi?.alici}) yapılır · 14 gün içinde iade
-              </p>
-            )}
-            {yontem === 'kart' && (
-              <p className="mt-3 text-center text-[11px] font-body text-muted">
-                Kartla ödeme Tosla&apos;nın güvenli sayfasında, 3D Secure ile · 14 gün içinde iade
-              </p>
-            )}
-            {/* 8 Kas 2026: havale/EFT kararında en çok aranan güven — aynı
-                satıcının Trendyol'daki tarihli puanı (bağlamdan; yoksa basılmaz). */}
-            <BaglamliSaticiPuaniSatiri className="mt-2.5" />
-          </div>
-        </div>
-
-        {/* Sipariş özeti — sağ 1/3 */}
-        <aside className="bg-surface border border-line rounded-[4px] p-5 sm:p-6 h-fit lg:sticky lg:top-24">
+  /** Sipariş özeti — mobilde formun üstündeki kapalı kutuda ve sayfa sonunda,
+      masaüstünde sağ sütunda AYNI içerik (tek tanım). */
+  const ozetIcerik = (
+    <>
           <p className="eyebrow">Özet</p>
           <h2 className="font-heading text-[20px] font-semibold text-ink mt-1 mb-5">
             Sipariş Özeti
@@ -901,6 +479,530 @@ export default function OdemePage() {
               <dd className="price text-[18px] text-ink">{formatPrice(total)}</dd>
             </div>
           </dl>
+    </>
+  )
+  const toplamAdet = items.reduce((t, i) => t + i.quantity, 0)
+
+  return (
+    /* Alt pay footer'da (globals.css #odeme-cubuk): yapışık çubuk sayfa sonunu örtmez. */
+    <div className="max-w-6xl mx-auto px-4 lg:px-8 py-8 sm:py-12">
+      <p className="eyebrow">Sipariş</p>
+      <h1 className="font-heading text-[32px] lg:text-[38px] font-semibold text-ink mt-2 mb-8">
+        Ödeme
+      </h1>
+
+      {/* Salt görsel adım çizgisi; teslimat alanları tamamlanınca Ödeme'ye geçer */}
+      <CheckoutSteps current={deliveryComplete ? 2 : 1} />
+
+      {/* Mobilde özet formun ÜSTÜNDE, kapalı (24 Kas 2026 tasarım denetimi):
+          özet 2.083 px aşağıdaydı; yazarken ne alındığı ve tutar görünmüyordu. */}
+      <details className="mb-6 rounded-[4px] border border-line bg-surface lg:hidden">
+        <summary className="flex min-h-[52px] cursor-pointer list-none items-center justify-between gap-3 px-5 font-body text-[14px] text-ink [&::-webkit-details-marker]:hidden">
+          <span>Sipariş özeti · {toplamAdet} ürün</span>
+          <span className="flex items-center gap-2">
+            <span className="price text-[15px]">{formatPrice(total)}</span>
+            <ChevronDown size={16} className="text-muted" aria-hidden />
+          </span>
+        </summary>
+        <div className="border-t border-line px-5 py-5">{ozetIcerik}</div>
+      </details>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+        {/* Form — sol 2/3 */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Üyelik uyarısı — sadece giriş yapılmamış kullanıcılara */}
+          {!userId && (
+            <div className="bg-accent-soft/60 border border-accent-line/30 p-5 rounded-[4px]">
+              <p className="text-[14px] font-body font-medium text-ink mb-1">
+                Üye olmadan, misafir olarak sipariş verebilirsiniz
+              </p>
+              <p className="text-[13px] font-body text-ink-soft mb-3">
+                Hesabınız varsa giriş yapabilirsiniz; sipariş geçmişiniz hesabınızda görünür.
+              </p>
+              <div className="flex items-center gap-5 text-[13px] font-body">
+                <a href="/giris" className="text-accent-deep underline underline-offset-4 hover:text-ink transition-colors">
+                  Giriş yap
+                </a>
+                <a href="/kayit" className="text-accent-deep underline underline-offset-4 hover:text-ink transition-colors">
+                  Üye ol
+                </a>
+              </div>
+            </div>
+          )}
+
+          <section id="odeme-teslimat" className="scroll-mt-24 bg-surface border border-line rounded-[4px] p-5 sm:p-6">
+            <p className="eyebrow">Adım 1</p>
+            <h2 className="font-heading text-[20px] font-semibold text-ink mt-1 mb-5">
+              Teslimat Bilgileri
+            </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              etiket="Ad"
+              required
+              autoComplete="given-name"
+              value={form.firstName}
+              onChange={(e) => updateField('firstName', e.target.value)}
+            />
+            <Input
+              etiket="Soyad"
+              required
+              autoComplete="family-name"
+              value={form.lastName}
+              onChange={(e) => updateField('lastName', e.target.value)}
+            />
+            <Input
+              etiket="E-posta"
+              required
+              ipucu="Sipariş onayı ve kargo takip bilgisi bu adrese gönderilir."
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={form.email}
+              onChange={(e) => updateField('email', e.target.value)}
+            />
+            <Input
+              etiket="Telefon"
+              required
+              placeholder="05XX XXX XX XX"
+              ipucu="Kargo teslimatında size ulaşılabilmesi için."
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={form.phone}
+              onChange={(e) => updateField('phone', e.target.value)}
+            />
+            <IlIlceSecici
+              il={form.city}
+              ilce={form.district}
+              onIl={(v) => updateField('city', v)}
+              onIlce={(v) => updateField('district', v)}
+            />
+            <div className="sm:col-span-2">
+              <Input
+                etiket="Açık adres"
+                required
+                placeholder="Mahalle, sokak, bina ve daire no"
+                autoComplete="street-address"
+                value={form.address}
+                onChange={(e) => updateField('address', e.target.value)}
+              />
+            </div>
+            <Input
+              etiket="Posta kodu (isteğe bağlı)"
+              inputMode="numeric"
+              autoComplete="postal-code"
+              value={form.zipCode}
+              onChange={(e) => updateField('zipCode', e.target.value)}
+            />
+          </div>
+          </section>
+
+          {/* Adım 2 · Ödeme (12 Kas 2026). Kart (Tosla) açıksa iki yol, kart
+              öne gelir; kapalıysa yalnız havale/EFT (7 Kas düzeni) ve kartla
+              almak isteyene Trendyol mağazası gösterilir. */}
+          <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
+            <p className="eyebrow">Adım 2</p>
+            <h2 className="font-heading text-[20px] font-semibold text-ink mt-1 mb-3">
+              {!odemeSecenekleriHazir
+                ? 'Ödeme'
+                : ikiYolAcik
+                  ? 'Ödeme Yöntemi'
+                  : yontem === 'kart'
+                    ? 'Ödeme: Kart'
+                    : 'Ödeme: Havale / EFT'}
+            </h2>
+            {!odemeSecenekleriHazir ? (
+              <p className="text-[13px] font-body text-muted">Ödeme seçenekleri yükleniyor…</p>
+            ) : (
+              <>
+                {ikiYolAcik && (
+                  <div
+                    role="radiogroup"
+                    aria-label="Ödeme yöntemi"
+                    className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2"
+                  >
+                    {(
+                      [
+                        {
+                          deger: 'kart',
+                          baslik: 'Kart ile öde',
+                          alt: 'Kredi veya banka kartı · tek çekim',
+                        },
+                        {
+                          deger: 'havale',
+                          baslik: 'Havale / EFT',
+                          alt: havale ? `Ek %${havale.oran} indirim` : 'Banka hesabımıza ödeme',
+                        },
+                      ] as const
+                    ).map((y) => {
+                      const secili = yontem === y.deger
+                      return (
+                        <label
+                          key={y.deger}
+                          className={`flex cursor-pointer items-start gap-3 rounded-[4px] border px-4 py-3 transition-colors ${
+                            secili ? 'border-ink bg-bg' : 'border-line hover:border-accent-line'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="odeme-yontemi"
+                            value={y.deger}
+                            checked={secili}
+                            onChange={() => {
+                              setSecilenYontem(y.deger)
+                              setPaymentError('')
+                            }}
+                            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-ink"
+                          />
+                          <span className="font-body">
+                            <span className="block text-[13px] font-medium text-ink">{y.baslik}</span>
+                            <span
+                              className={`mt-0.5 block text-[11px] ${
+                                y.deger === 'havale' && havale ? 'text-accent-deep' : 'text-muted'
+                              }`}
+                            >
+                              {y.alt}
+                            </span>
+                          </span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {yontem === 'kart' && (
+                  <>
+                    <p className="text-[14px] font-body text-ink-soft leading-relaxed">
+                      Siparişinizi onayladığınızda Tosla&apos;nın güvenli ödeme sayfasına geçersiniz.
+                      Kart bilgilerinizi orada girer, bankanızın onayıyla (3D Secure) ödemeyi
+                      tamamlarsınız; kart numaranızın tamamı ve güvenlik kodunuz bize hiç ulaşmaz.
+                      Ödemeniz onaylanınca siparişinizi hazırlamaya başlarız.
+                    </p>
+                    {/* 24 Kas 2026 tasarım denetimi: "Tosla kim?" ve "taksit / kapıda
+                        ödeme var mı?" soruları cevapsızdı; müşteri burada duruyordu. */}
+                    <p className="mt-2 text-[13px] font-body text-muted leading-relaxed">
+                      Tosla, Akbank iştiraki AkÖde&apos;nin ödeme hizmetidir. Ödeme tek çekimdir; taksit
+                      ve kapıda ödeme seçeneğimiz bulunmuyor.
+                    </p>
+                  </>
+                )}
+
+                {yontem === 'havale' && havaleBilgi && (
+                  <>
+                    <p className="text-[14px] font-body text-ink-soft leading-relaxed">
+                      Siparişinizi onayladığınızda ödeme bilgileri bu ekranda ve e-postanızda yer alır.
+                      Ödemeniz hesabımıza geçince siparişinizi onaylayıp kargoya hazırlarız.
+                    </p>
+                    <dl className="mt-4 grid grid-cols-1 rounded-[4px] border border-line bg-bg px-4 py-3 text-[14px] font-body sm:grid-cols-[auto_1fr] sm:gap-x-4 sm:gap-y-1.5">
+                      <dt className="text-[12px] text-muted sm:text-[14px]">Alıcı</dt>
+                      <dd className="mb-2 text-ink sm:mb-0">{havaleBilgi.alici}</dd>
+                      <dt className="text-[12px] text-muted sm:text-[14px]">Banka</dt>
+                      <dd className="mb-2 text-ink sm:mb-0">{havaleBilgi.banka}</dd>
+                      <dt className="text-[12px] text-muted sm:text-[14px]">IBAN</dt>
+                      <dd className="whitespace-nowrap font-mono text-[13px] text-ink">{havaleBilgi.iban}</dd>
+                    </dl>
+                    {/* 24 Kas 2026 tasarım denetimi: alıcı yalnız bir kişi adıydı ve
+                        mağazayla bağı yazmıyordu; müşteri "dolandırıcılık mı" diye duruyordu.
+                        Yeni iddia yok: aynı ad İletişim sayfasındaki satıcı bilgisidir. */}
+                    <p className="mt-2 text-[13px] font-body text-muted leading-relaxed">
+                      Hesap, mağazanın kayıtlı satıcısı {havaleBilgi.alici} adınadır (şahıs işletmesi).
+                      Satıcı bilgileri{' '}
+                      <a
+                        href="/iletisim"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-accent-deep underline underline-offset-2"
+                      >
+                        İletişim
+                      </a>{' '}
+                      sayfasında ve her sayfanın altında yer alır.
+                    </p>
+                    {havaleIndirimi > 0 && havale && (
+                      <p className="mt-3 text-[12px] font-body text-accent-deep">
+                        Havale/EFT ile ödemede ek %{havale.oran} indirim sepetinize uygulandı.
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {yontem === null && (
+                  <p className="text-[13px] font-body text-ink-soft leading-relaxed">
+                    Ödeme sistemimizi yeniliyoruz; ödeme kısa süre içinde açılıyor.
+                  </p>
+                )}
+              </>
+            )}
+            {odemeSecenekleriHazir && !kartKullanilabilir && (
+              <p className="mt-3 text-[12px] font-body text-muted">
+                Kartla ödemek isterseniz ürünlerimiz{' '}
+                <a
+                  href={TRENDYOL_MAGAZA_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-deep underline underline-offset-2"
+                >
+                  Trendyol mağazamızda
+                </a>{' '}
+                da satışta.
+              </p>
+            )}
+          </section>
+
+          {/* Faz 11E: misafir ödemede nazik hatırlatma — akışı KESMEZ, tek
+              satır; üye girişi yapılmışsa (userId dolu) hiç basılmaz. */}
+          <UyelikTesvikSatiri baglam="odeme" gizliyseGosterme={Boolean(userId)} />
+
+          {/* Hediye Notu */}
+          <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
+            <label className="text-[13px] text-ink-soft font-body block mb-2">
+              Hediye notu (isteğe bağlı, ücretsiz)
+            </label>
+            <textarea
+              placeholder="Sevdiklerinize özel bir not bırakın..."
+              value={giftNote}
+              onChange={(e) => setGiftNote(e.target.value)}
+              rows={3}
+              maxLength={300}
+              /* text-base: iOS, 16px'ten küçük alanlara dokunulduğunda sayfayı
+                 yakınlaştırıyor; masaüstünde tasarım ölçüsü korunuyor. */
+              className="w-full border border-line bg-white px-4 py-3 text-base sm:text-sm font-body text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors resize-none"
+            />
+            <p className="text-[10px] font-body text-muted mt-1 text-right">{giftNote.length}/300</p>
+          </section>
+
+          {/* Kurumsal fatura (Faz 28) — isteğe bağlı */}
+          <section id="odeme-fatura" className="scroll-mt-24 bg-surface border border-line rounded-[4px] p-5 sm:p-6">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={kurumsalFatura}
+                onChange={(e) => setKurumsalFatura(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-[#836835]"
+              />
+              <span className="font-body text-[13px] text-ink">
+                Kurumsal fatura istiyorum
+                <span className="mt-0.5 block text-[11px] text-muted">
+                  Şirket adına fatura için vergi dairesi ve vergi numarası gerekir.
+                  İşaretlemezseniz faturanız adınıza kesilir; kimlik numarası istemiyoruz.
+                </span>
+              </span>
+            </label>
+
+            {kurumsalFatura && (
+              <div className="mt-4 space-y-3">
+                <Input
+                  etiket="Firma unvanı"
+                  value={fatura.firma}
+                  onChange={(e) => setFatura((f) => ({ ...f, firma: e.target.value.slice(0, 150) }))}
+                />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Input
+                    etiket="Vergi dairesi"
+                    value={fatura.vergiDairesi}
+                    onChange={(e) => setFatura((f) => ({ ...f, vergiDairesi: e.target.value.slice(0, 80) }))}
+                  />
+                  <Input
+                    etiket="Vergi numarası"
+                    inputMode="numeric"
+                    value={fatura.vergiNo}
+                    onChange={(e) =>
+                      setFatura((f) => ({ ...f, vergiNo: e.target.value.replace(/\D/g, '').slice(0, 11) }))
+                    }
+                  />
+                </div>
+                <p className="font-body text-[11px] leading-relaxed text-muted">
+                  Bu bilgiler yalnız faturanızın düzenlenmesi için saklanır.
+                </p>
+              </div>
+            )}
+          </section>
+
+          {/* İndirim Kodu — sepetle AYNI bileşen, AYNI mesajlar (Faz 25) */}
+          <section className="bg-surface border border-line rounded-[4px] p-5 sm:p-6">
+            <KuponKutusu
+              kod={kod}
+              onKod={setKod}
+              mesaj={sunucuKodHatasi}
+              bilgiTonu={kuponBilgiMi}
+              uygulanan={
+                kuponUygulandi && secilenIndirim
+                  ? { ad: kampanyaEtiketi(secilenIndirim.ad), tutar: formatPrice(secilenIndirim.tutar) }
+                  : null
+              }
+            />
+            {/* İlk sipariş kuponu hatırlatması (Faz 19). Kod zaten
+                girilmişse tekrar önermeye gerek yok; sunucu da otomatik
+                kampanya varken bu metni hiç göndermiyor. */}
+            {ilkSiparisMetni && !kod && (
+              <p className="mt-2 font-body text-[11px] text-ink-soft">
+                <span className="text-accent-deep">✦</span> {ilkSiparisMetni}
+              </p>
+            )}
+          </section>
+
+          {esitlemeNotu && !paymentError && (
+            <div
+              role="status"
+              className="border border-line bg-surface px-4 py-3 text-[12px] font-body text-ink rounded-[4px]"
+            >
+              {esitlemeNotu}
+            </div>
+          )}
+
+          {paymentError && (
+            <div
+              role="alert"
+              className="border border-red-300 bg-red-50 px-4 py-3 text-[12px] font-body text-red-700 rounded-[4px]"
+            >
+              {paymentError}
+            </div>
+          )}
+
+          {/* Onay bloğu AKIŞTA, yalnız toplam + düğme yapışık (24 Kas 2026 tasarım
+              denetimi). Faz 19'da onay kutusu + düğme + yasal cümle tek parça hâlinde
+              ekranın altına yapışıktı: 167 px'lik blok 844 px'lik ekranın beşte birini
+              kapatıyor, form dar bir bantta kalıyor, sayfa sonunda alt bilgiyi
+              örtüyordu; düğme de form dolana dek soluk (basılmaz gibi) duruyordu.
+              Faz 19'un kazanımı korunur: düğme ve "eksik" uyarısı her an görünür. */}
+          <div
+            id="odeme-onay"
+            className="scroll-mt-24 rounded-[4px] border border-line bg-surface p-5 sm:border-0 sm:bg-transparent sm:p-0"
+          >
+            {/* Mesafeli satış onayı — yasal zorunluluk (Faz 19). Etiketin tamamı
+                tıklanabilir. */}
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={sozlesmeOnay}
+                onChange={(e) => setSozlesmeOnay(e.target.checked)}
+                className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer accent-ink"
+              />
+              <span className="font-body text-[14px] leading-relaxed text-ink-soft">
+                <a
+                  href={SOZLESME_YOLLARI.onBilgilendirme}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-deep underline underline-offset-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Ön bilgilendirme formunu
+                </a>{' '}
+                ve{' '}
+                <a
+                  href={SOZLESME_YOLLARI.mesafeliSatis}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-deep underline underline-offset-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  mesafeli satış sözleşmesini
+                </a>{' '}
+                okudum, onaylıyorum.
+              </span>
+            </label>
+            {/* Mesafeli Sözleşmeler Yön.: sipariş onayının ödeme yükümlülüğü
+                doğurduğu açıkça söylenir. */}
+            {yontem && (
+              <p className="mt-3 text-[12px] font-body leading-relaxed text-muted">
+                {yontem === 'kart'
+                  ? 'Siparişi onayladığınızda ödeme yükümlülüğü doğar; ödemeyi bir sonraki adımda kartınızla yaparsınız.'
+                  : 'Siparişi onayladığınızda ödeme yükümlülüğü doğar; ödemeyi havale/EFT ile yaparsınız.'}
+              </p>
+            )}
+          </div>
+
+          <div
+            id="odeme-cubuk"
+            className="fixed inset-x-0 bottom-[var(--nb-consent-h,0px)] z-40 border-t border-line bg-bg px-4 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0"
+          >
+            {/* Düğme sessiz kalmıyor: neyin eksik olduğu tek satırda yazılıyor
+                (Faz 15). İlk gönderme denemesine kadar gizli (Faz 11A). */}
+            {denendi && !isFormValid && eksikAlanlar.length > 0 && (
+              <p
+                id="odeme-eksikler"
+                role="alert"
+                className="mb-2 text-center text-[13px] font-body text-red-700"
+              >
+                Eksik: {eksikAlanlar.join(', ')}
+              </p>
+            )}
+            <div className="flex items-center gap-3">
+              <div className="shrink-0 sm:hidden">
+                <p className="font-body text-[11px] uppercase tracking-[0.12em] text-muted">Toplam</p>
+                <p className="price text-[18px] leading-tight text-ink">{formatPrice(total)}</p>
+              </div>
+              {/* aria-disabled KULLANILMIYOR: düğme gerçekten tıklanabilir ve
+                  tıklanınca eksikleri söyleyip ilgili bölüme götürür. Soluk görünüm
+                  kaldırıldı: müşteri düğmeyi bozuk sanıyordu. */}
+              <button
+                onClick={handlePayment}
+                disabled={loading || yontem === null}
+                aria-describedby={denendi && !isFormValid ? 'odeme-eksikler' : undefined}
+                className="basis min-h-[52px] flex-1 rounded-[4px] bg-ink px-4 font-body text-[13px] font-semibold uppercase tracking-[0.12em] text-bg transition-colors hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? (
+                  yontem === 'kart' ? (
+                    'Ödeme sayfası açılıyor…'
+                  ) : (
+                    'İşleniyor...'
+                  )
+                ) : !odemeSecenekleriHazir ? (
+                  'Yükleniyor…'
+                ) : yontem === 'kart' ? (
+                  <>
+                    Kartla öde<span className="hidden sm:inline"> · {formatPrice(total)}</span>
+                  </>
+                ) : yontem === 'havale' ? (
+                  <>
+                    Siparişi onayla<span className="hidden sm:inline"> · {formatPrice(total)}</span>
+                  </>
+                ) : (
+                  'Ödeme kısa süre içinde açılıyor'
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            {/* Güven satırı — yeni iddia yok: alıcı adı sitedeki satıcı bilgisiyle
+                aynı, iade vaadi /kargo-ve-iade ile aynı. */}
+            {yontem === 'havale' && (
+              <p className="mt-3 text-center text-[12px] font-body text-muted">
+                Ödemeniz yalnız satıcının hesabına ({havaleBilgi?.alici}) yapılır · 14 gün içinde iade
+              </p>
+            )}
+            {yontem === 'kart' && (
+              <p className="mt-3 text-center text-[12px] font-body text-muted">
+                Kartla ödeme Tosla&apos;nın güvenli sayfasında, 3D Secure ile · 14 gün içinde iade
+              </p>
+            )}
+            {/* 8 Kas 2026: havale/EFT kararında en çok aranan güven — aynı
+                satıcının Trendyol'daki tarihli puanı (bağlamdan; yoksa basılmaz). */}
+            <BaglamliSaticiPuaniSatiri className="mt-2.5" />
+            {/* 24 Kas 2026 tasarım denetimi: ödeme sayfasında bir insana ulaşmanın
+                yolu yoktu (yüzen WhatsApp düğmesi burada bilerek gizli). */}
+            <p className="mt-4 text-center text-[13px] font-body text-ink-soft">
+              Yardım için{' '}
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent-deep underline underline-offset-2"
+              >
+                WhatsApp&apos;tan yazabilir
+              </a>{' '}
+              ya da{' '}
+              <a href={`tel:+${WHATSAPP_NUMBER}`} className="text-accent-deep underline underline-offset-2">
+                {WHATSAPP_DISPLAY}
+              </a>{' '}
+              numarasını arayabilirsiniz.
+            </p>
+          </div>
+        </div>
+
+        {/* Sipariş özeti — sağ 1/3 */}
+        <aside className="bg-surface border border-line rounded-[4px] p-5 sm:p-6 h-fit lg:sticky lg:top-24">
+          {ozetIcerik}
         </aside>
       </div>
     </div>

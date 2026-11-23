@@ -6,7 +6,13 @@ import type { Metadata } from 'next'
 import ProductsClient from '@/components/store/ProductsClient'
 import { notFound } from 'next/navigation'
 import { buildCategoryFilter, getCategory } from '@/lib/catalog/categories'
-import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
+import {
+  LISTING_COLUMNS,
+  PER_PAGE,
+  malzemeSecenekleri,
+  malzemeyeGoreSuz,
+  paginateGroupedProducts,
+} from '@/lib/catalog/listing'
 import { fiyatKovalari, gosterilenFiyat, listeFiyatina } from '@/lib/catalog/fiyatKovalari'
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import JsonLd from '@/components/seo/JsonLd'
@@ -114,8 +120,11 @@ export default async function KategoriPage({
   }
 
   const sayfa = parseInt(sp.sayfa || '1')
-  const { data: products } = await query
-  const { cards, total } = paginateGroupedProducts((products || []) as any[], sayfa)
+  const { data: hamUrunler } = await query
+  // 24 Kas 2026: malzeme süzgeci (lib/catalog/listing) — ek sorgu yok.
+  const malzemeler = malzemeSecenekleri((hamUrunler || []) as any[])
+  const products = malzemeyeGoreSuz((hamUrunler || []) as any[], sp.malzeme)
+  const { cards, total } = paginateGroupedProducts(products as any[], sayfa)
 
   // Faz 11A: fiyat kovaları bu kategorinin gerçek fiyatlarından türer.
   const fiyatAraliklari = fiyatKovalari(
@@ -153,6 +162,7 @@ export default async function KategoriPage({
       total={total}
       categories={[kategori]}
       fiyatAraliklari={fiyatAraliklari}
+      malzemeler={malzemeler}
       currentPage={sayfa}
       perPage={PER_PAGE}
       currentParams={{
@@ -161,6 +171,7 @@ export default async function KategoriPage({
         min_fiyat: sp.min_fiyat || '',
         max_fiyat: sp.max_fiyat || '',
         tip: sp.tip || '',
+        malzeme: sp.malzeme || '',
       }}
       title={kategori}
       tanitim={icerik[`kategori_tanitim_${slug}`] || undefined}

@@ -30,27 +30,25 @@ export default function FavorilerimPage() {
   }, [items])
 
   return (
-    <div className="min-h-[420px] max-w-7xl mx-auto px-4 lg:px-8 py-16">
-      <h1 className="font-heading text-[36px] font-light text-ink mb-2">
+    <div className="min-h-[420px] max-w-[1400px] mx-auto px-4 lg:px-8 pt-6 pb-12 lg:py-14">
+      <h1 className="font-heading text-[28px] lg:text-[40px] font-medium text-ink mb-6 lg:mb-10">
         Favorilerim
       </h1>
-      <div className="w-16 h-px bg-accent mb-10" />
 
       {loading ? (
-        <p className="text-muted font-body text-[13px] text-center py-16">
-          Yükleniyor...
-        </p>
+        <p className="text-muted font-body text-[14px] py-16">Yükleniyor…</p>
       ) : items.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-muted font-body text-[13px] mb-6">
-            Henüz favoriye eklediğiniz ürün yok.
+        <div className="max-w-[52ch] py-6">
+          <p className="mb-6 font-body text-[15px] leading-relaxed text-ink-soft">
+            Henüz favori ürününüz yok. Beğendiğiniz ürünün sayfasındaki kalp simgesine
+            dokunduğunuzda ürün bu sayfada görünür.
           </p>
           <Link
             prefetch={false}
             href="/urunler"
-            className="inline-block py-3 px-8 bg-ink text-bg text-[11px] tracking-[0.15em] uppercase font-body hover:bg-accent transition-colors"
+            className="basis inline-flex min-h-[52px] items-center rounded-[4px] bg-ink px-8 font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-white hover:bg-accent-deep"
           >
-            Ürünleri Keşfet
+            Tüm Ürünler
           </Link>
         </div>
       ) : (

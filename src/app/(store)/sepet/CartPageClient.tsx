@@ -8,7 +8,7 @@ import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import Link from 'next/link'
 import { useSyncExternalStore } from 'react'
-import { Minus, Plus, Trash2 } from 'lucide-react'
+import { Minus, Plus, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
 import { FREE_SHIPPING_LABEL, SHIPPING_LINE_LABEL, shippingCostFor } from '@/lib/shipping'
@@ -19,7 +19,8 @@ import { PaylasilanSepet, SepetiPaylasDugmesi } from '@/components/store/SepetPa
 import type { PaylasilanKalem } from './page'
 import { kucukResim } from '@/lib/gorsel/kadraj'
 import { useKadrajSorgu } from '@/components/store/KadrajContext'
-import { BaglamliSaticiPuaniSatiri } from '@/components/store/SaticiPuaniContext'
+import { GeriAlSatiri, useGeriAlinabilirKaldirma } from '@/components/store/SepetGeriAl'
+import { GUVEN_METNI, odemeGuvenceKisa } from '@/lib/metin/guven'
 
 // Sepet localStorage'da tutuluyor; ilk sunucu çıktısıyla uyumsuzluk olmasın diye
 // içerik yalnızca hidrasyondan sonra basılır.
@@ -33,7 +34,8 @@ export default function CartPageClient({
   paylasilan?: PaylasilanKalem[]
 }) {
   const hydrated = useSyncExternalStore(subscribeNoop, () => true, () => false)
-  const { items, removeItem, updateQuantity, totalPrice } = useCart()
+  const { items, updateQuantity, totalPrice } = useCart()
+  const { silinen, kaldir, geriAl } = useGeriAlinabilirKaldirma()
 
   const subtotal = totalPrice()
   const shipping = shippingCostFor(subtotal)
@@ -42,7 +44,7 @@ export default function CartPageClient({
   const [kod, setKod] = useKuponKodu()
   const kadrajMi = useKadrajSorgu()
   const kampanyaIndirimi = useVitrinIndirimi()
-  const { ozet, indirim, kodHatasi, kuponBilgiMi, kuponUygulandi, ilkSiparisMetni, havale, kartAcik } =
+  const { ozet, indirim, kodHatasi, kuponBilgiMi, kuponUygulandi, ilkSiparisMetni, havale, kartAcik, yuklendi } =
     useOtomatikIndirim(
       items.map((i) => ({ productId: i.product.id, adet: Number(i.quantity) || 1 })),
       kod || null
@@ -61,11 +63,10 @@ export default function CartPageClient({
     // Denetim (Faz 11D): sepet durumu istemcide (localStorage) şekillendiği
     // için boş-durum bloğu hidrasyon SONRASI büyüyüp footer'ı itiyordu
     // (CLS 0.058). Asgari yükseklik yeri baştan tutar.
-    <div className="min-h-[480px] max-w-[1400px] mx-auto px-4 lg:px-8 py-14 lg:py-20">
-      <header className="mb-10 border-b border-line pb-6">
-        <p className="eyebrow">Sipariş</p>
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-          <h1 className="font-heading text-[38px] lg:text-[48px] font-medium text-ink">Sepetiniz</h1>
+    <div className="min-h-[480px] max-w-[1400px] mx-auto px-4 lg:px-8 py-8 lg:py-16">
+      <header className="mb-6 border-b border-line pb-5 lg:mb-10">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h1 className="font-heading text-[30px] lg:text-[44px] font-medium text-ink">Sepetiniz</h1>
           {hydrated && <SepetiPaylasDugmesi />}
         </div>
       </header>
@@ -78,19 +79,21 @@ export default function CartPageClient({
         <UyelikTesvikSatiri baglam="sepet" />
       </div>
 
+      <GeriAlSatiri silinen={silinen} onGeriAl={geriAl} className="mb-5" />
+
       {!hydrated ? (
         <p className="text-muted font-body text-sm">Sepet yükleniyor…</p>
       ) : !hasItems ? (
         <div>
-          <p className="text-muted font-body text-sm mb-6">
-            {BOS_DURUM.sepet.baslik}. {BOS_DURUM.sepet.metin}
+          <p className="mb-6 max-w-[52ch] font-body text-[15px] leading-relaxed text-ink-soft">
+            {BOS_DURUM.sepet.baslik}. {BOS_DURUM.sepet.metin} {FREE_SHIPPING_LABEL}.
           </p>
           <Link
             prefetch={false}
             href="/urunler"
-            className="inline-block bg-ink text-bg text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
+            className="inline-flex min-h-[52px] items-center rounded-[4px] bg-ink px-8 font-body text-[13px] font-semibold uppercase tracking-[0.12em] text-white transition-colors hover:bg-accent-deep"
           >
-            Alışverişe Başla
+            Tüm Ürünler
           </Link>
         </div>
       ) : (
@@ -122,7 +125,7 @@ export default function CartPageClient({
                   >
                     {product.display_title}
                   </Link>
-                  <p className="price text-[13px] text-ink mt-1.5">
+                  <p className="price text-[14px] text-ink mt-1.5">
                     {(() => {
                       const f = vitrinFiyati(
                         (product as any).override_price ?? product.display_price,
@@ -141,36 +144,39 @@ export default function CartPageClient({
                     })()}
                   </p>
 
-                  <div className="flex items-center gap-3 mt-3">
-                    <div className="flex items-center border border-line">
+                  {/* 24 Kas 2026: adet 26 → 44 px, kaldır 16 → 44 px; kaldırma geri alınabilir. */}
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="flex items-center rounded-[4px] border border-line-strong">
                       <button
-                        onClick={() => updateQuantity(product.id, quantity - 1)}
-                        className="p-1.5 text-ink-soft hover:text-accent-deep transition-colors"
+                        onClick={() =>
+                          quantity <= 1 ? kaldir(product, quantity) : updateQuantity(product.id, quantity - 1)
+                        }
+                        className="flex h-11 w-11 items-center justify-center text-ink transition-colors hover:text-accent-deep"
                         aria-label="Azalt"
                       >
-                        <Minus size={14} />
+                        <Minus size={15} />
                       </button>
-                      <span className="px-3 text-[12px] font-body">{quantity}</span>
+                      <span className="w-7 text-center font-body text-[14px] tabular-nums" aria-live="polite">{quantity}</span>
                       <button
                         onClick={() => updateQuantity(product.id, quantity + 1)}
-                        className="p-1.5 text-ink-soft hover:text-accent-deep transition-colors"
+                        className="flex h-11 w-11 items-center justify-center text-ink transition-colors hover:text-accent-deep"
                         aria-label="Artır"
                       >
-                        <Plus size={14} />
+                        <Plus size={15} />
                       </button>
                     </div>
 
                     <button
-                      onClick={() => removeItem(product.id)}
-                      className="text-muted hover:text-red-500 transition-colors"
-                      aria-label="Kaldır"
+                      onClick={() => kaldir(product, quantity)}
+                      className="flex h-11 w-11 items-center justify-center text-muted transition-colors hover:text-ink"
+                      aria-label={`${product.display_title} — sepetten kaldır`}
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={18} strokeWidth={1.5} />
                     </button>
                   </div>
                 </div>
 
-                <p className="text-[14px] font-body text-ink shrink-0">
+                <p className="price shrink-0 text-[15px] text-ink">
                   {formatPrice(
                     vitrinFiyati(
                       (product as any).override_price ?? product.display_price,
@@ -185,15 +191,15 @@ export default function CartPageClient({
           {/* Özet */}
           <aside className="w-full lg:w-80 shrink-0">
             <div className="bg-surface border border-line rounded-[4px] p-6 space-y-3 lg:sticky lg:top-28">
-              <div className="flex justify-between text-[13px] font-body text-ink-soft">
-                <span>Ara Toplam</span>
+              <div className="flex justify-between text-[14px] font-body text-ink-soft">
+                <span>Ara toplam</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
-              <div className="flex justify-between text-[13px] font-body text-ink-soft">
+              <div className="flex justify-between text-[14px] font-body text-ink-soft">
                 <span>Kargo</span>
                 <span>{shipping === 0 ? SHIPPING_LINE_LABEL : formatPrice(shipping)}</span>
               </div>
-              <p className="text-[11px] font-body text-ink">
+              <p className="text-[12px] font-body text-ink-soft">
                 <span className="text-accent-deep">✓</span> {FREE_SHIPPING_LABEL}
               </p>
 
@@ -252,13 +258,13 @@ export default function CartPageClient({
                     : `${ozet.yaklasanlar[0].ad} kampanyasından yararlanın`}
                 </p>
               )}
-              <div className="flex justify-between text-[15px] font-body text-ink font-medium pt-3 border-t border-line">
-                <span>Toplam</span>
-                <span>{formatPrice(sepetToplami)}</span>
+              <div className="flex items-baseline justify-between border-t border-line pt-3 font-body text-ink">
+                <span className="text-[15px] font-medium">Toplam</span>
+                <span className="price text-[20px]">{formatPrice(sepetToplami)}</span>
               </div>
               {(indirim || havaleDusulen > 0) && (
-                <p className="text-[11px] font-body text-accent-deep">
-                  {formatPrice(indirimTutari + havaleDusulen)} kazandınız
+                <p className="text-[12px] font-body text-ink-soft">
+                  Toplam indiriminiz: {formatPrice(indirimTutari + havaleDusulen)}
                   {ozet.tavanUygulandi && (
                     <span className="text-muted"> · indirim tavanı uygulandı</span>
                   )}
@@ -267,28 +273,41 @@ export default function CartPageClient({
               {/* Kart açıkken havale indirimi toplamdan düşmez; müşteri
                   ödeme adımında seçebileceğini burada görür. */}
               {kartAcik && havale && havaleTutari > 0 && (
-                <p className="text-[11px] font-body text-ink-soft">
+                <p className="text-[13px] font-body text-ink-soft">
                   Havale/EFT ile öderseniz ek %{havale.oran} indirimle{' '}
-                  <span className="text-accent-deep">{formatPrice(Math.max(0, sepetToplami - havaleTutari))}</span>
+                  <span className="font-medium text-ink">{formatPrice(Math.max(0, sepetToplami - havaleTutari))}</span>
                 </p>
               )}
 
               <Link
                 prefetch={false}
                 href="/odeme"
-                className="mt-4 block w-full text-center py-4 bg-ink text-bg text-[11px] uppercase tracking-[0.18em] font-body font-medium rounded-[4px] hover:bg-accent-deep transition-colors"
+                className="basis mt-4 flex min-h-[52px] w-full items-center justify-center rounded-[4px] bg-ink text-center font-body text-[13px] font-semibold uppercase tracking-[0.12em] text-white hover:bg-accent-deep"
               >
                 Ödemeye Geç
               </Link>
               <Link
                 prefetch={false}
                 href="/urunler"
-                className="block text-center text-[11px] font-body text-muted hover:text-accent-deep transition-colors"
+                className="flex min-h-[44px] items-center justify-center text-center font-body text-[14px] text-ink-soft underline underline-offset-4 transition-colors hover:text-ink"
               >
                 Alışverişe devam et
               </Link>
-              {/* 8 Kas 2026: Trendyol satıcı puanı (bağlamdan; yoksa basılmaz). */}
-              <BaglamliSaticiPuaniSatiri className="pt-2" />
+              {/* 24 Kas 2026: ödemenin nasıl alındığı ödeme adımından ÖNCE de yazar
+                  (lib/metin/guven; kart durumu sunucudan). Eskiden burada
+                  Trendyol puanı vardı. */}
+              <ul className="space-y-1.5 border-t border-line pt-3 font-body text-[12px] text-ink-soft">
+                {yuklendi && (
+                  <li className="flex items-center gap-1.5">
+                    <ShieldCheck size={14} strokeWidth={1.5} className="shrink-0 text-accent-deep" aria-hidden />
+                    {odemeGuvenceKisa(kartAcik)}
+                  </li>
+                )}
+                <li className="flex items-center gap-1.5">
+                  <RotateCcw size={14} strokeWidth={1.5} className="shrink-0 text-accent-deep" aria-hidden />
+                  {GUVEN_METNI.iade} · {GUVEN_METNI.hediye}
+                </li>
+              </ul>
             </div>
           </aside>
         </div>

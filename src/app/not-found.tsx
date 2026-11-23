@@ -1,4 +1,5 @@
 import NotFoundContent from '@/components/store/NotFoundContent'
+import StoreLayout from './(store)/layout'
 
 /**
  * Faz 27: CSP nonce'u ancak dinamik üretilen sayfalara işlenebiliyor.
@@ -12,6 +13,15 @@ export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Sayfa bulunamadı' }
 
 // Hiçbir rotaya uymayan adresler için kök 404.
+//
+// 24 Kas 2026 tasarım denetimi: bu sayfa mağaza kabuğunun DIŞINDA kalıyordu —
+// başlık, menü, arama ve alt bilgi yoktu; yanlış adrese düşen ziyaretçinin
+// elinde yalnız ortadaki düğmeler kalıyordu. Kabuk (app/(store)/layout)
+// burada da kullanılır; verisi süreç içi önbellekten gelir.
 export default function NotFound() {
-  return <NotFoundContent />
+  return (
+    <StoreLayout>
+      <NotFoundContent />
+    </StoreLayout>
+  )
 }

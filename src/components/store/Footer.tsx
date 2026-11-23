@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { MARKA_ALT_SATIR_BUYUK } from '@/lib/metin/marka'
 import { CATEGORIES } from '@/lib/catalog/categories'
 import type { CollectionCard } from '@/lib/collections'
 import { WHATSAPP_URL } from '@/lib/contact'
@@ -10,18 +11,24 @@ import { kunyeSatirlari } from '@/lib/layoutData'
 // Menüyle birebir aynı liste — tek kaynak src/lib/catalog/categories.ts
 const categories = CATEGORIES.map((c) => ({ href: `/kategori/${c.slug}`, label: c.title }))
 
+// 24 Kas 2026 tasarım denetimi: "Yardım" başlığı altında on bir bağlantı
+// vardı; yardım ile yasal metinler karışıktı. İki ayrı grup.
 const helpLinks = [
-  { href: '/sss', label: 'Sık Sorulan Sorular' },
+  { href: '/kargo-takip', label: 'Sipariş Takibi' },
   { href: '/kargo-ve-iade', label: 'Kargo, İade ve Değişim' },
-  { href: '/kargo-takip', label: 'Kargo Takip' },
+  { href: '/sss', label: 'Sık Sorulan Sorular' },
+  { href: '/blog', label: 'Takı Rehberi' },
   { href: '/hakkimizda', label: 'Hakkımızda' },
   { href: '/iletisim', label: 'İletişim' },
-  { href: '/kvkk', label: 'KVKK Aydınlatma' },
-  { href: '/gizlilik-politikasi', label: 'Gizlilik Politikası' },
-  { href: '/cerez-politikasi', label: 'Çerez Politikası' },
+]
+
+const legalLinks = [
   { href: '/mesafeli-satis-sozlesmesi', label: 'Mesafeli Satış Sözleşmesi' },
   { href: '/on-bilgilendirme-formu', label: 'Ön Bilgilendirme Formu' },
   { href: '/cayma-formu', label: 'Örnek Cayma Formu' },
+  { href: '/kvkk', label: 'KVKK Aydınlatma' },
+  { href: '/gizlilik-politikasi', label: 'Gizlilik Politikası' },
+  { href: '/cerez-politikasi', label: 'Çerez Politikası' },
 ]
 
 const accountLinks = {
@@ -94,35 +101,118 @@ export default function Footer({
     <footer className="bg-ink-deep text-line">
       {/* Ortada marka bloğu — Sessiz Atölye kapanışı */}
       <div className="border-b border-line/10">
-        <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-12 text-center">
+        <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-10 lg:py-12 text-center">
           <Link prefetch={false} href="/" className="inline-block">
             <span className="font-heading text-[26px] font-light tracking-[0.2em] text-bg block">
               NB STEELORA
             </span>
-            <span className="text-[9px] uppercase tracking-[0.4em] text-accent font-body mt-1 block">
-              Fine Jewellery
+            <span className="mt-1.5 block whitespace-nowrap font-body text-[10px] tracking-[0.34em] text-accent">
+              {MARKA_ALT_SATIR_BUYUK}
             </span>
           </Link>
-          <p className="text-[12px] leading-relaxed text-line/60 font-body mt-4 max-w-md mx-auto">
+          <p className="text-[14px] leading-relaxed text-line/75 font-body mt-4 max-w-md mx-auto">
             316L çelik ve kaplama takı markası. Her ürünün malzemesi kendi sayfasında yazar.
           </p>
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-14">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-10">
-          {/* Kategoriler */}
-          <div>
-            <h4 className="text-[11px] uppercase tracking-[0.2em] text-accent font-body mb-5">
-              Kategoriler
+      {/* 24 Kas 2026 tasarım denetimi: alt bilgi telefonda ~1.300 px'ti; bağlantılar
+          12 px yazı ve 30 px satırdı. Telefonda önce iletişim, sonra üç açılır
+          grup (yerel <details>, betik yok); geniş ekranda dört sütun. Yazı 14 px,
+          satırlar 44 px. */}
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-10 lg:py-14">
+        <div className="md:grid md:grid-cols-4 md:gap-10">
+          {/* İletişim — telefonda en üstte */}
+          <div className="md:order-last">
+            <h4 className="mb-3 font-body text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
+              İletişim
             </h4>
-            <ul className="space-y-3">
-              {categories.map((cat) => (
+            <ul className="font-body text-[14px] text-line/80">
+              <li>
+                <a
+                  href={WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-[44px] items-center gap-2 text-bg transition-colors hover:text-accent"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+                  WhatsApp&apos;tan yazın
+                </a>
+              </li>
+              <li>
+                {/* Telefon her sayfanın altında ve TIKLANABİLİR olmalı: Merchant
+                    Center "yanlış beyan" denetiminde işletmeye ulaşmanın en az
+                    iki yolu her sayfada aranıyor (5 Eyl 2026). */}
+                <a href="tel:+905051984646" className="inline-flex min-h-[44px] items-center transition-colors hover:text-accent">
+                  0505 198 46 46
+                </a>
+              </li>
+              <li>
+                <a href="mailto:info@nbsteelora.com" className="inline-flex min-h-[44px] items-center transition-colors hover:text-accent">
+                  info@nbsteelora.com
+                </a>
+              </li>
+              <li className="py-2 leading-relaxed">{(content.veri_sorumlusu_adres || '').trim() || 'Mezitli / Mersin / Türkiye'}</li>
+              <li className="py-1 text-line/60">Pazartesi–Cuma, 09.00–18.00</li>
+            </ul>
+          </div>
+
+          {/* Telefon: açılır gruplar */}
+          <div className="mt-6 border-t border-line/10 md:hidden">
+            {[
+              {
+                baslik: 'Alışveriş',
+                baglantilar: [
+                  { href: '/urunler', label: 'Tüm Ürünler' },
+                  ...categories,
+                  ...collections.map((k) => ({ href: `/koleksiyon/${k.slug}`, label: k.name })),
+                ],
+                hesap: false,
+              },
+              { baslik: 'Yardım', baglantilar: helpLinks, hesap: true },
+              { baslik: 'Yasal metinler', baglantilar: legalLinks, hesap: false },
+            ].map((grup) => (
+              <details key={grup.baslik} className="group border-b border-line/10">
+                <summary className="flex min-h-[52px] cursor-pointer list-none items-center justify-between font-body text-[15px] font-medium text-bg [&::-webkit-details-marker]:hidden">
+                  {grup.baslik}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-line/60 transition-transform duration-200 group-open:rotate-180"><path d="m6 9 6 6 6-6" /></svg>
+                </summary>
+                <ul className="pb-3">
+                  {grup.baglantilar.map((b) => (
+                    <li key={b.href}>
+                      <Link
+                        href={b.href}
+                        prefetch={false}
+                        className="flex min-h-[44px] items-center font-body text-[14px] text-line/80 transition-colors hover:text-accent"
+                      >
+                        {b.label}
+                      </Link>
+                    </li>
+                  ))}
+                  {grup.hesap && (
+                    <HesapBaglantilari
+                      girisli={accountLinks.loggedIn}
+                      girissiz={accountLinks.loggedOut}
+                      className="flex min-h-[44px] items-center font-body text-[14px] text-line/80 transition-colors hover:text-accent"
+                    />
+                  )}
+                </ul>
+              </details>
+            ))}
+          </div>
+
+          {/* Geniş ekran: sütunlar */}
+          <div className="hidden md:block">
+            <h4 className="mb-4 font-body text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
+              Alışveriş
+            </h4>
+            <ul className="space-y-2.5">
+              {[{ href: '/urunler', label: 'Tüm Ürünler' }, ...categories].map((cat) => (
                 <li key={cat.href}>
                   <Link
                     href={cat.href}
                     prefetch={false}
-                    className="inline-block py-1.5 -my-1.5 text-[12px] font-body text-line/70 hover:text-accent transition-colors"
+                    className="font-body text-[14px] text-line/80 transition-colors hover:text-accent"
                   >
                     {cat.label}
                   </Link>
@@ -133,16 +223,16 @@ export default function Footer({
             {/* Koleksiyonlar — adlar admin verisinden gelir */}
             {collections.length > 0 && (
               <>
-                <h4 className="text-[11px] uppercase tracking-[0.2em] text-accent font-body mt-8 mb-5">
+                <h4 className="mb-4 mt-8 font-body text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
                   Koleksiyonlar
                 </h4>
-                <ul className="space-y-3">
+                <ul className="space-y-2.5">
                   {collections.map((collection) => (
                     <li key={collection.slug}>
                       <Link
                         href={`/koleksiyon/${collection.slug}`}
                         prefetch={false}
-                        className="inline-block py-1.5 -my-1.5 text-[12px] font-body text-line/70 hover:text-accent transition-colors"
+                        className="font-body text-[14px] text-line/80 transition-colors hover:text-accent"
                       >
                         {collection.name}
                       </Link>
@@ -153,18 +243,17 @@ export default function Footer({
             )}
           </div>
 
-          {/* Yardım */}
-          <div>
-            <h4 className="text-[11px] uppercase tracking-[0.2em] text-accent font-body mb-5">
+          <div className="hidden md:block">
+            <h4 className="mb-4 font-body text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
               Yardım
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               {helpLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
                     prefetch={false}
-                    className="inline-block py-1.5 -my-1.5 text-[12px] font-body text-line/70 hover:text-accent transition-colors"
+                    className="font-body text-[14px] text-line/80 transition-colors hover:text-accent"
                   >
                     {link.label}
                   </Link>
@@ -173,43 +262,27 @@ export default function Footer({
               <HesapBaglantilari
                 girisli={accountLinks.loggedIn}
                 girissiz={accountLinks.loggedOut}
-                className="inline-block py-1.5 -my-1.5 text-[12px] font-body text-line/70 hover:text-accent transition-colors"
+                className="font-body text-[14px] text-line/80 transition-colors hover:text-accent"
               />
             </ul>
           </div>
 
-          {/* İletişim */}
-          <div>
-            <h4 className="text-[11px] uppercase tracking-[0.2em] text-accent font-body mb-5">
-              İletişim
+          <div className="hidden md:block">
+            <h4 className="mb-4 font-body text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
+              Yasal metinler
             </h4>
-            <ul className="space-y-3 text-[12px] font-body text-line/70">
-              <li>
-                <a href="mailto:info@nbsteelora.com" className="inline-block py-2.5 -my-2.5 hover:text-accent transition-colors">
-                  info@nbsteelora.com
-                </a>
-              </li>
-              <li>
-                {/* Telefon her sayfanın altında ve TIKLANABİLİR olmalı: Merchant
-                    Center "yanlış beyan" denetiminde işletmeye ulaşmanın en az
-                    iki yolu her sayfada aranıyor (5 Eyl 2026). */}
-                <a href="tel:+905051984646" className="inline-block py-2.5 -my-2.5 hover:text-accent transition-colors">
-                  0505 198 46 46
-                </a>
-              </li>
-              <li>{(content.veri_sorumlusu_adres || '').trim() || 'Mezitli / Mersin / Türkiye'}</li>
-              <li className="text-line/50">Pazartesi — Cuma: 09:00 — 18:00</li>
-              <li>
-                <a
-                  href={WHATSAPP_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 py-2.5 -my-2.5 hover:text-accent transition-colors"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                  WhatsApp ile Yazın
-                </a>
-              </li>
+            <ul className="space-y-2.5">
+              {legalLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    prefetch={false}
+                    className="font-body text-[14px] text-line/80 transition-colors hover:text-accent"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
@@ -221,7 +294,7 @@ export default function Footer({
           {/* Kart logoları — Tosla sanal POS şartı (13 Kas 2026); ayrıntı bileşende. */}
           <OdemeLogolari />
           <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
-          <p className="text-[10px] font-body text-line/50 tracking-wider">
+          <p className="text-center font-body text-[12px] leading-relaxed text-line/65 sm:text-left">
             {/* Satıcı künyesi — E-Ticaret Kanunu gereği; boş alanlar basılmaz. */}
             {kunye.length > 0 && (
               <>
@@ -263,14 +336,14 @@ export default function Footer({
           {/* Sosyal ikonlar site_content'ten beslenir; yalnız DOLU adresler
               basılır (panel → Site Metinleri). */}
           {sosyal.length > 0 && (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {sosyal.map((s) => (
                 <a
                   key={s.label}
                   href={s.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="-m-3 flex h-11 w-11 items-center justify-center text-line/50 hover:text-accent transition-colors"
+                  className="-m-2 flex h-11 w-11 items-center justify-center text-line/75 hover:text-accent transition-colors"
                   aria-label={s.label}
                 >
                   {s.icon}

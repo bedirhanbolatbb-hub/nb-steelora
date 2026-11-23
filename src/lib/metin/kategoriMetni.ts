@@ -26,7 +26,7 @@ const KATEGORI_METINLERI: Record<string, string[]> = {
     '316L paslanmaz çelik ve bijuteri seçenekleriyle kolyeler.',
     'İnce zincirlerle katmanlı kullanıma uygun kolye seçkisi.',
     'Belirgin uçlu kolyeler, sade bir kombini toparlamak için.',
-    'Gümüş ve altın kaplama seçenekleriyle çelik kolyeler.',
+    'Gümüş ve altın rengi seçenekleriyle çelik kolyeler.',
     'Tek parça takmayı sevenler için sade zincir kolyeler.',
     'Özel günlerde de taşınabilen, sade formlu kolyeler.',
   ],
@@ -35,7 +35,7 @@ const KATEGORI_METINLERI: Record<string, string[]> = {
     'Sade formlardan belirgin tasarımlara küpeler.',
     'Çelik ve bijuteri seçenekleriyle küpe modelleri.',
     '316L paslanmaz çelik seçenekleriyle günlük kullanıma uygun küpeler.',
-    'Altın ve gümüş kaplama seçenekleriyle küpe modelleri.',
+    'Altın ve gümüş rengi seçenekleriyle küpe modelleri.',
     'Sade formlarıyla günlük kullanıma uygun küpe modelleri.',
     'Tek başına ya da diğer küpelerle birlikte taşınabilen modeller.',
     'Sade halkalardan detaylı sallantılara uzanan bir küpe seçkisi.',
@@ -49,7 +49,7 @@ const KATEGORI_METINLERI: Record<string, string[]> = {
     '316L paslanmaz çelik seçenekleriyle bileklikler, günlük kullanıma uygun.',
     'İnce zincirlerden belirgin charm detaylarına bileklik modelleri.',
     'Tek başına sade, birlikte taşındığında belirgin bileklikler.',
-    'Altın ve gümüş kaplama seçenekleriyle zincir bileklikler.',
+    'Altın ve gümüş rengi seçenekleriyle zincir bileklikler.',
     'Boncuk ve charm detaylı bileklikler, kombinlemeye uygun.',
     'Gündelik kullanım ve özel günler için bileklik seçkisi.',
   ],
@@ -69,11 +69,11 @@ const KATEGORI_METINLERI: Record<string, string[]> = {
     'Çelik gövdeli, günlük kullanıma uygun piercing seçkisi.',
     '316L paslanmaz çelik gövdeleriyle günlük kullanıma uygun piercingler.',
     'Çelik gövdeli modeller, hijyen mührüyle gönderilir.',
-    'Titanyum ve çelik gövde seçenekleriyle piercing modelleri.',
+    'Çelik gövdeli, sade formlu piercing modelleri.',
     'Tek başına ya da birlikte taşınabilen piercing seçkisi.',
     'Günlük kullanım ve özel günler için çelik piercingler.',
     'İnce formlardan belirgin modellere uzanan piercing seçkisi.',
-    'Altın ve gümüş kaplama seçenekleriyle çelik gövdeli piercingler.',
+    'Altın ve gümüş rengi seçenekleriyle çelik gövdeli piercingler.',
     'Kombinlemeye uygun, sade çelik piercing modelleri.',
   ],
   erkek: [
@@ -141,14 +141,14 @@ export function kategoriTanitimi(slug: string, baslik: string, adet?: number): s
   const tekil = baslik.toLocaleLowerCase('tr-TR')
   const konum = cogulBulunma(baslik).toLocaleLowerCase('tr-TR')
   return [
-    `316L paslanmaz çelik ve premium kaplama seçenekleriyle ${tekil} seçkisi.`,
+    `316L paslanmaz çelik ve kaplama pirinç seçenekleriyle ${tekil} seçkisi.`,
     `Günlük kullanıma uygun ${tekil} modelleri.`,
     `Sade formlardan belirgin tasarımlara, ${konum} bir seçki.`,
     `Tek başına ya da birlikte taşınabilen ${tekil} modelleri.`,
     `Çelik ve bijuteri seçenekleriyle ${tekil} seçkisi.`,
     `Gündelik kullanım ve özel günler için ${tekil} modelleri.`,
     `Kombinlemeye uygun, sade formlu ${tekil} seçkisi.`,
-    `Altın ve gümüş kaplama seçenekleriyle ${tekil} modelleri.`,
+    `Altın ve gümüş rengi seçenekleriyle ${tekil} modelleri.`,
     ...(adet ? [`${adet} farklı model arasından seçin.`] : []),
   ]
 }

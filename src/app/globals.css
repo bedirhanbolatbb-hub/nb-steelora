@@ -18,6 +18,9 @@
 
   /* Çizgi ve vurgu */
   --color-line: #E7E1D8;
+  /* 24 Kas 2026 tasarım denetimi: form alanı çizgisi. --line beyazda 1,3:1
+     veriyordu; WCAG 1.4.11 arayüz bileşeni sınırı 3:1. Bu ton beyazda 3,3:1. */
+  --color-line-strong: #948D83;
   --color-accent: #B8934E;
   --color-accent-deep: #836835;
   --color-accent-line: #A78443;
@@ -38,6 +41,7 @@
   --ink-deep: #26231F;
   --muted: #6E675E;
   --line: #E7E1D8;
+  --line-strong: #948D83;
   --accent: #B8934E;
   /* Faz 25: #8C6D33 idi. Beyazda 4,83 veriyordu ama krem rozet zemininde
      (#F5EFE2) 4,21'de kalıyordu — WCAG AA normal metin eşiği 4,5. Ton (39°)
@@ -88,9 +92,11 @@ body {
    ezemez; istisna da bu yüzden sınıfla veriliyor. */
 .eyebrow {
   font-family: var(--font-body);
-  font-size: 10px;
+  /* 24 Kas 2026 tasarım denetimi: 10 px / .28em idi — okunmuyordu ve harf
+     aralığı büyük harf için önerilen üst sınırın iki katıydı. */
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent-deep);
 }
@@ -496,8 +502,8 @@ body[data-overlay='open'] .whatsapp-fab {
      scrollY tavanı değişmedi). Footer'ın kendi iç payı kesin olarak düzene
      dahil. Çerez bandı payını ConsentBanner zaten gövdede yönetiyor. */
   body:has(.sticky-buy[data-show='true']) footer {
-    /* çubuk 58px + 18px nefes payı; en derin öge (Instagram) 37px istiyordu */
-    padding-bottom: 76px;
+    /* çubuk 64px (24 Kas 2026: düğme 48px) + 24px nefes payı */
+    padding-bottom: 88px;
   }
 }
 
@@ -516,3 +522,26 @@ body[data-overlay='open'] .whatsapp-fab {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: none; }
 }
+
+/* Ödeme sayfasının yapışık toplam çubuğu (24 Kas 2026 tasarım denetimi):
+   sayfa sonunda alt bilginin son satırlarını (yasal satır, kart logoları)
+   örtmesin. Ürün sayfasındaki çubukla aynı desen — pay footer'a konur. */
+@media (max-width: 639px) {
+  body:has(#odeme-cubuk) footer {
+    padding-bottom: 104px;
+  }
+}
+
+/* WhatsApp balonu telefonda sayfa sonundaki yasal satırın ve kart logolarının
+   üstüne biniyordu (24 Kas 2026 tasarım denetimi). Balonun basıldığı
+   sayfalarda alt bilgiye yer açılır; yapışkan çubuk kuralları yukarıda. */
+@media (max-width: 639px) {
+  body:has(.whatsapp-fab:not(.hidden)) footer {
+    padding-bottom: 80px;
+  }
+}
+
+/* Başlıklarda satırlar dengeli kırılır, paragrafta tek kelimelik son satır
+   kalmaz (yalnız CSS; desteklemeyen tarayıcı eski hâliyle basar). */
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }

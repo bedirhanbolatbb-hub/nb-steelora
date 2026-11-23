@@ -55,9 +55,8 @@ export default async function IletisimPage() {
       <IletisimClient adres={kunye.adres} telefon={kunye.telefon} />
       <section className="border-t border-line bg-surface-muted/40">
         <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-6 lg:px-8">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-accent-deep">Yasal</p>
-          <h2 className="mt-2 font-heading text-[26px] font-medium text-ink">Satıcı Bilgileri</h2>
-          <div className="mt-5 max-w-[68ch] text-[13px] leading-relaxed font-body text-ink-soft">
+          <h2 className="font-heading text-[24px] font-medium text-ink lg:text-[26px]">Satıcı Bilgileri</h2>
+          <div className="mt-4 max-w-[68ch] text-[14px] leading-relaxed font-body text-ink-soft">
             <SaticiKunyesi kunye={kunye} baslikYok />
           </div>
         </div>

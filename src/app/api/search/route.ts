@@ -4,9 +4,11 @@ import { groupProducts, type GroupableProduct } from '@/lib/catalog/variants'
 import { kelimeEslesir, kelimelereAyir } from '@/lib/catalog/aramaMetni'
 
 const RESULT_LIMIT = 8
+/** /arama sonuç sayfası (24 Kas 2026): `tum=1` ile iki sayfalık kart. */
+const SAYFA_SINIRI = 48
 const DIZIN_OMRU_MS = 5 * 60 * 1000
 const KOLONLAR =
-  'id, slug, display_title, trendyol_title, display_price, display_images, trendyol_category, trendyol_stock, gender, created_at, variant_label'
+  'id, slug, display_title, trendyol_title, display_price, display_images, trendyol_category, trendyol_stock, gender, created_at, variant_label, material_type'
 
 type AramaSatiri = GroupableProduct & {
   trendyol_title?: string | null
@@ -38,6 +40,7 @@ async function aramaDizini(): Promise<Dizinli[]> {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const q = searchParams.get('q')?.trim()
+  const sinir = searchParams.get('tum') === '1' ? SAYFA_SINIRI : RESULT_LIMIT
 
   if (!q || q.length < 2) {
     return NextResponse.json([])
@@ -127,8 +130,8 @@ export async function GET(request: Request) {
   }
 
   // Gruplama ilk görülme sırasını korur — sıralama puanla kalır.
-  const results = groupProducts(puanli.slice(0, RESULT_LIMIT * 8).map((p) => p.satir))
-    .slice(0, RESULT_LIMIT)
+  const results = groupProducts(puanli.slice(0, sinir * 8).map((p) => p.satir))
+    .slice(0, sinir)
     .map((group) => ({ ...group.cover, option_count: group.optionCount, ...(yakin ? { yakin: true } : {}) }))
 
   // Aynı sorgu kısa süre içinde tekrar yazıldığında (yaygın: silip yeniden

@@ -8,6 +8,8 @@ type Props = {
   currentId: string
   /** 'chips' beden gibi etiketli gruplar için, 'thumbnails' görselle ayrışanlar için. */
   variant: 'chips' | 'thumbnails'
+  /** Yüzükte "Ölçü rehberi" bağlantısı basılır. */
+  yuzuk?: boolean
 }
 
 /**
@@ -19,9 +21,17 @@ type Props = {
  * Görselle ayrışan gruplar (harf kolyeleri, renk seçenekleri) eskiden
  * galerinin altındaydı; müşteri diğer seçeneği göremeden fiyata ve sepete
  * ekle düğmesine bakıyordu. Seçim de fiyat da aynı sütunda olmalı.
+ *
+ * 24 Kas 2026 tasarım denetimi (yüzük): beden seçince sayfa BAŞA atıyordu —
+ * her beden ayrı adres, bağlantı da sayfayı en üste kaydırıyordu; beden satırı
+ * katlamada kesiliyor, müşteri seçtiğini göremiyordu. `scroll={false}` ile
+ * konum korunur. Düğmeler 48 px, seçili beden dolu mürekkep; hangi bedenin
+ * sepete gideceği etikette yazıyla da söylenir. Numaraların mm karşılığı
+ * BASILMAZ: elimizde tedarikçiden doğrulanmış ölçü yok, uydurulmaz.
  */
-export default function ProductVariants({ members, currentId, variant }: Props) {
+export default function ProductVariants({ members, currentId, variant, yuzuk = false }: Props) {
   if (members.length < 2) return null
+  const secili = members.find((m) => m.id === currentId)
 
   return (
     <div
@@ -29,9 +39,29 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
       id={variant === 'chips' ? 'beden-secimi' : undefined}
       className={variant === 'chips' ? 'mt-5 scroll-mt-28' : 'mt-5'}
     >
-      <p className="text-[10px] uppercase tracking-[0.2em] font-body text-muted mb-3">
-        {variant === 'chips' ? `Beden seçin (${members.length})` : `Diğer seçenekler (${members.length})`}
-      </p>
+      {variant === 'chips' ? (
+        <div className="mb-2.5 flex items-baseline justify-between gap-3 font-body">
+          <p className="text-[13px] text-ink-soft">
+            {yuzuk ? 'Yüzük ölçüsü' : 'Beden'}
+            {secili?.variant_label && (
+              <>
+                : <span className="font-medium text-ink">{secili.variant_label}</span>
+              </>
+            )}
+          </p>
+          {yuzuk && (
+            <Link
+              prefetch={false}
+              href="/blog/yuzuk-olcusu-nasil-belirlenir"
+              className="-my-3 py-3 text-[13px] text-accent-deep underline underline-offset-4 transition-colors hover:text-ink"
+            >
+              Ölçü rehberi
+            </Link>
+          )}
+        </div>
+      ) : (
+        <p className="mb-2.5 font-body text-[13px] text-ink-soft">Diğer seçenekler ({members.length})</p>
+      )}
 
       {variant === 'chips' ? (
         <div className="flex flex-wrap gap-2">
@@ -43,15 +73,17 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
                 prefetch={false}
                 key={member.id}
                 href={`/urun/${member.slug}`}
+                // Konum korunur: beden değişince sayfa başa atmaz.
+                scroll={false}
                 aria-current={isCurrent ? 'page' : undefined}
-                className={`min-w-[44px] text-center px-3 py-2 text-[12px] font-body border rounded-[4px] transition-colors ${
+                className={`inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-[4px] border px-3 font-body text-[15px] transition-colors ${
                   isCurrent
-                    ? 'border-ink text-ink font-medium'
-                    : 'border-line text-ink-soft hover:border-accent-line hover:text-accent-deep'
+                    ? 'border-ink bg-ink font-medium text-white'
+                    : 'border-line-strong text-ink hover:border-ink'
                 } ${outOfStock ? 'opacity-40' : ''}`}
               >
-                {member.variant_label}
-                {outOfStock && <span className="ml-1 text-[10px]">· tükendi</span>}
+                <span className={outOfStock ? 'line-through' : undefined}>{member.variant_label}</span>
+                {outOfStock && <span className="sr-only"> (tükendi)</span>}
               </Link>
             )
           })}
@@ -67,10 +99,11 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
                 prefetch={false}
                 key={member.id}
                 href={`/urun/${member.slug}`}
+                scroll={false}
                 aria-current={isCurrent ? 'page' : undefined}
                 title={member.display_title}
                 className={`relative w-14 h-[68px] shrink-0 bg-surface-muted overflow-hidden rounded-[3px] border-2 transition-colors ${
-                  isCurrent ? 'border-accent-line' : 'border-transparent hover:border-line'
+                  isCurrent ? 'border-ink' : 'border-transparent hover:border-line-strong'
                 }`}
               >
                 {image && (
@@ -85,7 +118,7 @@ export default function ProductVariants({ members, currentId, variant }: Props) 
                   />
                 )}
                 {outOfStock && (
-                  <span className="absolute inset-x-0 bottom-0 bg-ink/70 text-bg text-[8px] text-center py-0.5 font-body">
+                  <span className="absolute inset-x-0 bottom-0 bg-ink/70 text-bg text-[10px] text-center py-0.5 font-body">
                     Tükendi
                   </span>
                 )}

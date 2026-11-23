@@ -43,7 +43,7 @@ export async function GET() {
 
   const metin = `# NB Steelora
 
-> 316L paslanmaz çelik ve premium kaplama takı satan Türkiye merkezli çevrimiçi mağaza. Kolye, küpe, bileklik, yüzük, piercing, halhal ve setler.${aktifUrun > 0 ? ` Şu an ${aktifUrun} ürün satışta.` : ''}
+> 316L paslanmaz çelik ve kaplama pirinç takı satan Türkiye merkezli çevrimiçi mağaza. Kolye, küpe, bileklik, yüzük, piercing, halhal ve setler.${aktifUrun > 0 ? ` Şu an ${aktifUrun} ürün satışta.` : ''}
 
 Satıcı: İsa Bolat — NB Steelora · Mezitli / Mersin, Türkiye
 İletişim: info@nbsteelora.com · 0505 198 46 46 (Pazartesi–Cuma 09:00–18:00)

@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { ViewTransition, useState } from 'react'
 import { formatPrice } from '@/lib/utils'
 import { resolveBadge } from '@/lib/catalog/badge'
+import { materialShort } from '@/lib/catalog/material'
 import ProductImage from './ProductImage'
 import { IMAGE_QUALITY, isRemoteMedia, trendyolCdnMi, trendyolYukleyici } from '@/lib/images'
 import { useCart } from '@/hooks/useCart'
@@ -84,7 +85,13 @@ export default function ProductCardV2({
   const addItem = useCart((s) => s.addItem)
   const [added, setAdded] = useState(false)
   const outOfStock = product.trendyol_stock === 0
-  const badge = resolveBadge(product as any)
+  // 24 Kas 2026 tasarım denetimi: "Son 1 adet" rozeti seçenekli kartta
+  // basılmaz — rozet yalnız kapak seçeneğin stoğunu anlatıyordu, "+8 seçenek"
+  // ile yan yana çelişkili ve baskı gibi okunuyordu (üstelik iki rozet dar
+  // kartta üst üste biniyordu). Ürün sayfasında seçili seçenek için görünür.
+  const hamRozet = resolveBadge(product as any)
+  const badge = optionCount > 0 && hamRozet?.tone === 'urgent' ? null : hamRozet
+  const malzeme = materialShort((product as any).material_type)
   // Aktif otomatik kampanya varsa kartta üstü çizili fiyat + oran rozeti
   // gösterilir; tutar yine sepette tek motordan hesaplanır (Faz 15).
   const kampanya = useVitrinIndirimi()
@@ -157,23 +164,16 @@ export default function ProductCardV2({
           />
         )}
 
-        {/* Tek rozet — mevcut öncelik kuralı */}
-        {badge && (
-          <span className="absolute top-3 left-3 bg-bg/95 text-ink text-[9px] px-2.5 py-1 font-body font-medium uppercase tracking-[0.15em] rounded-[2px]">
+        {/* Tek rozet — mevcut öncelik kuralı. Seçenek sayısı görselin üstünden
+            adın altına alındı (24 Kas 2026): fotoğrafta tek etiket kalır. */}
+        {badge && !outOfStock && (
+          <span className="absolute left-2 top-2 rounded-[2px] bg-bg/95 px-2 py-1 font-body text-[11px] font-semibold uppercase leading-none tracking-[0.08em] text-ink">
             {badge.label}
           </span>
         )}
 
-        {optionCount > 0 && (
-          // Mobilde sağ alt köşeyi çanta düğmesi tutuyor: seçenek rozeti
-          // orada üst üste binerdi, sağ üste alınıyor. Masaüstünde yeri aynı.
-          <span className="absolute right-3 top-3 bg-bg/95 text-ink text-[9px] px-2 py-0.5 font-body tracking-[0.08em] rounded-[2px] sm:bottom-3 sm:top-auto">
-            +{optionCount} seçenek
-          </span>
-        )}
-
         {outOfStock && (
-          <span className="absolute bottom-3 left-3 bg-ink text-bg text-[9px] px-2 py-0.5 font-body tracking-[0.08em] rounded-[2px]">
+          <span className="absolute left-2 top-2 rounded-[2px] bg-ink px-2 py-1 font-body text-[11px] font-semibold uppercase leading-none tracking-[0.08em] text-bg">
             Tükendi
           </span>
         )}
@@ -206,7 +206,7 @@ export default function ProductCardV2({
         <button
           onClick={handleQuickAdd}
           disabled={outOfStock}
-          className="absolute bottom-0 left-0 right-0 hidden py-3 bg-ink/90 text-bg text-[10px] tracking-[0.18em] uppercase font-body font-medium text-center backdrop-blur-[2px]
+          className="absolute bottom-0 left-0 right-0 hidden py-3 bg-ink/90 text-bg text-[12px] tracking-[0.1em] uppercase font-body font-semibold text-center backdrop-blur-[2px]
             sm:block sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-accent-deep transition-opacity duration-300
             disabled:bg-line disabled:text-muted disabled:cursor-not-allowed"
         >
@@ -215,52 +215,56 @@ export default function ProductCardV2({
       </div>
       </ViewTransition>
 
-      <div className="pt-3.5 pb-1 text-center">
+      {/* 24 Kas 2026 tasarım denetimi — kartın yazı bloğu:
+          · sola yaslı (ızgarada adlar ve fiyatlar tek hizada okunur),
+          · ad Inter 14/500, iki satırlık SABİT blok (fiyat satırları hizalı),
+          · malzeme + seçenek sayısı tek ince satırda,
+          · fiyat mürekkep 16/600; altın yalnız indirim rozetinin zemininde. */}
+      <div className="pt-3 pb-1">
         <h3
-          className={`font-heading text-ink clamp-2 leading-snug transition-colors group-hover:text-accent-deep ${
-            // Faz 11B: büyük kart mobilde 2 sütuna indi; tipografi büyütmesi
-            // yalnız masaüstünde geçerli, yoksa dar sütunda başlık taşıyor.
-            // Faz 12: kart adı BİLEREK serif (Playfair) — eskiden `font-body`
-            // yazılıydı ama katman hatası yüzünden zaten serif basılıyordu;
-            // artık açıkça seçili ve bir kademe büyük (13 → 14/15 px).
-            buyuk ? 'text-[14px] sm:text-[16px] font-medium min-h-[2.6em] sm:min-h-0' : 'text-[14px] sm:text-[15px] font-medium min-h-[2.6em]'
+          className={`font-body font-medium leading-[1.4] text-ink line-clamp-2 min-h-[2.8em] transition-colors group-hover:text-accent-deep ${
+            buyuk ? 'text-[14px] sm:text-[16px]' : 'text-[14px]'
           }`}
         >
           {product.display_title}
         </h3>
 
+        {(malzeme || optionCount > 0) && (
+          <p className="mt-1 truncate font-body text-[12px] text-muted">
+            {[malzeme, optionCount > 0 ? `${optionCount + 1} seçenek` : null].filter(Boolean).join(' · ')}
+          </p>
+        )}
+
         {/* Sosyal kanıt (Faz 11D): yalnız ONAYLI yorumu olan üründe yıldız +
             sayı; yorum yoksa hiçbir şey basılmaz — sahte doluluk yok. */}
         {Number((product as any).review_count) > 0 && (
-          <p className="mt-1 flex items-center justify-center gap-1 font-body text-[11px] text-ink-soft">
-            <Star size={11} className="fill-accent-deep text-accent-deep" aria-hidden />
+          <p className="mt-1 flex items-center gap-1 font-body text-[12px] text-ink-soft">
+            <Star size={12} className="fill-accent-deep text-accent-deep" aria-hidden />
             <span className="tabular-nums">{Number((product as any).avg_rating ?? 0).toFixed(1)}</span>
             <span className="text-muted">({Number((product as any).review_count)})</span>
           </p>
         )}
-        <div className="mt-1.5 flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1">
+        <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           {kampanyaliFiyat != null ? (
             <>
-              <span className={`price text-accent-deep ${// Faz 11B: mobilde büyük kart artık 2 sütunda; fiyat büyütmesi de
-            // başlık gibi yalnız masaüstünde geçerli (kart boyları eşitlensin).
-            buyuk ? 'text-[14px] sm:text-[16px]' : 'text-[14px]'}`}>
+              <span className={`price text-ink ${buyuk ? 'text-[16px] sm:text-[18px]' : 'text-[16px]'}`}>
                 {formatPrice(kampanyaliFiyat)}
               </span>
-              <span className="price text-[12px] font-normal text-muted line-through">
+              <span className="price text-[13px] font-normal text-muted line-through">
                 {formatPrice(listeFiyati)}
               </span>
-              <span className="rounded-[3px] bg-accent/10 px-1.5 py-0.5 font-body text-[10px] font-medium text-accent-deep">
+              <span className="rounded-[2px] bg-accent-soft px-1.5 py-0.5 font-body text-[11px] font-semibold leading-none text-ink">
                 %{kampanya!.oran}
               </span>
             </>
           ) : (
             <>
-              <span className={`price text-ink ${buyuk ? 'text-[14px] sm:text-[16px]' : 'text-[14px]'}`}>
+              <span className={`price text-ink ${buyuk ? 'text-[16px] sm:text-[18px]' : 'text-[16px]'}`}>
                 {formatPrice(listeFiyati)}
               </span>
               {(product as any).override_price &&
                 (product as any).override_price < product.display_price && (
-                  <span className="price text-[12px] text-muted line-through font-normal">
+                  <span className="price text-[13px] text-muted line-through font-normal">
                     {formatPrice(product.display_price)}
                   </span>
                 )}
@@ -268,7 +272,7 @@ export default function ProductCardV2({
           )}
         </div>
         {kampanya?.rozet && (
-          <p className="mt-1 text-center font-body text-[10px] text-accent-deep">{kampanya.rozet}</p>
+          <p className="mt-1 font-body text-[12px] text-accent-deep">{kampanya.rozet}</p>
         )}
       </div>
     </Link>

@@ -32,7 +32,12 @@ import { WHATSAPP_URL } from '@/lib/contact'
 export default function FloatingWhatsApp() {
   const yol = usePathname()
   if (yol?.startsWith('/odeme')) return null
-  const urunSayfasi = yol?.startsWith('/urun/') ?? false
+  // 24 Kas 2026 tasarım denetimi: telefonda balon liste sayfalarında sağ
+  // sütundaki kartların "sepete ekle" düğmesinin, fiyatların ve iletişim
+  // formunun ilk alanının üstüne biniyordu. Ürün sayfasındaki kural bu
+  // sayfalara da genişledi; kanal kapanmıyor — menüde "WhatsApp'tan yazın"
+  // satırı, ürün sayfasında düğme, alt bilgide bağlantı var. Masaüstü aynı.
+  const urunSayfasi = /^\/(urun\/|urunler|kategori\/|koleksiyon\/|arama|favorilerim|sepet|iletisim)/.test(yol ?? '')
 
   return (
     // whatsapp-fab: yapışkan satın alma çubuğu göründüğünde buton yukarı kayar

@@ -24,19 +24,35 @@ export default function GiftSplit({
   gorsel,
   baslik,
   metin,
+  hediyeKoleksiyonu = null,
 }: {
   gorsel?: string | null
   baslik?: string | null
   metin?: string | null
+  /** Adında "hediye" geçen koleksiyon varsa ilk kısayol odur (ana sayfa verisinden). */
+  hediyeKoleksiyonu?: { slug: string; name: string } | null
 }) {
   const kaynak = (gorsel ?? '').trim() || '/hediye-paketi.jpg'
   const kBaslik = (baslik ?? '').trim() || HEDIYE_VARSAYILAN.baslik
   const kMetin = (metin ?? '').trim() || HEDIYE_VARSAYILAN.metin
 
+  // 24 Kas 2026 tasarım denetimi: bölümün tek düğmesi "Ürünleri keşfet" idi ve
+  // kataloğun tamamına gidiyordu — hediye arayan müşteri için bir giriş yoktu
+  // (müşteri panelinde hediye alan iki kesimin de takıldığı yer). Dört kısayol:
+  // hepsi var olan sayfalar ve süzgeçler, yeni iddia yok.
+  const kisayollar = [
+    ...(hediyeKoleksiyonu
+      ? [{ href: `/koleksiyon/${hediyeKoleksiyonu.slug}`, ad: hediyeKoleksiyonu.name }]
+      : []),
+    { href: '/kategori/setler', ad: 'Setler' },
+    { href: '/urunler?max_fiyat=350', ad: '350 ₺ altı' },
+    { href: '/kategori/erkek', ad: 'Erkek için' },
+  ]
+
   return (
-    <section className="bg-surface-muted">
-      <div className="grid grid-cols-1 lg:grid-cols-2">
-        <div className="relative aspect-[4/3] lg:aspect-auto lg:min-h-[480px]">
+    <section className="mt-12 bg-surface-muted lg:mt-20">
+      <div className="mx-auto grid max-w-[1400px] grid-cols-1 lg:grid-cols-2">
+        <div className="relative aspect-[16/10] lg:aspect-auto lg:min-h-[440px]">
           <Image
             src={kaynak}
             // Vercel görsel dönüşüm kotası dolu (Faz 9B kararı): hem yerel
@@ -52,22 +68,27 @@ export default function GiftSplit({
             blurDataURL={BLUR_PLACEHOLDER}
           />
         </div>
-        <div className="flex items-center px-6 py-14 lg:px-16 lg:py-20">
-          <div data-reveal>
-            <p className="eyebrow">Hediye kutusu</p>
-            <h2 className="font-heading text-[30px] lg:text-[40px] font-medium text-ink mt-3 leading-tight">
+        <div className="flex items-center px-4 py-8 lg:px-16 lg:py-16">
+          <div data-reveal className="w-full">
+            <h2 className="font-heading text-[24px] lg:text-[32px] font-medium text-ink leading-tight">
               {kBaslik}
             </h2>
-            <p className="text-[13px] font-body text-ink-soft mt-4 leading-relaxed max-w-md">
+            <p className="mt-3 max-w-md font-body text-[15px] leading-relaxed text-ink-soft">
               {kMetin}
             </p>
-            <Link
-              prefetch={false}
-              href="/urunler"
-              className="inline-flex items-center mt-8 bg-ink text-bg text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
-            >
-              Ürünleri keşfet
-            </Link>
+            <ul className="mt-5 grid max-w-md grid-cols-2 gap-2">
+              {kisayollar.map((k) => (
+                <li key={k.href}>
+                  <Link
+                    prefetch={false}
+                    href={k.href}
+                    className="flex min-h-[48px] items-center justify-center rounded-[4px] border border-line-strong bg-bg px-3 text-center font-body text-[14px] font-medium text-ink transition-colors hover:border-ink"
+                  >
+                    {k.ad}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>

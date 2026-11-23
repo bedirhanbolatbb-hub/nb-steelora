@@ -1,4 +1,5 @@
 import { formatPrice } from '@/lib/utils'
+import { MARKA_ALT_SATIR_BUYUK } from '@/lib/metin/marka'
 import { htmlKacir } from '@/lib/guvenlik/girdi'
 import { WHATSAPP_URL } from '@/lib/contact'
 import { SHIPPING_LINE_LABEL } from '@/lib/shipping'
@@ -21,7 +22,7 @@ function shell(title: string, inner: string): string {
 <body style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #2A1E1E;">
   <div style="text-align: center; padding: 30px 0; border-bottom: 1px solid #E8D8D0;">
     <h1 style="letter-spacing: 0.3em; font-size: 20px; font-weight: 400; margin: 0;">NB STEELORA</h1>
-    <p style="font-size: 11px; color: #C89080; letter-spacing: 0.2em; margin: 5px 0 0;">FINE JEWELLERY</p>
+    <p style="font-size: 11px; color: #C89080; letter-spacing: 0.2em; margin: 5px 0 0;">${MARKA_ALT_SATIR_BUYUK}</p>
   </div>
   <div style="padding: 40px 0;">
     <h2 style="font-size: 24px; font-weight: 300; margin-bottom: 8px;">${title}</h2>

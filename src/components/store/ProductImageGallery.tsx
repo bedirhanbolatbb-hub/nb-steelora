@@ -81,12 +81,14 @@ export default function ProductImageGallery({ images, title, morphAd }: ProductI
 
   return (
     <>
-      {/* ── Mobil: kaydırmalı şerit + noktalar ── */}
-      <div className="sm:hidden">
+      {/* ── Mobil: kaydırmalı şerit + sayaç ──
+          24 Kas 2026 tasarım denetimi: nokta satırı fotoğrafın ALTINDA 24 px
+          yer tutuyordu; yerine fotoğrafın içinde "1 / 4" sayacı var. */}
+      <div className="relative -mx-4 sm:hidden">
         <div
           ref={railRef}
           onScroll={onRailScroll}
-          className="-mx-4 flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
+          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
           style={{ scrollbarWidth: 'none' }}
         >
           {(hasImages ? images : [null]).map((img, i) => {
@@ -124,25 +126,58 @@ export default function ProductImageGallery({ images, title, morphAd }: ProductI
           })}
         </div>
         {hasImages && images.length > 1 && (
-          <div className="mt-3 flex items-center justify-center gap-1.5" aria-hidden>
-            {images.map((_, i) => (
-              <span
-                key={i}
-                className={cn(
-                  'h-1.5 rounded-full transition-all duration-300',
-                  i === activeIndex ? 'w-5 bg-accent' : 'w-1.5 bg-line'
-                )}
-              />
-            ))}
-          </div>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-ink/60 px-2.5 py-1 font-body text-[12px] font-medium leading-none text-white lining-nums tabular-nums"
+          >
+            {activeIndex + 1} / {images.length}
+          </span>
         )}
       </div>
 
-      {/* ── Masaüstü: geniş çerçevesiz görünüm + ince şerit ── */}
-      <div className="hidden sm:block space-y-3">
+      {/* ── Masaüstü: solda dikey küçük resim şeridi + ana görsel ──
+          24 Kas 2026 tasarım denetimi: ana görsel pencereden uzundu (1440×900'de
+          785 px), küçük resimler katlamanın altında kalıyordu. Görselin
+          genişliği pencere yüksekliğine göre sınırlanır (4:5 korunur, kırpma
+          yok); şerit sola alındı, böylece hepsi tek bakışta görünür. */}
+      <div className="relative hidden sm:block">
+        {hasImages && images.length > 1 && (
+          <div
+            className="absolute inset-y-0 left-0 flex w-16 flex-col gap-2.5 overflow-y-auto"
+            style={{ scrollbarWidth: 'none' }}
+          >
+            {images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveIndex(i)}
+                aria-label={`${title} — ${i + 1}. görsel`}
+                aria-current={i === activeIndex ? 'true' : undefined}
+                className={cn(
+                  'relative aspect-[4/5] w-16 shrink-0 overflow-hidden rounded-[3px] bg-surface-muted transition-opacity duration-300',
+                  i === activeIndex ? 'opacity-100 ring-1 ring-inset ring-ink' : 'opacity-60 hover:opacity-100'
+                )}
+              >
+                <Image
+                  src={gorselBoyutu(img, 128)}
+                  unoptimized={isRemoteMedia(img)}
+                  // Küçük resimler boş alt metniyle basılıyordu: ekran
+                  // okuyucu ve arama motoru dört görseli de adsız görüyordu.
+                  alt={`${title} — ${i + 1}. görsel`}
+                  fill
+                  className="object-cover"
+                  sizes="64px"
+                  quality={IMAGE_QUALITY}
+                />
+              </button>
+            ))}
+          </div>
+        )}
         <ViewTransition name={morphAd ? `urun-${morphAd}` : undefined} share="morph" default="none">
         <div
-          className="relative aspect-[4/5] overflow-hidden rounded-[4px] bg-surface-muted cursor-zoom-in group"
+          className={cn(
+            'relative aspect-[4/5] max-w-[calc((100svh_-_16rem)_*_0.8)] overflow-hidden rounded-[4px] bg-surface-muted cursor-zoom-in group',
+            hasImages && images.length > 1 && 'ml-[76px]'
+          )}
           onClick={() => hasImages && setLightboxOpen(true)}
         >
           <ProductImage
@@ -157,36 +192,6 @@ export default function ProductImageGallery({ images, title, morphAd }: ProductI
           />
         </div>
         </ViewTransition>
-
-        {hasImages && images.length > 1 && (
-          <div className="flex gap-2.5 overflow-x-auto pb-1">
-            {images.map((img, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveIndex(i)}
-                aria-label={`${title} — ${i + 1}. görsel`}
-                className={cn(
-                  'relative w-14 shrink-0 aspect-[4/5] overflow-hidden rounded-[3px] bg-surface-muted transition-opacity duration-300',
-                  i === activeIndex
-                    ? 'opacity-100 ring-1 ring-accent'
-                    : 'opacity-55 hover:opacity-90'
-                )}
-              >
-                <Image
-                  src={gorselBoyutu(img, 128)}
-                  unoptimized={isRemoteMedia(img)}
-                  // Küçük resimler boş alt metniyle basılıyordu: ekran
-                  // okuyucu ve arama motoru dört görseli de adsız görüyordu.
-                  alt={`${title} — ${i + 1}. görsel`}
-                  fill
-                  className="object-cover"
-                  sizes="56px"
-                  quality={IMAGE_QUALITY}
-                />
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* ── Lightbox (davranış aynen) ── */}
@@ -201,7 +206,7 @@ export default function ProductImageGallery({ images, title, morphAd }: ProductI
         >
           <button
             onClick={closeLightbox}
-            className="absolute top-6 right-6 text-bg hover:text-accent transition-colors"
+            className="absolute top-3 right-3 z-10 flex h-11 w-11 items-center justify-center text-bg hover:text-accent transition-colors"
             aria-label="Kapat"
           >
             <X size={24} />
@@ -211,17 +216,17 @@ export default function ProductImageGallery({ images, title, morphAd }: ProductI
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); goTo(activeIndex - 1) }}
-                className="absolute left-4 text-bg hover:text-accent transition-colors"
+                className="absolute left-1 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-ink/40 text-bg hover:text-accent transition-colors sm:left-4"
                 aria-label="Önceki"
               >
-                <ChevronLeft size={32} />
+                <ChevronLeft size={28} />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); goTo(activeIndex + 1) }}
-                className="absolute right-4 text-bg hover:text-accent transition-colors"
+                className="absolute right-1 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-ink/40 text-bg hover:text-accent transition-colors sm:right-4"
                 aria-label="Sonraki"
               >
-                <ChevronRight size={32} />
+                <ChevronRight size={28} />
               </button>
             </>
           )}

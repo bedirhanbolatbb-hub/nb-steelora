@@ -89,6 +89,16 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     onClose()
   }
 
+  // 24 Kas 2026 tasarım denetimi: Enter'a basınca hiçbir şey olmuyordu ve
+  // sekiz satırdan fazlasını görmenin yolu yoktu. Artık sonuç sayfasına gider.
+  const tumSonuclar = (e?: React.FormEvent) => {
+    e?.preventDefault()
+    const metin = query.trim()
+    if (metin.length < 2) return
+    router.push(`/arama?q=${encodeURIComponent(metin)}`)
+    onClose()
+  }
+
   // Faz 11B denetimi: Escape hiç çalışmıyordu, Tab perdenin arkasına
   // kaçıyordu — klavye kullanıcısının katmanı kapatma yolu yoktu (KRİTİK).
   // Kancanın kendi ilk-odak taşıması kapalı: giriş kutusuna odak zaten
@@ -104,28 +114,31 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         role="dialog"
         aria-modal="true"
         aria-label="Ürün arama"
-        className="bg-bg max-w-2xl mx-auto mt-16 sm:mt-24 rounded-[6px] overflow-hidden border border-line shadow-2xl"
+        className="bg-bg max-w-2xl mx-3 sm:mx-auto mt-3 sm:mt-24 rounded-[6px] overflow-hidden border border-line shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Input */}
-        <div className="flex items-center gap-4 p-6 border-b border-line">
-          <Search size={18} className="text-muted shrink-0" />
+        <form onSubmit={tumSonuclar} role="search" className="flex items-center gap-3 px-5 py-4 border-b border-line">
+          <Search size={20} strokeWidth={1.6} className="text-ink-soft shrink-0" aria-hidden />
           <input
             ref={inputRef}
-            type="text"
-            placeholder="Ürün ara..."
+            type="search"
+            enterKeyHint="search"
+            aria-label="Ürün ara"
+            placeholder="Ürün adı ya da türü yazın"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent font-body text-[16px] tracking-wide text-ink placeholder:text-muted outline-none"
+            className="min-w-0 flex-1 bg-transparent font-body text-[16px] text-ink placeholder:text-muted outline-none"
           />
           <button
+            type="button"
             onClick={onClose}
             aria-label="Aramayı kapat"
-            className="-m-3 flex h-11 w-11 items-center justify-center text-muted hover:text-ink transition-colors"
+            className="-m-3 flex h-11 w-11 items-center justify-center text-ink-soft hover:text-ink transition-colors"
           >
-            <X size={18} />
+            <X size={20} strokeWidth={1.6} />
           </button>
-        </div>
+        </form>
 
         {/* Results */}
         <div className="max-h-[70vh] sm:max-h-96 overflow-y-auto">
@@ -147,14 +160,14 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
           )}
 
           {!loading && query.length >= 2 && results.length === 0 && (
-            <p className="p-6 text-center text-muted text-[13px] font-body">
+            <p className="p-6 text-center text-ink-soft text-[14px] font-body">
               &ldquo;{query}&rdquo; — {BOS_DURUM.arama.baslik.toLocaleLowerCase('tr-TR')}.{' '}
               {BOS_DURUM.arama.metin}
             </p>
           )}
 
           {!loading && results.length > 0 && (results[0] as any).yakin && (
-            <p className="px-6 pt-4 pb-2 text-[12px] font-body text-muted">
+            <p className="px-5 pt-4 pb-2 text-[13px] font-body text-ink-soft">
               &ldquo;{query}&rdquo; için tam eşleşme yok. Yakın sonuçlar:
             </p>
           )}
@@ -163,7 +176,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             <button
               key={product.id}
               onClick={() => handleProductClick(product.slug)}
-              className="w-full flex items-center gap-4 p-4 hover:bg-surface-muted transition-colors text-left border-b border-line/30 last:border-0"
+              className="w-full flex items-center gap-3.5 px-5 py-3 hover:bg-surface-muted transition-colors text-left border-b border-line/40"
             >
               <div className="w-14 h-14 bg-surface-muted shrink-0 overflow-hidden rounded-[2px]">
                 {product.display_images?.[0] ? (
@@ -184,25 +197,25 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-body text-ink font-medium truncate">
+                <p className="text-[14px] font-body text-ink font-medium line-clamp-2 leading-snug">
                   {product.display_title}
                 </p>
-                <p className="text-[11px] font-body text-muted mt-0.5">
+                <p className="text-[12px] font-body text-muted mt-0.5">
                   {markaKategorisi(product.trendyol_category)}
-                  {product.option_count > 0 && ` · +${product.option_count} seçenek`}
+                  {product.option_count > 0 && ` · ${product.option_count + 1} seçenek`}
                 </p>
               </div>
               {/* Faz 11A: arama sonucu liste fiyatı gösteriyordu. */}
-              <p className="text-[13px] font-body shrink-0 text-right">
+              <p className="text-[14px] font-body shrink-0 text-right">
                 {(() => {
                   const f = vitrinFiyati((product as any).display_price, kampanyaIndirimi)
                   return (
                     <>
-                      <span className="text-accent-deep font-medium block">
+                      <span className="block font-semibold text-ink">
                         {formatPrice(f.gosterilen)}
                       </span>
                       {f.ustuCizili != null && (
-                        <span className="text-muted line-through text-[11px]">
+                        <span className="text-muted line-through text-[12px]">
                           {formatPrice(f.ustuCizili)}
                         </span>
                       )}
@@ -213,8 +226,18 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             </button>
           ))}
 
+          {!loading && results.length > 0 && (
+            <button
+              type="button"
+              onClick={() => tumSonuclar()}
+              className="flex min-h-[52px] w-full items-center justify-center font-body text-[14px] font-medium text-ink underline decoration-accent underline-offset-4 transition-colors hover:text-accent-deep"
+            >
+              Tüm sonuçları görün
+            </button>
+          )}
+
           {!loading && query.length < 2 && (
-            <div className="p-6 text-center text-muted text-[13px] font-body">
+            <div className="p-6 text-center text-ink-soft text-[14px] font-body">
               Aramak istediğiniz ürünü yazın
             </div>
           )}

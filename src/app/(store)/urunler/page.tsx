@@ -8,7 +8,14 @@ import ProductsClient from '@/components/store/ProductsClient'
 import JsonLd from '@/components/seo/JsonLd'
 import KirintiYolu from '@/components/seo/KirintiYolu'
 import { webPageJsonLd, sayfaUstVerisi } from '@/lib/seo'
-import { LISTING_COLUMNS, PER_PAGE, paginateGroupedProducts } from '@/lib/catalog/listing'
+import {
+  LISTING_COLUMNS,
+  PER_PAGE,
+  malzemeSecenekleri,
+  malzemeyeGoreSuz,
+  paginateGroupedProducts,
+  setleriGeriAl,
+} from '@/lib/catalog/listing'
 import { getSiteContent } from '@/lib/supabase/content'
 
 /**
@@ -19,7 +26,7 @@ import { getSiteContent } from '@/lib/supabase/content'
  */
 /** Meta açıklaması ile CollectionPage şeması aynı cümleyi taşır. */
 const KATALOG_ACIKLAMA =
-  'NB Steelora kataloğunun tamamı: 316L paslanmaz çelik kolye, küpe, bileklik, yüzük, piercing ve setler. Kategori, fiyat ve renge göre süzün.'
+  'NB Steelora kataloğunun tamamı: 316L paslanmaz çelik ve kaplama pirinç kolye, küpe, bileklik, yüzük, piercing ve setler. Kategori, malzeme ve fiyata göre süzün.'
 
 export const metadata: Metadata = sayfaUstVerisi({
   baslik: 'Tüm Ürünler',
@@ -80,8 +87,18 @@ export default async function UrunlerPage({
   }
 
   const sayfa = parseInt(params.sayfa || '1')
-  const { data: products } = await query
-  const { cards, total } = paginateGroupedProducts((products || []) as any[], sayfa)
+  const { data: hamUrunler } = await query
+  // 24 Kas 2026: malzeme süzgeci. Seçenekler süzülmemiş listeden çıkar (yalnız
+  // gerçekten bulunan malzemeler), süzme aynı listede yapılır — ek sorgu yok.
+  const malzemeler = malzemeSecenekleri((hamUrunler || []) as any[])
+  const products = malzemeyeGoreSuz((hamUrunler || []) as any[], params.malzeme)
+  // Varsayılan sıralamada setler ilk satırların arkasına alınır (lib/catalog/listing).
+  const { cards, total } = paginateGroupedProducts(
+    products as any[],
+    sayfa,
+    PER_PAGE,
+    params.siralama ? undefined : setleriGeriAl
+  )
 
   /**
    * Faz 11A: filtre listesi TRENDYOL'un ham kategori adlarını basıyordu
@@ -126,6 +143,7 @@ export default async function UrunlerPage({
       total={total}
       categories={categories}
       fiyatAraliklari={fiyatAraliklari}
+      malzemeler={malzemeler}
       currentPage={sayfa}
       perPage={PER_PAGE}
       currentParams={{
@@ -133,6 +151,7 @@ export default async function UrunlerPage({
         siralama: params.siralama || '',
         min_fiyat: params.min_fiyat || '',
         max_fiyat: params.max_fiyat || '',
+        malzeme: params.malzeme || '',
       }}
         tanitim={icerik['kategori_tanitim_tum-urunler'] || undefined}
       />

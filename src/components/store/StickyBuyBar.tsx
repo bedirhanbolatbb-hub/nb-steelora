@@ -6,6 +6,8 @@ import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { useCart } from '@/hooks/useCart'
 import { useSepetPaneli } from '@/hooks/useSepetPaneli'
 import { formatPrice } from '@/lib/utils'
+import { FREE_SHIPPING_SHORT } from '@/lib/shipping'
+import { GUVEN_METNI } from '@/lib/metin/guven'
 import type { Product } from '@/types'
 
 /** Satın alma bloğunun ve beden bölümünün çıpaları — PDP'de basılır. */
@@ -18,7 +20,12 @@ const ADDED_FEEDBACK_MS = 1600
  * Yalnız dar ekranda (sm altı) görünen yapışkan satın alma çubuğu.
  *
  * Görünürlük kuralları:
- * - Satın alma bloğu yukarı doğru ekrandan çıkınca görünür (kaydırmada ölçülür).
+ * - Asıl "Sepete Ekle" düğmesi ekranda DEĞİLKEN görünür — düğme ister henüz
+ *   aşağıda olsun (sayfa açılışı), ister yukarıda kalmış olsun.
+ *   24 Kas 2026 tasarım denetimi: eskiden çubuk yalnız düğme yukarıda
+ *   kaldığında çıkıyordu; telefonda fiyat ve düğme ilk ekranın altındaydı
+ *   (y≈830–960), yani sayfa açıldığında ekranda ne fiyat ne satın alma yolu
+ *   vardı. Son 7 günde 60 ürün görüntülemesinden 1 sepete ekleme çıktı.
  * - Sepet çekmecesi / menü / arama açıkken CSS ile gizlenir
  *   (body[data-overlay='open'] — bkz. globals.css, Navbar).
  * - Klavye açıkken gizlenir: visualViewport yüksekliği belirgin düşerse ya da
@@ -42,7 +49,7 @@ export default function StickyBuyBar({
   const panelAc = useSepetPaneli((s) => s.ac)
   const fiyat = vitrinFiyati(price, kampanyaIndirimi)
   const addItem = useCart((s) => s.addItem)
-  const [passedBuyBlock, setPassedBuyBlock] = useState(false)
+  const [dugmeGorunmuyor, setDugmeGorunmuyor] = useState(false)
   const [inputFocused, setInputFocused] = useState(false)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   const [added, setAdded] = useState(false)
@@ -50,9 +57,9 @@ export default function StickyBuyBar({
   const sizeConfirmed = useRef(false)
 
   /**
-   * Çubuk, satın alma bloğu YUKARI doğru ekrandan çıktığında belirir. Blok
-   * henüz aşağıdaysa (sayfanın başı) çubuk yok: kullanıcı butonu görmeden
-   * ekranı kapatmanın anlamı olmaz.
+   * Çubuk, asıl düğmenin ORTASI ekranın görünür bandının dışındayken belirir
+   * (üstte yapışkan başlık 56 px; altta 8 px pay). Düğmenin yarısı göründüğü
+   * an çubuk çekilir — aynı anda iki "Sepete Ekle" durmaz.
    *
    * Ölçüm kaydırma anında yapılır, IntersectionObserver ile DEĞİL: IO yalnız
    * kesişim durumu DEĞİŞTİĞİNDE haber verir. Blok açılışta katlama altındaysa
@@ -71,7 +78,9 @@ export default function StickyBuyBar({
     let frame = 0
     const measure = () => {
       frame = 0
-      setPassedBuyBlock(target.getBoundingClientRect().bottom < 0)
+      const kutu = target.getBoundingClientRect()
+      const orta = kutu.top + kutu.height / 2
+      setDugmeGorunmuyor(!(orta > 56 && orta < window.innerHeight - 8))
 
       const vv = window.visualViewport
       // Klavye ekranın altından belirgin bir pay kapatır; küçük tarayıcı
@@ -137,7 +146,7 @@ export default function StickyBuyBar({
     setTimeout(() => setAdded(false), ADDED_FEEDBACK_MS)
   }, [addItem, added, hasSizes, outOfStock, product, panelAc])
 
-  const show = passedBuyBlock && !inputFocused && !keyboardOpen
+  const show = dugmeGorunmuyor && !inputFocused && !keyboardOpen
 
   return (
     <div
@@ -145,26 +154,31 @@ export default function StickyBuyBar({
       data-show={show ? 'true' : 'false'}
       aria-hidden={!show}
     >
-      <div className="flex items-center gap-3 px-4 py-2.5">
+      {/* Fiyat solda ve belirgin, düğme 48 px (eski düğme 37 px'ti). Alt satır
+          iki sözü tekrar eder; ürün adı yalnız ekran okuyucuya okunur. */}
+      <div className="flex items-center gap-3 px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-body text-ink truncate">{title}</p>
+          <span className="sr-only">{title}</span>
           {/* Faz 11A: çubuk liste fiyatını gösteriyordu; aynı sayfanın
               üstünde indirimli fiyat yazarken burada tam fiyat çıkıyordu. */}
-          <p className="price text-[14px] text-ink leading-tight">
+          <p className="price text-[17px] leading-tight text-ink">
             {formatPrice(fiyat.gosterilen)}
             {fiyat.ustuCizili != null && (
-              <span className="ml-2 text-[12px] text-muted line-through">
+              <span className="ml-2 text-[12px] font-normal text-muted line-through">
                 {formatPrice(fiyat.ustuCizili)}
               </span>
             )}
+          </p>
+          <p className="mt-0.5 truncate font-body text-[11px] text-muted">
+            {FREE_SHIPPING_SHORT} · {GUVEN_METNI.iade}
           </p>
         </div>
         <button
           onClick={handleAdd}
           disabled={outOfStock}
           tabIndex={show ? 0 : -1}
-          className={`shrink-0 px-5 py-2.5 text-[11px] tracking-[0.15em] uppercase font-body font-medium rounded-[4px] transition-colors ${
-            outOfStock ? 'bg-line text-muted cursor-not-allowed' : 'bg-ink text-bg'
+          className={`basis min-h-[48px] shrink-0 rounded-[4px] px-6 font-body text-[13px] font-semibold uppercase tracking-[0.12em] ${
+            outOfStock ? 'bg-line text-muted cursor-not-allowed' : 'bg-ink text-white'
           }`}
         >
           {outOfStock ? 'Tükendi' : added ? 'Eklendi ✓' : 'Sepete Ekle'}

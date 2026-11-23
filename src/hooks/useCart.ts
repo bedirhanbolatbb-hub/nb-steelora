@@ -23,6 +23,11 @@ interface CartStore {
   esitlemeNotu: string | null
   addItem: (product: Product, quantity?: number, kaynak?: SepetKaynagi) => void
   removeItem: (productId: string) => void
+  /**
+   * Kaldırılan satırı geri koyar ("Geri al", 24 Kas 2026). Sepete ekleme
+   * ölçümü ÜRETMEZ: geri alma yeni bir ekleme değildir, huniyi şişirmesin.
+   */
+  geriKoy: (item: CartItem) => void
   updateQuantity: (productId: string, quantity: number) => void
   clearCart: () => void
   /**
@@ -71,6 +76,12 @@ export const useCart = create<CartStore>()(
       removeItem: (productId) => {
         izle('remove_from_cart', { productId })
         set({ items: get().items.filter(i => i.product.id !== productId) })
+      },
+
+      geriKoy: (item) => {
+        const items = get().items
+        if (items.some((i) => i.product.id === item.product.id)) return
+        set({ items: [...items, item] })
       },
 
       updateQuantity: (productId, quantity) => {
