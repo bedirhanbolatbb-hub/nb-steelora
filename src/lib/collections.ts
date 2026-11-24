@@ -47,6 +47,24 @@ export function firstSentence(text: string | null): string {
   return (match ? match[0] : text).trim()
 }
 
+/**
+ * Uzun açıklamayı ikiye böler (24 Kas 2026). Koleksiyon sayfasında uzun bir
+ * paragraf ürünleri telefonda ilk ekranın altına itiyordu; arama motoru
+ * açıklaması da 500+ karakter oluyordu. Eşiği aşan açıklamada üstte yalnız
+ * giriş cümlesi, kalan metin ürünlerin altında gösterilir. Kısa açıklamalar
+ * bölünmez. Veri değişmez — yalnız gösterim.
+ */
+export const UZUN_ACIKLAMA_ESIGI = 200
+
+export function aciklamaBol(text: string | null): { giris: string; devam: string | null } {
+  const tam = (text ?? '').trim()
+  if (tam.length <= UZUN_ACIKLAMA_ESIGI) return { giris: tam, devam: null }
+  const giris = firstSentence(tam)
+  const devam = tam.slice(giris.length).trim()
+  if (!giris || !devam) return { giris: tam, devam: null }
+  return { giris, devam }
+}
+
 /** Aktif koleksiyonlar, admin sırasıyla; kapak görseli ve aktif ürün sayısıyla. */
 export async function getCollectionCards(): Promise<CollectionCard[]> {
   try {

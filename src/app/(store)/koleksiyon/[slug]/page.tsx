@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import ProductCardV2 from '@/components/store/ProductCardV2'
-import { getCollection } from '@/lib/collections'
+import { aciklamaBol, getCollection } from '@/lib/collections'
 import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
 import JsonLd from '@/components/seo/JsonLd'
 import { breadcrumbJsonLd, sayfaUstVerisi } from '@/lib/seo'
@@ -18,8 +18,10 @@ export async function generateMetadata({
   if (!data) return {}
 
   const { collection } = data
+  // Uzun açıklamada arama motoruna yalnız giriş cümlesi gider (aciklamaBol).
   const description =
-    collection.description || `${collection.name} koleksiyonu — NB Steelora küratörlü seçki.`
+    aciklamaBol(collection.description).giris ||
+    `${collection.name} koleksiyonu — NB Steelora küratörlü seçki.`
 
   return sayfaUstVerisi({
     baslik: collection.name,
@@ -39,6 +41,7 @@ export default async function KoleksiyonPage({
   if (!data) notFound()
 
   const { collection, products, cover } = data
+  const aciklama = aciklamaBol(collection.description)
 
   return (
     <div>
@@ -58,9 +61,9 @@ export default async function KoleksiyonPage({
               <h1 className="font-heading text-[30px] lg:text-[48px] font-medium text-ink leading-[1.1] mt-2">
                 {collection.name}
               </h1>
-              {collection.description && (
+              {aciklama.giris && (
                 <p className="text-[15px] lg:text-[16px] font-body text-ink-soft leading-relaxed mt-3 max-w-prose">
-                  {collection.description}
+                  {aciklama.giris}
                 </p>
               )}
               <p className="text-[13px] font-body text-muted mt-3">
@@ -122,6 +125,21 @@ export default async function KoleksiyonPage({
           </div>
         )}
       </section>
+
+      {/* Uzun açıklamanın devamı ürünlerin altında: alışveriş eden önce
+          ürünleri görür, bilgi arayan metnin tamamını burada bulur. */}
+      {aciklama.devam && (
+        <section className="border-t border-line bg-surface-muted">
+          <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-10 lg:py-14">
+            <h2 className="font-heading text-[22px] lg:text-[28px] font-medium text-ink">
+              Bu seçki hakkında
+            </h2>
+            <p className="text-[15px] lg:text-[16px] font-body text-ink-soft leading-relaxed mt-3 max-w-prose">
+              {aciklama.devam}
+            </p>
+          </div>
+        </section>
+      )}
     </div>
   )
 }
