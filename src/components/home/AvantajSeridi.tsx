@@ -21,9 +21,10 @@ const MADDELER = [
   { Icon: Truck, baslik: 'Ücretsiz kargo', metin: 'Tüm siparişlerde, alt limit yok', vurgulu: true },
   // Hediye notu ödeme adımında, ücretsiz (lib/legal/sss.ts ile aynı vaat).
   { Icon: Gift, baslik: 'Hediye kutusunda', metin: 'Her siparişte, hediye notu ücretsiz', vurgulu: false },
-  // "Koşulsuz" yazılmaz: hijyen mührü açılmış küpe/piercing ve kişiye özel
-  // ürünlerde cayma hakkı yok (bkz. /kargo-ve-iade). Doğru ve güçlü olan iki
-  // vaat: sebep sorulmaz, iade kargosu bizden.
+  // "Koşulsuz" yazılmaz: kişiye özel hazırlanan ürünlerde cayma hakkı yok
+  // (bkz. /kargo-ve-iade). 25 Kas 2026: küpe/piercing istisnası kalktı — mühür
+  // kullanılmıyor, bu ürünler de diğerleri gibi iade edilir (BB kararı). Doğru
+  // ve güçlü olan iki vaat: sebep sorulmaz, iade kargosu bizden.
   { Icon: RotateCcw, baslik: '14 gün iade', metin: 'Sebep göstermeden, iade kargosu bizden', vurgulu: false },
   // 7 Kas 2026: "iyzico güvencesiyle" kalktı (kart ödemesi kapalı, havale/EFT).
   // ETBİS kaydı sitede zaten doğrulanabilir (footer bağlantısı) — yeni iddia değil.

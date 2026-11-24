@@ -221,7 +221,8 @@ console.log('site metinleri')
 esit('Tosla dönüşü trafik kaynağı sayılmaz', kaynakGrubu('entegrasyon.tosla.com'), 'ic')
 esit('SSS: kart kapalıyken havale metni', odemeCevabi(false).startsWith('Şu an ödemeler havale/EFT ile'), true)
 esit('SSS: kart açıkken iki yol', odemeCevabi(true).startsWith('Kartla ya da havale/EFT ile'), true)
-esit('SSS listesinin sonunda ödeme sorusu', sssTamami(true).at(-1)?.soru, 'Nasıl ödeme yapabilirim?')
+// 24 Kas 2026'da ödeme sorusunun ardına taksit sorusu eklendi; liste bu ikisiyle biter.
+esit('SSS listesi ödeme ve taksit sorusuyla biter', sssTamami(true).slice(-2).map((s) => s.soru), ['Nasıl ödeme yapabilirim?', 'Taksit ya da kapıda ödeme var mı?'])
 
 console.log(`\n${gecti} geçti, ${kaldi} kaldı`)
 if (kaldi > 0) process.exit(1)

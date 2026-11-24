@@ -3,7 +3,7 @@ import { MARKA_ALT_SATIR_BUYUK } from '@/lib/metin/marka'
 import { htmlKacir } from '@/lib/guvenlik/girdi'
 import { WHATSAPP_URL } from '@/lib/contact'
 import { SHIPPING_LINE_LABEL } from '@/lib/shipping'
-import { BANKA_YANSIMA_LABEL, CAYMA_SURESI_GUN } from '@/lib/legal/sozlesme'
+import { AZAMI_TESLIM_GUN, BANKA_YANSIMA_LABEL, CAYMA_SURESI_GUN, GERI_ODEME_GUN } from '@/lib/legal/sozlesme'
 import { ORG_EMAIL } from '@/lib/seo'
 import { subeIfadesi } from '@/lib/shipping/firmalar'
 
@@ -176,6 +176,12 @@ export function orderConfirmationEmail(order: OrderLike) {
  * müşterinin elinde kalan bir kopya gerekir. Sipariş onay e-postası bu işlevi
  * görüyor. Onay damgası (sürüm + zaman) da burada yazılı ki müşteri neyi
  * onayladığını sonradan da görebilsin.
+ *
+ * 25 Kas 2026: özet, ön bilgilendirme formuyla AYNI şeyi söyler — (1) geri
+ * ödeme süresi "cayma bildirimi ulaştıktan sonra" değil, formdaki gibi ürünün
+ * iade kargosuna teslim edildiği günden işler (MSY m.12/1); (2) küpe/piercing
+ * istisnası kalktı, tek istisna kişiye özel ürünler. Süreler elle yazılmaz,
+ * lib/legal/sozlesme.ts'ten gelir (lib/legal/__testler__/iadeMetni.test.mts).
  */
 function onBilgilendirmeOzeti(order: OrderLike): string {
   const onay = order.metadata?.sozlesme_onayi ?? null
@@ -196,16 +202,18 @@ function onBilgilendirmeOzeti(order: OrderLike): string {
         e-posta ile iletebilirsiniz. İade kargo bedeli tarafımıza aittir.
       </p>
       <p style="margin: 0 0 10px; font-size: 13px; line-height: 1.8; color: #2A1E1E;">
-        <strong>Geri ödeme:</strong> Cayma bildiriminiz ulaştıktan sonra en geç 14 gün
-        içinde, ödemeyi yaptığınız yöntemle ve masrafsız olarak iade edilir.
+        <strong>Geri ödeme:</strong> Ürünü iade kargosuna teslim ettiğiniz tarihten
+        itibaren en geç ${GERI_ODEME_GUN} gün içinde, ödemeyi yaptığınız yöntemle ve
+        masrafsız olarak iade edilir.
       </p>
       <p style="margin: 0 0 10px; font-size: 13px; line-height: 1.8; color: #2A1E1E;">
-        <strong>İstisna:</strong> Kişiye özel hazırlanan ürünler ile hijyen gereği
-        ambalajı açıldıktan sonra iadesi uygun olmayan ürünlerde (küpe, piercing)
-        cayma hakkı, ambalaj açılmamış olmak kaydıyla geçerlidir.
+        <strong>İstisna:</strong> Cayma hakkı yalnızca kişiye özel hazırlanan
+        ürünlerde (isim, harf ya da tarih yazdırılan, özel ölçüye göre üretilen)
+        kullanılamaz. Küpe ve piercing dâhil diğer tüm ürünlerde ambalajı açmanız
+        cayma hakkınızı etkilemez.
       </p>
       <p style="margin: 0 0 10px; font-size: 13px; line-height: 1.8; color: #2A1E1E;">
-        <strong>Teslimat:</strong> Yasal azami süre 30 gündür. Kargo ücretsizdir.
+        <strong>Teslimat:</strong> Yasal azami süre ${AZAMI_TESLIM_GUN} gündür. Kargo ücretsizdir.
         <strong>Fiyatlar</strong> KDV dahildir.
       </p>
       <p style="margin: 0; font-size: 13px; line-height: 1.8; color: #2A1E1E;">

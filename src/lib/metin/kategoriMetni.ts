@@ -65,10 +65,12 @@ const KATEGORI_METINLERI: Record<string, string[]> = {
     'İnce bantlardan belirgin formlara uzanan yüzük seçkisi.',
   ],
   piercing: [
-    'Vücut takıları için hijyen mührüyle gönderilen piercingler.',
+    // 25 Kas 2026: "hijyen mührüyle gönderilir" diyen iki cümle çıkarıldı —
+    // mühür kullanılmıyor, ürünler kapalı hediye kutusunda gidiyor.
+    'Vücut takıları için çelik gövdeli piercing seçkisi.',
     'Çelik gövdeli, günlük kullanıma uygun piercing seçkisi.',
     '316L paslanmaz çelik gövdeleriyle günlük kullanıma uygun piercingler.',
-    'Çelik gövdeli modeller, hijyen mührüyle gönderilir.',
+    'Çelik gövdeli modeller, hediye kutusunda gönderilir.',
     'Çelik gövdeli, sade formlu piercing modelleri.',
     'Tek başına ya da birlikte taşınabilen piercing seçkisi.',
     'Günlük kullanım ve özel günler için çelik piercingler.',

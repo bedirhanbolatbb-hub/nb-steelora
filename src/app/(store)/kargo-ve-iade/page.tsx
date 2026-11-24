@@ -134,22 +134,23 @@ export default async function KargoVeIadePage() {
         gönderdiğiniz hesaba havale ile iade edilir.
       </p>
 
+      {/* 25 Kas 2026 (BB kararı): küpe/piercing istisnası kaldırıldı. Eski metin
+          "koruyucu bant/mühürle gönderilir" diyordu; mühür hiç kullanılmadı,
+          ürünler kapalı hediye kutusunda gidiyor. Ürün sayfalarındaki "14 gün
+          içinde sebep göstermeden iade" vaadiyle de çelişiyordu. Tek istisna
+          kişiye özel hazırlanan ürünler (MSY m.15/1-b); bu cümleler
+          lib/legal/__testler__/iadeMetni.test.mts ile korunur. */}
       <h2>Cayma Hakkının Kullanılamadığı Ürünler</h2>
-      <p>Mevzuat gereği yalnızca iki durumda cayma hakkı kullanılamaz:</p>
+      <p>Cayma hakkı yalnızca bir durumda kullanılamaz:</p>
       <ul>
         <li>
           <strong>Kişiye özel hazırlanan ürünler</strong> — isim, harf veya tarih
           yazdırılan, ya da özel ölçüye göre üretilen ürünler.
         </li>
-        <li>
-          <strong>Hijyen mührü açılmış küpe, piercing ve benzeri vücut deldirme takıları.</strong>{' '}
-          Bu ürünler koruyucu bant/mühürle gönderilir; mühür açılmamışsa cayma hakkınız
-          aynen geçerlidir.
-        </li>
       </ul>
       <p>
-        Kolye, bileklik, yüzük ve halhal gibi diğer tüm ürünlerde ambalajı açmanız iade
-        hakkınızı etkilemez.
+        Küpe ve piercing dâhil diğer tüm ürünlerde ambalajı açmanız iade hakkınızı
+        etkilemez.
       </p>
 
       <h2>Değişim</h2>

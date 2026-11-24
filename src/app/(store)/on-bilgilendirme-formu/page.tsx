@@ -169,27 +169,25 @@ export default async function OnBilgilendirmeFormuPage() {
       </p>
 
       <h2>6. Cayma Hakkının Kullanılamayacağı Haller</h2>
-      <p>Mesafeli Sözleşmeler Yönetmeliği m.15 uyarınca yalnızca şu iki hâlde cayma hakkı kullanılamaz:</p>
+      {/* 25 Kas 2026 (BB kararı): m.15/1(ç) bendi — küpe/piercing — metinden
+          çıkarıldı; mühür kullanılmıyor, bu ürünler de iade edilir. Esasa ilişkin
+          değişiklik: SOZLESME_SURUMU yükseltildi (lib/legal/sozlesme.ts). */}
+      <p>
+        Mesafeli Sözleşmeler Yönetmeliği m.15 kapsamındaki istisnalardan mağazamızda
+        yalnızca biri uygulanır:
+      </p>
       <ul>
         <li>
           <strong>m.15/1(b)</strong> — İstekleriniz veya kişisel ihtiyaçlarınız
           doğrultusunda hazırlanan ürünler (isim, harf, tarih yazdırılan ya da özel ölçüye
           göre üretilen kişiselleştirilmiş ürünler).
         </li>
-        <li>
-          <strong>m.15/1(ç)</strong> — Teslimden sonra ambalaj, bant, mühür veya paket gibi
-          koruyucu unsurları açılmış olan ürünlerden, iadesi sağlık ve hijyen açısından
-          uygun olmayanlar. Mağazamızda bu kapsama yalnızca{' '}
-          <strong>küpe, piercing ve benzeri vücut deldirme takıları</strong> girer; bu
-          ürünler hijyen mührü veya koruyucu bantla gönderilir.
-        </li>
       </ul>
       <p>
-        <strong>Bunun dışındaki tüm ürünlerde ambalajı açmanız cayma hakkınızı ortadan
-        kaldırmaz.</strong> Ürünü, işleyişini ve özelliklerini anlamak için makul ölçüde
-        inceleyebilirsiniz; bu incelemeden doğan değişikliklerden sorumlu tutulmazsınız
-        (m.13/2). Yukarıdaki iki istisnaya giren ürünlerde de koruyucu unsur açılmamışsa
-        cayma hakkınız aynen geçerlidir.
+        <strong>Küpe ve piercing dâhil diğer tüm ürünlerde ambalajı açmanız cayma
+        hakkınızı ortadan kaldırmaz.</strong> Ürünü, işleyişini ve özelliklerini anlamak
+        için makul ölçüde inceleyebilirsiniz; bu incelemeden doğan değişikliklerden
+        sorumlu tutulmazsınız (m.13/2).
       </p>
 
       <h2>7. İade Adresi</h2>

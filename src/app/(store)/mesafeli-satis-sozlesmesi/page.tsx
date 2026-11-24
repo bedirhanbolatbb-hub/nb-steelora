@@ -136,23 +136,20 @@ export default async function MesafeliSatisSozlesmesiPage() {
       </ul>
 
       <h2>7. Cayma Hakkının Kullanılamayacağı Haller</h2>
-      <p>Yönetmelik m.15 gereği yalnızca aşağıdaki hallerde cayma hakkı kullanılamaz:</p>
+      {/* 25 Kas 2026 (BB kararı): m.15/1(ç) bendi — küpe/piercing — metinden
+          çıkarıldı; mühür kullanılmıyor, bu ürünler de iade edilir. Esasa ilişkin
+          değişiklik: SOZLESME_SURUMU yükseltildi (lib/legal/sozlesme.ts). */}
+      <p>SATICI, Yönetmelik m.15 kapsamındaki istisnalardan yalnızca aşağıdakini uygular:</p>
       <ul>
         <li>
           <strong>m.15/1(b)</strong> — ALICI'nın istekleri veya kişisel ihtiyaçları
           doğrultusunda hazırlanan ürünler (isim/harf/tarih yazdırılan ya da özel ölçüye
           göre üretilen ürünler).
         </li>
-        <li>
-          <strong>m.15/1(ç)</strong> — Tesliminden sonra ambalaj, bant, mühür veya paket
-          gibi koruyucu unsurları açılmış olan ürünlerden, iadesi sağlık ve hijyen
-          açısından uygun olmayanlar; mağazada bu kapsama yalnızca küpe, piercing ve
-          benzeri vücut deldirme takıları girer.
-        </li>
       </ul>
       <p>
-        Bunların dışındaki ürünlerde ambalajın açılmış olması cayma hakkını ortadan
-        kaldırmaz.
+        Küpe ve piercing dâhil diğer tüm ürünlerde ambalajın açılmış olması cayma hakkını
+        ortadan kaldırmaz.
       </p>
 
       <h2>8. Genel Hükümler</h2>

@@ -12,7 +12,13 @@ import { FREE_SHIPPING_LABEL, GONDERIM_BOLGESI, TESLIM_CUMLESI } from '@/lib/shi
  * hediye paketi, hijyen mührü) buraya GİRMEZ.
  *
  * HİJYEN MÜHRÜ ÖZELLİKLE YOK: mühür kullanmama kararı verildi, dolayısıyla
- * "mühürle gönderilir" demek yalan olurdu.
+ * "mühürle gönderilir" demek yalan olurdu. 25 Kas 2026: hukuk sayfaları,
+ * sipariş e-postası ve piercing kategori cümlesi de bu karara uyduruldu —
+ * küpe ve piercing diğer ürünler gibi iade edilir; tek istisna kişiye özel
+ * hazırlanan ürünlerdir (lib/legal/__testler__/iadeMetni.test.mts).
+ * Aynı gün iade cevabındaki geri ödeme süresi de sözleşmeyle eşitlendi:
+ * süre "ürün bize ulaştıktan sonra" değil, ürünün iade kargosuna teslim
+ * edildiği günden işler (MSY m.12/1; sözleşme ve /kargo-ve-iade böyle yazar).
  *
  * Aynı liste üç yerde kullanılır: /sss sayfası, FAQPage şeması ve ürün
  * sayfasındaki akordeon — üçü ayrışmasın diye tek kaynak.
@@ -45,7 +51,7 @@ export const SSS_URUN: SssSorusu[] = [
   {
     soru: 'İade ve değişim nasıl işliyor?',
     cevap:
-      `Teslim aldığınız günden itibaren ${CAYMA_SURESI_GUN} gün içinde hiçbir gerekçe göstermeden cayma hakkınızı kullanabilirsiniz. Talebinizi üye olmadan Kargo Takip sayfasından (sipariş numaranız ve e-posta adresinizle), üyeyseniz Hesabım → Siparişlerim ekranından oluşturursunuz; kullanacağınız kargo firmasını ve iade kodunu e-posta ile bildiririz. İade kargo ücreti bize aittir; hiçbir hâlde sizden talep etmeyiz. Ürün tarafımıza ulaştıktan sonra ödemeniz en geç ${GERI_ODEME_GUN} gün içinde iade edilir.`,
+      `Teslim aldığınız günden itibaren ${CAYMA_SURESI_GUN} gün içinde hiçbir gerekçe göstermeden cayma hakkınızı kullanabilirsiniz. Talebinizi üye olmadan Kargo Takip sayfasından (sipariş numaranız ve e-posta adresinizle), üyeyseniz Hesabım → Siparişlerim ekranından oluşturursunuz; kullanacağınız kargo firmasını ve iade kodunu e-posta ile bildiririz. İade kargo ücreti bize aittir; hiçbir hâlde sizden talep etmeyiz. Ürünü iade kargosuna teslim ettiğiniz tarihten itibaren en geç ${GERI_ODEME_GUN} gün içinde ödemeniz iade edilir.`,
   },
 ]
 
@@ -137,6 +143,12 @@ export function sssUrun(malzeme: string | null | undefined, kartAcik: boolean): 
 /** Ödeme dışındaki sorular — ödeme cevabı aşağıdaki `sssTamami` ile eklenir. */
 const SSS_TAMAMI_SABIT: SssSorusu[] = [
   ...SSS_URUN,
+  // 25 Kas 2026: takı alışverişinde en sık sorulan iade sorusu. Cevap
+  // /kargo-ve-iade sayfasındaki cümlenin aynısıdır — yeni vaat değil.
+  {
+    soru: 'Küpe ve piercing iade edilebilir mi?',
+    cevap: `Evet. Küpe ve piercing dâhil tüm ürünlerde, teslim aldığınız günden itibaren ${CAYMA_SURESI_GUN} gün içinde cayma hakkınızı kullanabilirsiniz; ambalajı açmanız bu hakkı etkilemez. Cayma hakkı yalnızca kişiye özel hazırlanan ürünlerde kullanılamaz.`,
+  },
   {
     soru: 'Kargo ücreti var mı?',
     cevap: `${FREE_SHIPPING_LABEL}. Sipariş tutarına bakılmaksızın kargo bizden.`,

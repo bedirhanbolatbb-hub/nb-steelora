@@ -94,7 +94,7 @@ Marka adı TÜRKPATENT'te tescillidir (2025 163503).
 - Cayma hakkı: teslim tarihinden itibaren ${CAYMA_SURESI_GUN} gün, gerekçesiz. Üyelik gerekmez — iade talebi kargo takip sayfasından sipariş numarası ve e-posta ile açılır.
 - İade kargo ücreti satıcıya aittir; müşteriden alınmaz.
 - Geri ödeme: ürün kargoya verildikten sonra en geç ${GERI_ODEME_GUN} gün içinde başlatılır; karta yansıması bankaya bağlı olarak ${BANKA_YANSIMA_LABEL} sürer.
-- Cayma hakkı yalnız iki durumda kullanılamaz: kişiye özel hazırlanan ürünler ve hijyen mührü açılmış küpe/piercing.
+- Cayma hakkı yalnız kişiye özel hazırlanan ürünlerde kullanılamaz; küpe ve piercing dâhil diğer tüm ürünler iade edilebilir.
 - ${
     kartOdemesiAcikMi()
       ? 'Ödeme kartla (Tosla güvenli ödeme sayfası, 3D Secure, tek çekim; kart bilgisi siteye girilmez) ya da havale/EFT ile, sitedeki satıcı adına kayıtlı hesaba alınır.'

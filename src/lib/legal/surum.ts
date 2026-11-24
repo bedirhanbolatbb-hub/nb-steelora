@@ -52,7 +52,9 @@ export const MESAFELI_SURUMU: MetinSurumu = {
   // 7 Kas 2026: ödeme maddesi — kart (iyzico) yerine havale/EFT.
   // 16 Kas 2026: ödeme maddesi — kart (Tosla) ve havale/EFT birlikte
   // (canlıya alındığı gün; bkz. lib/legal/sozlesme.ts).
-  yururluk: '2026-11-16',
+  // 25 Kas 2026: cayma istisnaları — küpe/piercing için yazılan hijyen mührü
+  // bendi çıkarıldı (mühür kullanılmıyor); tek istisna kişiye özel ürünler.
+  yururluk: '2026-11-25',
 }
 
 /** ISO tarihi GG.AA.YYYY biçimine çevirir. Geçersizse olduğu gibi döner. */

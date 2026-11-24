@@ -22,7 +22,15 @@
 // Yalnız bir yönteme tanınan indirimin o yöntemde uygulandığı yazıldı.
 // (Kod 12.11.2026'da hazırlandı; canlıya alındığı gün 16.11.2026 — sürüm ve
 // lib/legal/surum.ts'deki iki yürürlük tarihi bu güne çekildi, docs/tosla/PLAN.md.)
-export const SOZLESME_SURUMU = '2026-11-16.1'
+// 25.11.2026 — ESASA İLİŞKİN: cayma hakkının istisnaları. Küpe ve piercing için
+// yazılan m.15/1(ç) bendi (koruyucu unsuru açılmış, iadesi hijyen açısından
+// uygun olmayan ürün) metinden çıkarıldı. Metin "hijyen mührü veya koruyucu
+// bantla gönderilir" diyordu; mühür hiç kullanılmadı, ürünler kapalı hediye
+// kutusunda gidiyor. Ürün sayfalarındaki "14 gün içinde sebep göstermeden
+// iade" vaadiyle de çelişiyordu (BB kararı, 24 Kas 2026). Tek istisna kişiye
+// özel hazırlanan ürünler (m.15/1-b). Değişiklik tüketici LEHİNE olduğu için
+// eski sürümü onaylamış siparişlerde de küpe/piercing iadesi reddedilmez.
+export const SOZLESME_SURUMU = '2026-11-25.1'
 
 /**
  * Yasal süreler ve eşikler — TEK KAYNAK (Faz 20'de mevzuattan doğrulandı).

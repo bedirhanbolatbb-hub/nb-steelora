@@ -1,4 +1,4 @@
-import { sepetHesabi, kampanyaIndirimi, kartFiyatiGosterilsinMi, kosulRozeti, INDIRIM_TAVANI_ORANI } from '/Users/bedir/Projects/nb-steelora/src/lib/campaigns/hesap.ts'
+import { sepetHesabi, kampanyaIndirimi, kartFiyatiGosterilsinMi, kosulRozeti, INDIRIM_TAVANI_ORANI } from '../hesap.ts'
 
 let gecti = 0, kaldi = 0
 const esit = (ad: string, bulunan: any, beklenen: any) => {
