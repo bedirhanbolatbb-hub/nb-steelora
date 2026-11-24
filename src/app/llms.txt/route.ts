@@ -7,6 +7,7 @@ import {
 } from '@/lib/legal/sozlesme'
 import { FREE_SHIPPING_LABEL, TESLIM_CUMLESI } from '@/lib/shipping'
 import { kartOdemesiAcikMi } from '@/lib/tosla/client'
+import { aciklamaBol } from '@/lib/collections'
 
 const TABAN = 'https://www.nbsteelora.com'
 
@@ -25,19 +26,57 @@ export const revalidate = 86400
  * (lib/legal/sozlesme.ts, lib/shipping.ts) okunur; ürün sayısı canlı
  * veritabanından gelir. Böylece koşullar değişince bu dosya kendiliğinden
  * güncellenir.
+ *
+ * 24 Kas 2026: koleksiyonlar ve kapsamlı rehber yazıları da listelenir.
+ * Asistanlar "316L çelik takı", "charm bileklik" gibi sorularda kaynak
+ * gösterecek sayfayı bu dosyadan buluyor; önceden yalnız kategoriler vardı.
+ * İkisi de veritabanından gelir (ad, adres, tek cümle) — elle liste tutulmaz.
  */
+
+/** Rehber sayılacak en kısa yazı: kısa duyuru yazıları listeye girmez. */
+const REHBER_EN_AZ_KARAKTER = 3500
+
 export async function GET() {
   let aktifUrun = 0
+  let koleksiyonlar: { slug: string; name: string; description: string | null }[] = []
+  let rehberler: { slug: string; title: string; excerpt: string | null }[] = []
   try {
     const supabase = createServiceClient()
-    const { count } = await supabase
-      .from('products')
-      .select('id', { count: 'exact', head: true })
-      .eq('is_active', true)
-    aktifUrun = count ?? 0
+    const [urun, kol, yazi] = await Promise.all([
+      supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
+      supabase
+        .from('collections')
+        .select('slug, name, description')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true }),
+      supabase
+        .from('blog_posts')
+        .select('slug, title, excerpt, content')
+        .eq('published', true)
+        .order('published_at', { ascending: false }),
+    ])
+    aktifUrun = urun.count ?? 0
+    koleksiyonlar = (kol.data ?? []) as typeof koleksiyonlar
+    rehberler = ((yazi.data ?? []) as { slug: string; title: string; excerpt: string | null; content: string | null }[])
+      .filter((y) => (y.content ?? '').length >= REHBER_EN_AZ_KARAKTER)
+      .map((y) => ({ slug: y.slug, title: y.title, excerpt: y.excerpt }))
   } catch {
-    // Sayı alınamazsa satır hiç basılmaz — tahmini rakam yazılmaz.
+    // Veri alınamazsa ilgili satırlar hiç basılmaz — tahmini bilgi yazılmaz.
   }
+
+  const tekSatir = (metin: string | null) => (metin ?? '').replace(/\s+/g, ' ').trim()
+  const koleksiyonListesi = koleksiyonlar
+    .map((k) => {
+      const giris = tekSatir(aciklamaBol(k.description).giris)
+      return `- [${k.name}](${TABAN}/koleksiyon/${k.slug})${giris ? `: ${giris}` : ''}`
+    })
+    .join('\n')
+  const rehberListesi = rehberler
+    .map((y) => {
+      const ozet = tekSatir(y.excerpt)
+      return `- [${y.title}](${TABAN}/blog/${y.slug})${ozet ? `: ${ozet}` : ''}`
+    })
+    .join('\n')
 
   const kategoriler = CATEGORIES.map((c) => `- [${c.title}](${TABAN}/kategori/${c.slug})`).join('\n')
 
@@ -62,10 +101,11 @@ Marka adı TÜRKPATENT'te tescillidir (2025 163503).
       : 'Ödeme havale/EFT ile, sitedeki satıcı adına kayıtlı hesaba alınır. Kart bilgisi istenmez.'
   }
 - Her sipariş ücretsiz hediye kutusunda gönderilir.
+- Malzeme: her ürünün malzemesi kendi sayfasında yazar — 316L paslanmaz çelik ya da kaplama pirinç. Kaplama pirinç ürünler bijuteridir; altın ya da gümüş değildir. 316L çelik nikel içerir.
 
 ## Kategoriler
 
-${kategoriler}
+${kategoriler}${koleksiyonListesi ? `\n\n## Koleksiyonlar\n\n${koleksiyonListesi}` : ''}${rehberListesi ? `\n\n## Rehberler\n\n${rehberListesi}` : ''}
 
 ## Sayfalar
 
