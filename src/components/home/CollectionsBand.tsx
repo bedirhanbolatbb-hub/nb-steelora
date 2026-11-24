@@ -72,7 +72,9 @@ export default function CollectionsBand({ collections }: { collections: Collecti
               key={collection.slug}
               className="w-[44vw] shrink-0 snap-start sm:w-auto"
               data-reveal
-              style={{ '--reveal-delay': `${i * 60}ms` } as React.CSSProperties}
+              // Gecikme üçüncü kapakta sabitlenir: telefonda dördüncü ve beşinci
+              // kapak yana kaydırınca görünür; artan gecikme "geç geliyor" hissi verirdi.
+              style={{ '--reveal-delay': `${Math.min(i, 2) * 60}ms` } as React.CSSProperties}
             >
               <Link prefetch={false} href={`/koleksiyon/${collection.slug}`} className="group block">
                 <div className="relative aspect-[4/5] overflow-hidden rounded-[4px] bg-surface-muted">
