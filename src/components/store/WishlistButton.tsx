@@ -32,7 +32,7 @@ export default function WishlistButton({
       }}
       className={
         kutu
-          ? 'shrink-0 flex items-center justify-center w-[58px] py-[18px] border border-line rounded-[4px] transition-colors hover:border-accent-line'
+          ? 'shrink-0 flex items-center justify-center min-h-[52px] w-[52px] border border-line-strong rounded-[4px] transition-colors hover:border-ink'
           : 'p-2 transition-transform hover:scale-110'
       }
       title={inWishlist ? 'Favorilerden çıkar' : 'Favorilere ekle'}
