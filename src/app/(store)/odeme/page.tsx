@@ -26,6 +26,8 @@ import KuponKutusu, { useKuponKodu } from '@/components/store/KuponKutusu'
 import { kucukResim } from '@/lib/gorsel/kadraj'
 import { useKadrajSorgu } from '@/components/store/KadrajContext'
 import { toslaOdemeSayfasiMi } from '@/lib/tosla/ortak'
+import { indirimNotu } from '@/lib/sepet/indirimNotu'
+import { dugmeSinifi } from '@/components/ui/Button'
 
 /** Kart ödemesi kapalıyken kartla almak isteyene gösterilen mağaza (7 Kas 2026). */
 
@@ -190,6 +192,16 @@ export default function OdemePage() {
   // Kargo eşiği indirimli ara toplam üzerinden — sunucudaki hesapla birebir
   // aynı olmalı, yoksa ekrandaki toplam ile çekilen tutar ayrışır (Faz 11).
   const discountedSubtotal = Math.max(0, subtotal - totalDiscount - havaleIndirimi)
+  // Tek indirim satırında toplam yinelenmez (lib/sepet/indirimNotu).
+  const indirimNotuMetni = indirimNotu(
+    {
+      satirSayisi: ozet.uygulananlar.length + (havaleIndirimi > 0 ? 1 : 0),
+      toplam: totalDiscount + havaleIndirimi,
+      tavanUygulandi: ozet.tavanUygulandi,
+      kuponDusmedi: Boolean(kod && !kuponUygulandi),
+    },
+    formatPrice
+  )
   // Kargo koşulsuz ücretsiz — sunucudaki hesapla birebir aynı tek kaynaktan.
   const shipping = shippingCostFor(discountedSubtotal)
   const total = discountedSubtotal + shipping
@@ -382,7 +394,7 @@ export default function OdemePage() {
         </p>
         <a
           href="/urunler"
-          className="inline-flex items-center justify-center bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
+          className={dugmeSinifi('primary', 'md')}
         >
           Ürünlere Git
         </a>
@@ -451,17 +463,11 @@ export default function OdemePage() {
                 <dd className="price text-[13px] text-accent-deep shrink-0">-{formatPrice(havaleIndirimi)}</dd>
               </div>
             )}
-            {totalDiscount + havaleIndirimi > 0 && (
-              <p className="text-[12px] font-body text-ink-soft">
-                Toplam indiriminiz: {formatPrice(totalDiscount + havaleIndirimi)}
-                {ozet.tavanUygulandi && <span className="text-muted"> · indirim tavanı uygulandı</span>}
-                {kod && !kuponUygulandi && (
-                  <span className="text-muted"> · en avantajlı kampanya uygulandı, indirimler toplanmaz</span>
-                )}
-              </p>
+            {indirimNotuMetni && (
+              <p className="text-[12px] font-body text-ink-soft">{indirimNotuMetni}</p>
             )}
             {ozet.yaklasanlar.length > 0 && (
-              <p className="text-[11px] font-body text-accent-deep">
+              <p className="text-[12px] font-body text-accent-deep">
                 {formatPrice(ozet.yaklasanlar[0].kalanTutar)} daha ekleyin,{' '}
                 {ozet.yaklasanlar[0].oran
                   ? `%${Math.round(ozet.yaklasanlar[0].oran)} kazanın`
@@ -475,7 +481,7 @@ export default function OdemePage() {
               </dd>
             </div>
             <div className="flex items-baseline justify-between gap-4 pt-3 border-t border-line">
-              <dt className="text-[12px] uppercase tracking-[0.15em] font-body text-ink">Toplam</dt>
+              <dt className="text-[12px] uppercase tracking-[0.1em] font-body text-ink">Toplam</dt>
               <dd className="price text-[18px] text-ink">{formatPrice(total)}</dd>
             </div>
           </dl>
@@ -657,7 +663,7 @@ export default function OdemePage() {
                           <span className="font-body">
                             <span className="block text-[13px] font-medium text-ink">{y.baslik}</span>
                             <span
-                              className={`mt-0.5 block text-[11px] ${
+                              className={`mt-0.5 block text-[12px] ${
                                 y.deger === 'havale' && havale ? 'text-accent-deep' : 'text-muted'
                               }`}
                             >
@@ -765,9 +771,9 @@ export default function OdemePage() {
               maxLength={300}
               /* text-base: iOS, 16px'ten küçük alanlara dokunulduğunda sayfayı
                  yakınlaştırıyor; masaüstünde tasarım ölçüsü korunuyor. */
-              className="w-full border border-line bg-white px-4 py-3 text-base sm:text-sm font-body text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors resize-none"
+              className="w-full border border-line-strong bg-white px-4 py-3 text-base sm:text-sm font-body text-ink placeholder:text-muted focus:border-ink focus:outline-none transition-colors resize-none"
             />
-            <p className="text-[10px] font-body text-muted mt-1 text-right">{giftNote.length}/300</p>
+            <p className="text-[12px] font-body text-muted mt-1 text-right">{giftNote.length}/300</p>
           </section>
 
           {/* Kurumsal fatura (Faz 28) — isteğe bağlı */}
@@ -781,7 +787,7 @@ export default function OdemePage() {
               />
               <span className="font-body text-[13px] text-ink">
                 Kurumsal fatura istiyorum
-                <span className="mt-0.5 block text-[11px] text-muted">
+                <span className="mt-0.5 block text-[12px] leading-snug text-muted">
                   Şirket adına fatura için vergi dairesi ve vergi numarası gerekir.
                   İşaretlemezseniz faturanız adınıza kesilir; kimlik numarası istemiyoruz.
                 </span>
@@ -810,7 +816,7 @@ export default function OdemePage() {
                     }
                   />
                 </div>
-                <p className="font-body text-[11px] leading-relaxed text-muted">
+                <p className="font-body text-[12px] leading-relaxed text-muted">
                   Bu bilgiler yalnız faturanızın düzenlenmesi için saklanır.
                 </p>
               </div>
@@ -834,7 +840,7 @@ export default function OdemePage() {
                 girilmişse tekrar önermeye gerek yok; sunucu da otomatik
                 kampanya varken bu metni hiç göndermiyor. */}
             {ilkSiparisMetni && !kod && (
-              <p className="mt-2 font-body text-[11px] text-ink-soft">
+              <p className="mt-2 font-body text-[12px] text-ink-soft">
                 <span className="text-accent-deep">✦</span> {ilkSiparisMetni}
               </p>
             )}
@@ -928,7 +934,7 @@ export default function OdemePage() {
             )}
             <div className="flex items-center gap-3">
               <div className="shrink-0 sm:hidden">
-                <p className="font-body text-[11px] uppercase tracking-[0.12em] text-muted">Toplam</p>
+                <p className="font-body text-[12px] uppercase tracking-[0.08em] text-muted">Toplam</p>
                 <p className="price text-[18px] leading-tight text-ink">{formatPrice(total)}</p>
               </div>
               {/* aria-disabled KULLANILMIYOR: düğme gerçekten tıklanabilir ve

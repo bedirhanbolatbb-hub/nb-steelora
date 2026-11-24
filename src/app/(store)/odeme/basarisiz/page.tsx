@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { dugmeSinifi } from '@/components/ui/Button'
 import { Clock, XCircle } from 'lucide-react'
 import { bankaYanitiAciklamasi } from '@/lib/tosla/bankaYaniti'
 
@@ -36,28 +37,28 @@ export default async function BasarisizPage({
           <Clock size={30} className="text-amber-700" />
         </div>
         <h1 className="font-heading text-[32px] text-ink mb-3">Ödemeniz Kontrol Ediliyor</h1>
-        <p className="text-[13px] font-body text-ink-soft mb-4 leading-relaxed">
+        <p className="text-[15px] font-body text-ink-soft mb-4 leading-relaxed">
           Ödemenizin sonucunu bankadan henüz kesin olarak alamadık. Lütfen tekrar ödeme
           yapmayın: kartınızdan çekim yapıldıysa siparişiniz onaylanır ve size e-posta
           göndeririz. Çekim yapılmadıysa da e-postayla bilgilendiririz.
         </p>
         {siparisNo && (
-          <p className="text-[12px] font-body text-muted mb-8">
+          <p className="text-[13px] font-body text-ink-soft mb-8">
             Sipariş numaranız: <span className="font-mono text-ink">{siparisNo}</span>
           </p>
         )}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
           <Link
             prefetch={false}
             href="/iletisim"
-            className="inline-block border border-line text-ink-soft text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:border-accent-line hover:text-accent-deep transition-all"
+            className={dugmeSinifi('outline', 'md')}
           >
             Bize Ulaşın
           </Link>
           <Link
             prefetch={false}
             href="/urunler"
-            className="inline-block border border-line text-ink-soft text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:border-accent-line hover:text-accent-deep transition-all"
+            className={dugmeSinifi('ghost', 'md', 'underline underline-offset-4')}
           >
             Alışverişe Dön
           </Link>
@@ -74,24 +75,24 @@ export default async function BasarisizPage({
       <h1 className="font-heading text-[32px] text-ink mb-3">
         Ödeme Başarısız
       </h1>
-      <p className="text-[12px] font-body text-muted mb-3 leading-relaxed">
+      <p className="text-[15px] font-body text-ink-soft mb-3 leading-relaxed">
         Ödeme işlemi tamamlanamadı; kartınızdan çekim yapılmadı. Kart bilgilerinizi kontrol
         edip tekrar deneyebilir, farklı bir kart kullanabilir ya da havale/EFT ile ödeyebilirsiniz.
       </p>
       {aciklama && (
-        <p className="text-[13px] font-body text-ink mb-3 leading-relaxed">{aciklama}</p>
+        <p className="text-[15px] font-body text-ink mb-3 leading-relaxed">{aciklama}</p>
       )}
       {bankaNedeni && (
-        <p className="text-[12px] font-body text-ink-soft mb-8">
+        <p className="text-[13px] font-body text-ink-soft mb-8">
           Bankanın yanıtı: {bankaNedeni}
           {bankaKodu ? ` (kod ${bankaKodu})` : ''}
         </p>
       )}
-      <div className={`flex flex-col sm:flex-row items-center justify-center gap-3 ${bankaNedeni ? '' : 'mt-5'}`}>
+      <div className={`flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center ${bankaNedeni ? '' : 'mt-5'}`}>
         <Link
           prefetch={false}
           href="/odeme"
-          className="basis inline-block bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:bg-accent-deep transition-all"
+          className={dugmeSinifi('primary', 'md')}
         >
           Tekrar Dene
         </Link>
@@ -100,14 +101,14 @@ export default async function BasarisizPage({
         <Link
           prefetch={false}
           href="/odeme?yontem=havale"
-          className="inline-block border border-ink text-ink text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:border-accent-deep hover:text-accent-deep transition-all"
+          className={dugmeSinifi('outline', 'md')}
         >
           Havale / EFT ile öde
         </Link>
         <Link
           prefetch={false}
           href="/urunler"
-          className="inline-block border border-line text-ink-soft text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:border-accent-line hover:text-accent-deep transition-all"
+          className={dugmeSinifi('ghost', 'md', 'underline underline-offset-4')}
         >
           Alışverişe Dön
         </Link>

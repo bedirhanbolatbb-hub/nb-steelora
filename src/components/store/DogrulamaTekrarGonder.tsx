@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Input from '@/components/ui/Input'
+import { dugmeSinifi } from '@/components/ui/Button'
 
 /**
  * Doğrulama mailini yeniden gönderir.
@@ -66,7 +67,7 @@ export default function DogrulamaTekrarGonder({
       <button
         type="submit"
         disabled={gonderiliyor || kalan > 0 || !eposta}
-        className="w-full border border-ink px-6 py-3 font-body text-[11px] uppercase tracking-[0.15em] text-ink transition-colors hover:bg-surface-muted disabled:opacity-45"
+        className={dugmeSinifi('outline', 'md', 'w-full')}
       >
         {gonderiliyor
           ? 'Gönderiliyor…'

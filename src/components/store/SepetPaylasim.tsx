@@ -10,6 +10,7 @@ import { formatPrice } from '@/lib/utils'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { paylasimKodla } from '@/lib/sepet/paylasim'
+import { dugmeSinifi } from '@/components/ui/Button'
 import type { PaylasilanKalem } from '@/app/(store)/sepet/page'
 import { kucukResim } from '@/lib/gorsel/kadraj'
 import { useKadrajSorgu } from '@/components/store/KadrajContext'
@@ -127,7 +128,7 @@ export function PaylasilanSepet({ kalemler }: { kalemler: PaylasilanKalem[] }) {
         <button
           type="button"
           onClick={hepsiniEkle}
-          className="mt-4 inline-block bg-ink text-bg text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
+          className={dugmeSinifi('primary', 'md', 'mt-4')}
         >
           Hepsini sepetime ekle
         </button>

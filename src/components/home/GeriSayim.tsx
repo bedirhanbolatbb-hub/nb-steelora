@@ -56,7 +56,7 @@ export default function GeriSayim({ bitis }: { bitis: string }) {
   if (!gecerli || bitti) return null
 
   return (
-    <span className="font-body text-[11px] tracking-[0.08em] text-ink-soft tabular-nums">
+    <span className="font-body text-[12px] tracking-[0.04em] text-ink-soft tabular-nums">
       {kalan ?? tariheKadar(bitis)}
     </span>
   )

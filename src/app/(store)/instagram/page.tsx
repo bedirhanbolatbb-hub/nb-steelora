@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { dugmeSinifi } from '@/components/ui/Button'
 import { createClient } from '@/lib/supabase/server'
 import { LISTING_COLUMNS } from '@/lib/catalog/listing'
 import { yayindakiPaylasimlar } from '@/lib/instagram/paylasimlar'
@@ -122,7 +123,7 @@ export default async function InstagramSayfasi() {
         <Link
           prefetch={false}
           href="/urunler"
-          className="inline-flex min-h-[44px] items-center justify-center rounded-[4px] bg-ink px-8 py-3.5 font-body text-[11px] font-medium uppercase tracking-[0.15em] text-bg transition-colors hover:bg-accent-deep"
+          className={dugmeSinifi('primary', 'md')}
         >
           Tüm ürünler
         </Link>

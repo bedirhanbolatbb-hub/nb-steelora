@@ -22,6 +22,7 @@ import { kucukResim } from '@/lib/gorsel/kadraj'
 import { useKadrajSorgu } from '@/components/store/KadrajContext'
 import { GeriAlSatiri, useGeriAlinabilirKaldirma } from '@/components/store/SepetGeriAl'
 import { GUVEN_METNI, odemeGuvenceKisa } from '@/lib/metin/guven'
+import { indirimNotu } from '@/lib/sepet/indirimNotu'
 
 // Sepet localStorage'da tutuluyor; ilk sunucu çıktısıyla uyumsuzluk olmasın diye
 // içerik yalnızca hidrasyondan sonra basılır.
@@ -57,6 +58,15 @@ export default function CartPageClient({
   const havaleTutari = havale?.tutar ?? 0
   const havaleDusulen = kartAcik ? 0 : havaleTutari
   const sepetToplami = Math.max(0, subtotal - indirimTutari - havaleDusulen) + shipping
+  // Tek indirim satırında toplam yinelenmez (lib/sepet/indirimNotu).
+  const indirimNotuMetni = indirimNotu(
+    {
+      satirSayisi: ozet.uygulananlar.length + (havaleDusulen > 0 ? 1 : 0),
+      toplam: indirimTutari + havaleDusulen,
+      tavanUygulandi: ozet.tavanUygulandi,
+    },
+    formatPrice
+  )
   const hasItems = hydrated && items.length > 0
 
 
@@ -210,7 +220,7 @@ export default function CartPageClient({
               {/* Kupon hatırlatması — otomatik kampanya daha avantajlıysa
                   "uygulanır" demek yanıltıcı olur: indirimler toplanmıyor. */}
               {couponApplies(coupon, subtotal) && (
-                <p className="text-[11px] font-body text-ink-soft pt-1">
+                <p className="text-[12px] font-body text-ink-soft pt-1">
                   <span className="text-accent-deep">✦</span> {coupon.label}
                   <span className="text-muted">
                     {indirimTutari > 0
@@ -238,7 +248,7 @@ export default function CartPageClient({
                   otomatik bir vitrin kampanyası YOKKEN dolduruyor, yani NB30
                   biter bitmez kendiliğinden görünür; ikisi hiç çakışmaz. */}
               {ilkSiparisMetni && (
-                <p className="text-[11px] font-body text-ink-soft pt-1">
+                <p className="text-[12px] font-body text-ink-soft pt-1">
                   <span className="text-accent-deep">✦</span> {ilkSiparisMetni}
                 </p>
               )}
@@ -255,7 +265,7 @@ export default function CartPageClient({
                 </div>
               )}
               {ozet.yaklasanlar.length > 0 && (
-                <p className="text-[11px] font-body text-accent-deep">
+                <p className="text-[12px] font-body text-accent-deep">
                   {formatPrice(ozet.yaklasanlar[0].kalanTutar)} daha ekleyin,{' '}
                   {ozet.yaklasanlar[0].oran
                     ? `%${Math.round(ozet.yaklasanlar[0].oran)} kazanın`
@@ -266,13 +276,8 @@ export default function CartPageClient({
                 <span className="text-[15px] font-medium">Toplam</span>
                 <span className="price text-[20px]">{formatPrice(sepetToplami)}</span>
               </div>
-              {(indirim || havaleDusulen > 0) && (
-                <p className="text-[12px] font-body text-ink-soft">
-                  Toplam indiriminiz: {formatPrice(indirimTutari + havaleDusulen)}
-                  {ozet.tavanUygulandi && (
-                    <span className="text-muted"> · indirim tavanı uygulandı</span>
-                  )}
-                </p>
+              {indirimNotuMetni && (
+                <p className="text-[12px] font-body text-ink-soft">{indirimNotuMetni}</p>
               )}
               {/* Kart açıkken havale indirimi toplamdan düşmez; müşteri
                   ödeme adımında seçebileceğini burada görür. */}

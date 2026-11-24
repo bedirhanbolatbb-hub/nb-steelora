@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Input from '@/components/ui/Input'
+import { dugmeSinifi } from '@/components/ui/Button'
 
 interface ReviewFormProps {
   productId: string
@@ -106,10 +107,10 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Star picker */}
       <div>
-        <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
-          Puanınız *
-        </label>
-        <div className="flex items-center gap-1">
+        <p id="puan-etiketi" className="mb-1 font-body text-[13px] text-ink-soft">
+          Puanınız <span aria-hidden className="text-accent-deep">*</span>
+        </p>
+        <div role="group" aria-labelledby="puan-etiketi" className="-ml-1.5 flex items-center">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
@@ -119,7 +120,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
               onMouseLeave={() => setHoverRating(0)}
               aria-label={`${star} yıldız`}
               aria-pressed={rating === star}
-              className="transition-transform hover:scale-110"
+              className="flex h-11 w-11 items-center justify-center"
             >
               <svg
                 className={`w-8 h-8 transition-colors ${
@@ -140,7 +141,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
             </button>
           ))}
           {displayRating > 0 && (
-            <span className="ml-2 text-[12px] font-body text-muted">
+            <span className="ml-2 text-[13px] font-body text-ink-soft">
               {ratingLabels[displayRating]}
             </span>
           )}
@@ -151,33 +152,30 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
           eşleşmesi ve moderasyon için tutulur. */}
       {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
-              Adınız *
-            </label>
-            <Input
-              type="text"
-              placeholder="Ad Soyad"
-              value={form.guest_name}
-              onChange={(e) =>
-                setForm({ ...form, guest_name: e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
-              E-posta *
-            </label>
-            <Input
-              type="email"
-              placeholder="ornek@mail.com"
-              value={form.guest_email}
-              onChange={(e) =>
-                setForm({ ...form, guest_email: e.target.value })
-              }
-            />
-            <p className="text-[10px] font-body text-muted mt-1">Yayınlanmaz.</p>
-          </div>
+          <Input
+            type="text"
+            etiket="Adınız"
+            ipucu="Yorumda adınız ve soyadınızın baş harfi görünür (ör. Ayşe K.)."
+            autoComplete="name"
+            required
+            value={form.guest_name}
+            onChange={(e) =>
+              setForm({ ...form, guest_name: e.target.value })
+            }
+          />
+          <Input
+            type="email"
+            etiket="E-posta"
+            ipucu="Yayınlanmaz."
+            inputMode="email"
+            autoComplete="email"
+            placeholder="ornek@eposta.com"
+            required
+            value={form.guest_email}
+            onChange={(e) =>
+              setForm({ ...form, guest_email: e.target.value })
+            }
+          />
         </div>
       }
 
@@ -196,46 +194,43 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
       </div>
 
       {/* Title */}
-      <div>
-        <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
-          Başlık (isteğe bağlı)
-        </label>
-        <Input
-          type="text"
-          placeholder="Yorumunuzun başlığı..."
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          maxLength={100}
-        />
-      </div>
+      <Input
+        type="text"
+        etiket="Başlık (isteğe bağlı)"
+        value={form.title}
+        onChange={(e) => setForm({ ...form, title: e.target.value })}
+        maxLength={100}
+      />
 
       {/* Body */}
       <div>
-        <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-2">
-          Yorumunuz *
+        <label htmlFor="yorum-metni" className="mb-1.5 block font-body text-[13px] text-ink-soft">
+          Yorumunuz <span aria-hidden className="text-accent-deep">*</span>
         </label>
         <textarea
-          placeholder="Ürün hakkında düşüncelerinizi paylaşın..."
+          id="yorum-metni"
+          placeholder="Ürünü nasıl buldunuz? En az 10 karakter."
           value={form.body}
           onChange={(e) => setForm({ ...form, body: e.target.value })}
           required
           rows={4}
           maxLength={1000}
-          className="w-full border border-line bg-white px-4 py-3 text-sm font-body text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors resize-none"
+          className="w-full border border-line-strong bg-white px-4 py-3 text-base sm:text-sm font-body text-ink placeholder:text-muted focus:border-ink focus:outline-none transition-colors resize-none"
         />
-        <p className="text-[10px] font-body text-muted mt-1 text-right">
+        <p className="text-[12px] font-body text-muted mt-1 text-right">
           {form.body.length}/1000
         </p>
       </div>
 
-      {error && <p className="text-accent-deep text-[12px] font-body">{error}</p>}
+      {error && <p role="alert" className="text-[13px] font-body text-red-700">{error}</p>}
 
             {/* Fotoğraf (isteğe bağlı) — Faz 11D */}
       <div className="mb-4">
-        <label className="block text-[11px] uppercase tracking-[0.14em] font-body text-muted mb-2">
+        <label htmlFor="yorum-foto" className="mb-1.5 block font-body text-[13px] text-ink-soft">
           Fotoğraf (isteğe bağlı)
         </label>
         <input
+          id="yorum-foto"
           type="file"
           accept="image/*"
           onChange={(e) => {
@@ -249,23 +244,23 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
             }
             setFoto(f)
           }}
-          className="block w-full text-[12px] font-body text-ink-soft file:mr-3 file:rounded-[4px] file:border file:border-line file:bg-bg file:px-4 file:py-2 file:font-body file:text-[11px] file:uppercase file:tracking-[0.12em] file:text-ink"
+          className="block w-full text-[13px] font-body text-ink-soft file:mr-3 file:rounded-[4px] file:border file:border-line file:bg-bg file:px-4 file:py-2.5 file:font-body file:text-[13px] file:text-ink"
         />
-        <p className="mt-1 text-[11px] font-body text-muted">
+        <p className="mt-1 text-[12px] font-body text-muted">
           Ürünün sizdeki hâli — onaylandıktan sonra yorumunuzla birlikte görünür.
         </p>
-        {fotoHata && <p className="mt-1 text-[11px] font-body text-red-600">{fotoHata}</p>}
+        {fotoHata && <p className="mt-1 text-[13px] font-body text-red-700">{fotoHata}</p>}
       </div>
 
 <button
         type="submit"
         disabled={loading}
-        className="py-3 px-8 bg-ink text-bg text-[11px] tracking-[0.15em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-50"
+        className={dugmeSinifi('primary', 'md', 'w-full sm:w-auto')}
       >
-        {loading ? 'Gönderiliyor...' : 'Değerlendirmeyi Gönder'}
+        {loading ? 'Gönderiliyor…' : 'Değerlendirmeyi gönder'}
       </button>
 
-      <p className="text-[11px] font-body text-muted">
+      <p className="text-[12px] font-body text-muted">
         Değerlendirmeler yayınlanmadan önce incelenir.
       </p>
     </form>

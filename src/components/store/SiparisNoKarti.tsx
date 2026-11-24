@@ -43,7 +43,7 @@ export default function SiparisNoKarti({ orderNumber }: { orderNumber: string })
 
   return (
     <div className="bg-surface border border-line rounded-[4px] px-6 py-5 mb-8 text-left">
-      <p className="text-[10px] uppercase tracking-[0.2em] font-body text-muted mb-1 text-center">
+      <p className="text-[12px] uppercase tracking-[0.1em] font-body text-muted mb-1 text-center">
         Sipariş Numarası
       </p>
       <div className="flex items-center justify-center gap-2">

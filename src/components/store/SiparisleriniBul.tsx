@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { dugmeSinifi } from '@/components/ui/Button'
 
 /**
  * "Sipariş numaranızı bilmiyor musunuz?" (Faz 11C).
@@ -63,7 +64,7 @@ export default function SiparisleriniBul() {
             <button
               type="submit"
               disabled={durum === 'gonderiliyor'}
-              className="min-h-[44px] shrink-0 rounded-[4px] bg-ink px-5 font-body text-[11px] font-medium uppercase tracking-[0.14em] text-bg transition-colors hover:bg-accent-deep disabled:opacity-50"
+              className={dugmeSinifi('primary', 'sm', 'shrink-0 px-5')}
             >
               {durum === 'gonderiliyor' ? 'Gönderiliyor…' : 'Gönder'}
             </button>

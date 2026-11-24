@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { isRemoteMedia } from '@/lib/images'
 import Link from 'next/link'
+import { dugmeSinifi } from '@/components/ui/Button'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
 import type { Metadata } from 'next'
@@ -119,7 +120,7 @@ export default async function BlogPostPage({
 
         <div className="max-w-[68ch] mx-auto px-4 py-12">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-1.5 text-[10px] font-body text-muted uppercase tracking-wider mb-8 flex-wrap">
+          <nav className="flex items-center gap-1.5 text-[12px] font-body text-muted mb-8 flex-wrap">
             <Link prefetch={false} href="/" className="hover:text-accent-deep transition-colors">
               Ana Sayfa
             </Link>
@@ -133,7 +134,7 @@ export default async function BlogPostPage({
 
           {/* Header */}
           <div className="mb-10">
-            <div className="flex items-center gap-2 mb-4 flex-wrap text-[10px] font-body text-muted uppercase tracking-[0.12em]">
+            <div className="flex items-center gap-2 mb-4 flex-wrap text-[12px] font-body text-muted uppercase tracking-[0.06em]">
               {post.published_at && (
                 <span>
                   {new Date(post.published_at).toLocaleDateString('tr-TR', {
@@ -170,7 +171,7 @@ export default async function BlogPostPage({
             <Link
               prefetch={false}
               href={kesfetYolu}
-              className="inline-flex items-center justify-center bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
+              className={dugmeSinifi('primary', 'md')}
             >
               {konu ? `${konu.etiket} Koleksiyonunu Keşfet` : 'Koleksiyonu Keşfet'}
             </Link>
@@ -191,7 +192,7 @@ export default async function BlogPostPage({
                 <Link
                   prefetch={false}
                   href={kesfetYolu}
-                  className="text-[11px] uppercase tracking-[0.15em] font-body text-accent-deep hover:text-ink transition-colors"
+                  className="text-[12px] uppercase tracking-[0.1em] font-body font-semibold text-accent-deep hover:text-ink transition-colors"
                 >
                   Tümünü gör
                 </Link>
@@ -241,7 +242,7 @@ export default async function BlogPostPage({
                       <h3 className="font-heading text-[17px] font-semibold text-ink group-hover:text-accent-deep transition-colors leading-snug">
                         {p.title}
                       </h3>
-                      <span className="text-[10px] font-body text-muted uppercase tracking-[0.12em] mt-1.5 block">
+                      <span className="text-[12px] font-body text-muted uppercase tracking-[0.06em] mt-1.5 block">
                         {p.read_time} dk okuma
                       </span>
                     </div>

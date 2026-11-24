@@ -44,7 +44,7 @@ export default function PromoStrip({ bant }: { bant: VitrinBandi | null }) {
           {bant.metin}
         </p>
         {bant.bitis && <GeriSayim bitis={bant.bitis} />}
-        <span className="font-body text-[11px] uppercase tracking-[0.14em] text-accent-deep underline underline-offset-4">
+        <span className="font-body text-[12px] font-semibold uppercase tracking-[0.1em] text-accent-deep underline underline-offset-4">
           Keşfet
         </span>
       </Link>

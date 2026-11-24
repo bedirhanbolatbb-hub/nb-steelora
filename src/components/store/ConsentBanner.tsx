@@ -230,7 +230,7 @@ export default function ConsentBanner() {
           <div className="space-y-4">
             <div className="flex items-baseline justify-between gap-4">
               <h2 className="font-heading text-[20px] font-medium text-ink">Çerez tercihleri</h2>
-              <span className="text-[11px] text-muted">Sürüm {CONSENT_VERSION}</span>
+              <span className="text-[12px] text-muted">Sürüm {CONSENT_VERSION}</span>
             </div>
             <p className="text-[12px] text-ink-soft">
               Ayrıntılar:{' '}
@@ -266,7 +266,7 @@ export default function ConsentBanner() {
                         {k.aciklama}
                       </span>
                       {/* Süre ve hukuki sebep — KVKK şeffaflık gereği tek satırda. */}
-                      <span className="mt-1 block text-[11px] leading-relaxed text-muted">
+                      <span className="mt-1 block text-[12px] leading-relaxed text-muted">
                         {k.kunye}
                       </span>
                     </label>

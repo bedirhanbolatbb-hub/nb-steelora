@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { dugmeSinifi } from '@/components/ui/Button'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { CheckCircle } from 'lucide-react'
@@ -15,24 +16,24 @@ function BasariliContent() {
         <CheckCircle size={32} className="text-accent-deep" />
       </div>
       <h1 className="font-heading text-[32px] text-ink mb-3">
-        Siparişiniz Alındı!
+        Siparişiniz Alındı
       </h1>
       {orderNumber && (
-        <p className="text-[13px] font-body text-ink-soft mb-2">
+        <p className="text-[15px] font-body text-ink-soft mb-2">
           Sipariş Numarası:{' '}
           <span className="text-accent-deep font-medium">{orderNumber}</span>
         </p>
       )}
-      <p className="text-[12px] font-body text-muted mb-8 leading-relaxed">
-        Siparişiniz başarıyla oluşturuldu. Onay e-postası kısa süre içinde
-        gönderilecektir. Teşekkür ederiz!
+      <p className="text-[14px] font-body text-ink-soft mb-8 leading-relaxed">
+        Siparişiniz oluşturuldu. Onay e-postası kısa süre içinde gönderilir.
+        Teşekkür ederiz.
       </p>
       <Link
         prefetch={false}
         href="/urunler"
-        className="inline-block border border-accent-line text-accent-deep text-[11px] uppercase tracking-[0.15em] font-body px-8 py-3 hover:bg-accent-deep hover:text-white transition-all"
+        className={dugmeSinifi('outline', 'md')}
       >
-        Alışverişe Devam Et
+        Alışverişe devam
       </Link>
     </div>
   )

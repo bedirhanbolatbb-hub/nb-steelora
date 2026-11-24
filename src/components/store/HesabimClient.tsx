@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/utils'
 import { useWishlist } from '@/hooks/useWishlist'
 import ProductGrid from '@/components/store/ProductGrid'
 import Input from '@/components/ui/Input'
+import { dugmeSinifi } from '@/components/ui/Button'
 import HesapSilme from '@/components/store/HesapSilme'
 
 interface HesabimClientProps {
@@ -66,9 +67,9 @@ function hasPendingCustomerRequest(requests: any[] | undefined) {
   return Array.isArray(requests) && requests.some((r) => r.status === 'pending')
 }
 
-const btnPrimary = 'py-3 px-8 bg-ink text-white text-[11px] tracking-[0.15em] uppercase font-body hover:bg-accent transition-colors disabled:opacity-50'
-const btnOutline = 'py-2 px-4 border border-line text-ink-soft text-[10px] tracking-[0.12em] uppercase font-body hover:border-accent-line hover:text-accent-deep transition-colors disabled:opacity-50 disabled:pointer-events-none'
-const inputClass = 'w-full px-3 py-2 border border-line bg-white font-body text-sm text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors'
+const btnPrimary = dugmeSinifi('primary', 'md')
+const btnOutline = dugmeSinifi('outline', 'sm', 'disabled:pointer-events-none')
+const inputClass = 'w-full px-4 py-3 border border-line-strong bg-white font-body text-base sm:text-sm text-ink placeholder:text-muted focus:border-ink focus:outline-none transition-colors'
 
 export default function HesabimClient({ user, profile, orders }: HesabimClientProps) {
   const [tab, setTab] = useState('profil')
@@ -294,11 +295,11 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
       <div className="w-16 h-px bg-accent mb-8" />
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-6 border-b border-line mb-8">
+      <div className="flex flex-wrap gap-x-6 border-b border-line mb-8">
         {tabs.map((t) => (
           <button key={t.id} onClick={() => handleTabClick(t.id)}
-            className={`pb-3 text-[11px] uppercase tracking-[0.15em] font-body transition-colors ${
-              tab === t.id ? 'border-b-2 border-accent-line text-ink font-medium' : 'text-muted hover:text-ink'
+            className={`-mb-px inline-flex min-h-[44px] items-center text-[13px] uppercase tracking-[0.06em] font-body transition-colors ${
+              tab === t.id ? 'border-b-2 border-ink text-ink font-medium' : 'border-b-2 border-transparent text-ink-soft hover:text-ink'
             }`}>
             {t.label}
           </button>
@@ -310,22 +311,22 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
         <div className="space-y-4">
           <div className="max-w-md space-y-4">
           <div>
-            <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-1">E-posta</label>
+            <label className="text-[13px] text-ink-soft font-body block mb-1.5">E-posta</label>
             <p className="text-[14px] font-body text-ink">{user.email}</p>
           </div>
           <div>
-            <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-1">Ad Soyad</label>
+            <label className="text-[13px] text-ink-soft font-body block mb-1.5">Ad Soyad</label>
             <Input type="text" value={profileForm.full_name} onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })} />
           </div>
           <div>
-            <label className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-1">Telefon</label>
+            <label className="text-[13px] text-ink-soft font-body block mb-1.5">Telefon</label>
             <Input type="tel" value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} />
           </div>
           <button onClick={saveProfile} disabled={saving} className={btnPrimary}>
             {saving ? 'Kaydediliyor...' : saved ? 'Kaydedildi ✓' : 'Kaydet'}
           </button>
           <div className="pt-8 border-t border-line">
-            <button onClick={signOut} className="text-[12px] font-body text-muted hover:text-red-500 transition-colors">
+            <button onClick={signOut} className="inline-flex min-h-[44px] items-center text-[14px] font-body text-ink-soft underline underline-offset-4 hover:text-ink transition-colors">
               Çıkış Yap
             </button>
           </div>
@@ -342,7 +343,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
       {tab === 'siparisler' && (
         <div>
           {orders.length === 0 ? (
-            <p className="text-muted font-body text-[13px]">Henüz siparişiniz bulunmuyor.</p>
+            <p className="text-muted font-body text-[15px]">Henüz siparişiniz bulunmuyor.</p>
           ) : (
             <div className="space-y-6">
               {orders.map((order: any) => {
@@ -365,13 +366,13 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                   <div key={order.id} className="border border-line p-6 bg-white/40">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
                       <div>
-                        <p className="font-body text-[11px] uppercase tracking-[0.15em] text-muted mb-1">
+                        <p className="font-body text-[12px] uppercase tracking-[0.08em] text-muted mb-1">
                           Sipariş numarası
                         </p>
                         <p className="font-body text-[15px] font-medium text-ink">
                           {order.order_number}
                         </p>
-                        <p className="text-[12px] font-body text-muted mt-1">
+                        <p className="text-[14px] font-body text-muted mt-1">
                           {new Date(order.created_at).toLocaleString('tr-TR', {
                             dateStyle: 'long',
                             timeStyle: 'short',
@@ -380,7 +381,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                       </div>
                       <div className="text-left sm:text-right shrink-0">
                         <span
-                          className={`inline-block text-[10px] font-body px-2 py-1 rounded ${
+                          className={`inline-block text-[12px] font-medium font-body px-2.5 py-1 rounded-[2px] ${
                             statusColors[order.status] || 'bg-gray-100'
                           }`}
                         >
@@ -394,10 +395,10 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
 
                     {shippingLine ? (
                       <div className="mb-4 pb-4 border-b border-line/40">
-                        <p className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-1">
+                        <p className="text-[12px] uppercase tracking-[0.08em] text-muted font-body mb-1">
                           Teslimat adresi
                         </p>
-                        <p className="text-[12px] font-body text-ink-soft leading-relaxed">
+                        <p className="text-[14px] font-body text-ink-soft leading-relaxed">
                           {shippingLine}
                         </p>
                       </div>
@@ -405,17 +406,17 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
 
                     {order.status === 'shipped' && order.tracking_number ? (
                       <div className="mb-4 p-3 bg-bg/80 border border-line/50">
-                        <p className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-1">
+                        <p className="text-[12px] uppercase tracking-[0.08em] text-muted font-body mb-1">
                           Kargo takip
                         </p>
-                        <p className="text-[13px] font-body text-ink font-medium tracking-wide">
+                        <p className="text-[15px] font-body text-ink font-medium tracking-wide">
                           {String(order.tracking_number)}
                         </p>
                         {/* Faz 10A: durum çizelgesi kargo takip sayfasında. */}
                         <Link
                           prefetch={false}
                           href={`/kargo-takip?kod=${encodeURIComponent(String(order.tracking_number))}`}
-                          className="mt-2 inline-block text-[12px] font-body text-accent-deep underline underline-offset-4 hover:text-ink transition-colors"
+                          className="mt-2 inline-block text-[14px] font-body text-accent-deep underline underline-offset-4 hover:text-ink transition-colors"
                         >
                           Kargoyu takip et →
                         </Link>
@@ -424,7 +425,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
 
                     {order.status === 'cancelled' ? (
                       <div className="mb-4 p-3 bg-red-50/90 border border-red-100">
-                        <p className="text-[12px] font-body text-ink-soft leading-relaxed">
+                        <p className="text-[14px] font-body text-ink-soft leading-relaxed">
                           Bu sipariş iptal edilmiştir. Ödeme iadesi süreçleri tamamlandıysa kartınıza
                           yansıması bankanıza bağlıdır.
                         </p>
@@ -432,17 +433,17 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                     ) : null}
 
                     <div className="mb-4">
-                      <p className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-2">
+                      <p className="text-[12px] uppercase tracking-[0.08em] text-muted font-body mb-2">
                         Ürünler
                       </p>
                       <ul className="space-y-1">
                         {lines.length === 0 ? (
-                          <li className="text-[12px] font-body text-muted">Ürün satırı yok.</li>
+                          <li className="text-[14px] font-body text-muted">Ürün satırı yok.</li>
                         ) : (
                           lines.map((item: any, i: number) => (
                             <li
                               key={i}
-                              className="text-[12px] font-body text-ink-soft flex justify-between gap-4"
+                              className="text-[14px] font-body text-ink-soft flex justify-between gap-4"
                             >
                               <span>{item.name}</span>
                               <span className="shrink-0 text-muted">× {item.quantity}</span>
@@ -453,14 +454,14 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                     </div>
 
                     <div className="mb-4 p-3 border border-line/60 bg-bg/30">
-                      <p className="text-[10px] uppercase tracking-[0.15em] text-muted font-body mb-2">
+                      <p className="text-[12px] uppercase tracking-[0.08em] text-muted font-body mb-2">
                         Talep durumu
                       </p>
                       {orderRequestsLoading && requests.length === 0 ? (
-                        <p className="text-[12px] font-body text-muted">Yükleniyor...</p>
+                        <p className="text-[14px] font-body text-muted">Yükleniyor...</p>
                       ) : latestRequest ? (
                         <div className="space-y-1">
-                          <p className="text-[12px] font-body text-ink">
+                          <p className="text-[14px] font-body text-ink">
                             <span className="text-muted">Son talep:</span>{' '}
                             {requestTypeLabels[latestRequest.request_type] ||
                               latestRequest.request_type}
@@ -469,7 +470,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                               {requestStatusLabels[latestRequest.status] || latestRequest.status}
                             </span>
                           </p>
-                          <p className="text-[11px] font-body text-muted">
+                          <p className="text-[12px] font-body text-muted">
                             {new Date(latestRequest.created_at).toLocaleString('tr-TR', {
                               dateStyle: 'medium',
                               timeStyle: 'short',
@@ -477,7 +478,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                           </p>
                         </div>
                       ) : (
-                        <p className="text-[12px] font-body text-muted">
+                        <p className="text-[14px] font-body text-muted">
                           Henüz bir iptal veya iade talebiniz yok.
                         </p>
                       )}
@@ -485,7 +486,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
 
                     {flash ? (
                       <div
-                        className={`mb-4 text-[12px] font-body px-3 py-2 border ${
+                        className={`mb-4 text-[14px] font-body px-3 py-2 border ${
                           flash.type === 'success'
                             ? 'bg-green-50 border-green-200 text-green-900'
                             : 'bg-red-50 border-red-200 text-red-900'
@@ -496,7 +497,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                     ) : null}
 
                     {pendingReq ? (
-                      <p className="text-[11px] font-body text-muted mb-2">
+                      <p className="text-[13px] font-body text-ink-soft mb-2">
                         Bekleyen bir talebiniz var; yeni talep oluşturmadan önce sonuçlanmasını
                         bekleyin.
                       </p>
@@ -544,7 +545,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                     {formOpen ? (
                       <div className="mt-4 pt-4 border-t border-line/40 space-y-3">
                         <label className="block">
-                          <span className="text-[10px] uppercase tracking-[0.15em] text-muted font-body block mb-1">
+                          <span className="text-[13px] text-ink-soft font-body block mb-1.5">
                             Açıklama{' '}
                             <span className="normal-case tracking-normal text-muted">
                               (isteğe bağlı)
@@ -564,7 +565,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                             type="button"
                             disabled={busy}
                             onClick={() => submitOrderRequest(order.id, formOpen)}
-                            className="py-2 px-5 bg-ink text-bg rounded-[4px] text-[10px] tracking-[0.12em] uppercase font-body hover:bg-accent-deep transition-colors disabled:opacity-50"
+                            className={dugmeSinifi('primary', 'sm', 'px-5')}
                           >
                             {busy ? 'Gönderiliyor...' : 'Talebi Gönder'}
                           </button>
@@ -601,22 +602,22 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
           {!addressLoaded ? (
             <p className="text-muted font-body text-sm">Yükleniyor...</p>
           ) : addresses.length === 0 ? (
-            <p className="text-muted font-body text-[13px]">Henüz kayıtlı adresiniz yok.</p>
+            <p className="text-muted font-body text-[15px]">Henüz kayıtlı adresiniz yok.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {addresses.map((addr) => (
                 <div key={addr.id} className="border border-line p-5 relative">
                   {addr.is_default && (
-                    <span className="text-[9px] bg-ink text-bg rounded-[4px] px-2 py-0.5 uppercase tracking-wider font-body absolute top-3 right-3">Varsayılan</span>
+                    <span className="text-[11px] bg-ink text-bg rounded-[2px] px-2 py-0.5 uppercase tracking-[0.06em] font-body absolute top-3 right-3">Varsayılan</span>
                   )}
-                  <p className="font-body text-[13px] font-semibold text-ink mb-1">{addr.title}</p>
-                  <p className="font-body text-[12px] text-ink-soft">{addr.full_name}</p>
-                  <p className="font-body text-[12px] text-ink-soft">{addr.phone}</p>
-                  <p className="font-body text-[12px] text-ink-soft">{addr.district}, {addr.city}</p>
-                  <p className="font-body text-[12px] text-ink-soft">{addr.address}</p>
-                  <div className="flex gap-3 mt-3">
-                    <button onClick={() => setAddressForm({ ...addr })} className="text-[11px] text-accent-deep hover:text-ink font-body transition-colors">Düzenle</button>
-                    <button onClick={() => deleteAddress(addr.id)} className="text-[11px] text-red-400 hover:text-red-600 font-body transition-colors">Sil</button>
+                  <p className="font-body text-[15px] font-semibold text-ink mb-1">{addr.title}</p>
+                  <p className="font-body text-[14px] text-ink-soft">{addr.full_name}</p>
+                  <p className="font-body text-[14px] text-ink-soft">{addr.phone}</p>
+                  <p className="font-body text-[14px] text-ink-soft">{addr.district}, {addr.city}</p>
+                  <p className="font-body text-[14px] text-ink-soft">{addr.address}</p>
+                  <div className="flex gap-5 mt-1">
+                    <button onClick={() => setAddressForm({ ...addr })} className="inline-flex min-h-[44px] items-center text-[14px] text-ink underline underline-offset-4 hover:text-accent-deep font-body transition-colors">Düzenle</button>
+                    <button onClick={() => deleteAddress(addr.id)} className="inline-flex min-h-[44px] items-center text-[14px] text-red-700 underline underline-offset-4 hover:text-red-800 font-body transition-colors">Sil</button>
                   </div>
                 </div>
               ))}
@@ -636,15 +637,15 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
                   <input className={inputClass} placeholder="İlçe" value={addressForm.district} onChange={(e) => setAddressForm((f: any) => ({ ...f, district: e.target.value }))} />
                 </div>
                 <textarea className={`${inputClass} resize-none`} rows={3} placeholder="Açık adres" value={addressForm.address} onChange={(e) => setAddressForm((f: any) => ({ ...f, address: e.target.value }))} />
-                <label className="flex items-center gap-2 text-[12px] font-body">
+                <label className="flex items-center gap-2 text-[14px] font-body">
                   <input type="checkbox" checked={addressForm.is_default} onChange={(e) => setAddressForm((f: any) => ({ ...f, is_default: e.target.checked }))} />
                   Varsayılan adres olarak ayarla
                 </label>
                 <div className="flex gap-3 pt-2">
-                  <button onClick={saveAddress} disabled={addressSaving} className="flex-1 py-2 bg-ink text-bg rounded-[4px] text-[11px] uppercase tracking-wider hover:bg-accent-deep transition-colors disabled:opacity-50">
+                  <button onClick={saveAddress} disabled={addressSaving} className={dugmeSinifi('primary', 'md', 'flex-1')}>
                     {addressSaving ? 'Kaydediliyor...' : 'Kaydet'}
                   </button>
-                  <button onClick={() => setAddressForm(null)} className="flex-1 py-2 border border-line text-muted text-[11px] uppercase tracking-wider hover:border-accent-line transition-colors">
+                  <button onClick={() => setAddressForm(null)} className={dugmeSinifi('outline', 'md', 'flex-1')}>
                     İptal
                   </button>
                 </div>
@@ -663,8 +664,8 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
           <div className="flex gap-0 mb-6 border border-line">
             {(['individual', 'corporate'] as const).map((type) => (
               <button key={type} onClick={() => setBillingForm((f) => ({ ...f, billing_type: type }))}
-                className={`flex-1 py-2 text-[11px] uppercase tracking-wider font-body transition-colors ${
-                  billingForm.billing_type === type ? 'bg-ink text-white' : 'text-muted hover:text-ink'
+                className={`flex-1 min-h-[44px] text-[13px] uppercase tracking-[0.06em] font-body transition-colors ${
+                  billingForm.billing_type === type ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink'
                 }`}>
                 {type === 'individual' ? 'Bireysel' : 'Kurumsal'}
               </button>
@@ -704,7 +705,7 @@ export default function HesabimClient({ user, profile, orders }: HesabimClientPr
       {tab === 'favoriler' && (
         <div>
           {wishlistItems.length === 0 ? (
-            <p className="text-muted font-body text-[13px]">Henüz favoriye eklediğiniz ürün yok.</p>
+            <p className="text-muted font-body text-[15px]">Henüz favoriye eklediğiniz ürün yok.</p>
           ) : (
             <ProductGrid products={favProducts} />
           )}

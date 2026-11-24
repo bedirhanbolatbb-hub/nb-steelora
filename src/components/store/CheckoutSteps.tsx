@@ -23,7 +23,7 @@ export default function CheckoutSteps({ current }: { current: 1 | 2 | 3 }) {
             >
               <span
                 aria-hidden
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-body font-medium ${
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-body font-medium ${
                   active
                     ? 'bg-ink text-bg'
                     : done
@@ -34,7 +34,7 @@ export default function CheckoutSteps({ current }: { current: 1 | 2 | 3 }) {
                 {done ? '✓' : step}
               </span>
               <span
-                className={`text-[10px] sm:text-[11px] uppercase tracking-[0.15em] font-body truncate ${
+                className={`text-[12px] uppercase tracking-[0.08em] font-body truncate ${
                   active ? 'text-ink font-medium' : done ? 'text-ink-soft' : 'text-muted'
                 }`}
               >

@@ -118,7 +118,7 @@ export default function ProductVariants({ members, currentId, variant, yuzuk = f
                   />
                 )}
                 {outOfStock && (
-                  <span className="absolute inset-x-0 bottom-0 bg-ink/70 text-bg text-[10px] text-center py-0.5 font-body">
+                  <span className="absolute inset-x-0 bottom-0 bg-ink/75 text-bg text-[11px] leading-tight text-center py-0.5 font-body">
                     Tükendi
                   </span>
                 )}

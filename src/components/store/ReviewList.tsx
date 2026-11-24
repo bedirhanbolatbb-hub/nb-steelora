@@ -136,7 +136,7 @@ export default function ReviewList({ productId }: { productId: string }) {
           <div className="flex-1 max-w-xs space-y-2">
             {ratingCounts.map(({ star, count, percent }) => (
               <div key={star} className="flex items-center gap-2">
-                <span className="text-[11px] font-body text-muted w-3">
+                <span className="text-[12px] font-body text-muted w-3">
                   {star}
                 </span>
                 <svg
@@ -151,7 +151,7 @@ export default function ReviewList({ productId }: { productId: string }) {
                     style={{ width: `${percent}%` }}
                   />
                 </div>
-                <span className="text-[11px] font-body text-muted w-4 text-right">
+                <span className="text-[12px] font-body text-muted w-5 text-right">
                   {count}
                 </span>
               </div>
@@ -221,7 +221,7 @@ export default function ReviewList({ productId }: { productId: string }) {
                   <div className="flex items-center gap-2 mb-1">
                     <StarRating rating={review.rating} />
                     {review.is_verified_purchase && (
-                      <span className="text-[9px] font-body text-accent-deep border border-accent-line/50 px-1.5 py-0.5 rounded-[2px]">
+                      <span className="text-[11px] font-body text-accent-deep border border-accent-line/50 px-1.5 py-0.5 rounded-[2px]">
                         Doğrulanmış alışveriş
                       </span>
                     )}
@@ -232,7 +232,7 @@ export default function ReviewList({ productId }: { productId: string }) {
                     </p>
                   )}
                 </div>
-                <span className="text-[11px] font-body text-muted">
+                <span className="text-[12px] font-body text-muted">
                   {new Date(review.created_at).toLocaleDateString('tr-TR')}
                 </span>
               </div>
@@ -252,7 +252,7 @@ export default function ReviewList({ productId }: { productId: string }) {
                   />
                 </a>
               )}
-              <p className="text-[11px] font-body text-muted">
+              <p className="text-[12px] font-body text-muted">
                 {maskName(review.guest_name)}
               </p>
             </div>

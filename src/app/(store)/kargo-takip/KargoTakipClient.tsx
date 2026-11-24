@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Input from '@/components/ui/Input'
+import { dugmeSinifi } from '@/components/ui/Button'
 import { DURUM_SIRASI, DURUM_ETIKETLERI, type KargoDurumu } from '@/lib/shipping/providers/types'
 
 type Sonuc = {
@@ -68,9 +70,6 @@ export default function KargoTakipClient({
     setYukleniyor(false)
   }
 
-  const alanSinifi =
-    'w-full border border-line bg-bg px-4 py-3 text-[14px] text-ink placeholder:text-muted focus:border-accent-line focus:outline-none transition-colors'
-
   const aktifIdx = sonuc?.gonderi ? DURUM_SIRASI.indexOf(sonuc.gonderi.durum) : -1
   const dalMesaji = sonuc?.gonderi ? DAL_DURUMLARI[sonuc.gonderi.durum] : undefined
 
@@ -88,8 +87,8 @@ export default function KargoTakipClient({
             key={deger}
             type="button"
             onClick={() => setMod(deger)}
-            className={`-mb-px border-b pb-3 text-[12px] uppercase tracking-[0.14em] transition-colors ${
-              mod === deger ? 'border-ink text-ink' : 'border-transparent text-muted hover:text-ink-soft'
+            className={`-mb-px inline-flex min-h-[44px] items-center border-b font-body text-[14px] transition-colors ${
+              mod === deger ? 'border-ink font-medium text-ink' : 'border-transparent text-ink-soft hover:text-ink'
             }`}
           >
             {etiket}
@@ -97,29 +96,36 @@ export default function KargoTakipClient({
         ))}
       </div>
 
-      <form onSubmit={sorgula} className="mt-6 space-y-3">
+      <form onSubmit={sorgula} className="mt-6 space-y-4">
         {mod === 'siparis' ? (
           <>
-            <input
-              className={alanSinifi}
-              placeholder="Sipariş numarası (NBS-…)"
+            {/* 24 Kas 2026: etiket yalnız yer tutucuydu ve alan 14 px idi
+                (iPhone'da dokununca sayfa yakınlaşıyordu). */}
+            <Input
+              etiket="Sipariş numarası"
+              ipucu="Sipariş onay e-postanızda yazar."
+              placeholder="NBS-…"
+              autoComplete="off"
+              autoCapitalize="characters"
               value={siparisNo}
               onChange={(e) => setSiparisNo(e.target.value)}
               required
             />
-            <input
-              className={alanSinifi}
+            <Input
+              etiket="Siparişte kullandığınız e-posta"
               type="email"
-              placeholder="Sipariş e-postanız"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="ornek@eposta.com"
               value={eposta}
               onChange={(e) => setEposta(e.target.value)}
               required
             />
           </>
         ) : (
-          <input
-            className={alanSinifi}
-            placeholder="Takip kodu"
+          <Input
+            etiket="Takip kodu"
+            autoComplete="off"
             value={kod}
             onChange={(e) => setKod(e.target.value)}
             required
@@ -129,7 +135,7 @@ export default function KargoTakipClient({
         <button
           type="submit"
           disabled={yukleniyor}
-          className="w-full bg-ink px-6 py-3.5 text-[12px] uppercase tracking-[0.18em] text-bg transition-colors hover:bg-ink/90 disabled:opacity-50"
+          className={dugmeSinifi('primary', 'lg', 'w-full')}
         >
           {yukleniyor ? 'Sorgulanıyor…' : 'Kargomu sorgula'}
         </button>
@@ -142,7 +148,7 @@ export default function KargoTakipClient({
       {sonuc && (
         <section className="mt-10">
           {sonuc.siparisNo && (
-            <p className="text-[11px] uppercase tracking-[0.2em] text-muted">Sipariş {sonuc.siparisNo}</p>
+            <p className="text-[12px] uppercase tracking-[0.1em] text-muted">Sipariş {sonuc.siparisNo}</p>
           )}
 
           {!sonuc.gonderi ? (
@@ -155,7 +161,7 @@ export default function KargoTakipClient({
                 {sonuc.gonderi.durumEtiketi}
               </h2>
 
-              <dl className="mt-5 space-y-2 border-y border-line py-5 text-[13px]">
+              <dl className="mt-5 space-y-2 border-y border-line py-5 text-[14px]">
                 {sonuc.gonderi.firmaAdi && (
                   <div className="flex justify-between gap-4">
                     <dt className="text-muted">Kargo firması</dt>
@@ -209,7 +215,7 @@ export default function KargoTakipClient({
 
               {sonuc.olaylar && sonuc.olaylar.length > 0 && (
                 <details className="mt-8 border-t border-line pt-5">
-                  <summary className="cursor-pointer text-[12px] uppercase tracking-[0.14em] text-muted hover:text-ink">
+                  <summary className="flex min-h-[44px] cursor-pointer items-center font-body text-[14px] text-ink-soft underline underline-offset-4 hover:text-ink">
                     Hareket geçmişi
                   </summary>
                   <ul className="mt-4 space-y-3">
@@ -292,7 +298,7 @@ function IadeTalebi({ siparisNo, eposta }: { siparisNo: string; eposta: string }
           </p>
           <button
             onClick={() => setAcik(true)}
-            className="basis mt-3 inline-flex min-h-[44px] items-center rounded-[4px] border border-ink px-6 font-body text-[11px] font-medium uppercase tracking-[0.16em] text-ink hover:bg-ink hover:text-bg"
+            className={dugmeSinifi('outline', 'sm', 'mt-3 px-6')}
           >
             İade talebi oluştur
           </button>
@@ -309,13 +315,13 @@ function IadeTalebi({ siparisNo, eposta }: { siparisNo: string; eposta: string }
             rows={3}
             maxLength={1000}
             placeholder="Yazmak zorunda değilsiniz."
-            className="w-full rounded-[4px] border border-line bg-bg px-3 py-2 font-body text-[13px] text-ink outline-none focus:border-ink"
+            className="w-full border border-line-strong bg-white px-4 py-3 font-body text-base text-ink outline-none focus:border-ink sm:text-sm"
           />
-          {hata && <p className="font-body text-[12px] text-red-600">{hata}</p>}
+          {hata && <p role="alert" className="font-body text-[13px] text-red-700">{hata}</p>}
           <button
             type="submit"
             disabled={durum === 'gonderiliyor'}
-            className="basis inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-7 font-body text-[11px] font-medium uppercase tracking-[0.16em] text-bg hover:bg-accent-deep disabled:opacity-50"
+            className={dugmeSinifi('primary', 'md')}
           >
             {durum === 'gonderiliyor' ? 'Gönderiliyor…' : 'İade talebini gönder'}
           </button>

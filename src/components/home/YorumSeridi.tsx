@@ -49,7 +49,7 @@ export default function YorumSeridi({ yorumlar }: { yorumlar: VitrinYorumu[] }) 
               <figcaption className="mt-4 flex flex-wrap items-center gap-2 border-t border-line/60 pt-3">
                 <span className="font-body text-[12px] font-medium text-ink">{y.ad}</span>
                 {y.dogrulanmis && (
-                  <span className="rounded-[2px] border border-accent-line/50 px-1.5 py-0.5 font-body text-[9px] text-accent-deep">
+                  <span className="rounded-[2px] border border-accent-line/50 px-1.5 py-0.5 font-body text-[11px] text-accent-deep">
                     Doğrulanmış alışveriş
                   </span>
                 )}
@@ -57,7 +57,7 @@ export default function YorumSeridi({ yorumlar }: { yorumlar: VitrinYorumu[] }) 
                   <Link
                     prefetch={false}
                     href={`/urun/${y.urunSlug}`}
-                    className="ml-auto font-body text-[11px] text-muted underline underline-offset-2 hover:text-accent-deep"
+                    className="ml-auto font-body text-[12px] text-muted underline underline-offset-2 hover:text-accent-deep"
                   >
                     {y.urunAd}
                   </Link>

@@ -22,6 +22,7 @@ import { GeriAlSatiri, useGeriAlinabilirKaldirma } from '@/components/store/Sepe
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
 import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
 import { SepetiPaylasDugmesi } from '@/components/store/SepetPaylasim'
+import { indirimNotu } from '@/lib/sepet/indirimNotu'
 import { kucukResim } from '@/lib/gorsel/kadraj'
 import { useKadrajSorgu } from '@/components/store/KadrajContext'
 
@@ -58,6 +59,15 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
   const havaleDusulen = kartAcik ? 0 : havaleTutari
   const indirimVar = Boolean(indirim) || havaleDusulen > 0
   const indirimliToplam = Math.max(0, subtotal - ozet.indirimToplami - havaleDusulen)
+  // Tek indirim satırında toplam yinelenmez (lib/sepet/indirimNotu).
+  const indirimNotuMetni = indirimNotu(
+    {
+      satirSayisi: ozet.uygulananlar.length + (havaleDusulen > 0 ? 1 : 0),
+      toplam: ozet.indirimToplami + havaleDusulen,
+      tavanUygulandi: ozet.tavanUygulandi,
+    },
+    formatPrice
+  )
   const hasItems = items.length > 0
   // Faz 36: teslim süresi tarih olarak (panel her açıldığında yeniden hesap).
   const teslimEtiketi = useMemo(() => (isOpen ? tahminiTeslimEtiketi() : ''), [isOpen])
@@ -279,13 +289,9 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                         {formatPrice(indirimliToplam)}
                       </span>
                     </div>
-                    {/* "… kazandınız" yerine ne olduğunu söyleyen yalın cümle. */}
-                    <p className="text-[12px] font-body text-ink-soft">
-                      Toplam indiriminiz: {formatPrice(ozet.indirimToplami + havaleDusulen)}
-                      {ozet.tavanUygulandi && (
-                        <span className="text-muted"> · indirim tavanı uygulandı</span>
-                      )}
-                    </p>
+                    {indirimNotuMetni && (
+                      <p className="text-[12px] font-body text-ink-soft">{indirimNotuMetni}</p>
+                    )}
                   </>
                 )}
                 {/* Kart açıkken havale indirimi toplamdan düşmez; müşteri

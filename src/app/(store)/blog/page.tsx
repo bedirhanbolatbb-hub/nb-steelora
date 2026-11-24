@@ -79,7 +79,7 @@ export default async function BlogPage() {
                 )}
               </div>
               <div className="flex flex-col flex-1 p-5">
-                <div className="flex items-center gap-2 text-[10px] font-body text-muted uppercase tracking-[0.12em]">
+                <div className="flex items-center gap-2 text-[12px] font-body text-muted uppercase tracking-[0.06em]">
                   {post.published_at && (
                     <span>
                       {new Date(post.published_at).toLocaleDateString('tr-TR', {
@@ -100,7 +100,7 @@ export default async function BlogPage() {
                     {post.excerpt}
                   </p>
                 )}
-                <span className="mt-4 pt-1 text-[11px] uppercase tracking-[0.15em] font-body font-medium text-ink border-b border-accent-line pb-0.5 self-start">
+                <span className="mt-4 pt-1 text-[12px] uppercase tracking-[0.1em] font-body font-semibold text-ink border-b border-accent-line pb-0.5 self-start">
                   Devamını Oku →
                 </span>
               </div>

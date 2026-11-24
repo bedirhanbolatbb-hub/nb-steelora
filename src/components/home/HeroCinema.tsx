@@ -44,7 +44,7 @@ export default function HeroCinema({
           {baslik1} <span className={`italic ${image ? 'text-[#E5C990]' : 'text-accent-deep'}`}>{baslik2}</span> {baslik3}
         </h1>
         <p
-          className={`text-[13px] lg:text-[14px] font-body leading-relaxed mt-5 max-w-md hero-line ${
+          className={`text-[15px] lg:text-[16px] font-body leading-relaxed mt-5 max-w-md hero-line ${
             image ? 'text-white/85' : 'text-ink-soft'
           }`}
           style={{ '--hero-delay': '140ms' } as React.CSSProperties}
@@ -58,7 +58,7 @@ export default function HeroCinema({
           <Link
             prefetch={false}
             href="/urunler"
-            className={`inline-flex items-center text-[11px] uppercase tracking-[0.18em] font-body font-medium px-8 py-3.5 rounded-[4px] transition-colors ${
+            className={`basis inline-flex min-h-[52px] items-center text-[13px] uppercase tracking-[0.1em] font-body font-semibold px-8 rounded-[4px] ${
               image
                 ? 'bg-bg text-ink hover:bg-accent-deep hover:text-white'
                 : 'bg-ink text-bg hover:bg-accent-deep'
@@ -69,7 +69,7 @@ export default function HeroCinema({
           <Link
             prefetch={false}
             href="/#one-cikanlar"
-            className={`text-[11px] uppercase tracking-[0.16em] font-body underline underline-offset-4 transition-colors ${
+            className={`inline-flex min-h-[44px] items-center text-[13px] uppercase tracking-[0.1em] font-body font-medium underline underline-offset-4 transition-colors ${
               image ? 'text-white/80 hover:text-white' : 'text-accent-deep hover:text-ink'
             }`}
           >

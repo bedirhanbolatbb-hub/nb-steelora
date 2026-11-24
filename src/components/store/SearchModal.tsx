@@ -191,7 +191,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                     className="search-thumb w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted text-[9px] font-body">
+                  <div className="w-full h-full flex items-center justify-center text-muted text-[11px] font-body">
                     Görsel
                   </div>
                 )}

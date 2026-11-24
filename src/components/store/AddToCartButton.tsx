@@ -37,7 +37,7 @@ export default function AddToCartButton({ product, disabled }: AddToCartButtonPr
     <button
       onClick={handleClick}
       disabled={disabled || added}
-      className={`basis w-full py-[18px] rounded-[4px] font-body font-medium text-[12px] tracking-[0.2em] uppercase flex items-center justify-center gap-2 ${tone}`}
+      className={`basis flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[4px] px-6 font-body text-[13px] font-semibold uppercase tracking-[0.1em] ${tone}`}
     >
       {disabled ? (
         'Stok Tükendi'
