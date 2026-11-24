@@ -85,6 +85,9 @@ $$;
 REVOKE ALL ON FUNCTION public.tarayici_ziyareti_yaz(text, text, text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.tarayici_ziyareti_yaz(text, text, text) TO service_role;
 
+-- API'nin yeni tablo ve fonksiyonu hemen görmesi için şema önbelleğini tazele.
+NOTIFY pgrst, 'reload schema';
+
 -- Doğrulama (isteğe bağlı):
 -- SELECT public.tarayici_ziyareti_yaz('deneme', 'asistan', '/');
 -- SELECT * FROM public.tarayici_ziyaretleri WHERE tarayici = 'deneme';   -- adet = 1
