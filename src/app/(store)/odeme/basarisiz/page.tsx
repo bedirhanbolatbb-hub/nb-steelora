@@ -88,7 +88,7 @@ export default async function BasarisizPage({
           {bankaKodu ? ` (kod ${bankaKodu})` : ''}
         </p>
       )}
-      <div className={`flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center ${bankaNedeni ? '' : 'mt-5'}`}>
+      <div className={`mx-auto flex max-w-[340px] flex-col items-stretch gap-3 ${bankaNedeni ? '' : 'mt-5'}`}>
         <Link
           prefetch={false}
           href="/odeme"

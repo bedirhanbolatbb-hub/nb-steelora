@@ -309,7 +309,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                 prefetch={false}
                 href="/odeme"
                 onClick={onClose}
-                className="basis flex min-h-[52px] w-full items-center justify-center rounded-[4px] bg-ink text-center font-body text-[13px] font-semibold uppercase tracking-[0.12em] text-white hover:bg-accent-deep"
+                className="basis flex min-h-[52px] w-full items-center justify-center rounded-[4px] bg-ink text-center font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-white hover:bg-accent-deep"
               >
                 Ödemeye Geç
               </Link>

@@ -102,7 +102,7 @@ export default function CartPageClient({
           <Link
             prefetch={false}
             href="/urunler"
-            className="inline-flex min-h-[52px] items-center rounded-[4px] bg-ink px-8 font-body text-[13px] font-semibold uppercase tracking-[0.12em] text-white transition-colors hover:bg-accent-deep"
+            className="inline-flex min-h-[52px] items-center rounded-[4px] bg-ink px-8 font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-accent-deep"
           >
             Tüm Ürünler
           </Link>
@@ -291,7 +291,7 @@ export default function CartPageClient({
               <Link
                 prefetch={false}
                 href="/odeme"
-                className="basis mt-4 flex min-h-[52px] w-full items-center justify-center rounded-[4px] bg-ink text-center font-body text-[13px] font-semibold uppercase tracking-[0.12em] text-white hover:bg-accent-deep"
+                className="basis mt-4 flex min-h-[52px] w-full items-center justify-center rounded-[4px] bg-ink text-center font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-white hover:bg-accent-deep"
               >
                 Ödemeye Geç
               </Link>

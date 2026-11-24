@@ -177,7 +177,7 @@ export default function StickyBuyBar({
           onClick={handleAdd}
           disabled={outOfStock}
           tabIndex={show ? 0 : -1}
-          className={`basis min-h-[48px] shrink-0 rounded-[4px] px-6 font-body text-[13px] font-semibold uppercase tracking-[0.12em] ${
+          className={`basis min-h-[48px] shrink-0 rounded-[4px] px-6 font-body text-[13px] font-semibold uppercase tracking-[0.1em] ${
             outOfStock ? 'bg-line text-muted cursor-not-allowed' : 'bg-ink text-white'
           }`}
         >

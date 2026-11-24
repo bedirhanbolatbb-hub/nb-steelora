@@ -944,7 +944,7 @@ export default function OdemePage() {
                 onClick={handlePayment}
                 disabled={loading || yontem === null}
                 aria-describedby={denendi && !isFormValid ? 'odeme-eksikler' : undefined}
-                className="basis min-h-[52px] flex-1 rounded-[4px] bg-ink px-4 font-body text-[13px] font-semibold uppercase tracking-[0.12em] text-bg transition-colors hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-60"
+                className="basis min-h-[52px] flex-1 rounded-[4px] bg-ink px-4 font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-bg transition-colors hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? (
                   yontem === 'kart' ? (

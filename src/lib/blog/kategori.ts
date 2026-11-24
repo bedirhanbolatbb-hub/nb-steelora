@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import type { Product } from '@/types'
+import { getGroupKey, type GroupableProduct } from '@/lib/catalog/variants'
 
 /**
  * Blog yazısı → ürün kategorisi eşleşmesi (Faz 16).
@@ -36,8 +37,12 @@ export function yaziKategorisi(metin: string): { kategori: string; etiket: strin
 
 /**
  * Yazının altındaki rail için ürünler. Stokta olan, aktif ürünlerden en çok
- * satanlar; kategori eşleşmesi yoksa öne çıkanlara düşülür. Aynı ürün iki kez
- * gelmez (kimliğe göre tekilleştirilir).
+ * satanlar; kategori eşleşmesi yoksa öne çıkanlara düşülür.
+ *
+ * 24 Kas 2026: tekilleştirme ürün kimliğine göreydi; bir yüzüğün her ölçüsü
+ * ayrı ürün olduğu için ölçü rehberinin altında AYNI yüzük üç kez çıkıyordu.
+ * Artık liste sayfalarıyla aynı anahtar (getGroupKey: ad + kategori + fiyat +
+ * cinsiyet) kullanılır: aile başına tek ürün, en çok satan üyesi.
  */
 export async function railUrunleri(kategori: string | null, adet = 3): Promise<Product[]> {
   const supabase = createServiceClient()
@@ -48,22 +53,24 @@ export async function railUrunleri(kategori: string | null, adet = 3): Promise<P
       .select('*')
       .gt('trendyol_stock', 0)
       .order('sales_count', { ascending: false })
-      .limit(adet * 2)
+      .limit(adet * 8)
     if (kat) q = q.ilike('trendyol_category', `%${kat}%`)
     const { data } = await q
     return (data ?? []) as Product[]
   }
 
   const secilen = new Map<string, Product>()
-  for (const urun of await cek(kategori)) secilen.set(urun.id, urun)
-
-  // Kategoride yeterli ürün yoksa (ya da eşleşme hiç yoksa) genel havuzdan tamamla.
-  if (secilen.size < adet) {
-    for (const urun of await cek(null)) {
+  const ekle = (urunler: Product[]) => {
+    for (const urun of urunler) {
       if (secilen.size >= adet) break
-      secilen.set(urun.id, urun)
+      const aile = getGroupKey(urun as unknown as GroupableProduct)
+      if (!secilen.has(aile)) secilen.set(aile, urun)
     }
   }
+
+  ekle(await cek(kategori))
+  // Kategoride yeterli ürün yoksa (ya da eşleşme hiç yoksa) genel havuzdan tamamla.
+  if (secilen.size < adet) ekle(await cek(null))
 
   return [...secilen.values()].slice(0, adet)
 }

@@ -47,7 +47,11 @@ export default function SiparisNoKarti({ orderNumber }: { orderNumber: string })
         Sipariş Numarası
       </p>
       <div className="flex items-center justify-center gap-2">
-        <p className="price select-all text-[24px] text-ink">{orderNumber}</p>
+        {/* 24 Kas 2026: 24 px'te numara 390 px ekranda "NBS-" ve rakamlar diye
+            iki satıra bölünüyordu. Tek satır; telefonda 20 px. */}
+        <p className="price select-all whitespace-nowrap text-[20px] text-ink sm:text-[24px]">
+          {orderNumber}
+        </p>
         <button
           onClick={kopyala}
           aria-label="Sipariş numarasını kopyala"
@@ -56,17 +60,21 @@ export default function SiparisNoKarti({ orderNumber }: { orderNumber: string })
           {kopyalandi ? <Check size={18} className="text-accent-deep" /> : <Copy size={18} />}
         </button>
       </div>
-      <p className="mt-2 text-center font-body text-[12px] leading-relaxed text-ink-soft">
+      <p className="mt-2 text-center font-body text-[13px] leading-relaxed text-ink-soft">
         <strong>Bu numarayı not alın.</strong> Onay e-postası ulaşmazsa siparişinize bu
         numarayla{' '}
-        <Link prefetch={false} href="/kargo-takip" className="text-accent-deep underline underline-offset-2">
+        <Link
+          prefetch={false}
+          href={`/kargo-takip?no=${encodeURIComponent(orderNumber)}`}
+          className="text-accent-deep underline underline-offset-2"
+        >
           Kargo Takip
         </Link>{' '}
         sayfasından ulaşabilirsiniz.
       </p>
       <div className="mt-3 text-center">
         {mailDurumu === 'tamam' ? (
-          <p className="font-body text-[12px] text-ink-soft">
+          <p className="font-body text-[13px] leading-relaxed text-ink-soft">
             Sipariş bilgileri kayıtlı adresinize yeniden gönderildi — gereksiz (spam)
             klasörünü de kontrol edin.
           </p>
@@ -74,7 +82,7 @@ export default function SiparisNoKarti({ orderNumber }: { orderNumber: string })
           <button
             onClick={tekrarGonder}
             disabled={mailDurumu === 'gonderiliyor'}
-            className="min-h-[44px] font-body text-[12px] text-accent-deep underline underline-offset-4 transition-colors hover:text-ink disabled:opacity-50"
+            className="min-h-[44px] font-body text-[13px] text-accent-deep underline underline-offset-4 transition-colors hover:text-ink disabled:opacity-50"
           >
             {mailDurumu === 'gonderiliyor'
               ? 'Gönderiliyor…'
