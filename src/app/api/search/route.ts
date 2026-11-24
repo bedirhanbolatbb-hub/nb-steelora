@@ -130,7 +130,14 @@ export async function GET(request: Request) {
   }
 
   // Gruplama ilk görülme sırasını korur — sıralama puanla kalır.
-  const results = groupProducts(puanli.slice(0, sinir * 8).map((p) => p.satir))
+  // 24 Kas 2026: setlerin adı uzun ve çok kelimeli olduğu için "charm" gibi tek
+  // kelimelik aramada ilk sıraları setler (üçlü kolaj kapaklar) tutuyordu.
+  // Sorgu set aramıyorsa tekli ürünler öne alınır; sıra kendi içinde puanla kalır.
+  const setAraniyor = sorgu.some((k) => k.startsWith('set'))
+  const gruplar = groupProducts(puanli.slice(0, sinir * 8).map((p) => p.satir))
+  const setMi = (g: (typeof gruplar)[number]) => /set/i.test(String(g.cover.display_title ?? ''))
+  const sirali = setAraniyor ? gruplar : [...gruplar.filter((g) => !setMi(g)), ...gruplar.filter(setMi)]
+  const results = sirali
     .slice(0, sinir)
     .map((group) => ({ ...group.cover, option_count: group.optionCount, ...(yakin ? { yakin: true } : {}) }))
 

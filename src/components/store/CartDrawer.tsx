@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { kampanyaEtiketi } from '@/lib/campaignLabel'
 import { vitrinFiyati } from '@/lib/campaigns/vitrinFiyat'
 import { markaKategorisi } from '@/lib/catalog/categories'
+import { secenekMetni } from '@/lib/catalog/secenek'
 import { useVitrinIndirimi } from '@/components/store/KampanyaContext'
 import { BOS_DURUM } from '@/lib/metin/bosDurum'
 import { kaydirmaKilidi } from '@/lib/ui/kaydirmaKilidi'
@@ -88,7 +89,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-line">
-          <h2 className="font-heading text-[20px] text-ink">
+          <h2 className="font-heading text-[20px] font-medium text-ink">
             Sepetiniz ({items.length})
           </h2>
           <button
@@ -131,7 +132,7 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                       />
                     </Link>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-heading text-[15px] leading-snug text-ink line-clamp-2">
+                      <h3 className="font-body text-[14px] font-medium leading-snug text-ink line-clamp-2">
                         <Link
                           prefetch={false}
                           href={`/urun/${item.product.slug}`}
@@ -142,7 +143,9 @@ export default function CartDrawer({ isOpen, onClose, coupon }: CartDrawerProps)
                         </Link>
                       </h3>
                       <p className="text-[12px] text-muted font-body mt-0.5">
-                        {markaKategorisi(item.product.trendyol_category)}
+                        {[markaKategorisi(item.product.trendyol_category), secenekMetni(item.product)]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </p>
                       {/* Faz 11A: satır liste fiyatını gösteriyordu; ürün
                           sayfasında indirimli, burada tam fiyat çıkıyordu. */}

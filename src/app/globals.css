@@ -478,12 +478,19 @@ body[data-overlay='open'] .whatsapp-fab {
    değiştiriyordu; düğme 139px sıçrıyor ve bu düzen kayması olarak sayılıyordu
    (ölçüm: sayfa yükleme CLS'inin tamamı, 0.0070). Transform kaymaya girmez. */
 .whatsapp-fab {
-  transform: translateY(calc(-1 * var(--nb-consent-h, 0px) - var(--nb-fab-lift, 0px)));
+  transform: translateY(calc(-1 * var(--nb-consent-h, 0px) - var(--nb-fab-lift, 0px) + var(--nb-fab-kayma, 0px)));
 }
 
 @media (max-width: 639px) {
   .whatsapp-fab {
-    transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1), opacity 200ms ease-out;
+  }
+
+  /* Aşağı kayarken (okurken) balon çekilir — components/store/FloatingWhatsApp. */
+  .whatsapp-fab[data-cekildi='true'] {
+    --nb-fab-kayma: 96px;
+    opacity: 0;
+    pointer-events: none;
   }
 
   /* Faz 11B: çubuk 68px + 12px boşluk. Eski -62px çubuğun içine denk

@@ -1,5 +1,6 @@
 'use client'
 
+import { secenekMetni } from '@/lib/catalog/secenek'
 import { useState, useEffect, useRef } from 'react'
 import UyelikTesvikSatiri from '@/components/store/UyelikTesvikSatiri'
 import { kampanyaEtiketi } from '@/lib/campaignLabel'
@@ -415,11 +416,11 @@ export default function OdemePage() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-body text-ink leading-snug clamp-2">
+                  <p className="text-[13px] font-body text-ink leading-snug clamp-2">
                     {item.product.display_title}
                   </p>
-                  <p className="text-[11px] font-body text-muted mt-0.5">
-                    {item.quantity} adet
+                  <p className="text-[12px] font-body text-muted mt-0.5">
+                    {[secenekMetni(item.product), `${item.quantity} adet`].filter(Boolean).join(' · ')}
                   </p>
                 </div>
                 <p className="price text-[13px] text-ink shrink-0">
@@ -913,7 +914,7 @@ export default function OdemePage() {
 
           <div
             id="odeme-cubuk"
-            className="fixed inset-x-0 bottom-[var(--nb-consent-h,0px)] z-40 border-t border-line bg-bg px-4 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0"
+            className="fixed inset-x-0 bottom-[var(--nb-consent-h,0px)] z-40 mb-0 border-t border-line bg-bg px-4 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] sm:static sm:mb-6 sm:z-auto sm:border-0 sm:bg-transparent sm:p-0"
           >
             {/* Düğme sessiz kalmıyor: neyin eksik olduğu tek satırda yazılıyor
                 (Faz 15). İlk gönderme denemesine kadar gizli (Faz 11A). */}

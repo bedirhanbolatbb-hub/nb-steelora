@@ -244,13 +244,13 @@ export default function ProductCardV2({
             <span className="text-muted">({Number((product as any).review_count)})</span>
           </p>
         )}
-        <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <div className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
           {kampanyaliFiyat != null ? (
             <>
               <span className={`price text-ink ${buyuk ? 'text-[16px] sm:text-[18px]' : 'text-[16px]'}`}>
                 {formatPrice(kampanyaliFiyat)}
               </span>
-              <span className="price text-[13px] font-normal text-muted line-through">
+              <span className="price text-[12px] font-normal text-muted line-through">
                 {formatPrice(listeFiyati)}
               </span>
               <span className="rounded-[2px] bg-accent-soft px-1.5 py-0.5 font-body text-[11px] font-semibold leading-none text-ink">

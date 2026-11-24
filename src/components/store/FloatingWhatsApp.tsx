@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { WHATSAPP_URL } from '@/lib/contact'
 
@@ -31,6 +32,30 @@ import { WHATSAPP_URL } from '@/lib/contact'
  */
 export default function FloatingWhatsApp() {
   const yol = usePathname()
+  // 24 Kas 2026 tasarım denetimi: balon telefonda okunan satırların sonuna
+  // biniyordu (ana sayfa, yardım sayfaları). Aşağı kayarken — yani okurken —
+  // çekilir; yukarı kayınca ya da sayfanın başında geri gelir. Yalnız
+  // transform + opacity (globals.css); geniş ekranda bu durum yok sayılır.
+  const [cekildi, setCekildi] = useState(false)
+  useEffect(() => {
+    let son = window.scrollY
+    let kare = 0
+    const olc = () => {
+      kare = 0
+      const y = window.scrollY
+      if (Math.abs(y - son) < 8) return
+      setCekildi(y > son && y > 240)
+      son = y
+    }
+    const dinle = () => {
+      if (!kare) kare = requestAnimationFrame(olc)
+    }
+    window.addEventListener('scroll', dinle, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', dinle)
+      if (kare) cancelAnimationFrame(kare)
+    }
+  }, [])
   if (yol?.startsWith('/odeme')) return null
   // 24 Kas 2026 tasarım denetimi: telefonda balon liste sayfalarında sağ
   // sütundaki kartların "sepete ekle" düğmesinin, fiyatların ve iletişim
@@ -46,6 +71,7 @@ export default function FloatingWhatsApp() {
       href={WHATSAPP_URL}
       target="_blank"
       rel="noopener noreferrer"
+      data-cekildi={cekildi ? 'true' : undefined}
       className={`whatsapp-fab fixed bottom-5 right-4 z-40 h-12 w-12 items-center justify-center rounded-full bg-ink text-bg shadow-lg transition-colors hover:bg-accent-deep hover:shadow-xl sm:bottom-6 sm:right-6 sm:flex sm:h-14 sm:w-14 ${
         urunSayfasi ? 'hidden' : 'flex'
       }`}

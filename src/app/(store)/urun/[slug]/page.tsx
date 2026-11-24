@@ -278,7 +278,7 @@ export default async function UrunDetayPage({
         {/* Ürün bilgisi */}
         <div>
           {/* Kategori · malzeme — ince eyebrow hissiyatında (tek kanonik yer) */}
-          <p className="font-body text-[11px] uppercase tracking-[0.16em] text-accent-deep">
+          <p className="font-body text-[12px] font-semibold uppercase tracking-[0.14em] text-accent-deep">
             {kategoriYolu ? (
               <Link
                 prefetch={false}

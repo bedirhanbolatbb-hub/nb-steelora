@@ -52,7 +52,7 @@ export default function KuponKutusu({
   uygulanan,
   /** "Daha avantajlı kampanya var" bir hata değil; farklı tonda basılır. */
   bilgiTonu = false,
-  baslik = 'İndirim Kodu',
+  baslik = 'İndirim kodu',
 }: {
   kod: string
   onKod: (kod: string) => void
@@ -72,9 +72,10 @@ export default function KuponKutusu({
 
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-[0.15em] font-body text-muted mb-3">{baslik}</p>
+      <p className="mb-1.5 font-body text-[13px] text-ink-soft">{baslik}</p>
       <div className="flex gap-2">
         <Input
+          aria-label={baslik}
           placeholder="Kodu girin"
           value={taslak}
           onChange={(e) => setTaslak(e.target.value.toLocaleUpperCase('tr-TR'))}
@@ -91,7 +92,7 @@ export default function KuponKutusu({
           <button
             type="button"
             onClick={kaldir}
-            className="shrink-0 rounded-[4px] border border-line px-4 py-2 font-body text-[11px] uppercase tracking-[0.15em] text-ink-soft transition-colors hover:border-ink hover:text-ink"
+            className="shrink-0 rounded-[4px] border border-line-strong px-4 font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-ink transition-colors hover:border-ink"
           >
             Kaldır
           </button>
@@ -100,7 +101,7 @@ export default function KuponKutusu({
             type="button"
             onClick={uygula}
             disabled={!taslak.trim()}
-            className="shrink-0 rounded-[4px] border border-ink px-4 py-2 font-body text-[11px] uppercase tracking-[0.15em] text-ink transition-colors hover:bg-ink hover:text-bg disabled:opacity-40"
+            className="shrink-0 rounded-[4px] border border-ink px-4 font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-ink transition-colors hover:bg-ink hover:text-bg disabled:border-line-strong disabled:text-muted disabled:hover:bg-transparent disabled:hover:text-muted"
           >
             Uygula
           </button>
@@ -108,7 +109,7 @@ export default function KuponKutusu({
       </div>
 
       {uygulanan && (
-        <p className="mt-2 font-body text-[11px] text-accent-deep">
+        <p className="mt-2 font-body text-[13px] text-ink">
           ✓ {uygulanan.ad} — {uygulanan.tutar} indirim
         </p>
       )}
@@ -117,8 +118,8 @@ export default function KuponKutusu({
       {mesaj && !uygulanan && (
         <p
           role="status"
-          className={`mt-2 font-body text-[11px] leading-relaxed ${
-            bilgiTonu ? 'text-ink-soft' : 'text-red-600'
+          className={`mt-2 font-body text-[13px] leading-relaxed ${
+            bilgiTonu ? 'text-ink-soft' : 'text-red-700'
           }`}
         >
           {mesaj}

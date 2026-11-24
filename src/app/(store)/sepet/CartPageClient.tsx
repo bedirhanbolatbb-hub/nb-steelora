@@ -11,6 +11,7 @@ import { useSyncExternalStore } from 'react'
 import { Minus, Plus, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
+import { secenekMetni } from '@/lib/catalog/secenek'
 import { FREE_SHIPPING_LABEL, SHIPPING_LINE_LABEL, shippingCostFor } from '@/lib/shipping'
 import { couponApplies, type CouponReminder } from '@/lib/campaigns'
 import { useOtomatikIndirim } from '@/hooks/useOtomatikIndirim'
@@ -121,10 +122,13 @@ export default function CartPageClient({
                   <Link
                     prefetch={false}
                     href={`/urun/${product.slug}`}
-                    className="font-heading text-[17px] font-medium text-ink hover:text-accent-deep transition-colors block leading-snug"
+                    className="font-body text-[15px] font-medium text-ink hover:text-accent-deep transition-colors block leading-snug"
                   >
                     {product.display_title}
                   </Link>
+                  {secenekMetni(product) && (
+                    <p className="mt-0.5 font-body text-[13px] text-ink-soft">{secenekMetni(product)}</p>
+                  )}
                   <p className="price text-[14px] text-ink mt-1.5">
                     {(() => {
                       const f = vitrinFiyati(

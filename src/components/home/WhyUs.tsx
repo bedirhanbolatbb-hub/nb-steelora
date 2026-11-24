@@ -72,7 +72,7 @@ export default function WhyUs({ saticiPuani = null }: { saticiPuani?: SaticiPuan
             >
               <Icon size={20} strokeWidth={1.5} className="mt-0.5 shrink-0 text-accent-deep" aria-hidden />
               <div className="min-w-0">
-                <h3 className="text-[15px] font-medium text-ink">{baslik}</h3>
+                <h3 className="font-body text-[15px] font-medium text-ink">{baslik}</h3>
                 <p className="mt-0.5 text-[14px] leading-snug text-ink-soft">{metin}</p>
               </div>
             </li>

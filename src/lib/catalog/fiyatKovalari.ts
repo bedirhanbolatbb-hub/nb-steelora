@@ -45,7 +45,7 @@ export function fiyatKovalari(fiyatlar: number[], kovaSayisi = 3): FiyatKovasi[]
     const doluMu = temiz.some((f) => f >= alt && (i === n - 1 ? true : f < ust))
     if (!doluMu) continue
     kovalar.push({
-      label: i === n - 1 ? `${tl(alt)} ₺ üzeri` : `${tl(alt)} — ${tl(ust)} ₺`,
+      label: i === n - 1 ? `${tl(alt)} ₺ ve üzeri` : `${tl(alt)}–${tl(ust)} ₺`,
       min: String(alt),
       max: i === n - 1 ? '' : String(ust),
     })
