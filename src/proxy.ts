@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, type NextFetchEvent } from 'next/server'
 import { cspUret } from '@/lib/security/basliklar'
 import { panelCereziGecerliMi } from '@/lib/admin/panelOturumu'
 import { yayindakiPaylasimlar } from '@/lib/instagram/paylasimlar'
+import { tarayiciBul } from '@/lib/izleme/tarayicilar'
+import { tarayiciZiyaretiYaz } from '@/lib/izleme/tarayiciSayaci'
 
 /**
  * İstek katmanı — 14 Kas 2026'dan beri YALNIZ şu yollarda çalışır (matcher):
@@ -12,6 +14,12 @@ import { yayindakiPaylasimlar } from '@/lib/instagram/paylasimlar'
  *     (layout'larında force-dynamic) ve her istekte yeni nonce alır.
  *  3. Instagram'dan gelen ana sayfa ziyareti (`/?utm_source=instagram`) →
  *     seçki sayfasına çevrilir.
+ *  4. Tarayıcı sayacı (24 Kas 2026): kullanıcı aracısı yapay zekâ ya da arama
+ *     tarayıcısı adı taşıyan sayfa istekleri. Katman bu isteklerde yalnız
+ *     sayar ve isteği DOKUNMADAN geçirir (nonce yok, başlık değişmez; sayfa
+ *     yine önbellekten verilir). Koşul eşleştiricide: insan ziyaretçinin
+ *     isteği bu katmana hiç gelmez. Ölçüm: yanıtta `x-nb-tarayici` başlığı
+ *     yalnız bu isteklerde bulunur.
  *
  * Neden: vitrin sayfaları artık önbellekten veriliyor (ücretsiz planda ayda
  * 4 saatlik sunucu süresi sınırı). Önbellekten dönen sayfa istek başı nonce
@@ -38,22 +46,51 @@ function guvenlikEkle(yanit: NextResponse, csp: string, gizliYol: boolean): Next
 
 const GIZLI_ONEKLER = ['/hesabim', '/odeme', '/siparis-tamamlandi']
 
+/**
+ * Oturum kapısı ya da nonce'lu politika gereken yollar — eşleştiricideki ilk
+ * yedi satırla aynı. Tarayıcı sayacı eşleştiriciyi vitrin yollarına da açtığı
+ * için "buraya gelen her istek kapılı yoldur" varsayımı artık geçerli değil;
+ * bu listenin dışındaki yollar dokunulmadan geçirilir.
+ */
+const KAPILI_ONEKLER = ['/panel', '/hesabim', '/odeme', '/siparis-tamamlandi', '/giris', '/kayit', '/sifremi-unuttum']
+
 const onekte = (yol: string, onek: string) => yol === onek || yol.startsWith(`${onek}/`)
 
-export async function proxy(request: NextRequest) {
+/** İsteği olduğu gibi geçirir; tarayıcı isteğinde yanıta yalnız tanı başlığı ekler. */
+function dokunmadanGecir(tarayiciAdi: string | null): NextResponse {
+  const yanit = NextResponse.next()
+  if (tarayiciAdi) yanit.headers.set('x-nb-tarayici', tarayiciAdi)
+  return yanit
+}
+
+export async function proxy(request: NextRequest, event: NextFetchEvent) {
   const { pathname } = request.nextUrl
 
-  if (pathname.startsWith('/admin')) {
+  // Tarayıcı sayacı: yalnız listedeki adlarla gelen isteklerde yazar; yazım
+  // yanıtı bekletmez (lib/izleme/tarayiciSayaci.ts).
+  const tarayici = tarayiciBul(request.headers.get('user-agent'))
+  if (tarayici && (request.method === 'GET' || request.method === 'HEAD')) {
+    event.waitUntil(tarayiciZiyaretiYaz(tarayici, pathname))
+  }
+
+  if (onekte(pathname, '/admin')) {
     return NextResponse.redirect(new URL('/panel', request.url), 308)
   }
 
-  // Yalnız `/?utm_source=instagram` buraya gelir (matcher). Yayında paylaşım
-  // yoksa ana sayfa olduğu gibi (önbellekten) verilir.
+  // Instagram'dan gelen ana sayfa ziyareti seçki sayfasına çevrilir. Koşul
+  // eskiden yalnız eşleştiricideydi; tarayıcı sayacı ana sayfayı da buraya
+  // getirdiği için burada da denetlenir. Yayında paylaşım yoksa ana sayfa
+  // olduğu gibi (önbellekten) verilir.
   if (pathname === '/') {
-    if (yayindakiPaylasimlar().length > 0) {
+    const kaynak = (request.nextUrl.searchParams.get('utm_source') || '').toLowerCase()
+    if (kaynak === 'instagram' && yayindakiPaylasimlar().length > 0) {
       return NextResponse.rewrite(new URL(`/instagram${request.nextUrl.search}`, request.url))
     }
-    return NextResponse.next()
+    return dokunmadanGecir(tarayici?.ad ?? null)
+  }
+
+  if (!KAPILI_ONEKLER.some((o) => onekte(pathname, o))) {
+    return dokunmadanGecir(tarayici?.ad ?? null)
   }
 
   const nonce = nonceUret()
@@ -94,6 +131,23 @@ export const config = {
     {
       source: '/',
       has: [{ type: 'query', key: 'utm_source', value: '[iI][nN][sS][tT][aA][gG][rR][aA][mM]' }],
+    },
+    // Tarayıcı sayacı: YALNIZ kullanıcı aracısı listedeki adlardan birini
+    // taşıyan sayfa istekleri (betik, biçem, görsel ve /api hariç). Kalıp
+    // lib/izleme/tarayicilar.ts → eslestiriciKalibi() ile birebir aynı olmalı;
+    // Next burada sabit metin istediği için elle yazılı, eşitliği test denetler
+    // (src/lib/izleme/__testler__/tarayicilar.test.mts).
+    {
+      source:
+        '/((?!_next/|api/|.*\\.(?:js|css|map|png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|otf|mp4|webm|json|webmanifest)$).*)',
+      has: [
+        {
+          type: 'header',
+          key: 'user-agent',
+          value:
+            '.*(?:OAI-SearchBot|ChatGPT-User|Perplexity[Bb]ot|Perplexity-User|Claude-SearchBot|Claude-User|Claude-Web|GoogleAgent-URLContext|GoogleAgent-Mariner|Google-NotebookLM|Gemini-Deep-Research|Apple[Bb]ot|DuckAssistBot|MistralAI-User|MistralAI-Index|[Mm]eta-[Ee]xternal[Ff]etcher|meta-webindexer|Amzn-SearchBot|Amzn-User|YouBot|GrokBot|xAI-Grok|kagi-fetcher|TavilyBot|LinkupBot|Bravebot|ExaSearchBot|PhindBot|AzureAI-SearchBot|cohere-ai|Kimi-SearchBot|Kimi-User|TongyiBot|YiyanBot|DoubaoBot|Manus-User|GPT[Bb]ot|Claude[Bb]ot|anthropic-ai|CC[Bb]ot|GoogleOther|Google-CloudVertexBot|Bytespider|TikTokSpider|Amazon[Bb]ot|[Mm]eta-[Ee]xternal[Aa]gent|[Ff]acebook[Bb]ot|DeepSeekBot|MistralAI-Training|PetalBot|PanguBot|Diffbot|omgili|Timpibot|A[Ii]2Bot|cohere-training-data-crawler|YandexAdditional|QwenBot|ERNIEBot|MoonshotBot|KimiBot|ChatGLM-Spider|ImagesiftBot|[Gg]oogle[Bb]ot|[Bb]ing[Bb]ot|Yandex[Bb]ot|DuckDuck[Bb]ot).*',
+        },
+      ],
     },
   ],
 }

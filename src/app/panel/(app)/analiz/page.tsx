@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createServiceClient } from '@/lib/supabase/service'
 import { donemCoz, raporUret } from '@/lib/analytics/report'
 import { kampanyaRaporu } from '@/lib/analytics/kampanyaRaporu'
+import { tarayiciRaporu } from '@/lib/izleme/tarayiciRaporu'
 import AnalizClient from './AnalizClient'
 
 export const metadata: Metadata = { title: 'Analiz' }
@@ -18,6 +19,9 @@ export default async function PanelAnalizPage({
   // Faz 11E: kampanya işe yaradı mı — siparişlerden sayılır, motor
   // sayaçlarından değil; iptal/iade edilenler dışarıda.
   const kampanyalar = await kampanyaRaporu(donem.baslangic, donem.bitis)
+  // 24 Kas 2026: yapay zekâ ve arama tarayıcıları — ziyaretçi ölçümünden
+  // ayrı tutulur (robotlar orada bilerek dışarıda).
+  const tarayicilar = await tarayiciRaporu(donem.baslangic, donem.bitis)
 
   // Ölçüm geçmişi notu: veri taşındığı için eski dönemler boş görünüyor;
   // metin panelden değiştirilebilir, gerek kalmayınca boşaltılıp kaldırılır.
@@ -50,6 +54,7 @@ export default async function PanelAnalizPage({
       adlar={adlar}
       olcumNotu={olcumNotu}
       kampanyalar={kampanyalar}
+      tarayicilar={tarayicilar}
     />
   )
 }

@@ -352,3 +352,32 @@ Karar: kod değişikliği yok. Kadraj artık yalnız yeni ürün görseli eklend
 (16 Kas'taki gibi bir kerelik ~15–25 dk) — sürüm yalnız kesim hesabı gerçekten
 değişince artırılmalı, ardından 12 saatlik ölçüm. Bunun dışında yeniden ölçüm
 yalnız Vercel sınır uyarısı gelirse.
+
+
+## 24 Kasım 2026 — tarayıcı sayacı: ara katman tarayıcı adlı isteklere açıldı
+
+Amaç: ChatGPT, Perplexity, Claude gibi asistanların ve arama motorlarının
+tarayıcıları siteyi okuyor mu, hangi sayfaları — ölçmek (BB 23 Kas: yapay
+zekâ görünürlüğü). Vitrin önbellekten verildiği için sunucu kodu bu istekleri
+görmüyordu.
+
+- `src/proxy.ts` eşleştiricisine tek satır eklendi: sayfa istekleri (betik,
+  biçem, görsel ve `/api` hariç) **yalnız kullanıcı aracısı listedeki bir
+  tarayıcı adını taşıyorsa** ara katmana gelir. İnsan ziyaretçinin vitrin
+  isteği yine ara katmana uğramaz — Next'in kendi eşleyicisiyle sınanıyor
+  (`src/lib/izleme/__testler__/istekKatmani.test.mts`: Chrome ve iPhone ile
+  ana sayfa, ürün, koleksiyon, blog → eşleşmez).
+- Ara katman bu isteklerde yalnız sayar ve isteği dokunmadan geçirir (nonce
+  yok, sayfa önbellekten). Yazım `waitUntil` ile, tek REST çağrısı
+  (`tarayici_ziyareti_yaz`); supabase-js ara katmana alınmadı.
+- Liste: `src/lib/izleme/tarayicilar.ts` (67 ad; kaynak ai.robots.txt, MIT).
+  Tablo ve fonksiyon: `docs/izleme/02-tarayici-ziyaretleri.sql`.
+- Canlıda ayırt etme: yanıtta `x-nb-tarayici` başlığı yalnız bu isteklerde
+  bulunur. Sıradan tarayıcıyla açılan vitrin sayfasında bu başlık YOKSA ara
+  katman o istekte çalışmamıştır.
+- Beklenen yük: tarayıcı isteği başına birkaç milisaniye. Kontrol yeri aynı:
+  Usage → Fluid Active CPU → `12 hours` → "Type" sekmesinde `middleware`.
+  Bu satır belirgin büyürse (günde birkaç dakikayı aşarsa) ilk adım
+  eşleştiriciden klasik arama motorlarını (Googlebot, bingbot, YandexBot,
+  DuckDuckBot) çıkarmak: listede `grup: 'arama'` olan dört satır silinir,
+  test olması gereken kalıbı yazdırır.

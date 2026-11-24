@@ -6,6 +6,7 @@ import { Download, Info } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { PBadge, PButton, PCard, PInput, PSayfaNotu } from '../_components/ui'
 import type { Rapor, UrunSatiri } from '@/lib/analytics/report'
+import type { TarayiciRaporu } from '@/lib/izleme/tarayiciRaporu'
 
 const DONEMLER = [
   ['bugun', 'Bugün'],
@@ -19,6 +20,26 @@ const DONEMLER = [
 ] as const
 
 const sayi = (n: number) => n.toLocaleString('tr-TR')
+
+/** "24 Kas 14.20" — panel saatleri İstanbul'a göre. */
+const gunSaat = (iso: string | null) =>
+  iso
+    ? new Date(iso)
+        .toLocaleString('tr-TR', {
+          timeZone: 'Europe/Istanbul',
+          day: 'numeric',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+        .replace(':', '.')
+    : '—'
+
+const TARAYICI_GRUPLARI = [
+  { grup: 'asistan', baslik: 'Asistanlar ve yapay zekâ araması' },
+  { grup: 'egitim', baslik: 'Model eğitimi için veri toplayanlar' },
+  { grup: 'arama', baslik: 'Arama motorları' },
+] as const
 const yuzde = (n: number) => `%${n.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}`
 
 function sure(saniye: number): string {
@@ -161,6 +182,7 @@ export default function AnalizClient({
   adlar,
   olcumNotu,
   kampanyalar = [],
+  tarayicilar,
 }: {
   rapor: Rapor
   secili: string
@@ -178,6 +200,8 @@ export default function AnalizClient({
     toplamCiro: number
     ortalamaSepet: number
   }[]
+  /** Yapay zekâ ve arama tarayıcıları özeti (24 Kas 2026). */
+  tarayicilar?: TarayiciRaporu
 }) {
   const router = useRouter()
   const sp = useSearchParams()
@@ -606,6 +630,84 @@ export default function AnalizClient({
           </PCard>
         )}
       </div>
+
+      {/* Yapay zekâ tarayıcıları (24 Kas 2026). "Asistanlar bizi önermiyor"
+          sorusunun ilk adımı: sayfalarımızı okumaya geliyorlar mı? Ziyaretçi
+          sayılarından ayrıdır; robotlar orada bilerek sayılmaz. */}
+      {tarayicilar && (
+        <PCard title={`Yapay zekâ tarayıcıları — ${rapor.donem.etiket}`}>
+          <p className="border-b border-[var(--p-line)] px-4 py-2 text-[11px] leading-relaxed text-[var(--p-muted)]">
+            ChatGPT, Perplexity, Claude gibi asistanların ve arama motorlarının sitemizi okumaya gelen
+            programları. Sayım, programın kendini tanıttığı ada göre yapılır; ziyaretçi sayılarına dahil
+            değildir.
+          </p>
+          {!tarayicilar.kurulu ? (
+            <p className="px-4 py-6 text-center text-[12px] text-[var(--p-muted)]">
+              Sayaç hazır, kayıt tablosu henüz açılmadı. Tablo açıldığında sayım kendiliğinden başlar.
+            </p>
+          ) : tarayicilar.tarayicilar.length === 0 ? (
+            <p className="px-4 py-6 text-center text-[12px] text-[var(--p-muted)]">Bu dönemde gelen olmadı.</p>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x lg:divide-[var(--p-line)]">
+              <div className="lg:col-span-2">
+                {TARAYICI_GRUPLARI.map(({ grup, baslik }) => {
+                  const satirlar = tarayicilar.tarayicilar.filter((t) => t.grup === grup)
+                  return (
+                    <div key={grup} className="border-b border-[var(--p-line)] last:border-0">
+                      <p className="flex justify-between gap-3 px-4 pt-3 pb-1 text-[11px] font-medium uppercase tracking-[0.06em] text-[var(--p-muted)]">
+                        <span>{baslik}</span>
+                        <span className="tabular-nums">{sayi(tarayicilar.toplam[grup])}</span>
+                      </p>
+                      {satirlar.length === 0 ? (
+                        <p className="px-4 pb-3 text-[12px] text-[var(--p-muted)]">Gelen olmadı.</p>
+                      ) : (
+                        <ul className="divide-y divide-[var(--p-line)] text-[12px]">
+                          {satirlar.map((t) => (
+                            <li key={t.ad} className="flex items-baseline justify-between gap-3 px-4 py-2">
+                              <span className="min-w-0">
+                                <span className="text-[var(--p-ink)]">{t.ad}</span>
+                                {t.isletmeci && <span className="text-[var(--p-muted)]"> · {t.isletmeci}</span>}
+                              </span>
+                              <span className="shrink-0 whitespace-nowrap text-[var(--p-muted)]">
+                                son: {gunSaat(t.sonGorulme)}
+                                <span className="ml-3 tabular-nums text-[var(--p-ink)]">{sayi(t.ziyaret)}</span>
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="border-t border-[var(--p-line)] lg:border-t-0">
+                <p className="px-4 pt-3 pb-1 text-[11px] font-medium uppercase tracking-[0.06em] text-[var(--p-muted)]">
+                  En çok okunan sayfalar
+                </p>
+                {tarayicilar.sayfalar.length === 0 ? (
+                  <p className="px-4 pb-3 text-[12px] text-[var(--p-muted)]">
+                    Asistan ya da eğitim tarayıcısı henüz sayfa okumadı.
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-[var(--p-line)] text-[12px]">
+                    {tarayicilar.sayfalar.map((s) => (
+                      <li key={s.yol} className="flex justify-between gap-3 px-4 py-2">
+                        <span className="min-w-0 truncate text-[var(--p-ink)]" title={s.yol}>
+                          {s.yol}
+                        </span>
+                        <span className="tabular-nums">{sayi(s.ziyaret)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="px-4 py-2 text-[11px] leading-relaxed text-[var(--p-muted)]">
+                  Arama motorları bu listede yoktur; onların ürün sayfası ziyaretleri tek satırda toplanır.
+                </p>
+              </div>
+            </div>
+          )}
+        </PCard>
+      )}
     </div>
   )
 }
