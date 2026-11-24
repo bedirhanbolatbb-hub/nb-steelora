@@ -16,6 +16,8 @@ import {
   paginateGroupedProducts,
   setleriGeriAl,
 } from '@/lib/catalog/listing'
+import { renkSecenekleri, renkeGoreSuz } from '@/lib/catalog/renk'
+import { renkHaritasiGetir } from '@/lib/catalog/renkVerisi'
 import { getSiteContent } from '@/lib/supabase/content'
 
 /**
@@ -87,11 +89,18 @@ export default async function UrunlerPage({
   }
 
   const sayfa = parseInt(params.sayfa || '1')
-  const { data: hamUrunler } = await query
+  // Renk haritası liste sorgusuyla birlikte istenir (lib/catalog/renkVerisi).
+  const [{ data: hamUrunler }, renkHaritasi] = await Promise.all([query, renkHaritasiGetir()])
   // 24 Kas 2026: malzeme süzgeci. Seçenekler süzülmemiş listeden çıkar (yalnız
   // gerçekten bulunan malzemeler), süzme aynı listede yapılır — ek sorgu yok.
   const malzemeler = malzemeSecenekleri((hamUrunler || []) as any[])
-  const products = malzemeyeGoreSuz((hamUrunler || []) as any[], params.malzeme)
+  // Renk süzgeci aynı düzende: seçenekler süzülmemiş listeden, süzme bellekte.
+  const renkler = renkSecenekleri((hamUrunler || []) as any[], renkHaritasi)
+  const products = renkeGoreSuz(
+    malzemeyeGoreSuz((hamUrunler || []) as any[], params.malzeme),
+    renkHaritasi,
+    params.renk
+  )
   // Varsayılan sıralamada setler ilk satırların arkasına alınır (lib/catalog/listing).
   const { cards, total } = paginateGroupedProducts(
     products as any[],
@@ -144,6 +153,7 @@ export default async function UrunlerPage({
       categories={categories}
       fiyatAraliklari={fiyatAraliklari}
       malzemeler={malzemeler}
+      renkler={renkler}
       currentPage={sayfa}
       perPage={PER_PAGE}
       currentParams={{
@@ -152,6 +162,7 @@ export default async function UrunlerPage({
         min_fiyat: params.min_fiyat || '',
         max_fiyat: params.max_fiyat || '',
         malzeme: params.malzeme || '',
+        renk: params.renk || '',
       }}
         tanitim={icerik['kategori_tanitim_tum-urunler'] || undefined}
       />

@@ -2,6 +2,8 @@ import { fetchApprovedProducts, fetchStockAndPriceMap } from './client'
 import { malzemeCoz, malzemeYazilacak, type MalzemeTipi } from '@/lib/catalog/material'
 import { sonYazilanBarkodlar } from './stokKuyrugu'
 import { modelKoduKolonuVar, modelKoduTemizle } from '@/lib/catalog/urunKodlari'
+import { renkTemizle } from '@/lib/catalog/renk'
+import { renkKolonuVar } from '@/lib/catalog/renkVerisi'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 function getServiceClient() {
@@ -39,6 +41,8 @@ type VariantRow = {
   variantLabel: string | null
   gender: string | null
   material: MalzemeTipi
+  /** Trendyol "Renk" özelliği, olduğu gibi (harf kolyelerinde harfi taşır). */
+  color: string | null
 }
 
 /**
@@ -84,6 +88,11 @@ function flattenContents(contents: any[]): VariantRow[] {
       ozellik: findAttribute(content.attributes, 'Materyal'),
       baslik: content.title || '',
     })
+    // Renk çoğunlukla content seviyesindedir (Trendyol'da her renk ayrı
+    // içeriktir); varyantta ayrıca yazıyorsa o değer önceliklidir (aşağıda).
+    // Ham değer yazılır; süzgeç grubuna çevirme görüntüleme katmanında
+    // (lib/catalog/renk) — harf kolyelerinde bu alan harfi taşır.
+    const contentColor = renkTemizle(findAttribute(content.attributes, 'Renk'))
     const siblings = (content.variants || []).filter(
       (v: any) => v?.barcode && !v.archived && v.onSale !== false
     )
@@ -105,6 +114,7 @@ function flattenContents(contents: any[]): VariantRow[] {
         variantLabel: labelsDistinguish ? labels[i] : null,
         gender,
         material,
+        color: renkTemizle(findAttribute(variant.attributes, 'Renk')) ?? contentColor,
       })
     })
   }
@@ -178,6 +188,8 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
   // bir kolon toplu yazmayı düşürür ve sayfadaki ürünler koşu sonunda pasife
   // çekilir. Kolon yoksa alan yükte hiç yer almaz.
   const modelKoduYaz = await modelKoduKolonuVar(supabase)
+  // Renk kolonu (docs/renk/01) için aynı koruma: kolon yoksa alan yükte yer almaz.
+  const renkYaz = await renkKolonuVar(supabase)
 
   const existingByBarcode = new Map(
     (existingRows || []).map((r: any) => [r.trendyol_barcode, r])
@@ -238,6 +250,7 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
       slug: existing ? existing.slug : generateSlug(row.title, row.barcode),
       trendyol_id: existing ? existing.trendyol_id : row.variantId,
       ...(modelKoduYaz ? { trendyol_model_code: row.modelCode } : {}),
+      ...(renkYaz ? { trendyol_color: row.color } : {}),
     })
 
     const yazilan = payload[payload.length - 1]
@@ -283,6 +296,23 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
             .upsert([kodsuz], { onConflict: 'trendyol_barcode' })
           if (!kodsuzHata) {
             console.warn(`Model kodu yazılamadı (${item.trendyol_barcode}); satır kodsuz yazıldı.`)
+            rowError = null
+          }
+        }
+
+        // GÜVENLİK AĞI: renk yüzünden reddedilen satır (ör. kolon şema
+        // önbelleğine henüz girmemiş) EK ALANLAR OLMADAN yazılır — renk de
+        // model kodu da. Rengin bir tur eksik kalması, ürünün pasife
+        // düşmesinden iyidir; sonraki koşuda kendiliğinden dolar.
+        if (rowError && 'trendyol_color' in item) {
+          const eksiz: UpsertRow = { ...item }
+          delete eksiz.trendyol_color
+          delete eksiz.trendyol_model_code
+          const { error: eksizHata } = await supabase
+            .from('products')
+            .upsert([eksiz], { onConflict: 'trendyol_barcode' })
+          if (!eksizHata) {
+            console.warn(`Renk yazılamadı (${item.trendyol_barcode}); satır ek alanlar olmadan yazıldı.`)
             rowError = null
           }
         }

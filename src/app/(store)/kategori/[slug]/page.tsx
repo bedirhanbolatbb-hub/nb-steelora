@@ -13,6 +13,8 @@ import {
   malzemeyeGoreSuz,
   paginateGroupedProducts,
 } from '@/lib/catalog/listing'
+import { renkSecenekleri, renkeGoreSuz } from '@/lib/catalog/renk'
+import { renkHaritasiGetir } from '@/lib/catalog/renkVerisi'
 import { fiyatKovalari, gosterilenFiyat, listeFiyatina } from '@/lib/catalog/fiyatKovalari'
 import { vitrinIndirimiGetir } from '@/lib/campaigns/vitrinIndirimi'
 import JsonLd from '@/components/seo/JsonLd'
@@ -120,10 +122,17 @@ export default async function KategoriPage({
   }
 
   const sayfa = parseInt(sp.sayfa || '1')
-  const { data: hamUrunler } = await query
+  // Renk haritası liste sorgusuyla birlikte istenir (lib/catalog/renkVerisi).
+  const [{ data: hamUrunler }, renkHaritasi] = await Promise.all([query, renkHaritasiGetir()])
   // 24 Kas 2026: malzeme süzgeci (lib/catalog/listing) — ek sorgu yok.
   const malzemeler = malzemeSecenekleri((hamUrunler || []) as any[])
-  const products = malzemeyeGoreSuz((hamUrunler || []) as any[], sp.malzeme)
+  // Renk süzgeci aynı düzende (lib/catalog/renk).
+  const renkler = renkSecenekleri((hamUrunler || []) as any[], renkHaritasi)
+  const products = renkeGoreSuz(
+    malzemeyeGoreSuz((hamUrunler || []) as any[], sp.malzeme),
+    renkHaritasi,
+    sp.renk
+  )
   const { cards, total } = paginateGroupedProducts(products as any[], sayfa)
 
   // Faz 11A: fiyat kovaları bu kategorinin gerçek fiyatlarından türer.
@@ -163,6 +172,7 @@ export default async function KategoriPage({
       categories={[kategori]}
       fiyatAraliklari={fiyatAraliklari}
       malzemeler={malzemeler}
+      renkler={renkler}
       currentPage={sayfa}
       perPage={PER_PAGE}
       currentParams={{
@@ -172,6 +182,7 @@ export default async function KategoriPage({
         max_fiyat: sp.max_fiyat || '',
         tip: sp.tip || '',
         malzeme: sp.malzeme || '',
+        renk: sp.renk || '',
       }}
       title={kategori}
       tanitim={icerik[`kategori_tanitim_${slug}`] || undefined}

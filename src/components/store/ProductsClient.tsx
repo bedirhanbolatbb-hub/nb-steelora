@@ -28,6 +28,8 @@ interface ProductsClientProps {
   fiyatAraliklari: FiyatKovasi[]
   /** Listede gerçekten bulunan malzemeler (24 Kas 2026); boşsa süzgeç basılmaz. */
   malzemeler?: { value: string; label: string }[]
+  /** Listede gerçekten bulunan renk grupları (24 Kas 2026); boşsa süzgeç basılmaz. */
+  renkler?: { value: string; label: string }[]
   currentPage: number
   perPage: number
   currentParams: Record<string, string>
@@ -96,6 +98,7 @@ function ProductsInner({
   categories,
   fiyatAraliklari,
   malzemeler = [],
+  renkler = [],
   currentPage,
   perPage,
   currentParams,
@@ -141,6 +144,7 @@ function ProductsInner({
   const qsMin = sp.get('min_fiyat') || ''
   const qsMax = sp.get('max_fiyat') || ''
   const qsMalzeme = sp.get('malzeme') || ''
+  const qsRenk = sp.get('renk') || ''
 
   const priceLabel = (() => {
     if (qsMin && qsMax) return `${qsMin}–${qsMax} ₺`
@@ -166,6 +170,17 @@ function ProductsInner({
             key: 'malzeme',
             label: malzemeler.find((m) => m.value === qsMalzeme)?.label ?? qsMalzeme,
             clear: { malzeme: '' },
+          },
+        ]
+      : []),
+    // Renk çipi yalnız seçenek gerçekten varsa basılır: renk verisi yokken
+    // adreste kalan eski bir parametre listeyi süzmez, çipi de olmamalı.
+    ...(qsRenk && renkler.some((r) => r.value === qsRenk)
+      ? [
+          {
+            key: 'renk',
+            label: renkler.find((r) => r.value === qsRenk)?.label ?? qsRenk,
+            clear: { renk: '' },
           },
         ]
       : []),
@@ -211,6 +226,26 @@ function ProductsInner({
               onClick={() => updateParams({ malzeme: m.value })}
             >
               {m.label}
+            </Secenek>
+          ))}
+        </div>
+      )}
+
+      {/* Renk (24 Kas 2026): Trendyol'un renk bilgisinden; yalnız listede
+          gerçekten bulunan gruplar. "Altın rengi" malzeme değil renktir. */}
+      {renkler.length > 0 && (
+        <div>
+          <h3 className={SUZGEC_BASLIGI}>Renk</h3>
+          <Secenek secili={!currentParams.renk} onClick={() => updateParams({ renk: '' })}>
+            Tümü
+          </Secenek>
+          {renkler.map((r) => (
+            <Secenek
+              key={r.value}
+              secili={currentParams.renk === r.value}
+              onClick={() => updateParams({ renk: r.value })}
+            >
+              {r.label}
             </Secenek>
           ))}
         </div>
