@@ -67,18 +67,18 @@ export default function SifremiUnuttumPage() {
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
       <div className="max-w-md w-full">
-        <h1 className="font-heading text-[36px] font-light text-ink mb-2 text-center">
+        <h1 className="font-heading text-[30px] font-medium text-ink mb-6 text-center">
           Şifremi Unuttum
         </h1>
-        <div className="w-16 h-px bg-accent mx-auto mb-10" />
-        <p className="text-[13px] font-body text-ink-soft text-center mb-6">
-          E-posta adresinizi girin, şifre sıfırlama linki gönderelim.
+        <p className="text-[14px] font-body text-ink-soft text-center mb-6">
+          E-posta adresinizi yazın; şifre sıfırlama bağlantısını gönderelim.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             type="email"
-            placeholder="E-posta *"
+            etiket="E-posta adresi"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -87,7 +87,7 @@ export default function SifremiUnuttumPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-ink text-bg font-body text-[12px] tracking-[0.15em] uppercase hover:bg-accent transition-colors disabled:opacity-50"
+            className="basis flex min-h-[52px] w-full items-center justify-center rounded-[4px] bg-ink font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-white hover:bg-accent-deep disabled:opacity-50"
           >
             {loading ? 'Gönderiliyor...' : 'Link Gönder'}
           </button>

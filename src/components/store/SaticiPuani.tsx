@@ -87,7 +87,7 @@ export function SaticiPuaniKarti({ veri, className = '' }: { veri: SaticiPuani; 
             </>
           )}
         </p>
-        <p className="mt-0.5 font-body text-[10.5px] text-muted">{veri.tarih} itibarıyla</p>
+        <p className="mt-0.5 font-body text-[12px] text-muted">{veri.tarih} itibarıyla</p>
       </div>
     </div>
   )
@@ -118,7 +118,7 @@ export function SaticiPuaniBandi({ veri }: { veri: SaticiPuani }) {
               </>
             )}
           </p>
-          <p className="mt-0.5 font-body text-[10.5px] text-muted lg:text-[11px]">{veri.tarih} itibarıyla</p>
+          <p className="mt-0.5 font-body text-[12px] text-muted">{veri.tarih} itibarıyla</p>
         </div>
       </div>
     </div>
@@ -128,7 +128,7 @@ export function SaticiPuaniBandi({ veri }: { veri: SaticiPuani }) {
 /** Tek satır: sepet, ödeme ve havale bekleyen sipariş ekranı. */
 export function SaticiPuaniSatiri({ veri, className = '' }: { veri: SaticiPuani; className?: string }) {
   return (
-    <p className={`font-body text-[11px] text-ink-soft ${className}`}>
+    <p className={`font-body text-[12px] text-ink-soft ${className}`}>
       <span className="sr-only">{saticiPuaniCumlesi(veri)}</span>
       <span aria-hidden="true" className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5">
         <svg viewBox="0 0 24 24" className="h-[11px] w-[11px] shrink-0">

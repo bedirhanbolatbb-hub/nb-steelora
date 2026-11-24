@@ -352,16 +352,17 @@ html:has(:target) {
 }
 .prose-blog p {
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  /* 24 Kas 2026 tasarım denetimi: rehber yazıları 14,4 px'ti; okuma metni 16 px. */
+  font-size: 1rem;
   color: var(--ink-soft);
-  line-height: 1.8;
+  line-height: 1.75;
   margin-bottom: 1rem;
 }
 .prose-blog ul, .prose-blog ol {
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: var(--ink-soft);
-  line-height: 1.8;
+  line-height: 1.75;
   margin-bottom: 1rem;
   padding-left: 1.5rem;
 }

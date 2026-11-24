@@ -164,7 +164,9 @@ export default function ConsentBanner() {
   // Reddet ve Kabul et AYNI ölçüde ve aynı kontrast ailesinde — KVKK karanlık
   // desen yasağı gereği reddetmek kabul etmek kadar kolay görünmeli.
   const dugme =
-    'min-h-[36px] shrink-0 px-4 py-2 text-[11px] uppercase tracking-[0.14em] transition-colors disabled:opacity-50'
+    // 24 Kas 2026 tasarım denetimi: düğmeler 36 px / 11 px idi; 44 px / 12 px.
+    // Telefonda Reddet ve Kabul et satırı eşit paylaşır (ikisi de aynı kolaylıkta).
+    'min-h-[44px] flex-1 sm:flex-none shrink-0 rounded-[4px] px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] transition-colors disabled:opacity-50'
   // Ayarlar görünümündeki geniş düğmeler (alt alta sığsın diye esner).
   const genisDugme = `${dugme} flex-1`
 
@@ -218,7 +220,7 @@ export default function ConsentBanner() {
                 type="button"
                 disabled={gonderiliyor}
                 onClick={() => setAyarlar(true)}
-                className="shrink-0 px-2 py-2 text-[11px] text-muted underline underline-offset-4 transition-colors hover:text-ink"
+                className="min-h-[44px] shrink-0 px-2 text-[13px] text-ink-soft underline underline-offset-4 transition-colors hover:text-ink"
               >
                 Ayarlar
               </button>

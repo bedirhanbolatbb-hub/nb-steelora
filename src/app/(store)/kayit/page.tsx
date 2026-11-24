@@ -96,10 +96,9 @@ export default function KayitPage() {
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
       <div className="max-w-md w-full">
-        <h1 className="font-heading text-[36px] font-light text-ink mb-2 text-center">
+        <h1 className="font-heading text-[30px] font-medium text-ink mb-6 text-center">
           Üye Ol
         </h1>
-        <div className="w-16 h-px bg-accent mx-auto mb-6" />
 
         {/* Faz 11E: üyelere özel kampanya varsa burada görünür; yoksa hiç
             basılmaz (olmayan indirim vaat edilmez). */}
@@ -110,28 +109,33 @@ export default function KayitPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             type="text"
-            placeholder="Ad Soyad *"
+            etiket="Ad Soyad"
+            autoComplete="name"
             value={form.fullName}
             onChange={(e) => setForm({ ...form, fullName: e.target.value })}
             required
           />
           <Input
             type="email"
-            placeholder="E-posta *"
+            etiket="E-posta adresi"
+            autoComplete="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             required
           />
           <Input
             type="password"
-            placeholder="Şifre * (en az 6 karakter)"
+            etiket="Şifre"
+            ipucu="En az 6 karakter."
+            autoComplete="new-password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             required
           />
           <Input
             type="password"
-            placeholder="Şifre Tekrar *"
+            etiket="Şifre (tekrar)"
+            autoComplete="new-password"
             value={form.confirmPassword}
             onChange={(e) =>
               setForm({ ...form, confirmPassword: e.target.value })
@@ -139,12 +143,12 @@ export default function KayitPage() {
             required
           />
 
-          {error && <p className="text-red-500 text-sm font-body">{error}</p>}
+          {error && <p role="alert" className="text-red-700 text-[14px] font-body">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-ink text-white font-body text-[12px] tracking-[0.15em] uppercase hover:bg-accent transition-colors disabled:opacity-50"
+            className="basis flex min-h-[52px] w-full items-center justify-center rounded-[4px] bg-ink font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-white hover:bg-accent-deep disabled:opacity-50"
           >
             {loading ? 'Kaydediliyor...' : 'Üye Ol'}
           </button>

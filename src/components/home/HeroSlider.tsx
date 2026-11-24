@@ -445,7 +445,7 @@ function KargoSatiri({ ton }: { ton: 'acik' | 'koyu' }) {
  */
 function YapayZekaNotu() {
   return (
-    <p className="pointer-events-none absolute right-3 top-3 z-[1] rounded-[2px] bg-ink/55 px-2 py-1 font-body text-[11px] leading-none text-white md:bottom-4 md:right-5 md:top-auto">
+    <p className="pointer-events-none absolute right-3 top-3 z-[1] rounded-[2px] bg-ink/55 px-2 py-1 font-body text-[12px] leading-none text-white md:bottom-4 md:right-5 md:top-auto">
       Yapay zekâ ile üretilmiş görsel
     </p>
   )

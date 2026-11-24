@@ -169,7 +169,7 @@ export default function StickyBuyBar({
               </span>
             )}
           </p>
-          <p className="mt-0.5 truncate font-body text-[11px] text-muted">
+          <p className="mt-0.5 truncate font-body text-[12px] text-muted">
             {FREE_SHIPPING_SHORT} · {GUVEN_METNI.iade}
           </p>
         </div>

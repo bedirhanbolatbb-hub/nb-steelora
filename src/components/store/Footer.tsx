@@ -309,7 +309,7 @@ export default function Footer({
                     href={content.veri_sorumlusu_etbis}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline underline-offset-2 hover:text-accent transition-colors"
+                    className="inline-block py-2.5 -my-2.5 underline underline-offset-2 hover:text-accent transition-colors"
                   >
                     ETBİS kayıt doğrulama
                   </a>
@@ -320,7 +320,7 @@ export default function Footer({
                     href={ETBIS_DOGRULAMA}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline underline-offset-2 hover:text-accent transition-colors"
+                    className="inline-block py-2.5 -my-2.5 underline underline-offset-2 hover:text-accent transition-colors"
                   >
                     ETBİS: {content.veri_sorumlusu_etbis} — kaydı doğrula
                   </a>

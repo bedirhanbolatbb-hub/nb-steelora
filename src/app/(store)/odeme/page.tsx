@@ -394,8 +394,7 @@ export default function OdemePage() {
       masaüstünde sağ sütunda AYNI içerik (tek tanım). */
   const ozetIcerik = (
     <>
-          <p className="eyebrow">Özet</p>
-          <h2 className="font-heading text-[20px] font-semibold text-ink mt-1 mb-5">
+          <h2 className="mb-5 hidden font-heading text-[20px] font-medium text-ink lg:block">
             Sipariş Özeti
           </h2>
           <ul className="space-y-4">
@@ -453,8 +452,8 @@ export default function OdemePage() {
               </div>
             )}
             {totalDiscount + havaleIndirimi > 0 && (
-              <p className="text-[11px] font-body text-accent-deep">
-                {formatPrice(totalDiscount + havaleIndirimi)} kazandınız
+              <p className="text-[12px] font-body text-ink-soft">
+                Toplam indiriminiz: {formatPrice(totalDiscount + havaleIndirimi)}
                 {ozet.tavanUygulandi && <span className="text-muted"> · indirim tavanı uygulandı</span>}
                 {kod && !kuponUygulandi && (
                   <span className="text-muted"> · en avantajlı kampanya uygulandı, indirimler toplanmaz</span>

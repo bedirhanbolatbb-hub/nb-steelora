@@ -51,20 +51,20 @@ export default async function KoleksiyonPage({
 
       {/* Hikâye bandı */}
       <section className="bg-surface-muted border-b border-line">
-        <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-14 lg:py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center">
+        <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8 lg:py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-14 items-center">
             <div data-reveal>
               <p className="eyebrow">Koleksiyon</p>
-              <h1 className="font-heading text-[40px] lg:text-[56px] font-medium text-ink leading-[1.08] mt-3">
+              <h1 className="font-heading text-[30px] lg:text-[48px] font-medium text-ink leading-[1.1] mt-2">
                 {collection.name}
               </h1>
               {collection.description && (
-                <p className="text-[14px] lg:text-[15px] font-body text-ink-soft leading-relaxed mt-5 max-w-prose">
+                <p className="text-[15px] lg:text-[16px] font-body text-ink-soft leading-relaxed mt-3 max-w-prose">
                   {collection.description}
                 </p>
               )}
-              <p className="text-[11px] font-body text-muted mt-5 tracking-[0.08em]">
-                {products.length} parça
+              <p className="text-[13px] font-body text-muted mt-3">
+                {products.length} ürün
               </p>
             </div>
 
@@ -94,16 +94,16 @@ export default async function KoleksiyonPage({
       </section>
 
       {/* Ürünler */}
-      <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-14 lg:py-20">
+      <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8 lg:py-16">
         {products.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-[13px] font-body text-muted mb-4">
-              Bu koleksiyondaki parçalar şu anda stokta değil.
+            <p className="text-[15px] font-body text-ink-soft mb-4">
+              Bu koleksiyondaki ürünler şu anda stokta değil.
             </p>
             <Link
               prefetch={false}
               href="/urunler"
-              className="inline-flex items-center justify-center bg-ink text-bg text-[11px] uppercase tracking-[0.15em] font-body font-medium px-8 py-3.5 rounded-[4px] hover:bg-accent-deep transition-colors"
+              className="basis inline-flex min-h-[52px] items-center justify-center rounded-[4px] bg-ink px-8 font-body text-[13px] font-semibold uppercase tracking-[0.1em] text-white hover:bg-accent-deep"
             >
               Tüm Ürünler
             </Link>
