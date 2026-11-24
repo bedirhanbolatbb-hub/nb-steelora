@@ -84,7 +84,7 @@ export default function UyelerClient({
           <ul className="space-y-2">
             {bugun.map((u) => (
               <li key={u.id} className="flex flex-wrap items-center gap-2 text-[13px]">
-                <Link
+                <Link prefetch={false}
                   href={`/panel/uyeler/${u.id}`}
                   className="font-medium text-[var(--p-ink)] underline underline-offset-2"
                 >
@@ -129,7 +129,7 @@ export default function UyelerClient({
                 {gorunen.map((u) => (
                   <tr key={u.id} className="border-b border-[var(--p-line)] last:border-0">
                     <td className="py-2 pr-3">
-                      <Link
+                      <Link prefetch={false}
                         href={`/panel/uyeler/${u.id}`}
                         className="font-medium text-[var(--p-ink)] underline underline-offset-2"
                       >

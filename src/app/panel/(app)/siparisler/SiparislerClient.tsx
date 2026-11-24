@@ -258,7 +258,7 @@ export default function SiparislerClient({
             {satirlar.map((s) => {
               const d = durumRozeti(s)
               return (
-                <Link
+                <Link prefetch={false}
                   key={s.id}
                   href={`/panel/siparisler/${s.id}`}
                   className="block rounded-[6px] border border-[var(--p-line)] bg-[var(--p-surface)] p-3"

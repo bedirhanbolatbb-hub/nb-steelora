@@ -236,7 +236,7 @@ export default function SiparisDetayClient({
   return (
     <div className="mx-auto max-w-5xl space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Link href="/panel/siparisler" className="flex min-h-[44px] items-center gap-1 text-[13px] text-[var(--p-muted)] hover:text-[var(--p-ink)]">
+        <Link prefetch={false} href="/panel/siparisler" className="flex min-h-[44px] items-center gap-1 text-[13px] text-[var(--p-muted)] hover:text-[var(--p-ink)]">
           <ArrowLeft size={14} /> Siparişler
         </Link>
         <span className="ml-auto flex items-center gap-2">
@@ -343,7 +343,7 @@ export default function SiparisDetayClient({
           {siparis.acikTalepVar ? (
             <p className="text-[13px] leading-relaxed text-[var(--p-ink-soft)]">
               Bu siparişte açık bir talep zaten var. Adımları{' '}
-              <Link href="/panel/siparisler?tab=talepler" className="underline">
+              <Link prefetch={false} href="/panel/siparisler?tab=talepler" className="underline">
                 Müşteri talepleri
               </Link>{' '}
               sekmesinden yürütün.

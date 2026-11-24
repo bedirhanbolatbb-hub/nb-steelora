@@ -672,7 +672,7 @@ export default function KurasyonClient({
         <p className="text-[12px] leading-relaxed text-[var(--p-muted)]">
           Anasayfada aktif koleksiyonların tamamı basılır — şu an {koleksiyonlar.length} koleksiyon
           {koleksiyonlar.length > 0 ? `: ${koleksiyonlar.map((k) => k.name).join(', ')}` : ''}.
-          Sıra, ad ve kapak görseli <Link href="/panel/koleksiyonlar" className="text-[var(--p-accent-deep)] underline underline-offset-2">Koleksiyonlar</Link> sayfasından
+          Sıra, ad ve kapak görseli <Link prefetch={false} href="/panel/koleksiyonlar" className="text-[var(--p-accent-deep)] underline underline-offset-2">Koleksiyonlar</Link> sayfasından
           yönetilir. Koleksiyon yoksa bant hiç basılmaz.
         </p>
       </PCard>
@@ -680,7 +680,7 @@ export default function KurasyonClient({
       <PCard title="Blog şeridi (3)">
         <p className="text-[12px] leading-relaxed text-[var(--p-muted)]">
           Anasayfada en son yayımlanan 3 yazı basılır; seçim yapılmaz.
-          Yazılar <Link href="/panel/blog" className="text-[var(--p-accent-deep)] underline underline-offset-2">Blog</Link> sayfasından yönetilir.
+          Yazılar <Link prefetch={false} href="/panel/blog" className="text-[var(--p-accent-deep)] underline underline-offset-2">Blog</Link> sayfasından yönetilir.
         </p>
       </PCard>
 

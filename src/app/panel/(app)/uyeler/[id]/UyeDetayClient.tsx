@@ -92,7 +92,7 @@ export default function UyeDetayClient({
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
-      <Link href="/panel/uyeler" className="text-[12px] text-[var(--p-muted)] underline underline-offset-2">
+      <Link prefetch={false} href="/panel/uyeler" className="text-[12px] text-[var(--p-muted)] underline underline-offset-2">
         ← Üyeler
       </Link>
 
@@ -126,7 +126,7 @@ export default function UyeDetayClient({
           <ul className="divide-y divide-[var(--p-line)] text-[13px]">
             {siparisler.map((s) => (
               <li key={s.id} className="flex flex-wrap items-center gap-2 py-2">
-                <Link href={`/panel/siparisler/${s.id}`} className="font-medium underline underline-offset-2">
+                <Link prefetch={false} href={`/panel/siparisler/${s.id}`} className="font-medium underline underline-offset-2">
                   {s.no}
                 </Link>
                 <PBadge tone={ORDER_STATUS[s.durum]?.tone ?? 'neutral'}>
@@ -175,7 +175,7 @@ export default function UyeDetayClient({
                   </span>
                   <span className="font-medium">{OLAY_ADI[h.event] ?? h.event}</span>
                   {h.urunAdi && (
-                    <Link
+                    <Link prefetch={false}
                       href={`/urun/${h.urunSlug}`}
                       target="_blank"
                       className="text-[var(--p-accent-deep)] underline underline-offset-2"

@@ -148,7 +148,7 @@ export default function UrunDetayClient({ urun, kadrajKarti }: { urun: UrunDetay
     <div className="mx-auto max-w-6xl space-y-4">
       {/* Üst şerit */}
       <div className="flex flex-wrap items-center gap-2">
-        <Link href="/panel/urunler" className="flex min-h-[44px] items-center gap-1 text-[13px] text-[var(--p-muted)] hover:text-[var(--p-ink)]">
+        <Link prefetch={false} href="/panel/urunler" className="flex min-h-[44px] items-center gap-1 text-[13px] text-[var(--p-muted)] hover:text-[var(--p-ink)]">
           <ArrowLeft size={14} /> Ürünler
         </Link>
         {(urun.trendyolBarcode || urun.trendyolModelCode) && (

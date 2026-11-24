@@ -175,7 +175,7 @@ export default async function PanelDashboard() {
             const bos = y.deger === 0
             return (
               <li key={y.etiket}>
-                <Link
+                <Link prefetch={false}
                   href={y.href}
                   className="flex min-h-[44px] items-center justify-between gap-3 py-2.5 transition-colors hover:text-[var(--p-ink)]"
                 >
@@ -228,7 +228,7 @@ export default async function PanelDashboard() {
       {/* ── Dikkat isteyenler ── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {dikkat.map((d) => (
-          <Link key={d.href} href={d.href} className="group">
+          <Link prefetch={false} key={d.href} href={d.href} className="group">
             <PCard className="transition-colors group-hover:border-[var(--p-ink)]">
               <div className="flex items-baseline justify-between gap-2">
                 <p className="text-[13px] text-[var(--p-ink-soft)]">{d.etiket}</p>
@@ -255,7 +255,7 @@ export default async function PanelDashboard() {
         <PCard
           title="Stok riski — son 1 adet"
           action={
-            <Link href="/panel/urunler" className="text-[12px] text-[var(--p-accent-deep)] hover:underline">
+            <Link prefetch={false} href="/panel/urunler" className="text-[12px] text-[var(--p-accent-deep)] hover:underline">
               Tümü ({sonAdet})
             </Link>
           }
@@ -301,7 +301,7 @@ export default async function PanelDashboard() {
         <PCard
           title="Senkron sağlığı"
           action={
-            <Link href="/panel/senkron" className="text-[12px] text-[var(--p-accent-deep)] hover:underline">
+            <Link prefetch={false} href="/panel/senkron" className="text-[12px] text-[var(--p-accent-deep)] hover:underline">
               Ayrıntı
             </Link>
           }
@@ -333,7 +333,7 @@ export default async function PanelDashboard() {
       <PCard
         title="Son siparişler"
         action={
-          <Link href="/panel/siparisler" className="text-[12px] text-[var(--p-accent-deep)] hover:underline">
+          <Link prefetch={false} href="/panel/siparisler" className="text-[12px] text-[var(--p-accent-deep)] hover:underline">
             Tümü
           </Link>
         }

@@ -45,7 +45,7 @@ export default function PanelShell({ children }: { children: ReactNode }) {
       <div className="flex min-h-dvh">
         {/* ── Kenar çubuğu (masaüstü) ── */}
         <aside className="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col border-r border-[var(--p-line)] bg-[var(--p-surface)] sm:flex">
-          <Link href="/panel" className="block border-b border-[var(--p-line)] px-5 py-4">
+          <Link prefetch={false} href="/panel" className="block border-b border-[var(--p-line)] px-5 py-4">
             <span className="panel-brand text-[16px] tracking-[0.12em] text-[var(--p-ink)]">
               NB STEELORA
             </span>
@@ -63,7 +63,7 @@ export default function PanelShell({ children }: { children: ReactNode }) {
                 <ul className="space-y-0.5">
                   {g.links.map((link) => (
                     <li key={link.href}>
-                      <Link
+                      <Link prefetch={false}
                         href={link.href}
                         className={cn(
                           'block rounded-[4px] px-2 py-1.5 text-[13px] transition-colors',
@@ -98,7 +98,7 @@ export default function PanelShell({ children }: { children: ReactNode }) {
               başlıkla üst üste binmiş görünmesine yol açıyordu (7A bulgusu). */}
           <header className="sticky top-0 z-40 border-b border-[var(--p-line)] bg-[var(--p-surface)] px-4 py-3 sm:px-6">
             <nav className="text-[11px] text-[var(--p-muted)]" aria-label="breadcrumb">
-              <Link href="/panel" className="hover:text-[var(--p-ink)] transition-colors">
+              <Link prefetch={false} href="/panel" className="hover:text-[var(--p-ink)] transition-colors">
                 Panel
               </Link>
               {group && <span> / {group}</span>}
@@ -119,7 +119,7 @@ export default function PanelShell({ children }: { children: ReactNode }) {
             const Icon = tab.icon
             const active = isActive(tab.href)
             return (
-              <Link
+              <Link prefetch={false}
                 key={tab.href}
                 href={tab.href}
                 className={cn(
@@ -167,7 +167,7 @@ export default function PanelShell({ children }: { children: ReactNode }) {
                 <ul>
                   {g.links.map((link) => (
                     <li key={link.href}>
-                      <Link
+                      <Link prefetch={false}
                         href={link.href}
                         className={cn(
                           'block min-h-[44px] rounded-[4px] px-2 py-2.5 text-[14px]',

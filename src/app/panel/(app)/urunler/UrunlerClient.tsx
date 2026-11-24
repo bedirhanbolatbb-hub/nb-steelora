@@ -363,7 +363,7 @@ export default function UrunlerClient({
                   <input type="checkbox" checked={secili.has(p.id)} onChange={() => toggle(p.id)} aria-label={p.title} className="h-4 w-4 accent-[var(--p-accent-line)]" />
                 </td>
                 <td className="px-3 py-2">
-                  <Link href={`/panel/urunler/${p.id}`} className="flex items-center gap-3 group">
+                  <Link prefetch={false} href={`/panel/urunler/${p.id}`} className="flex items-center gap-3 group">
                     <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
                       {p.image && <Image src={gorselBoyutu(p.image, 96)} unoptimized={isRemoteMedia(p.image)} alt="" width={40} height={40} sizes="40px" className="h-10 w-10 object-cover" />}
                     </span>
@@ -394,7 +394,7 @@ export default function UrunlerClient({
         {satirlar.map((p) => (
           <div key={p.id} className={cn('flex items-center gap-3 rounded-[6px] border border-[var(--p-line)] bg-[var(--p-surface)] p-3', secili.has(p.id) && 'border-[var(--p-accent-line)]')}>
             <input type="checkbox" checked={secili.has(p.id)} onChange={() => toggle(p.id)} aria-label={p.title} className="h-5 w-5 shrink-0 accent-[var(--p-accent-line)]" />
-            <Link href={`/panel/urunler/${p.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+            <Link prefetch={false} href={`/panel/urunler/${p.id}`} className="flex min-w-0 flex-1 items-center gap-3">
               <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[4px] bg-[var(--p-bg)]">
                 {p.image && <Image src={gorselBoyutu(p.image, 112)} unoptimized={isRemoteMedia(p.image)} alt="" width={48} height={48} sizes="48px" className="h-12 w-12 object-cover" />}
               </span>
