@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { LISTING_COLUMNS } from '@/lib/catalog/listing'
 
 /**
@@ -68,7 +68,7 @@ export function aciklamaBol(text: string | null): { giris: string; devam: string
 /** Aktif koleksiyonlar, admin sırasıyla; kapak görseli ve aktif ürün sayısıyla. */
 export async function getCollectionCards(): Promise<CollectionCard[]> {
   try {
-    const supabase = await createClient()
+    const supabase = createPublicClient()
     const { data: collections } = await supabase
       .from('collections')
       .select('id, slug, name, description, image_url, product_ids')
@@ -105,7 +105,9 @@ export async function getCollectionCards(): Promise<CollectionCard[]> {
 export async function getCollection(
   slug: string
 ): Promise<{ collection: CollectionRow; products: any[]; cover: string | null } | null> {
-  const supabase = await createClient()
+  // Çerezsiz istemci: koleksiyon verisi herkese açık; çerez okuyan istemci
+  // sayfayı her istekte yeniden çizdiriyordu (bkz. lib/supabase/public).
+  const supabase = createPublicClient()
 
   const { data: collection } = await supabase
     .from('collections')

@@ -8,6 +8,20 @@ import { BLUR_PLACEHOLDER, IMAGE_QUALITY, isRemoteMedia } from '@/lib/images'
 import JsonLd from '@/components/seo/JsonLd'
 import { breadcrumbJsonLd, sayfaUstVerisi } from '@/lib/seo'
 
+/**
+ * Önbellekten verilir (24 Kas 2026) — ürün sayfasıyla aynı düzen: ilk
+ * ziyarette üretilir, en fazla 24 saat saklanır; panel kaydı, Trendyol
+ * senkronu, stok değişimi ve gece yarısı tazelemesi önbelleği hemen yeniler
+ * (lib/cache/vitrin). Önceden her istekte baştan çiziliyordu: 100 ürünlük
+ * koleksiyonda sunucu yanıtı yarım saniyeyi buluyor, her tarayıcı ziyareti
+ * ücretsiz plandaki sunucu süresinden yiyordu.
+ */
+export const revalidate = 86400
+
+export async function generateStaticParams() {
+  return []
+}
+
 export async function generateMetadata({
   params,
 }: {

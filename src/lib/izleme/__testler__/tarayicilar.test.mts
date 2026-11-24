@@ -46,6 +46,9 @@ const UA = {
     'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/22F76 Instagram 380.0.0.31.94 (iPhone15,2; iOS 18_5; tr_TR; tr; scale=3.00; 1179x2556; 742338231)',
   android:
     'Mozilla/5.0 (Linux; Android 14; SM-A546E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36',
+  // Claude masaüstü uygulamasının içindeki tarayıcı: adında "Claude" geçer ama tarayıcı robotu değildir.
+  claudeUygulamasi:
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Claude/6.28899.6 Chrome/156.0.8078.100 Safari/537.36',
 }
 
 // ── 1. Tanıma ve gruplama
@@ -69,6 +72,7 @@ esit('sıradan Chrome tanınmaz', tani(UA.chrome), null)
 esit('iPhone Safari tanınmaz', tani(UA.iphone), null)
 esit('Instagram uygulama içi tarayıcı tanınmaz', tani(UA.instagram), null)
 esit('Android Chrome tanınmaz', tani(UA.android), null)
+esit('Claude uygulamasının içindeki tarayıcı tanınmaz', tani(UA.claudeUygulamasi), null)
 esit('boş kullanıcı aracısı tanınmaz', tani(null), null)
 
 // ── 2. Liste tutarlılığı
@@ -114,7 +118,7 @@ esit(
 )
 esit(
   'insan tarayıcıları kalıptan GEÇMEZ (katman onlar için çalışmaz)',
-  [UA.chrome, UA.iphone, UA.instagram, UA.android].filter((u) => kalip.test(u)),
+  [UA.chrome, UA.iphone, UA.instagram, UA.android, UA.claudeUygulamasi].filter((u) => kalip.test(u)),
   []
 )
 // Kalıptan geçen her şeyi sınıflandırıcı da tanımalı: aksi hâlde katman boşuna çalışır.
