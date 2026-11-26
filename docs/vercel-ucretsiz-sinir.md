@@ -381,3 +381,48 @@ görmüyordu.
   eşleştiriciden klasik arama motorlarını (Googlebot, bingbot, YandexBot,
   DuckDuckBot) çıkarmak: listede `grup: 'arama'` olan dört satır silinir,
   test olması gereken kalıbı yazdırır.
+
+
+## 25–26 Kasım 2026 — ikinci tur: sunucu süresi alarmı
+
+Ölçüm (25 Kas, Usage → Fluid Active CPU): 30 günlük pencerede **2 sa 17 dk /
+4 sa** (18 Kas'ta 1 sa 10 dk). Gidişle sınır 8–12 Aralık arasında aşılıyordu
+(10 Kas'ta site bu yüzden kapanmıştı). 12 Kasım'ın kullanımı 13 Aralık'ta
+pencereden düşer; o güne kadar kalan pay ~103 dk (günde ~5,9 dk, yayınlar ve
+panel kontrolleri dahil).
+
+Son 12 saat: işlev 5 dk 25 sn + ara katman 1 dk 01 sn. Sakin saatlerde işlev
+~12 sn/sa, ara katman ~4,7 sn/sa (12 saatte 340 çağrı). **24 Kas'taki "tarayıcı
+isteği başına birkaç milisaniye" beklentisi yanlıştı:** ara katman çağrı
+başına ~0,18 sn Active CPU harcıyor (soğuk açılış). İlk 16 saatin 400 tarayıcı
+isteğinin 44'ü asistan, 201'i eğitim (GPTBot 109, PetalBot 66, Bytespider 25),
+155'i arama motoruydu (Googlebot 140). Ayrıca ölçüm turlarım (43 + 279 sayfa)
+tek başına ~2,5 dk yedi.
+
+Yapılanlar (tek yayın):
+
+- **Tarayıcı sayacı yalnız asistanları sayar** (`SAYILAN_GRUPLAR`,
+  `src/lib/izleme/tarayicilar.ts`). Eşleştirici kalıbı yalnız asistan adlarını
+  taşır; eğitim ve arama tarayıcılarının vitrin isteği ara katmana hiç gelmez.
+  Kapılı yollarda (panel, ödeme…) katman herkes için çalışır ama sayım yine
+  yalnız asistan için (`sayilirMi`). Panel kartı eski kayıtları "25 Kas
+  2026'dan beri sayılmıyor" notuyla gösterir. Beklenen: −~95 sn/gün.
+- **`/api/health` uç önbelleği 15 dk → 60 dk** (her çağrı Kargonomi ve
+  Resend'e de gidiyor). Beklenen: −~24 sn/gün.
+- **Senkron vitrin önbelleğini yalnız görünen bir şey değiştiyse tazeler**
+  (`src/lib/trendyol/vitrinFarki.ts`). Yazmadan önce yük veritabanıyla alan
+  alan karşılaştırılır (defter damgaları hariç, beyaz liste yok); yeni ürün,
+  pasife çekilen ürün, okunamayan karşılaştırma, düşen toplu yazım ve yarıda
+  kalan koşu "değişti" sayılır. Slug'ı koruyan okuma bilerek ayrı bırakıldı.
+  Yanıtta `vitrin_degisti` / `vitrin_farklari`. Beklenen: −20–30 sn/gün.
+
+Kalıcı kurallar: yayından sonra tüm sayfaları tarama yok (en çok 10 sayfa
+örnek); kod değişiklikleri tek yayında toplanır; 12 Aralık'a kadar zorunlu
+olmayan yayın yok; her günlük kontrolde Fluid Active CPU okunup not edilir
+(hedef günde ≤ 5 dk; 30 günlük toplam 3 sa 40 dk'yı geçerse acil önlem).
+
+Sıradaki adaylar (gerekirse): yasal sayfaları önbelleğe almak (önce veritabanı
+hatasında boş sayfa üretmeyen sıkı okuma gerekir — `kunyeGetir` /
+`getSiteContent` hatayı yutuyor), kadraj görsellerini doğrudan depodan vermek
+(~−50 sn/gün), kategori/liste sayfalarını önbelleğe almak, düşük değerli
+tarayıcılara robots kuralı, gece tazelemesini koşullu yapmak.

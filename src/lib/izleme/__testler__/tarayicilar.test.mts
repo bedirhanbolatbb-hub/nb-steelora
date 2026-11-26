@@ -1,5 +1,13 @@
 import { readFileSync } from 'node:fs'
-import { TARAYICILAR, eslestiriciKalibi, tarayiciBul, yolOzeti, YOL_EN_FAZLA } from '../tarayicilar.ts'
+import {
+  SAYILAN_GRUPLAR,
+  TARAYICILAR,
+  eslestiriciKalibi,
+  sayilirMi,
+  tarayiciBul,
+  yolOzeti,
+  YOL_EN_FAZLA,
+} from '../tarayicilar.ts'
 import { istanbulGunu, tarayiciOzeti } from '../tarayiciRaporu.ts'
 
 /**
@@ -8,6 +16,10 @@ import { istanbulGunu, tarayiciOzeti } from '../tarayiciRaporu.ts'
  * İki şey sessizce bozulabilir: (1) bir tarayıcı yanlış gruba düşer ya da hiç
  * tanınmaz, (2) liste değişir ama src/proxy.ts'teki sabit kalıp eski kalır —
  * o zaman yeni ad hiç sayılmaz ve kimse fark etmez. İkisi de burada sınanır.
+ *
+ * 25 Kas 2026: yalnız asistan grubu sayılıyor. Üçüncü bir şey daha sınanır:
+ * eğitim ve arama tarayıcıları kalıptan GEÇMEMELİ — geçerlerse istek katmanı
+ * onlar için de çalışır ve ücretsiz plandaki sunucu süresi boşa harcanır.
  */
 let gecen = 0
 let kalan = 0
@@ -104,18 +116,32 @@ esit('proxy.ts kalıbı listeyle birebir aynı', proxyKalibi === eslestiriciKali
 // Next, değeri baştan sona eşleştirir (^…$).
 const kalip = new RegExp(`^${eslestiriciKalibi()}$`)
 const ornek = (ad: string) => `Mozilla/5.0 (compatible; ${ad}/1.0; +https://ornek.invalid/bot)`
+esit('sayılan gruplar: yalnız asistan', [...SAYILAN_GRUPLAR], ['asistan'])
 esit(
-  'listedeki her ad kalıptan geçer',
-  TARAYICILAR.filter((t) => !kalip.test(ornek(t.ad))).map((t) => t.ad),
+  'sayılan gruptaki her ad kalıptan geçer',
+  TARAYICILAR.filter((t) => sayilirMi(t) && !kalip.test(ornek(t.ad))).map((t) => t.ad),
   []
 )
 esit(
-  'gerçek tarayıcı metinleri kalıptan geçer',
-  [UA.oaiSearch, UA.chatgptUser, UA.perplexity, UA.claudeUser, UA.claudeBot, UA.gptBot, UA.googlebot, UA.bingbot, UA.applebot, UA.yandexEk].filter(
-    (u) => !kalip.test(u)
-  ),
+  'sayılmayan gruplardaki hiçbir ad kalıptan GEÇMEZ (katman onlar için çalışmaz)',
+  TARAYICILAR.filter((t) => !sayilirMi(t) && kalip.test(ornek(t.ad))).map((t) => t.ad),
   []
 )
+esit(
+  'gerçek asistan metinleri kalıptan geçer',
+  [UA.oaiSearch, UA.chatgptUser, UA.perplexity, UA.perplexityUser, UA.claudeUser, UA.applebot].filter((u) => !kalip.test(u)),
+  []
+)
+esit(
+  'gerçek eğitim ve arama tarayıcısı metinleri kalıptan GEÇMEZ',
+  [UA.claudeBot, UA.gptBot, UA.googlebot, UA.bingbot, UA.yandexEk].filter((u) => kalip.test(u)),
+  []
+)
+esit('sayilirMi: asistan sayılır', sayilirMi(tarayiciBul(UA.oaiSearch)), true)
+esit('sayilirMi: eğitim tarayıcısı sayılmaz', sayilirMi(tarayiciBul(UA.gptBot)), false)
+esit('sayilirMi: arama motoru sayılmaz', sayilirMi(tarayiciBul(UA.googlebot)), false)
+esit('sayilirMi: tanınmayan sayılmaz', sayilirMi(tarayiciBul(UA.chrome)), false)
+esit('sayilirMi: boş değer sayılmaz', sayilirMi(null), false)
 esit(
   'insan tarayıcıları kalıptan GEÇMEZ (katman onlar için çalışmaz)',
   [UA.chrome, UA.iphone, UA.instagram, UA.android, UA.claudeUygulamasi].filter((u) => kalip.test(u)),
@@ -157,12 +183,26 @@ esit(
 esit('son görülme en yeni olan', ozet.tarayicilar[0].sonGorulme, '2026-11-25T08:00:00Z')
 esit('işletmeci listeden gelir', ozet.tarayicilar[0].isletmeci, 'OpenAI (ChatGPT araması)')
 esit(
-  'sayfalar: arama motoru ve "(diğer)" hariç, çoktan aza',
+  'sayfalar: yalnız sayılan grup (asistan), "(diğer)" hariç, çoktan aza',
   ozet.sayfalar,
   [
-    { yol: '/llms.txt', ziyaret: 6 },
     { yol: '/koleksiyon/316l-celik-takilar', ziyaret: 3 },
+    { yol: '/llms.txt', ziyaret: 2 },
   ]
+)
+// Grup listesi elle verilirse o gruplar toplanır; arama motoru hiçbir durumda girmez.
+esit(
+  'sayfalar: gruplar elle verilince (asistan + eğitim + arama) arama yine dışarıda',
+  tarayiciOzeti(
+    [
+      { gun: '2026-11-24', tarayici: 'OAI-SearchBot', grup: 'asistan', yol: '/llms.txt', adet: 2, son_gorulme: null },
+      { gun: '2026-11-24', tarayici: 'GPTBot', grup: 'egitim', yol: '/llms.txt', adet: 4, son_gorulme: null },
+      { gun: '2026-11-24', tarayici: 'Googlebot', grup: 'arama', yol: '/urun/*', adet: 120, son_gorulme: null },
+    ],
+    5,
+    ['asistan', 'egitim', 'arama']
+  ).sayfalar,
+  [{ yol: '/llms.txt', ziyaret: 6 }]
 )
 esit('İstanbul günü: UTC 21:30 ertesi gündür', istanbulGunu(new Date('2026-11-24T21:30:00Z')), '2026-11-25')
 esit('İstanbul günü: UTC 20:59 aynı gündür', istanbulGunu(new Date('2026-11-24T20:59:00Z')), '2026-11-24')

@@ -115,6 +115,15 @@ export type RunResult = {
   note: string | null
   /** Yeni / fiyatı ya da stok durumu değişen / pasife çekilen ürünlerin slug'ları (IndexNow). */
   degisenSluglar: string[]
+  /**
+   * Koşu vitrinde görünen bir şeyi değiştirdi mi? (25 Kas 2026) Vitrin önbelleği
+   * yalnız bu doğruysa tazelenir (api/sync). Yeni ürün, herhangi bir alanı
+   * değişen satır, pasife çekilen ürün ya da karşılaştırmanın yapılamadığı her
+   * durum "değişti" sayılır (lib/trendyol/vitrinFarki.ts).
+   */
+  vitrinDegisti: boolean
+  /** Hangi alanda kaç satır farklıydı (günlük kaydı ve yanıt için). */
+  vitrinFarklari: Record<string, number>
 }
 
 /**
@@ -139,6 +148,8 @@ export async function processRun(params: {
   let totalElements = 0
   let note: string | null = null
   const degisenler = new Set<string>()
+  let vitrinDegisti = false
+  const vitrinFarklari: Record<string, number> = {}
 
   while (page < MAX_PAGES) {
     const result = await syncTrendyolPage(page, PAGE_SIZE, runStartedAt)
@@ -146,6 +157,11 @@ export async function processRun(params: {
     updated += result.updated
     skipped += result.skipped
     for (const s of result.degisenSluglar ?? []) degisenler.add(s)
+    // Bilgi gelmediyse "değişti" sayılır (emniyetli taraf).
+    if (result.vitrinDegisti !== false) vitrinDegisti = true
+    for (const [alan, adet] of Object.entries(result.vitrinFarklari ?? {})) {
+      vitrinFarklari[alan] = (vitrinFarklari[alan] ?? 0) + adet
+    }
     totalPages = result.totalPages
     totalElements = result.totalElements
     pagesDone++
@@ -177,7 +193,12 @@ export async function processRun(params: {
     deactivated = stale?.length ?? 0
     // Satıştan kalkan ürünün sayfası da değişti (artık listelenmiyor).
     for (const r of (stale ?? []) as { slug: string | null }[]) if (r.slug) degisenler.add(r.slug)
-    if (deactivated > 0) console.log(`Sync: ${deactivated} ürün pasife çekildi (bu koşuda görülmedi)`)
+    if (deactivated > 0) {
+      console.log(`Sync: ${deactivated} ürün pasife çekildi (bu koşuda görülmedi)`)
+      // Vitrinden ürün düştü: listeler ve o ürünün sayfası değişti.
+      vitrinDegisti = true
+      vitrinFarklari['(pasife çekildi)'] = deactivated
+    }
   } else if (done) {
     note = `Koşu ${Math.round(elapsedBeforeDeactivate / 1000)} sn sürdü (sınır ${DEACTIVATE_BUDGET_MS / 1000} sn); pasife çekme atlandı.`
   }
@@ -205,6 +226,11 @@ export async function processRun(params: {
   console.log(
     `[sync] ${runId}: ${pagesDone} sayfa, +${added}/${updated} güncellendi, ${skipped} atlandı, ${deactivated} pasife çekildi, ${durationMs} ms, ${status}`
   )
+  console.log(
+    vitrinDegisti
+      ? `[sync] vitrin: değişiklik var, önbellek tazelenecek — ${JSON.stringify(vitrinFarklari)}`
+      : '[sync] vitrin: değişiklik yok, önbellek tazelenmeyecek'
+  )
 
   return {
     runId,
@@ -220,6 +246,8 @@ export async function processRun(params: {
     durationMs,
     note,
     degisenSluglar: [...degisenler],
+    vitrinDegisti,
+    vitrinFarklari,
   }
 }
 

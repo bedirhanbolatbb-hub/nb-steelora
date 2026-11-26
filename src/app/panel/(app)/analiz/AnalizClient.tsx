@@ -40,6 +40,9 @@ const TARAYICI_GRUPLARI = [
   { grup: 'egitim', baslik: 'Model eğitimi için veri toplayanlar' },
   { grup: 'arama', baslik: 'Arama motorları' },
 ] as const
+// 25 Kas 2026: yalnız asistanlar sayılıyor (lib/izleme/tarayicilar → SAYILAN_GRUPLAR).
+// Sayılmayan grubun eski kayıtları bu notla gösterilir.
+const SAYIM_DURDU_NOTU = '25 Kas 2026’dan beri sayılmıyor'
 const yuzde = (n: number) => `%${n.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}`
 
 function sure(saniye: number): string {
@@ -637,9 +640,10 @@ export default function AnalizClient({
       {tarayicilar && (
         <PCard title={`Yapay zekâ tarayıcıları — ${rapor.donem.etiket}`}>
           <p className="border-b border-[var(--p-line)] px-4 py-2 text-[11px] leading-relaxed text-[var(--p-muted)]">
-            ChatGPT, Perplexity, Claude gibi asistanların ve arama motorlarının sitemizi okumaya gelen
-            programları. Sayım, programın kendini tanıttığı ada göre yapılır; ziyaretçi sayılarına dahil
-            değildir.
+            ChatGPT, Perplexity, Claude gibi asistanların sitemizi okumaya gelen programları. Sayım,
+            programın kendini tanıttığı ada göre yapılır; ziyaretçi sayılarına dahil değildir. 25 Kasım
+            2026’dan beri yalnız asistanlar sayılır: arama motorlarının ve model eğitimi için veri
+            toplayanların sayımı, sitenin ücretsiz sunucu süresini korumak için durduruldu.
           </p>
           {!tarayicilar.kurulu ? (
             <p className="px-4 py-6 text-center text-[12px] text-[var(--p-muted)]">
@@ -652,10 +656,17 @@ export default function AnalizClient({
               <div className="lg:col-span-2">
                 {TARAYICI_GRUPLARI.map(({ grup, baslik }) => {
                   const satirlar = tarayicilar.tarayicilar.filter((t) => t.grup === grup)
+                  // Sayılmayan grup: seçili dönemde eski kaydı varsa notla gösterilir,
+                  // yoksa hiç gösterilmez ("gelen olmadı" yanlış izlenim verirdi).
+                  const sayiliyor = tarayicilar.sayilanGruplar.includes(grup)
+                  if (!sayiliyor && satirlar.length === 0) return null
                   return (
                     <div key={grup} className="border-b border-[var(--p-line)] last:border-0">
                       <p className="flex justify-between gap-3 px-4 pt-3 pb-1 text-[11px] font-medium uppercase tracking-[0.06em] text-[var(--p-muted)]">
-                        <span>{baslik}</span>
+                        <span>
+                          {baslik}
+                          {!sayiliyor && <span className="normal-case tracking-normal"> — {SAYIM_DURDU_NOTU}</span>}
+                        </span>
                         <span className="tabular-nums">{sayi(tarayicilar.toplam[grup])}</span>
                       </p>
                       {satirlar.length === 0 ? (
@@ -686,7 +697,7 @@ export default function AnalizClient({
                 </p>
                 {tarayicilar.sayfalar.length === 0 ? (
                   <p className="px-4 pb-3 text-[12px] text-[var(--p-muted)]">
-                    Asistan ya da eğitim tarayıcısı henüz sayfa okumadı.
+                    Bu dönemde bir asistanın okuduğu sayfa olmadı.
                   </p>
                 ) : (
                   <ul className="divide-y divide-[var(--p-line)] text-[12px]">
@@ -701,7 +712,7 @@ export default function AnalizClient({
                   </ul>
                 )}
                 <p className="px-4 py-2 text-[11px] leading-relaxed text-[var(--p-muted)]">
-                  Arama motorları bu listede yoktur; onların ürün sayfası ziyaretleri tek satırda toplanır.
+                  Yalnız asistanların okuduğu sayfalar listelenir.
                 </p>
               </div>
             </div>

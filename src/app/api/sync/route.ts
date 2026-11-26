@@ -42,24 +42,33 @@ async function runSync() {
       runStartedAt: start.runStartedAt,
     })
 
-    // Fiyat ve stok yazıldı: vitrin önbelleği yanıttan sonra tazelenir.
-    // Yalnız gerçekten koşan bir senkronun sonunda — durum okuması, atlanan
-    // (eşzamanlı) koşu ya da yetkisiz istek önbelleği boşaltmaz (15 Kas 2026).
-    after(vitriniYenile)
+    // Vitrin önbelleği yanıttan sonra tazelenir — yalnız gerçekten koşan bir
+    // senkronun sonunda (durum okuması, atlanan koşu ya da yetkisiz istek
+    // önbelleği boşaltmaz; 15 Kas 2026) ve 25 Kas 2026'dan beri YALNIZ koşu
+    // vitrinde görünen bir şeyi değiştirdiyse. Çoğu gün Trendyol'da hiçbir şey
+    // değişmiyor; yine de bütün sayfalar yeniden üretiliyordu (ücretsiz planda
+    // sunucu süresi). Karar emniyetli taraftan verilir: yeni ürün, herhangi bir
+    // alanı farklı satır, pasife çekilen ürün ya da yapılamayan karşılaştırma
+    // "değişti" sayılır (lib/trendyol/vitrinFarki.ts). Değişiklik olmayan günde
+    // sayfalar zaten veritabanıyla aynıdır; gece yarısı tazelemesi
+    // (api/cron/vitrin-tazele) ayrıca her gün çalışır.
+    if (result.vitrinDegisti) {
+      after(vitriniYenile)
 
-    // Katalog değişti: beslemeyi ve site haritasını tazelenmek üzere işaretle.
-    // İkisi de ISR ile üretiliyor (/feed.xml saatlik, /sitemap.xml günlük);
-    // işaretlemezsek senkron bittikten sonra bir saate kadar ESKİ malzeme,
-    // fiyat ve ürün kümesini yayınlamaya devam ediyorlar. 23 Ağustos'ta malzeme
-    // düzeltmesi canlıya indiğinde besleme tam olarak bu yüzden bir saat
-    // boyunca eski hâlini servis etti.
-    try {
-      revalidatePath('/feed.xml')
-      revalidatePath('/sitemap.xml')
-    } catch (e: any) {
-      // Tazeleme işareti konamazsa koşu yine başarılıdır; besleme kendi
-      // süresi dolunca tazelenir.
-      console.warn('[sync] besleme/harita tazeleme işareti konamadı:', e?.message)
+      // Katalog değişti: beslemeyi ve site haritasını tazelenmek üzere işaretle.
+      // İkisi de ISR ile üretiliyor (/feed.xml saatlik, /sitemap.xml günlük);
+      // işaretlemezsek senkron bittikten sonra bir saate kadar ESKİ malzeme,
+      // fiyat ve ürün kümesini yayınlamaya devam ediyorlar. 23 Ağustos'ta malzeme
+      // düzeltmesi canlıya indiğinde besleme tam olarak bu yüzden bir saat
+      // boyunca eski hâlini servis etti.
+      try {
+        revalidatePath('/feed.xml')
+        revalidatePath('/sitemap.xml')
+      } catch (e: any) {
+        // Tazeleme işareti konamazsa koşu yine başarılıdır; besleme kendi
+        // süresi dolunca tazelenir.
+        console.warn('[sync] besleme/harita tazeleme işareti konamadı:', e?.message)
+      }
     }
 
     // IndexNow (Kasım 2026): yeni, fiyatı ya da stok durumu değişen ve satıştan
@@ -93,6 +102,8 @@ async function runSync() {
       skipped: result.skipped,
       deactivated: result.deactivated,
       indexnow_adres: result.degisenSluglar.length,
+      vitrin_degisti: result.vitrinDegisti,
+      vitrin_farklari: result.vitrinFarklari,
       totalPages: result.totalPages,
       totalElements: result.totalElements,
       duration_ms: result.durationMs,
@@ -102,6 +113,9 @@ async function runSync() {
   } catch (error: any) {
     // Satır 'running' kalırsa 20 dk boyunca yeni koşu başlamaz; hemen kapat.
     await failRun(supabase, start.runId, error?.message ?? 'bilinmeyen hata')
+    // Koşu yarıda kaldıysa bazı sayfalar yazılmış olabilir ve neyin değiştiği
+    // bilinmiyor: vitrin önbelleği tazelenir (emniyetli taraf, 25 Kas 2026).
+    after(vitriniYenile)
     throw error
   }
 }

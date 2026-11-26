@@ -22,6 +22,10 @@
  * geçiyorsa uzun olan önce yazılır (test denetler). Ekledikten sonra
  * src/proxy.ts'teki sabit kalıbı da güncelleyin — test, olması gereken
  * metni yazdırır.
+ *
+ * 25 Kas 2026 — YALNIZ ASİSTAN GRUBU SAYILIYOR (bkz. SAYILAN_GRUPLAR). Liste
+ * üç grubu da tutmaya devam eder: panel, önceki günlerin kayıtlarını bu
+ * listedeki işletmeci adlarıyla gösterir.
  */
 export type TarayiciGrubu = 'asistan' | 'egitim' | 'arama'
 
@@ -110,6 +114,28 @@ export const TARAYICILAR: readonly Tarayici[] = [
   { ad: 'DuckDuckBot', isletmeci: 'DuckDuckGo', grup: 'arama', kalip: 'DuckDuck[Bb]ot' },
 ]
 
+/**
+ * İstek katmanında SAYILAN gruplar (25 Kas 2026).
+ *
+ * İlk 16 saatin ölçümü: 400 tarayıcı isteğinin 44'ü asistan, 201'i eğitim
+ * (GPTBot, PetalBot, Bytespider), 155'i arama motoruydu (Googlebot, bingbot).
+ * İstek katmanı her çağrıda ~0,18 sn sunucu süresi harcıyor (soğuk açılış) —
+ * günde ~2 dakika; ücretsiz planda ayda 4 saatlik sınırın dörtte biri yalnız
+ * saymaya gidiyordu. Sorulan soru "asistanlar sayfalarımızı okuyor mu" olduğu
+ * için yalnız asistan grubu sayılır: eğitim ve arama tarayıcılarının isteği
+ * eşleştiriciden geçmez, istek katmanı onlar için HİÇ çalışmaz. Arama
+ * motorlarının tarama sayısı zaten Search Console ve Bing'de var.
+ *
+ * Bir grubu yeniden saymak için buraya ekleyin; test, src/proxy.ts'e yazılması
+ * gereken kalıbı yazdırır. Önce docs/vercel-ucretsiz-sinir.md'deki bütçeye bakın.
+ */
+export const SAYILAN_GRUPLAR: readonly TarayiciGrubu[] = ['asistan']
+
+/** Bu tarayıcının isteği sayılır mı? (Kapılı yollarda katman herkes için çalışır; sayım yine yalnız bunlar için.) */
+export function sayilirMi(t: Tarayici | null | undefined): t is Tarayici {
+  return !!t && SAYILAN_GRUPLAR.includes(t.grup)
+}
+
 const ARAMA_DIZISI = TARAYICILAR.map((t) => ({ t, anahtar: t.ad.toLowerCase() }))
 
 /** Kullanıcı aracısından tarayıcıyı bulur; listede yoksa null. */
@@ -144,9 +170,11 @@ export function yolOzeti(yol: string | null | undefined, grup: TarayiciGrubu): s
  * src/proxy.ts'teki eşleştiricinin kullanıcı aracısı kalıbı. Next, eşleştirici
  * değerlerini derleme anında SABİT metin olarak ister; bu yüzden aynı metin
  * orada elle de yazılıdır. Test ikisini karşılaştırır: liste değişip kalıp
- * unutulursa test kırılır.
+ * unutulursa test kırılır. Kalıba yalnız SAYILAN gruplar girer.
  */
 export function eslestiriciKalibi(): string {
   const kacis = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return `.*(?:${TARAYICILAR.map((t) => t.kalip ?? kacis(t.ad)).join('|')}).*`
+  return `.*(?:${TARAYICILAR.filter(sayilirMi)
+    .map((t) => t.kalip ?? kacis(t.ad))
+    .join('|')}).*`
 }

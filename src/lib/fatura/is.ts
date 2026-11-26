@@ -67,7 +67,8 @@ export interface FaturaIsiSonucu {
 const mesaj = (e: unknown) => String((e as Error)?.message ?? e).slice(0, 240)
 const bekle = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
-async function kilitAl(): Promise<string | null> {
+/** Fatura turlarının ortak kilidi; Trendyol'a kesilen fatura yolu da kullanır (trendyolaFaturaIsi.ts). */
+export async function kilitAl(): Promise<string | null> {
   const db = createServiceClient()
   const simdi = new Date().toISOString()
   await db.from('alert_state').upsert(
@@ -84,7 +85,7 @@ async function kilitAl(): Promise<string | null> {
   return data?.length ? simdi : null
 }
 
-async function kilitBirak(damga: string): Promise<void> {
+export async function kilitBirak(damga: string): Promise<void> {
   try {
     await createServiceClient()
       .from('alert_state')

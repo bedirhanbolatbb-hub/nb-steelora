@@ -181,6 +181,34 @@ sonra yeni yükleme başlatılmaz, kalan sonraki tura kalır.
 
 Panel karşılığı: buton yok; sonuç maille gelir.
 
+## Trendyol'a kesilen faturalar (26 Kas 2026)
+
+Trendyol bazen satıcıdan kendi adına fatura ister (Finans → Fatura Listeleme →
+"Trendyol'a Kesmem Gereken Faturalar"): kupon/promosyon fatura farkı, kargo
+tazmini. Ekran bir **Fatura Kodu**, KDV oranı ve KDV dahil tutar verir; kural
+"faturayı kendi sisteminizden kesin, notuna Fatura Kodunu yazın, belge
+yüklemeyin — e-fatura sisteminden otomatik okunur". Yukarıdaki otomatik iş
+bunları kesmez; bunlar için ayrı, yalnız panel oturumuyla çağrılan yol var:
+
+- Önizleme `GET /api/fatura/trendyol?kod=…&tutar=…&oran=…&kalem=…&kaynak=…&kaynakTarih=gg/aa/yyyy`
+  — hiçbir şey yazmaz. Taslak `POST` aynı parametreler + `onay=evet`.
+- **Alıcı elle yazılmaz:** daha önce Trendyol'a kesilmiş imzalı bir belgeden
+  (`kaynak`, ör. Haziran 2026'nın GIB2026000000429'u) sunucuda kopyalanır.
+  Kaynak imzalı değilse, alıcısı 10 haneli vergi numaralı ve unvanında
+  TRENDYOL geçen bir şirket değilse, vergi dairesi ya da adres boşsa durur.
+- Tip SATIS, tek kalem, 1 adet; KDV %1/%10/%20 (istisnalı %0 bu yoldan
+  kesilmez). Tutar matrah + KDV'ye kuruşu kuruşuna bölünmezse durur
+  (22,97 → 19,14 + 3,83).
+- Not: `Fatura Kodu: <kod>` + `YALNIZ: <yazıyla tutar>`. Notta sipariş
+  numarası olmadığı için otomatik işin sipariş eşlemesine girmez.
+- Çift kesim yok: kodun tarihinden bugüne GİB'deki her belgenin notu okunur;
+  kod bir belgede (taslak, imzalı, silinmiş) varsa ikinci kez kesilmez.
+  Otomatik işle aynı kilit kullanılır.
+- Taslak imzasız açılır; BB GİB İmza ile imzalar. Yükleme adımı yoktur.
+
+Kod: `lib/fatura/trendyolaFatura.ts` (saf, testli),
+`lib/fatura/trendyolaFaturaIsi.ts`, `app/api/fatura/trendyol/route.ts`.
+
 ## Sonraki adımlar (henüz yok)
 
 - İmza: portalın SMS imzası (kodu BB girer) panelden toplu yapılabilir.

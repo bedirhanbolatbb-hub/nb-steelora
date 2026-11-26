@@ -2,7 +2,7 @@ import { NextRequest, NextResponse, type NextFetchEvent } from 'next/server'
 import { cspUret } from '@/lib/security/basliklar'
 import { panelCereziGecerliMi } from '@/lib/admin/panelOturumu'
 import { yayindakiPaylasimlar } from '@/lib/instagram/paylasimlar'
-import { tarayiciBul } from '@/lib/izleme/tarayicilar'
+import { sayilirMi, tarayiciBul } from '@/lib/izleme/tarayicilar'
 import { tarayiciZiyaretiYaz } from '@/lib/izleme/tarayiciSayaci'
 
 /**
@@ -14,12 +14,15 @@ import { tarayiciZiyaretiYaz } from '@/lib/izleme/tarayiciSayaci'
  *     (layout'larında force-dynamic) ve her istekte yeni nonce alır.
  *  3. Instagram'dan gelen ana sayfa ziyareti (`/?utm_source=instagram`) →
  *     seçki sayfasına çevrilir.
- *  4. Tarayıcı sayacı (24 Kas 2026): kullanıcı aracısı yapay zekâ ya da arama
- *     tarayıcısı adı taşıyan sayfa istekleri. Katman bu isteklerde yalnız
+ *  4. Tarayıcı sayacı (24 Kas 2026): kullanıcı aracısı bir yapay zekâ
+ *     ASİSTANININ adını taşıyan sayfa istekleri. Katman bu isteklerde yalnız
  *     sayar ve isteği DOKUNMADAN geçirir (nonce yok, başlık değişmez; sayfa
  *     yine önbellekten verilir). Koşul eşleştiricide: insan ziyaretçinin
  *     isteği bu katmana hiç gelmez. Ölçüm: yanıtta `x-nb-tarayici` başlığı
- *     yalnız bu isteklerde bulunur.
+ *     yalnız bu isteklerde bulunur. 25 Kas 2026'dan beri eğitim ve arama
+ *     tarayıcıları (GPTBot, Googlebot…) sayılmaz ve eşleştiriciden geçmez:
+ *     katman çağrı başına ~0,18 sn sunucu süresi harcıyor, günde ~600
+ *     tarayıcı isteğinin onda dokuzu onlardı (lib/izleme/tarayicilar.ts).
  *
  * Neden: vitrin sayfaları artık önbellekten veriliyor (ücretsiz planda ayda
  * 4 saatlik sunucu süresi sınırı). Önbellekten dönen sayfa istek başı nonce
@@ -66,9 +69,12 @@ function dokunmadanGecir(tarayiciAdi: string | null): NextResponse {
 export async function proxy(request: NextRequest, event: NextFetchEvent) {
   const { pathname } = request.nextUrl
 
-  // Tarayıcı sayacı: yalnız listedeki adlarla gelen isteklerde yazar; yazım
-  // yanıtı bekletmez (lib/izleme/tarayiciSayaci.ts).
-  const tarayici = tarayiciBul(request.headers.get('user-agent'))
+  // Tarayıcı sayacı: yalnız SAYILAN gruptaki adlarla gelen isteklerde yazar;
+  // yazım yanıtı bekletmez (lib/izleme/tarayiciSayaci.ts). Kapılı yollarda
+  // katman herkes için çalışır (ör. Googlebot /giris'e gelirse): tanınan ama
+  // sayılmayan tarayıcı burada elenir.
+  const taninan = tarayiciBul(request.headers.get('user-agent'))
+  const tarayici = sayilirMi(taninan) ? taninan : null
   if (tarayici && (request.method === 'GET' || request.method === 'HEAD')) {
     event.waitUntil(tarayiciZiyaretiYaz(tarayici, pathname))
   }
@@ -132,11 +138,11 @@ export const config = {
       source: '/',
       has: [{ type: 'query', key: 'utm_source', value: '[iI][nN][sS][tT][aA][gG][rR][aA][mM]' }],
     },
-    // Tarayıcı sayacı: YALNIZ kullanıcı aracısı listedeki adlardan birini
-    // taşıyan sayfa istekleri (betik, biçem, görsel ve /api hariç). Kalıp
-    // lib/izleme/tarayicilar.ts → eslestiriciKalibi() ile birebir aynı olmalı;
-    // Next burada sabit metin istediği için elle yazılı, eşitliği test denetler
-    // (src/lib/izleme/__testler__/tarayicilar.test.mts).
+    // Tarayıcı sayacı: YALNIZ kullanıcı aracısı SAYILAN gruptaki (asistanlar)
+    // adlardan birini taşıyan sayfa istekleri (betik, biçem, görsel ve /api
+    // hariç). Kalıp lib/izleme/tarayicilar.ts → eslestiriciKalibi() ile birebir
+    // aynı olmalı; Next burada sabit metin istediği için elle yazılı, eşitliği
+    // test denetler (src/lib/izleme/__testler__/tarayicilar.test.mts).
     {
       source:
         '/((?!_next/|api/|.*\\.(?:js|css|map|png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|otf|mp4|webm|json|webmanifest)$).*)',
@@ -145,7 +151,7 @@ export const config = {
           type: 'header',
           key: 'user-agent',
           value:
-            '.*(?:OAI-SearchBot|ChatGPT-User|Perplexity[Bb]ot|Perplexity-User|Claude-SearchBot|Claude-User|Claude-Web|GoogleAgent-URLContext|GoogleAgent-Mariner|Google-NotebookLM|Gemini-Deep-Research|Apple[Bb]ot|DuckAssistBot|MistralAI-User|MistralAI-Index|[Mm]eta-[Ee]xternal[Ff]etcher|meta-webindexer|Amzn-SearchBot|Amzn-User|YouBot|GrokBot|xAI-Grok|kagi-fetcher|TavilyBot|LinkupBot|Bravebot|ExaSearchBot|PhindBot|AzureAI-SearchBot|cohere-ai|Kimi-SearchBot|Kimi-User|TongyiBot|YiyanBot|DoubaoBot|Manus-User|GPT[Bb]ot|Claude[Bb]ot|anthropic-ai|CC[Bb]ot|GoogleOther|Google-CloudVertexBot|Bytespider|TikTokSpider|Amazon[Bb]ot|[Mm]eta-[Ee]xternal[Aa]gent|[Ff]acebook[Bb]ot|DeepSeekBot|MistralAI-Training|PetalBot|PanguBot|Diffbot|omgili|Timpibot|A[Ii]2Bot|cohere-training-data-crawler|YandexAdditional|QwenBot|ERNIEBot|MoonshotBot|KimiBot|ChatGLM-Spider|ImagesiftBot|[Gg]oogle[Bb]ot|[Bb]ing[Bb]ot|Yandex[Bb]ot|DuckDuck[Bb]ot).*',
+            '.*(?:OAI-SearchBot|ChatGPT-User|Perplexity[Bb]ot|Perplexity-User|Claude-SearchBot|Claude-User|Claude-Web|GoogleAgent-URLContext|GoogleAgent-Mariner|Google-NotebookLM|Gemini-Deep-Research|Apple[Bb]ot|DuckAssistBot|MistralAI-User|MistralAI-Index|[Mm]eta-[Ee]xternal[Ff]etcher|meta-webindexer|Amzn-SearchBot|Amzn-User|YouBot|GrokBot|xAI-Grok|kagi-fetcher|TavilyBot|LinkupBot|Bravebot|ExaSearchBot|PhindBot|AzureAI-SearchBot|cohere-ai|Kimi-SearchBot|Kimi-User|TongyiBot|YiyanBot|DoubaoBot|Manus-User).*',
         },
       ],
     },

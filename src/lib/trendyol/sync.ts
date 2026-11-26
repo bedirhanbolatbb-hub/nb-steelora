@@ -4,6 +4,7 @@ import { sonYazilanBarkodlar } from './stokKuyrugu'
 import { modelKoduKolonuVar, modelKoduTemizle } from '@/lib/catalog/urunKodlari'
 import { renkTemizle } from '@/lib/catalog/renk'
 import { renkKolonuVar } from '@/lib/catalog/renkVerisi'
+import { karsilastirilanAlanlar, vitrinFarki } from './vitrinFarki'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 function getServiceClient() {
@@ -137,6 +138,49 @@ function flattenContents(contents: any[]): VariantRow[] {
  */
 type UpsertRow = Record<string, unknown>
 
+/** Sayfanın vitrin farkı: değişti mi, hangi alanda kaç satır. */
+type SayfaFarki = { degisti: boolean; alanlar: Record<string, number> }
+
+/**
+ * Sayfanın yükünü veritabanındaki mevcut satırlarla karşılaştırır (25 Kas 2026).
+ * Yazmadan ÖNCE çağrılır; sonuç koşu sahibine gider ve vitrin önbelleği yalnız
+ * bir fark varsa tazelenir (lib/trendyol/vitrinFarki.ts).
+ *
+ * AYRI bir okumadır ve öyle kalmalı: syncTrendyolPage'deki `existingRows`
+ * sorgusuna kolon EKLENMEZ. O sorgu düşerse bütün satırlar "yeni" sayılır ve
+ * slug'lar baştan üretilir — ürün adresleri değişir. Bu okuma düşerse olan tek
+ * şey "değişti" sayılmasıdır: önbellek eskisi gibi tazelenir.
+ */
+async function sayfaVitrinFarki(
+  supabase: ReturnType<typeof getServiceClient>,
+  payload: UpsertRow[]
+): Promise<SayfaFarki> {
+  if (payload.length === 0) return { degisti: false, alanlar: {} }
+  const okunamadi: SayfaFarki = { degisti: true, alanlar: { '(karşılaştırma okunamadı)': 1 } }
+  try {
+    // Yükteki bütün satırlar aynı alanları taşır (model kodu ve renk koşulu
+    // sayfa başına sabittir); kolon listesi ilk satırdan alınır.
+    const { data, error } = await supabase
+      .from('products')
+      .select(karsilastirilanAlanlar(payload[0]).join(', '))
+      .in('trendyol_barcode', payload.map((p) => String(p.trendyol_barcode)))
+    if (error || !data) return okunamadi
+
+    const mevcutlar = new Map(
+      (data as unknown as Record<string, unknown>[]).map((r) => [String(r.trendyol_barcode), r])
+    )
+    const alanlar: Record<string, number> = {}
+    for (const yazilan of payload) {
+      for (const alan of vitrinFarki(mevcutlar.get(String(yazilan.trendyol_barcode)), yazilan)) {
+        alanlar[alan] = (alanlar[alan] ?? 0) + 1
+      }
+    }
+    return { degisti: Object.keys(alanlar).length > 0, alanlar }
+  } catch {
+    return okunamadi
+  }
+}
+
 /**
  * Sync sayfası işler.
  *
@@ -266,12 +310,22 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
     else added++
   }
 
+  // Vitrin farkı — yazmadan ÖNCE: yazımdan sonra veritabanı yüke eşitlenir ve
+  // karşılaştıracak bir şey kalmaz.
+  const fark = await sayfaVitrinFarki(supabase, payload)
+
   if (payload.length > 0) {
     const { error } = await supabase
       .from('products')
       .upsert(payload, { onConflict: 'trendyol_barcode' })
 
     if (error) {
+      // Satır satır yazımda satırlar eksik alanla (kodsuz, renksiz, malzemesiz)
+      // yazılabilir; yazılan şey artık karşılaştırılan yük değildir. Şüphede
+      // "değişti" denir.
+      fark.degisti = true
+      fark.alanlar['(toplu yazım düştü)'] = (fark.alanlar['(toplu yazım düştü)'] ?? 0) + 1
+
       // Toplu yazma tek bir bozuk satır yüzünden düşerse (ör. trendyol_id
       // çakışması) 50 ürünü birden kaybetmeyelim: satır satır dene, yalnız
       // gerçekten yazılamayanı atla.
@@ -356,5 +410,19 @@ export async function syncTrendyolPage(page: number, size = 100, runStartedAt?: 
 
   // Pasife çekme ve sync_log kaydı koşu sahibindedir (lib/trendyol/syncRun.ts):
   // tek sayfa değil, koşunun tamamı bittiğinde karar verilmesi gerekiyor.
-  return { page, added, updated, skipped, totalPages, totalElements, done, runStartedAt: runStart, degisenSluglar }
+  return {
+    page,
+    added,
+    updated,
+    skipped,
+    totalPages,
+    totalElements,
+    done,
+    runStartedAt: runStart,
+    degisenSluglar,
+    /** Bu sayfa vitrinde görünen bir şeyi değiştirdi mi (lib/trendyol/vitrinFarki). */
+    vitrinDegisti: fark.degisti,
+    /** Hangi alanda kaç satır farklıydı — günlük kaydı için. */
+    vitrinFarklari: fark.alanlar,
+  }
 }

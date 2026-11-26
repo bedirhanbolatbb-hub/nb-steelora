@@ -130,14 +130,18 @@ export async function GET() {
     {
       status: dbDustu ? 503 : 200,
       // 15 Kas 2026 (ücretsiz plandaki sunucu süresi): izleyici bu ucu 5
-      // dakikada bir yokluyor (12 saatte ~150 çağrı). Sağlıklı yanıt CDN'de
-      // 15 dakika tutulur → işlev saatte en fazla ~4 kez çalışır. Veritabanı
+      // dakikada bir yokluyor. Sağlıklı yanıt CDN'de tutulur; veritabanı
       // düştüyse (503) yanıt hiç saklanmaz: izleyici kesintiyi en geç bir
       // önbellek süresi sonra görür, düzelmeyi ise hemen.
+      // 25 Kas 2026: süre 15 dk → 60 dk. 15 dakikada da işlev günde ~135 kez
+      // çalışıyordu (12 saatte 68 çağrı, 15 sn) — her çağrı Kargonomi ve
+      // Resend'e de gidiyor. Sitenin kendisi düşerse izleyici bunu yine anında
+      // görür (yanıt gelmez); bir saat geciken yalnız iki dış servisin
+      // "yavaşladı" bilgisi, o da sabah raporunda (api/health/rapor) ayrıca var.
       headers: {
         'Cache-Control': dbDustu
           ? 'no-store, max-age=0'
-          : 'public, max-age=0, s-maxage=900, stale-while-revalidate=60',
+          : 'public, max-age=0, s-maxage=3600, stale-while-revalidate=300',
       },
     }
   )

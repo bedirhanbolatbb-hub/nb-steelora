@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { TARAYICILAR, type TarayiciGrubu } from './tarayicilar'
+import { SAYILAN_GRUPLAR, TARAYICILAR, type TarayiciGrubu } from './tarayicilar'
 
 /**
  * Panel → Analiz: tarayıcı ziyaretleri özeti (24 Kas 2026).
@@ -19,14 +19,21 @@ export type TarayiciSatiri = {
 
 export type TarayiciRaporu = {
   kurulu: boolean
+  /**
+   * Şu an sayılan gruplar (25 Kas 2026'dan beri yalnız asistanlar). Kart,
+   * sayılmayan grubu yalnız seçili dönemde ESKİ kaydı varsa ve "sayılmıyor"
+   * notuyla gösterir — "gelen olmadı" yazıp yanlış izlenim vermesin diye.
+   */
+  sayilanGruplar: TarayiciGrubu[]
   tarayicilar: TarayiciSatiri[]
-  /** Asistan ve eğitim tarayıcılarının en çok okuduğu sayfalar. */
+  /** Sayılan yapay zekâ gruplarının (asistanlar) en çok okuduğu sayfalar. */
   sayfalar: { yol: string; ziyaret: number }[]
   toplam: Record<TarayiciGrubu, number>
 }
 
 const BOS: TarayiciRaporu = {
   kurulu: false,
+  sayilanGruplar: [...SAYILAN_GRUPLAR],
   tarayicilar: [],
   sayfalar: [],
   toplam: { asistan: 0, egitim: 0, arama: 0 },
@@ -39,8 +46,17 @@ export function istanbulGunu(t: Date): string {
 
 type HamSatir = { gun: string; tarayici: string; grup: string; yol: string; adet: number; son_gorulme: string | null }
 
-/** Ham sayaç satırlarını kart verisine toplar — veritabanından bağımsız, test edilir. */
-export function tarayiciOzeti(satirlar: HamSatir[], sayfaAdedi = 5): Omit<TarayiciRaporu, 'kurulu'> {
+/**
+ * Ham sayaç satırlarını kart verisine toplar — veritabanından bağımsız, test edilir.
+ * `sayfaGruplari`: "en çok okunan sayfalar" hangi gruplardan toplanır. Varsayılan
+ * sayılan gruplardır; böylece 24–25 Kas'ın eğitim tarayıcısı kayıtları (GPTBot,
+ * PetalBot) asistanların okuduğu sayfaların önüne geçmez.
+ */
+export function tarayiciOzeti(
+  satirlar: HamSatir[],
+  sayfaAdedi = 5,
+  sayfaGruplari: readonly TarayiciGrubu[] = SAYILAN_GRUPLAR
+): Omit<TarayiciRaporu, 'kurulu' | 'sayilanGruplar'> {
   const isletmeciler = new Map(TARAYICILAR.map((t) => [t.ad, t.isletmeci]))
   const tarayicilar = new Map<string, TarayiciSatiri>()
   const sayfalar = new Map<string, number>()
@@ -65,9 +81,10 @@ export function tarayiciOzeti(satirlar: HamSatir[], sayfaAdedi = 5): Omit<Tarayi
     }
     tarayicilar.set(s.tarayici, mevcut)
 
-    // Arama motorlarının adresleri bilerek toplu yazılır (bkz. yolOzeti);
-    // "en çok okunan sayfalar" yapay zekâ tarayıcıları içindir.
-    if (grup !== 'arama' && s.yol !== '(diğer)') {
+    // "En çok okunan sayfalar" yalnız istenen yapay zekâ gruplarından toplanır.
+    // Arama motorları hiçbir durumda girmez: adresleri bilerek toplu yazılır
+    // (bkz. yolOzeti), sayfa sayfa bir şey söylemez.
+    if (grup !== 'arama' && sayfaGruplari.includes(grup) && s.yol !== '(diğer)') {
       sayfalar.set(s.yol, (sayfalar.get(s.yol) ?? 0) + adet)
     }
   }
@@ -98,7 +115,7 @@ export async function tarayiciRaporu(bas: Date, bit: Date): Promise<TarayiciRapo
       .order('adet', { ascending: false })
       .limit(5000)
     if (error) return BOS
-    return { kurulu: true, ...tarayiciOzeti((data ?? []) as HamSatir[]) }
+    return { kurulu: true, sayilanGruplar: [...SAYILAN_GRUPLAR], ...tarayiciOzeti((data ?? []) as HamSatir[]) }
   } catch {
     return BOS
   }

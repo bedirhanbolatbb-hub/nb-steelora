@@ -147,9 +147,20 @@ export function istanbulSimdi(simdi = new Date()): { tarih: string; saat: string
  */
 export async function belgeleriListele(oturum: GibOturum, gun: number): Promise<GibBelge[]> {
   const bugun = istanbulSimdi().gun
+  return belgeleriAralikta(oturum, new Date(bugun.getTime() - (gun - 1) * 86_400_000), bugun)
+}
+
+/**
+ * İki gün (dahil, UTC gece yarısı olarak verilen İstanbul takvim günleri)
+ * arasındaki belgeler; aralık sondan başa 7'şer günlük parçalarla okunur.
+ * belgeleriListele bunun "bugünden geriye N gün" hâlidir (26 Kas 2026'da
+ * ayrıldı; Trendyol'a kesilen fatura yolu eski bir belgeyi tarihiyle arıyor).
+ */
+export async function belgeleriAralikta(oturum: GibOturum, bas: Date, bit: Date): Promise<GibBelge[]> {
+  const gun = Math.round((bit.getTime() - bas.getTime()) / 86_400_000) + 1
   const belgeler: GibBelge[] = []
   for (let bitisFarki = 0; bitisFarki < gun; bitisFarki += 7) {
-    const bitis = new Date(bugun.getTime() - bitisFarki * 86_400_000)
+    const bitis = new Date(bit.getTime() - bitisFarki * 86_400_000)
     const baslangic = new Date(bitis.getTime() - Math.min(6, gun - 1 - bitisFarki) * 86_400_000)
     const veri = await komut(oturum, 'EARSIV_PORTAL_TASLAKLARI_GETIR', 'RG_BASITTASLAKLAR', {
       baslangic: gunAyYil(baslangic),

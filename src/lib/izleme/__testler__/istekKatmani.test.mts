@@ -23,12 +23,16 @@ const { yayindakiPaylasimlar } = await import('../../instagram/paylasimlar.ts')
  * (24 Kas 2026).
  *
  * Katman 14 Kas'tan beri yalnız birkaç yolda çalışıyordu; sayaç onu yapay zekâ
- * ve arama tarayıcılarının isteklerine de açtı. Burada sınananlar:
+ * tarayıcılarının isteklerine de açtı. 25 Kas 2026'dan beri yalnız ASİSTANLARA
+ * açık: katman çağrı başına ~0,18 sn sunucu süresi harcıyor ve isteklerin onda
+ * dokuzu eğitim tarayıcıları ile arama motorlarıydı. Burada sınananlar:
  *  1. İnsan ziyaretçinin vitrin isteği katmana HİÇ gelmiyor (ücretsiz plandaki
  *     sunucu süresi sınırı — 10 Kas'ta site bu yüzden kapanmıştı).
- *  2. Tarayıcı isteği dokunulmadan geçiyor: yönlendirme yok, güvenlik politikası
+ *  2. Eğitim tarayıcısının ve arama motorunun vitrin isteği de katmana gelmiyor;
+ *     gelse bile sayılmıyor.
+ *  3. Asistan isteği dokunulmadan geçiyor: yönlendirme yok, güvenlik politikası
  *     başlığı yok, ana sayfa Instagram seçkisine ÇEVRİLMİYOR.
- *  3. Eski davranış aynı: panel kapısı, /admin yönlendirmesi, nonce'lu yollar.
+ *  4. Eski davranış aynı: panel kapısı, /admin yönlendirmesi, nonce'lu yollar.
  */
 // CommonJS paketi: adlı içe aktarma çalışmıyor, varsayılan nesneden alınır.
 const { isRewrite, getRewrittenUrl, getRedirectUrl } = nextTest
@@ -53,6 +57,7 @@ const IPHONE =
 const OAI = 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.3; +https://openai.com/searchbot'
 const GOOGLEBOT =
   'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+const GPTBOT = 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.2; +https://openai.com/gptbot'
 
 // ── 1. Eşleştirici: katman kimin isteğinde çalışır?
 const calisir = (url: string, ua: string) =>
@@ -73,12 +78,27 @@ esit('asistan tarayıcısı: ürün sayfası → çalışır', calisir('/urun/ko
 esit('asistan tarayıcısı: ana sayfa → çalışır', calisir('/', OAI), true)
 esit('asistan tarayıcısı: llms.txt → çalışır', calisir('/llms.txt', OAI), true)
 esit('asistan tarayıcısı: site haritası → çalışır', calisir('/sitemap.xml', OAI), true)
-esit('Googlebot: kategori → çalışır', calisir('/kategori/kolye', GOOGLEBOT), true)
-esit('tarayıcı: betik dosyası → çalışmaz', calisir('/_next/static/chunks/main-abc.js', GOOGLEBOT), false)
-esit('tarayıcı: görsel iyileştirme → çalışmaz', calisir('/_next/image?url=x&w=640&q=75', GOOGLEBOT), false)
-esit('tarayıcı: görsel dosyası → çalışmaz', calisir('/badges/visa.svg', GOOGLEBOT), false)
-esit('tarayıcı: /api → çalışmaz', calisir('/api/search?q=kolye', GOOGLEBOT), false)
-esit('tarayıcı: site simgesi → çalışmaz', calisir('/favicon.ico', OAI), false)
+esit('asistan tarayıcısı: kategori → çalışır', calisir('/kategori/kolye', OAI), true)
+esit('asistan tarayıcısı: betik dosyası → çalışmaz', calisir('/_next/static/chunks/main-abc.js', OAI), false)
+esit('asistan tarayıcısı: görsel iyileştirme → çalışmaz', calisir('/_next/image?url=x&w=640&q=75', OAI), false)
+esit('asistan tarayıcısı: görsel dosyası → çalışmaz', calisir('/badges/visa.svg', OAI), false)
+esit('asistan tarayıcısı: /api → çalışmaz', calisir('/api/search?q=kolye', OAI), false)
+esit('asistan tarayıcısı: site simgesi → çalışmaz', calisir('/favicon.ico', OAI), false)
+// 25 Kas 2026: eğitim tarayıcıları ve arama motorları vitrinde katmanı ÇALIŞTIRMAZ.
+// Günde ~500 istek onlardandı; her biri ~0,18 sn sunucu süresi demekti.
+for (const [kim, ua] of [
+  ['Googlebot', GOOGLEBOT],
+  ['GPTBot', GPTBOT],
+] as const) {
+  esit(`${kim}: ana sayfa → çalışmaz`, calisir('/', ua), false)
+  esit(`${kim}: ürün sayfası → çalışmaz`, calisir('/urun/kolye-NBK024', ua), false)
+  esit(`${kim}: kategori → çalışmaz`, calisir('/kategori/kolye', ua), false)
+  esit(`${kim}: blog → çalışmaz`, calisir('/blog/celik-taki-kararir-mi', ua), false)
+  esit(`${kim}: llms.txt → çalışmaz`, calisir('/llms.txt', ua), false)
+  esit(`${kim}: site haritası → çalışmaz`, calisir('/sitemap.xml', ua), false)
+  esit(`${kim}: robots.txt → çalışmaz`, calisir('/robots.txt', ua), false)
+  esit(`${kim}: panel → çalışır (oturum kapısı herkese)`, calisir('/panel', ua), true)
+}
 
 // ── 2. İşlev: istek geldiğinde ne yapar?
 type Sonuc = { tur: string; hedef: string | null; csp: boolean; onbellek: string | null; isaret: string | null; yazim: number }
@@ -102,12 +122,19 @@ async function dene(yol: string, ua: string, cerez?: string): Promise<Sonuc> {
 }
 
 const dokunulmadi = (isaret: string) => ({ tur: 'gecir', hedef: null, csp: false, onbellek: null, isaret, yazim: 1 })
+const sayilmadi = { tur: 'gecir', hedef: null, csp: false, onbellek: null, isaret: null, yazim: 0 }
 esit('asistan → ürün sayfası: dokunulmadan geçer, sayılır', await dene('/urun/kolye-NBK024', OAI), dokunulmadi('OAI-SearchBot'))
 esit('asistan → llms.txt: dokunulmadan geçer, sayılır', await dene('/llms.txt', OAI), dokunulmadi('OAI-SearchBot'))
-esit('Googlebot → koleksiyon: dokunulmadan geçer, sayılır', await dene('/koleksiyon/charm-bileklikler', GOOGLEBOT), dokunulmadi('Googlebot'))
+esit('asistan → koleksiyon: dokunulmadan geçer, sayılır', await dene('/koleksiyon/charm-bileklikler', OAI), dokunulmadi('OAI-SearchBot'))
 // En kritik satır: tarayıcı ana sayfayı okurken Instagram seçkisine çevrilmemeli.
 esit('asistan → ana sayfa: Instagram seçkisine ÇEVRİLMEZ', await dene('/', OAI), dokunulmadi('OAI-SearchBot'))
-esit('Googlebot → ana sayfa (başka kaynak etiketi): çevrilmez', await dene('/?utm_source=google', GOOGLEBOT), dokunulmadi('Googlebot'))
+esit('asistan → ana sayfa (başka kaynak etiketi): çevrilmez', await dene('/?utm_source=google', OAI), dokunulmadi('OAI-SearchBot'))
+// Eşleştirici eğitim tarayıcısını ve arama motorunu vitrinde katmana getirmez.
+// Yine de gelirse (eşleştirici ile liste bir gün ayrışırsa) işlev saymaz, iz
+// başlığı da koymaz: sayım kararı tek yerde, lib/izleme/tarayicilar → sayilirMi.
+esit('Googlebot → koleksiyon (katman çağrılsa bile): sayılmaz, iz başlığı yok', await dene('/koleksiyon/charm-bileklikler', GOOGLEBOT), sayilmadi)
+esit('GPTBot → ürün sayfası (katman çağrılsa bile): sayılmaz, iz başlığı yok', await dene('/urun/kolye-NBK024', GPTBOT), sayilmadi)
+esit('Googlebot → ana sayfa (katman çağrılsa bile): sayılmaz, çevrilmez', await dene('/?utm_source=google', GOOGLEBOT), sayilmadi)
 
 const paylasimVar = yayindakiPaylasimlar().length > 0
 const instagram = await dene('/?utm_source=Instagram&utm_medium=social', IPHONE)
@@ -128,9 +155,11 @@ const odeme = await dene('/odeme', IPHONE)
 esit('ödeme: nonce politikası + önbellek yok, sayım yok', { tur: odeme.tur, csp: odeme.csp, onbellek: odeme.onbellek, yazim: odeme.yazim, isaret: odeme.isaret }, { tur: 'gecir', csp: true, onbellek: 'no-store, max-age=0, must-revalidate', yazim: 0, isaret: null })
 const girisSayfasi = await dene('/giris', CHROME)
 esit('üye girişi: nonce politikası, önbellek başlığına dokunulmaz', { tur: girisSayfasi.tur, csp: girisSayfasi.csp, onbellek: girisSayfasi.onbellek }, { tur: 'gecir', csp: true, onbellek: null })
-// Tarayıcı kapılı yola gelirse hem sayılır hem kapı çalışır.
+// Kapılı yolda katman herkes için çalışır: kapı her tarayıcıya işler, sayım yalnız asistana.
 const botPanel = await dene('/panel', GOOGLEBOT)
-esit('Googlebot → panel: sayılır ve giriş sayfasına yönlenir', { tur: botPanel.tur, hedef: botPanel.hedef, yazim: botPanel.yazim }, { tur: 'yonlendirme:307', hedef: '/panel/login', yazim: 1 })
+esit('Googlebot → panel: sayılmaz, giriş sayfasına yönlenir', { tur: botPanel.tur, hedef: botPanel.hedef, yazim: botPanel.yazim }, { tur: 'yonlendirme:307', hedef: '/panel/login', yazim: 0 })
+const asistanPanel = await dene('/panel', OAI)
+esit('asistan → panel: sayılır ve giriş sayfasına yönlenir', { tur: asistanPanel.tur, hedef: asistanPanel.hedef, yazim: asistanPanel.yazim }, { tur: 'yonlendirme:307', hedef: '/panel/login', yazim: 1 })
 
 console.log(`\n  ${gecen} geçti, ${kalan} kaldı`)
 process.exit(kalan ? 1 : 0)
