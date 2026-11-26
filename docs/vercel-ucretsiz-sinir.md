@@ -426,3 +426,8 @@ hatasında boş sayfa üretmeyen sıkı okuma gerekir — `kunyeGetir` /
 `getSiteContent` hatayı yutuyor), kadraj görsellerini doğrudan depodan vermek
 (~−50 sn/gün), kategori/liste sayfalarını önbelleğe almak, düşük değerli
 tarayıcılara robots kuralı, gece tazelemesini koşullu yapmak.
+
+26 Kas ek: yayından sonra panel kartı, asistan grubundaki `meta-webindexer`'ın
+ilk 36 saatte 420 istek attığını gösterdi (asistan isteklerinin %86'sı; günde
+~50 sn ara katman). Tarayıcıya `sayilmaz: true` verildi: tanınır, eski kaydı
+"sayılmıyor" notuyla görünür, eşleştirici kalıbında yer almaz.

@@ -15,6 +15,8 @@ export type TarayiciSatiri = {
   ziyaret: number
   /** Dönem içindeki en son ziyaret (ISO). */
   sonGorulme: string | null
+  /** Grubu sayılsa da bu tarayıcı artık sayılmıyor (tarayicilar.ts → sayilmaz). */
+  sayilmiyor: boolean
 }
 
 export type TarayiciRaporu = {
@@ -58,6 +60,7 @@ export function tarayiciOzeti(
   sayfaGruplari: readonly TarayiciGrubu[] = SAYILAN_GRUPLAR
 ): Omit<TarayiciRaporu, 'kurulu' | 'sayilanGruplar'> {
   const isletmeciler = new Map(TARAYICILAR.map((t) => [t.ad, t.isletmeci]))
+  const sayilmayanlar = new Set(TARAYICILAR.filter((t) => t.sayilmaz).map((t) => t.ad))
   const tarayicilar = new Map<string, TarayiciSatiri>()
   const sayfalar = new Map<string, number>()
   const toplam: Record<TarayiciGrubu, number> = { asistan: 0, egitim: 0, arama: 0 }
@@ -74,6 +77,7 @@ export function tarayiciOzeti(
       grup,
       ziyaret: 0,
       sonGorulme: null,
+      sayilmiyor: sayilmayanlar.has(s.tarayici),
     }
     mevcut.ziyaret += adet
     if (s.son_gorulme && (!mevcut.sonGorulme || s.son_gorulme > mevcut.sonGorulme)) {

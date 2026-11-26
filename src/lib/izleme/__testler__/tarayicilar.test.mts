@@ -142,6 +142,8 @@ esit('sayilirMi: eğitim tarayıcısı sayılmaz', sayilirMi(tarayiciBul(UA.gptB
 esit('sayilirMi: arama motoru sayılmaz', sayilirMi(tarayiciBul(UA.googlebot)), false)
 esit('sayilirMi: tanınmayan sayılmaz', sayilirMi(tarayiciBul(UA.chrome)), false)
 esit('sayilirMi: boş değer sayılmaz', sayilirMi(null), false)
+const metaUA = 'meta-webindexer/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler)'
+esit('meta-webindexer tanınır ama sayılmaz (çok sık geliyor)', [tarayiciBul(metaUA)?.ad, sayilirMi(tarayiciBul(metaUA)), kalip.test(metaUA)], ['meta-webindexer', false, false])
 esit(
   'insan tarayıcıları kalıptan GEÇMEZ (katman onlar için çalışmaz)',
   [UA.chrome, UA.iphone, UA.instagram, UA.android, UA.claudeUygulamasi].filter((u) => kalip.test(u)),

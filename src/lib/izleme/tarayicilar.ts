@@ -36,6 +36,11 @@ export type Tarayici = {
   grup: TarayiciGrubu
   /** İstek katmanı eşleştiricisindeki parça; yoksa adın kendisi. */
   kalip?: string
+  /**
+   * Grubu sayılsa da bu tarayıcı SAYILMAZ (26 Kas 2026): çok sık gelen bir
+   * dizinleyici. Her isteği ara katmanda ~0,18 sn sunucu süresi demek.
+   */
+  sayilmaz?: true
 }
 
 export const TARAYICILAR: readonly Tarayici[] = [
@@ -57,7 +62,8 @@ export const TARAYICILAR: readonly Tarayici[] = [
   { ad: 'MistralAI-User', isletmeci: 'Mistral (Le Chat)', grup: 'asistan' },
   { ad: 'MistralAI-Index', isletmeci: 'Mistral (Le Chat araması)', grup: 'asistan' },
   { ad: 'meta-externalfetcher', isletmeci: 'Meta (Meta AI)', grup: 'asistan', kalip: '[Mm]eta-[Ee]xternal[Ff]etcher' },
-  { ad: 'meta-webindexer', isletmeci: 'Meta (Meta AI)', grup: 'asistan' },
+  // 26 Kas 2026: ilk 36 saatte 420 istek (asistan isteklerinin %86'sı) → sayılmaz.
+  { ad: 'meta-webindexer', isletmeci: 'Meta (Meta AI)', grup: 'asistan', sayilmaz: true },
   { ad: 'Amzn-SearchBot', isletmeci: 'Amazon', grup: 'asistan' },
   { ad: 'Amzn-User', isletmeci: 'Amazon', grup: 'asistan' },
   { ad: 'YouBot', isletmeci: 'You.com', grup: 'asistan' },
@@ -133,7 +139,7 @@ export const SAYILAN_GRUPLAR: readonly TarayiciGrubu[] = ['asistan']
 
 /** Bu tarayıcının isteği sayılır mı? (Kapılı yollarda katman herkes için çalışır; sayım yine yalnız bunlar için.) */
 export function sayilirMi(t: Tarayici | null | undefined): t is Tarayici {
-  return !!t && SAYILAN_GRUPLAR.includes(t.grup)
+  return !!t && SAYILAN_GRUPLAR.includes(t.grup) && !t.sayilmaz
 }
 
 const ARAMA_DIZISI = TARAYICILAR.map((t) => ({ t, anahtar: t.ad.toLowerCase() }))

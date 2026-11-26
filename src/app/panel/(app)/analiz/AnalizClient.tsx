@@ -678,6 +678,7 @@ export default function AnalizClient({
                               <span className="min-w-0">
                                 <span className="text-[var(--p-ink)]">{t.ad}</span>
                                 {t.isletmeci && <span className="text-[var(--p-muted)]"> · {t.isletmeci}</span>}
+                                {t.sayilmiyor && <span className="text-[var(--p-muted)]"> · 26 Kas 2026’dan beri sayılmıyor</span>}
                               </span>
                               <span className="shrink-0 whitespace-nowrap text-[var(--p-muted)]">
                                 son: {gunSaat(t.sonGorulme)}

@@ -151,7 +151,7 @@ export const config = {
           type: 'header',
           key: 'user-agent',
           value:
-            '.*(?:OAI-SearchBot|ChatGPT-User|Perplexity[Bb]ot|Perplexity-User|Claude-SearchBot|Claude-User|Claude-Web|GoogleAgent-URLContext|GoogleAgent-Mariner|Google-NotebookLM|Gemini-Deep-Research|Apple[Bb]ot|DuckAssistBot|MistralAI-User|MistralAI-Index|[Mm]eta-[Ee]xternal[Ff]etcher|meta-webindexer|Amzn-SearchBot|Amzn-User|YouBot|GrokBot|xAI-Grok|kagi-fetcher|TavilyBot|LinkupBot|Bravebot|ExaSearchBot|PhindBot|AzureAI-SearchBot|cohere-ai|Kimi-SearchBot|Kimi-User|TongyiBot|YiyanBot|DoubaoBot|Manus-User).*',
+            '.*(?:OAI-SearchBot|ChatGPT-User|Perplexity[Bb]ot|Perplexity-User|Claude-SearchBot|Claude-User|Claude-Web|GoogleAgent-URLContext|GoogleAgent-Mariner|Google-NotebookLM|Gemini-Deep-Research|Apple[Bb]ot|DuckAssistBot|MistralAI-User|MistralAI-Index|[Mm]eta-[Ee]xternal[Ff]etcher|Amzn-SearchBot|Amzn-User|YouBot|GrokBot|xAI-Grok|kagi-fetcher|TavilyBot|LinkupBot|Bravebot|ExaSearchBot|PhindBot|AzureAI-SearchBot|cohere-ai|Kimi-SearchBot|Kimi-User|TongyiBot|YiyanBot|DoubaoBot|Manus-User).*',
         },
       ],
     },

@@ -205,6 +205,12 @@ bunları kesmez; bunlar için ayrı, yalnız panel oturumuyla çağrılan yol va
   kod bir belgede (taslak, imzalı, silinmiş) varsa ikinci kez kesilmez.
   Otomatik işle aynı kilit kullanılır.
 - Taslak imzasız açılır; BB GİB İmza ile imzalar. Yükleme adımı yoktur.
+- **Kaynak belge şimdiki GİB hesabında olmalı.** Haziran 2026'nın
+  GIB2026000000429'u eski firmanın hesabında kaldı (şirket devri, Kasım 2026;
+  yeni hesabın numaraları GIB2026000000001'den başlıyor) — 26 Kas'ta 5 Mayıs –
+  28 Temmuz aralığında arandı, yok. Bu yüzden ilk fatura (KRM_1181208_251126,
+  22,97 TL) BB tarafından portalda elle kesilir; alıcı Trendyol ekranındaki
+  "Şirket Bilgilerini Gör"den. Sonrakilerde kaynak olarak o belge verilir.
 
 Kod: `lib/fatura/trendyolaFatura.ts` (saf, testli),
 `lib/fatura/trendyolaFaturaIsi.ts`, `app/api/fatura/trendyol/route.ts`.
